@@ -4,14 +4,13 @@ paths: ["**/*.py"]
 
 # Python Patterns
 
-## Environments
+## Environment
 
-Two environments — know which one applies:
+Python is client-only — CLI tools, tests, RLM agent integration. No Python in the server stack.
 
 | Context | Python | Key packages |
 |---|---|---|
-| **Claude Code tool use** | `~/uvws/.venv/bin/python` (3.12) | rdflib, pyshacl, owlrl, httpx |
-| **Adapter Docker** | Docker container (Python 3.12-slim) | FastAPI, uvicorn, httpx, rdflib |
+| **Claude Code tool use** | `~/uvws/.venv/bin/python` (3.12) | rdflib, pyshacl, owlrl, httpx, pyyaml |
 
 ## Package management — uv
 
@@ -57,12 +56,21 @@ g.serialize("out.ttl", format="turtle")
 g.serialize("out.jsonld", format="json-ld")
 ```
 
-## HTTP — httpx (async)
+## HTTP — httpx
 
 ```python
 import httpx
 
-async with httpx.AsyncClient(base_url=CSS_URL) as client:
+# Sync for RLM sandbox tools (dspy.RLM requires sync)
+def sparql_query(query: str, endpoint: str = "http://localhost:8080/sparql") -> str:
+    r = httpx.post(endpoint, data={"query": query},
+                   headers={"Accept": "application/sparql-results+json"},
+                   timeout=30.0)
+    r.raise_for_status()
+    return r.text
+
+# Async for CLI tools and tests
+async with httpx.AsyncClient(base_url="http://localhost:3000") as client:
     # LDP container listing
     r = await client.get("/vault/concepts/",
                          headers={"Accept": "text/turtle"})
@@ -86,28 +94,30 @@ conforms, report_g, report_text = validate(
 )
 ```
 
-## FastAPI Pattern (adapter)
+## RLM Agent Tool Pattern (from cogitarelink-fabric)
 
 ```python
-from contextlib import asynccontextmanager
-import httpx
-
-@asynccontextmanager
-async def lifespan(app):
-    app.state.css = httpx.AsyncClient(base_url=CSS_URL)
-    app.state.oxigraph = httpx.AsyncClient(base_url=OXIGRAPH_URL)
-    yield
-    await app.state.oxigraph.aclose()
-    await app.state.css.aclose()
-
-app = FastAPI(lifespan=lifespan)
+def make_pod_query_tool(ep, max_chars=10_000):
+    """Closure bound to a discovered endpoint — same pattern as fabric."""
+    def sparql_query(query: str) -> str:
+        r = httpx.post(ep.sparql_url, data={"query": query},
+                       headers={"Accept": "application/sparql-results+json"},
+                       timeout=30.0)
+        r.raise_for_status()
+        txt = r.text
+        if len(txt) > max_chars:
+            return txt[:max_chars] + f"\n... truncated ({len(txt)} total chars)."
+        return txt
+    return sparql_query
 ```
 
-## Async-first
+## Async-first (for CLI tools)
 
-All IO: async/await. Use `asyncio.gather` for parallel requests.
+All IO in CLI tools: async/await. Use `asyncio.gather` for parallel requests.
 No blocking calls in async context.
+Exception: RLM sandbox tools must be sync (dspy.RLM limitation).
 
 ## Error handling
 
 Raise specific exceptions at system boundaries. Don't catch-all internally.
+RLM tools return error strings (not exceptions) so the agent can reason about failures.
