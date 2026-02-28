@@ -1,12 +1,12 @@
 # /pod-init
 
-Scaffold a new Pod configuration: CSS config, Python adapter stub, docker-compose service, .well-known/ templates.
+Scaffold a new Pod configuration: CSS config, docker-compose service, shared artifacts.
 
 ## Usage
 ```
-/pod-init [--port <css-port>] [--adapter-port <adapter-port>]
+/pod-init [--port <css-port>] [--sparql-port <comunica-port>]
 ```
-Example: `/pod-init --port 3000 --adapter-port 8080`
+Example: `/pod-init --port 3000 --sparql-port 8080`
 
 ## Steps
 
@@ -15,23 +15,13 @@ Example: `/pod-init --port 3000 --adapter-port 8080`
    - File backend, WAC authorization, dev token provider
    - Storage path: `/data`
 
-2. **Python adapter** (`adapter/`):
-   - `Dockerfile` — Python 3.12-slim
-   - `requirements.txt` — fastapi, uvicorn, httpx, rdflib
-   - `main.py` — FastAPI app with:
-     - `.well-known/void` (VoID service description)
-     - `.well-known/shacl` (SHACL shapes, `{base}` substitution)
-     - `/health` endpoint
-     - LDP proxy to CSS (optional)
-
-3. **docker-compose.yml** entry:
+2. **docker-compose.yml** entry:
    - CSS service (image, ports, volumes, healthcheck)
-   - Adapter service (build context, depends_on CSS)
-   - Oxigraph service (fabric metadata)
+   - Comunica service (node:20-slim, npx @comunica/query-sparql-solid-http, depends_on CSS)
    - Named volumes for persistence
 
-4. **Shared artifacts**:
+3. **Shared artifacts**:
    - `shapes/concept-note.ttl` — initial SHACL shape
-   - `ontology/solid-pod-profile.ttl` — PROF CoreProfile for Pod
+   - `ontology/solid-pod-profile.ttl` — PROF SolidPodProfile
 
-5. Report: files created + next steps (docker compose up, verify health, import vault)
+4. Report: files created + next steps (docker compose up, verify health, import vault)

@@ -10,9 +10,9 @@ Generate or update SPDX 3.0 Software Bill of Materials for the project.
 ## Steps
 
 1. **Scan dependencies**:
-   - Python: parse `pyproject.toml` and `adapter/requirements.txt`
-   - Docker: parse `docker-compose.yml` for container images
-   - CSS: parse any `package.json` for Node.js dependencies
+   - Python: parse `pyproject.toml`
+   - Docker: parse `docker-compose.yml` for container images (CSS, node:20-slim)
+   - CSS extensions (Phase 2): parse any `package.json` for Node.js dependencies
 
 2. **Generate SPDX 3.0 SBOM**:
    - Create `provenance/sbom.spdx.json`

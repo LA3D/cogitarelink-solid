@@ -13,7 +13,7 @@ Health check: verify all services are running and Pod is functional.
    ```bash
    docker compose ps
    ```
-   Verify: css (healthy), adapter (healthy), oxigraph (healthy)
+   Verify: css (healthy), comunica (running)
 
 2. **CSS health**:
    ```bash
@@ -21,28 +21,16 @@ Health check: verify all services are running and Pod is functional.
    ```
    Expected: JSON with server metadata
 
-3. **Adapter health**:
+3. **Comunica SPARQL**:
    ```bash
-   curl -s http://localhost:8080/health
-   ```
-   Expected: `{"status": "ok"}`
-
-4. **Oxigraph health**:
-   ```bash
-   curl -s http://localhost:7878/query -d "query=SELECT * WHERE {} LIMIT 1" -H "Accept: application/sparql-results+json"
+   curl -s http://localhost:8080/sparql -d "query=SELECT * WHERE {} LIMIT 1" -H "Accept: application/sparql-results+json"
    ```
    Expected: SPARQL results JSON
 
-5. **VoID self-description**:
+4. **LDP browsability**:
    ```bash
-   curl -s http://localhost:8080/.well-known/void -H "Accept: text/turtle"
+   curl -s http://localhost:3000/ -H "Accept: text/turtle"
    ```
-   Expected: VoID Turtle with `dct:conformsTo`
+   Expected: Turtle with root container description
 
-6. **LDP browsability**:
-   ```bash
-   curl -s http://localhost:3000/vault/ -H "Accept: text/turtle"
-   ```
-   Expected: Turtle with `ldp:contains` triples
-
-7. Report: service status table, any issues found
+5. Report: service status table, any issues found
