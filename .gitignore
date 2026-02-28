@@ -13,6 +13,11 @@ venv/
 node_modules/
 npm-debug.log*
 
+# TypeScript build
+dist/
+*.js.map
+*.d.ts
+
 # Docker
 .docker/
 
