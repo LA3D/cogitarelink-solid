@@ -66,13 +66,19 @@ Every `.meta` sidecar includes SHA-256 hash:
 ```turtle
 @prefix void: <http://rdfs.org/ns/void#> .
 @prefix dct: <http://purl.org/dc/terms/> .
-@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix fabric: <https://w3id.org/cogitarelink/fabric#> .
 
 <> a void:Dataset ;
     dct:title "Agentic Memory Research Vault Pod" ;
-    dct:conformsTo <https://w3id.org/cogitarelink/fabric/CoreProfile> ;
+    dct:conformsTo fabric:CoreProfile ,    # shared with cogitarelink-fabric
+                    fabric:SolidPodProfile ; # Pod-specific extensions
     void:feature <feature/ldp-browse> ;
     void:vocabulary <http://www.w3.org/2004/02/skos/core#> ,
                     <http://purl.org/dc/terms/> ,
                     <http://www.w3.org/ns/prov#> .
 ```
+
+## Profile Architecture (D12)
+- `fabric:CoreProfile` — canonical, defined in cogitarelink-fabric (`ontology/fabric-core-profile.ttl`)
+- `fabric:SolidPodProfile` — Pod extension, defined here (`ontology/solid-pod-profile.ttl`), `prof:isProfileOf fabric:CoreProfile`
+- Never redefine CoreProfile locally — it's the shared contract across all fabric node types

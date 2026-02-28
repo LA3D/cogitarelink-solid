@@ -1,57 +1,69 @@
-@prefix prof: <http://www.w3.org/ns/dx/prof/> .
-@prefix role: <http://www.w3.org/ns/dx/prof/role/> .
-@prefix dct:  <http://purl.org/dc/terms/> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+# Pod-specific profile extension for cogitarelink-solid (D12)
+#
+# The canonical fabric:CoreProfile is defined ONCE in cogitarelink-fabric:
+#   ~/dev/git/LA3D/agents/cogitarelink-fabric/ontology/fabric-core-profile.ttl
+#   URI: <https://w3id.org/cogitarelink/fabric#CoreProfile>
+#
+# This file does NOT redefine CoreProfile. Instead it declares a Pod-specific
+# sub-profile that extends the shared CoreProfile with Pod-only vocabulary
+# requirements (SKOS, Dublin Core) and LDP-specific agent guidance.
+#
+# Pod nodes declare:
+#   dct:conformsTo <https://w3id.org/cogitarelink/fabric#CoreProfile> ,
+#                  fabric:SolidPodProfile .
 
-# PROF profile for cogitarelink-solid Pod nodes (D12)
-# Same CoreProfile conformance as cogitarelink-fabric nodes.
-# Agents use dct:conformsTo to discover this profile.
+@prefix prof:   <http://www.w3.org/ns/dx/prof/> .
+@prefix role:   <http://www.w3.org/ns/dx/prof/role/> .
+@prefix fabric: <https://w3id.org/cogitarelink/fabric#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 
-<https://w3id.org/cogitarelink/fabric/CoreProfile> a prof:Profile ;
-    dct:title "Knowledge Fabric Core Profile" ;
-    dct:description "Profile for self-describing knowledge fabric nodes. Pod nodes conform to this alongside triplestore nodes." ;
-    prof:isProfileOf <http://www.w3.org/ns/void#Dataset> ;
+fabric:SolidPodProfile
+    a prof:Profile ;
+    rdfs:label "Solid Pod Profile"@en ;
+    dct:description "Extension of CoreProfile for Solid Pod fabric nodes. Adds LDP container browsing, Pod-specific vocabularies (SKOS, Dublin Core), and document-first agent navigation."@en ;
+    prof:isProfileOf fabric:CoreProfile ;
+    dct:created "2026-02-28"^^xsd:date ;
 
-    # L1: Service Description + VoID
+    # Pod-specific L2 TBox: vocabularies used for vault content (not in base CoreProfile)
     prof:hasResource [
         a prof:ResourceDescriptor ;
-        prof:hasRole role:specification ;
-        prof:hasArtifact <https://www.w3.org/TR/void/> ;
-        dct:title "VoID — Vocabulary of Interlinked Datasets"
-    ] ;
-
-    # L2: TBox cache (standard ontologies)
-    prof:hasResource [
-        a prof:ResourceDescriptor ;
+        rdfs:label "SKOS Core Vocabulary" ;
+        dct:description "W3C SKOS — concept schemes, labels, relations. Primary vocabulary for vault concept notes." ;
         prof:hasRole role:schema ;
         prof:hasArtifact <http://www.w3.org/2004/02/skos/core#> ;
-        dct:title "SKOS Core Vocabulary"
+        dct:format <https://www.iana.org/assignments/media-types/text/turtle> ;
     ] ;
     prof:hasResource [
         a prof:ResourceDescriptor ;
+        rdfs:label "Dublin Core Terms" ;
+        dct:description "DCMI Terms — title, creator, date, subject, source. Used for frontmatter-derived metadata." ;
         prof:hasRole role:schema ;
         prof:hasArtifact <http://purl.org/dc/terms/> ;
-        dct:title "Dublin Core Terms"
-    ] ;
-    prof:hasResource [
-        a prof:ResourceDescriptor ;
-        prof:hasRole role:schema ;
-        prof:hasArtifact <http://www.w3.org/ns/prov#> ;
-        dct:title "PROV-O Ontology"
+        dct:format <https://www.iana.org/assignments/media-types/text/turtle> ;
     ] ;
 
-    # L3: Endpoint-specific SHACL shapes
+    # Pod-specific agent navigation guidance
     prof:hasResource [
         a prof:ResourceDescriptor ;
-        prof:hasRole role:constraints ;
-        prof:hasArtifact <{base}/.well-known/shacl> ;
-        dct:title "Pod content SHACL shapes"
-    ] ;
+        rdfs:label "Pod agent navigation guidance" ;
+        dct:description """Pod nodes support dual access — document browsing AND graph querying:
 
-    # L4: SPARQL examples
-    prof:hasResource [
-        a prof:ResourceDescriptor ;
-        prof:hasRole role:example ;
-        prof:hasArtifact <{base}/.well-known/sparql-examples> ;
-        dct:title "Behavioral SPARQL templates"
+Document access (LDP):
+1. GET / → root container (ldp:contains)
+2. GET /vault/concepts/ → concept note container
+3. GET /vault/concepts/context-graphs → individual resource (Markdown + .meta)
+
+Graph access (Comunica SPARQL):
+1. Configure Comunica source: {base} (type: ldp)
+2. Query across LDP resources without data duplication
+3. Federate with Oxigraph for catalog/crosswalk queries
+
+Discovery:
+1. GET .well-known/void → VoID (conformsTo, features, vocabularies)
+2. GET .well-known/shacl → shapes with sh:agentInstruction
+3. Check void:feature for <feature/ldp-browse> (Pod-specific capability)
+4. Use Type Index for class → container routing""" ;
+        prof:hasRole role:guidance ;
     ] .

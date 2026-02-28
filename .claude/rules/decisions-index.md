@@ -13,7 +13,7 @@ D8: Solid Type Index as primary machine-actionable navigation — maps RDF class
 D9: Dual-index pattern — Type Index (machines) + JSON-LD index (agents) + `.well-known/void` (fabric) + VAULT-INDEX.md (humans) coexist
 D10: Three-layer Pod RDF architecture — Layer A: LDP container structure (automatic, CSS-generated); Layer B: resource metadata (Turtle `.meta` sidecars, SHACL-governed); Layer C: navigation indexes (Type Index, JSON-LD, VoID)
 D11: Shared SHACL shapes — define in fabric, reference from Shape Trees; also governs frontmatter → RDF mapping (three-way enforcement: import, Pod write, fabric load)
-D12: CoreProfile conformance for Pod — same PROF declaration as fabric nodes; `discover_endpoint()` works unchanged
+D12: CoreProfile conformance for Pod — Pod declares `dct:conformsTo fabric:CoreProfile, fabric:SolidPodProfile`; CoreProfile is canonical in cogitarelink-fabric (never redefine locally); SolidPodProfile extends it with Pod-specific vocab + guidance
 D13: Comunica federation across Pod LDP + Oxigraph SPARQL — unified SPARQL layer; agent reasons about datasets (VoID), not servers
 D14: `alsoKnownAs` DID-WebID bridge in first WebID profile — identity bridge as foundation, not add-on (Phase 1)
 D15: VoID feature flags — `void:feature` entries distinguish Pod-type nodes (LDP browse) from triplestore-type nodes
