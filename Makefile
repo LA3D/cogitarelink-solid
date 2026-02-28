@@ -18,11 +18,11 @@ status:
 	@echo "=== CSS health ==="
 	curl -sf http://localhost:3000/.well-known/solid | $(PYTHON) -m json.tool 2>/dev/null || echo "CSS not responding"
 	@echo ""
-	@echo "=== Adapter health ==="
-	curl -sf http://localhost:8080/health 2>/dev/null || echo "Adapter not responding"
+	@echo "=== Comunica SPARQL ==="
+	curl -sf http://localhost:8080/sparql -d "query=SELECT * WHERE {} LIMIT 1" -H "Accept: application/sparql-results+json" 2>/dev/null | head -1 || echo "Comunica not responding"
 	@echo ""
-	@echo "=== Oxigraph health ==="
-	curl -sf http://localhost:7878/query -d "query=SELECT * WHERE {} LIMIT 1" -H "Accept: application/sparql-results+json" 2>/dev/null | head -1 || echo "Oxigraph not responding"
+	@echo "=== LDP root ==="
+	curl -sf http://localhost:3000/ -H "Accept: text/turtle" 2>/dev/null | head -5 || echo "LDP not browsable"
 
 test:
 	$(PYTHON) -m pytest tests/ -v
