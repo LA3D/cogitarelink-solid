@@ -9,28 +9,81 @@ paths: ["**/*.ts", "**/*.js", "**/*.json"]
 Community Solid Server uses Components.js (JSON-LD dependency injection).
 Extensions are **configuration-level** — no CSS fork required.
 
-Key CSS extension points:
-- `MonitoringStore`: intercepts resource create/update/delete events
-- `WaterfallHandler`: intercepts HTTP requests matching conditions
-- `RoutingResourceStore`: routes requests to different backends by path
+### Extension template
 
-## Components.js Config Pattern
+Follow the [hello-world-component](https://github.com/CommunitySolidServer/hello-world-component) pattern:
+
+```
+css/extensions/
+  package.json        — Components.js component metadata + lsd:* fields
+  tsconfig.json       — TypeScript config (strict, ESM)
+  src/
+    index.ts          — Re-export all handler classes
+    VoidHandler.ts    — .well-known/void endpoint
+    ShaclHandler.ts   — .well-known/shacl endpoint
+  config/
+    void.json         — Components.js wiring for VoidHandler
+    shacl.json        — Components.js wiring for ShaclHandler
+```
+
+### Key CSS extension points
+- `WaterfallHandler`: HTTP request routing — insert custom handlers before LdpHandler
+- `RouterHandler`: Match routes by regex (`allowedPathNames: ["/\\.well-known/void"]`)
+- `MonitoringStore`: Intercepts resource CRUD — emits AS.Create/Update/Delete events (D17)
+- `StorageDescriptionHandler`: Reference pattern for `.well-known/` endpoints
+
+### WaterfallHandler insertion (Components.js)
 
 ```json
 {
-  "@context": "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^7.0.0/components/context.jsonld",
-  "import": [
-    "css:config/file.json"
-  ],
-  "@graph": [
-    {
-      "comment": "Custom extension component",
-      "@id": "urn:solid-server:default:SearchHandler",
-      "@type": "WaterfallHandler"
-    }
-  ]
+  "@type": "Override",
+  "overrideInstance": { "@id": "urn:solid-server:default:BaseHttpHandler" },
+  "overrideSteps": [{
+    "@type": "OverrideListInsertAfter",
+    "overrideParameter": { "@id": "BaseHttpHandler:_handlers" },
+    "overrideTarget": { "@id": "urn:solid-server:default:StorageDescriptionHandler" },
+    "overrideValue": { "@id": "urn:cogitarelink:VoidHandler" }
+  }]
 }
 ```
+
+### Reference implementations
+- [shape-validator-component](https://github.com/CommunitySolidServer/shape-validator-component) — SHACL validation on Pod writes
+- [predicate-cardinalities-component](https://github.com/CommunitySolidServer/predicate-cardinalities-component) — `.well-known/` with VoID vocabulary
+
+## Comunica (D3, D13, D28)
+
+SPARQL federation over Solid LDP resources.
+
+Key packages:
+- `@comunica/query-sparql` — core SPARQL engine
+- `@comunica/query-sparql-solid` — Solid auth support
+- `@comunica/query-sparql-link-traversal-solid` — link traversal (experimental)
+
+CLI SPARQL endpoint:
+```bash
+npx @comunica/query-sparql-solid-http http://localhost:3000/ -p 8080 --lenient
+```
+
+Programmatic:
+```typescript
+import { QueryEngine } from '@comunica/query-sparql-solid';
+const engine = new QueryEngine();
+const bindings = await engine.queryBindings(query, {
+  sources: ['http://localhost:3000/'],
+  lenient: true,
+});
+```
+
+## JavaScript RDF Ecosystem
+
+| Package | Purpose | npm |
+|---------|---------|-----|
+| N3.js v2 | RDF parsing/serialization, in-memory store | `n3` |
+| shacl-engine | Fast SHACL Core validation (no SHACL-AF) | `shacl-engine` |
+| rdf-validate-shacl | SHACL validation (Zazuko) | `rdf-validate-shacl` |
+| @inrupt/solid-client | Solid data access, WAC, ACP | `@inrupt/solid-client` |
+| @inrupt/solid-client-authn-node | Solid-OIDC auth for Node.js | `@inrupt/solid-client-authn-node` |
 
 ## CSS Config Files
 
@@ -39,17 +92,9 @@ Key CSS extension points:
 - File backend: `@css:config/file.json`
 - In-memory: `@css:config/default.json`
 
-## Phase 2b: OSLC Query Extension (D16, D19)
-
-CSS extension for OSLC Query parameters on LDP container GET:
-- Custom WaterfallHandler intercepts `oslc.*` query params
-- SQLite FTS5 backend for `oslc.searchTerms`
-- Property filter for `oslc.where`
-- ~1200 LOC across 12-15 TypeScript files
-
 ## Node.js Conventions
 
-- CSS requires Node.js 18+
+- CSS requires Node.js 18+ (recommend 20 LTS)
 - TypeScript strict mode
 - ESM modules (`"type": "module"` in package.json)
 - CSS v7.x is latest stable
