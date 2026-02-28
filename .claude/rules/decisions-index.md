@@ -2,10 +2,10 @@
 
 Always loaded. Concise index of all architectural decisions.
 
-D1: CSS + Python adapter — CSS (TypeScript Pod server, file backend) + FastAPI adapter (Python, .well-known/ gateway, vault importer); not pure Python, not pure CSS
+D1: CSS + TypeScript extensions + Comunica sidecar — CSS (TypeScript Pod server, file backend) + CSS extensions (.well-known/ via WaterfallHandler) + Comunica (SPARQL-over-LDP sidecar). Python is client-only: vault importer CLI, SHACL shape development, RLM agents via httpx. Supersedes original "CSS + Python adapter" design.
 D2: Pod as fabric node type — Pod participates in fabric via `.well-known/` protocol (same as Oxigraph nodes); not client, not overlay
 D3: Comunica for Pod SPARQL — client-side SPARQL federation over LDP resources; no data duplication into triplestore
-D4: Oxigraph for fabric metadata only — catalog (VoID), crosswalks (SSSOM), navigational ontology; not Pod content
+D4: Oxigraph deferred to Phase 2 — fabric metadata (VoID catalog, SSSOM crosswalks, navigational ontology) lives in cogitarelink-fabric; added to Pod docker-compose when federation across Pod + fabric is tested
 D5: Vault-to-Pod as MVP — Agentic Memory Systems concept notes (~20 files); not synthetic data, not full vault
 D6: Markdown as primary Pod document format — Markdown with YAML frontmatter (content layer); Turtle for `.meta` sidecars (Layer B); JSON-LD for navigation index (Layer C)
 D7: Frontmatter → RDF mapping via SHACL shape — SHACL shape defines predicate vocabulary per note type; default wikilink predicate = `skos:related`; importer reads shape, builds mapping, validates generated Turtle
@@ -20,7 +20,7 @@ D15: VoID feature flags — `void:feature` entries distinguish Pod-type nodes (L
 D16: OSLC Query 3.0 for Pod search — standard URL parameters on LDP container GET (`oslc.searchTerms`, `oslc.where`, `oslc.select`)
 D17: TRS 3.0 for change tracking — standard change data capture drives index sync; replaces filesystem watchers
 D18: SQLite FTS5 + sqlite-vec — embedded hybrid search index sidecar; no additional container
-D19: CSS extension via MonitoringStore + WaterfallHandler — Components.js DI config, not CSS fork
+D19: CSS extensions as primary integration — Components.js DI config for all Pod customization. Reference implementations: `shape-validator-component` (SHACL on write), `predicate-cardinalities-component` (.well-known/ with VoID). `.well-known/void`, `.well-known/shacl`, `.well-known/sparql-examples` are CSS extension handlers inserted via WaterfallHandler + RouterHandler.
 D20: PROV-O provenance on Pod resources — importer-generated in `.meta` sidecars; `prov:wasGeneratedBy`, `prov:wasDerivedFrom`, `prov:wasAttributedTo`; SHACL-validated
 D21: Content integrity via `digestMultibase` — SHA-256 hashes in `.meta` sidecars; re-computed on TRS events
 D22: `.well-known/sparql-examples` — behavioral SPARQL templates generated from SHACL shapes; `sh:SPARQLExecutable` format
@@ -29,6 +29,7 @@ D24: SSSOM crosswalk generation — wikilink names → Pod URIs, tags → SKOS c
 D25: VC lifecycle for Pod access — ACP + `acp:vc` matchers; Credo-TS sidecar issues VCs; Phase 3 experiment
 D26: LDN inbox multiplexing — type-based dispatch for VC delivery, TRS change, IoT notifications; single `POST /inbox`
 D27: Schema-level TRS freshness — re-harvest VoID catalog when Pod data shape changes, not on every resource write
+D28: Comunica SPARQL-over-LDP sidecar — `comunica-sparql-http` pointed at CSS, exposes standard SPARQL Protocol endpoint at port 8080. RLM agents query via httpx POST (same `make_fabric_query_tool` pattern from cogitarelink-fabric). VoID feature flag `fabric:LDPBrowse` distinguishes Pod nodes from triplestore nodes (D15). Link traversal discovers resources via Type Index + `ldp:contains`.
 
 Full log: ~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md
 Plan: ~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md
