@@ -1,0 +1,74 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# SHACL shape for concept notes imported from Obsidian vault (D7, D11)
+# Governs frontmatter → RDF mapping: the importer reads this shape to
+# determine which YAML keys map to which predicates.
+
+<#ConceptNoteShape> a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:intent "Validates concept notes imported from Obsidian vault into Solid Pod" ;
+    sh:agentInstruction """Concept notes are the primary knowledge unit in this Pod.
+Each represents a research concept from the Agentic Memory Systems domain.
+Query with: SELECT ?c ?label WHERE { ?c a skos:Concept ; skos:prefLabel ?label }
+Related concepts linked via skos:related. Parent MOC via dct:isPartOf.""" ;
+
+    # Required properties
+    sh:property [
+        sh:path skos:prefLabel ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:name "title" ;
+        sh:description "Note title (from frontmatter or filename)"
+    ] ;
+
+    sh:property [
+        sh:path dct:created ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:date ;
+        sh:name "created" ;
+        sh:description "Creation date (from frontmatter 'created:')"
+    ] ;
+
+    sh:property [
+        sh:path rdf:type ;
+        sh:minCount 1 ;
+        sh:hasValue skos:Concept ;
+        sh:name "type" ;
+        sh:description "Note type (from frontmatter 'type: concept-note')"
+    ] ;
+
+    # Optional properties
+    sh:property [
+        sh:path dct:subject ;
+        sh:datatype xsd:string ;
+        sh:name "tags" ;
+        sh:description "Tags (from frontmatter 'tags:' array)"
+    ] ;
+
+    sh:property [
+        sh:path skos:related ;
+        sh:nodeKind sh:IRI ;
+        sh:name "related" ;
+        sh:description "Related concepts (from frontmatter 'related:' wikilinks, default predicate)"
+    ] ;
+
+    sh:property [
+        sh:path dct:isPartOf ;
+        sh:nodeKind sh:IRI ;
+        sh:name "up" ;
+        sh:description "Parent MOC or container (from frontmatter 'up:' wikilink)"
+    ] ;
+
+    sh:property [
+        sh:path dct:source ;
+        sh:nodeKind sh:IRI ;
+        sh:name "source" ;
+        sh:description "Source literature (from frontmatter 'source:' wikilinks)"
+    ] .

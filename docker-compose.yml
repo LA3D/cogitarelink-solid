@@ -1,0 +1,51 @@
+services:
+  css:
+    image: solidproject/community-server:7
+    ports:
+      - "3000:3000"
+    volumes:
+      - css-data:/data
+      - ./css/config:/config:ro
+    command: ["-c", "/config/solid-config.json", "-f", "/data", "-b", "http://localhost:3000"]
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/.well-known/solid"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  adapter:
+    build: ./adapter
+    ports:
+      - "8080:8080"
+    environment:
+      CSS_URL: http://css:3000
+      OXIGRAPH_URL: http://oxigraph:7878
+      NODE_BASE: http://localhost:8080
+      SHAPES_DIR: /app/shapes
+      ONTOLOGY_DIR: /app/ontology
+    volumes:
+      - ./shapes:/app/shapes:ro
+      - ./ontology:/app/ontology:ro
+    depends_on:
+      css:
+        condition: service_healthy
+
+  oxigraph:
+    image: ghcr.io/oxigraph/oxigraph:latest
+    ports:
+      - "7878:7878"
+    volumes:
+      - oxigraph-data:/data
+    command: serve --location /data --bind 0.0.0.0:7878
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/oxigraph", "query", "--location", "/data",
+             "--query", "SELECT * WHERE {} LIMIT 1", "--results-format", "tsv"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  css-data:
+  oxigraph-data:

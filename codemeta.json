@@ -1,0 +1,35 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-3.0",
+  "@type": "SoftwareSourceCode",
+  "name": "cogitarelink-solid",
+  "description": "Solid Pod as a knowledge fabric node: bridging document and graph access via navigational meta-structure",
+  "version": "0.1.0",
+  "license": "https://spdx.org/licenses/Apache-2.0",
+  "codeRepository": "https://github.com/LA3D/agents/cogitarelink-solid",
+  "programmingLanguage": ["Python", "TypeScript"],
+  "runtimePlatform": ["Python 3.12", "Node.js 18+"],
+  "author": [
+    {
+      "@type": "Person",
+      "@id": "https://orcid.org/0000-0003-4091-6059",
+      "givenName": "Charles F.",
+      "familyName": "Vardeman II",
+      "email": "cvardema@nd.edu",
+      "affiliation": {
+        "@type": "Organization",
+        "@id": "https://ror.org/00mkhxb43",
+        "name": "University of Notre Dame"
+      }
+    }
+  ],
+  "funder": [
+    {
+      "@type": "Organization",
+      "@id": "https://ror.org/001zwgm84",
+      "name": "CI Compass"
+    }
+  ],
+  "relatedLink": [
+    "https://github.com/LA3D/agents/cogitarelink-fabric"
+  ]
+}

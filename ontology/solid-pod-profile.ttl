@@ -1,0 +1,57 @@
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix role: <http://www.w3.org/ns/dx/prof/role/> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# PROF profile for cogitarelink-solid Pod nodes (D12)
+# Same CoreProfile conformance as cogitarelink-fabric nodes.
+# Agents use dct:conformsTo to discover this profile.
+
+<https://w3id.org/cogitarelink/fabric/CoreProfile> a prof:Profile ;
+    dct:title "Knowledge Fabric Core Profile" ;
+    dct:description "Profile for self-describing knowledge fabric nodes. Pod nodes conform to this alongside triplestore nodes." ;
+    prof:isProfileOf <http://www.w3.org/ns/void#Dataset> ;
+
+    # L1: Service Description + VoID
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        prof:hasRole role:specification ;
+        prof:hasArtifact <https://www.w3.org/TR/void/> ;
+        dct:title "VoID — Vocabulary of Interlinked Datasets"
+    ] ;
+
+    # L2: TBox cache (standard ontologies)
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        prof:hasRole role:schema ;
+        prof:hasArtifact <http://www.w3.org/2004/02/skos/core#> ;
+        dct:title "SKOS Core Vocabulary"
+    ] ;
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        prof:hasRole role:schema ;
+        prof:hasArtifact <http://purl.org/dc/terms/> ;
+        dct:title "Dublin Core Terms"
+    ] ;
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        prof:hasRole role:schema ;
+        prof:hasArtifact <http://www.w3.org/ns/prov#> ;
+        dct:title "PROV-O Ontology"
+    ] ;
+
+    # L3: Endpoint-specific SHACL shapes
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        prof:hasRole role:constraints ;
+        prof:hasArtifact <{base}/.well-known/shacl> ;
+        dct:title "Pod content SHACL shapes"
+    ] ;
+
+    # L4: SPARQL examples
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        prof:hasRole role:example ;
+        prof:hasArtifact <{base}/.well-known/sparql-examples> ;
+        dct:title "Behavioral SPARQL templates"
+    ] .

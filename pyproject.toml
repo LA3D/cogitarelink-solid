@@ -1,0 +1,31 @@
+[project]
+name = "cogitarelink-solid"
+version = "0.1.0"
+description = "Solid Pod as a knowledge fabric node: bridging document and graph access via navigational meta-structure"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+authors = [
+    { name = "Charles F. Vardeman II", email = "cvardema@nd.edu" },
+]
+dependencies = [
+    "httpx>=0.28",
+    "rdflib>=7.0",
+    "pyshacl>=0.31",
+]
+
+[project.optional-dependencies]
+adapter = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+]
+test = [
+    "pytest>=9.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests/pytest"]
