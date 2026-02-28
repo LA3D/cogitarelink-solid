@@ -12,15 +12,13 @@ dependencies = [
     "httpx>=0.28",
     "rdflib>=7.0",
     "pyshacl>=0.31",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
-adapter = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.34",
-]
 test = [
     "pytest>=9.0",
+    "pytest-httpx>=0.35",
 ]
 
 [build-system]
