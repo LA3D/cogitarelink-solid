@@ -4,7 +4,7 @@ paths: ["**/docker-compose*.yml", "**/Dockerfile*"]
 
 # Docker Patterns
 
-## Three-service stack
+## Two-service stack (Phase 1)
 
 ```yaml
 services:
@@ -15,29 +15,22 @@ services:
       - css-data:/data
       - ./css/config:/config:ro
 
-  adapter:          # Python FastAPI gateway
-    build: ./adapter
+  comunica:         # SPARQL-over-LDP sidecar (D28)
+    image: node:20-slim
     ports: ["8080:8080"]
-    depends_on: [css, oxigraph]
-    volumes:
-      - ./shapes:/app/shapes:ro
-      - ./ontology:/app/ontology:ro
-
-  oxigraph:         # Fabric metadata store (catalog, crosswalks only)
-    image: ghcr.io/oxigraph/oxigraph:latest
-    ports: ["7878:7878"]
-    volumes:
-      - oxigraph-data:/data
+    entrypoint: ["npx", "--yes", "@comunica/query-sparql-solid-http"]
+    command: ["http://css:3000/", "-p", "8080", "--lenient"]
+    depends_on: [css]
 
 volumes:
   css-data:
-  oxigraph-data:
 ```
+
+Phase 2 adds Oxigraph for fabric metadata federation (D4, D13).
 
 ## Port conventions
 - 3000: CSS (Community Solid Server)
-- 8080: Python adapter (FastAPI gateway)
-- 7878: Oxigraph SPARQL (internal only in production; exposed for dev)
+- 8080: Comunica SPARQL endpoint (was Python adapter)
 
 ## CSS container
 - Official image: `solidproject/community-server:7`
@@ -46,18 +39,28 @@ volumes:
 - Base URL via `-b http://localhost:3000`
 - Named volume for `css-data` — not bind mount (macOS permission issues)
 
+## Comunica container
+- Uses `node:20-slim` with npx to run `@comunica/query-sparql-solid-http`
+- `--lenient` flag: log errors instead of crashing on invalid documents
+- Queries CSS over internal Docker network (`http://css:3000/`)
+- Exposes standard SPARQL Protocol at `http://localhost:8080/sparql`
+
 ## Apple Silicon
 - CSS image is multi-arch (no issue)
+- node:20-slim is multi-arch (no issue)
 - If adding Credo sidecar later: `platform: linux/amd64` required (Askar ARM unavailable)
 
 ## Health checks
 ```yaml
+# CSS
 healthcheck:
   test: ["CMD", "curl", "-f", "http://localhost:3000/.well-known/solid"]
   interval: 10s
   timeout: 5s
   retries: 3
 ```
+
+Comunica has no built-in health check; test via `curl /sparql?query=...`.
 
 ## Named volumes
 Use named volumes for persistence — not bind mounts.
