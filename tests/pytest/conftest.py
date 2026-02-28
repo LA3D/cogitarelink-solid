@@ -9,12 +9,12 @@ def css_url():
 
 
 @pytest.fixture
-def adapter_url():
-    """Base URL for Python adapter (local dev)."""
+def comunica_url():
+    """Base URL for Comunica SPARQL endpoint (local dev)."""
     return "http://localhost:8080"
 
 
 @pytest.fixture
-def oxigraph_url():
-    """Base URL for Oxigraph SPARQL endpoint (local dev)."""
-    return "http://localhost:7878"
+def sparql_url(comunica_url):
+    """SPARQL Protocol endpoint URL."""
+    return f"{comunica_url}/sparql"
