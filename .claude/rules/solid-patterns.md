@@ -34,9 +34,9 @@ DELETE /vault/concepts/context-graphs
 ## .well-known/ Protocol (D12, same as fabric)
 
 Four endpoints for self-description:
-- `/.well-known/void` — VoID dataset description (L1)
-- `/.well-known/shacl` — SHACL shapes for Pod content (L3)
-- `/.well-known/sparql-examples` — behavioral SPARQL templates (L4)
+- `/.well-known/void` — VoID dataset description (CSS extension, Phase 2)
+- `/.well-known/shacl` — SHACL shapes for Pod content (CSS extension, Phase 2)
+- `/.well-known/sparql-examples` — behavioral SPARQL templates (CSS extension, Phase 2)
 - `/.well-known/solid` — Solid server metadata (CSS-native)
 
 ## CSS .meta Sidecars
