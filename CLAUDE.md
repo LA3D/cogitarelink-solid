@@ -18,13 +18,19 @@ See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md
 ## Key Commands
 
 ```bash
-docker compose up -d                          # start stack (CSS + adapter + Oxigraph)
-docker compose logs -f adapter                # tail adapter logs
-curl http://localhost:3000/                    # CSS root (Solid Pod)
-curl http://localhost:8080/.well-known/void    # adapter VoID SD
-pytest tests/ -v                              # run test suite
-python scripts/vault_import.py                # import vault subset to Pod
+docker compose up -d                                    # start stack (CSS + adapter + Oxigraph)
+docker compose logs -f adapter                          # tail adapter logs
+curl http://localhost:3000/                              # CSS root (Solid Pod)
+curl http://localhost:8080/.well-known/void              # adapter VoID SD
+~/uvws/.venv/bin/python -m pytest tests/ -v             # run test suite
+~/uvws/.venv/bin/python scripts/vault_import.py         # import vault subset to Pod
+uv pip install -e ".[test]"                             # install project in dev mode
 ```
+
+## Python Environment
+
+Global uv venv at `~/uvws/.venv` — always use this, never create a project-local venv.
+See @.claude/rules/python-patterns.md for details.
 
 ## Repo Structure
 

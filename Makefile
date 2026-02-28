@@ -1,4 +1,6 @@
-.PHONY: up down logs status test import clean
+PYTHON := ~/uvws/.venv/bin/python
+
+.PHONY: up down logs status test import clean install
 
 up:
 	docker compose up -d
@@ -14,7 +16,7 @@ status:
 	docker compose ps
 	@echo ""
 	@echo "=== CSS health ==="
-	curl -sf http://localhost:3000/.well-known/solid | python3 -m json.tool 2>/dev/null || echo "CSS not responding"
+	curl -sf http://localhost:3000/.well-known/solid | $(PYTHON) -m json.tool 2>/dev/null || echo "CSS not responding"
 	@echo ""
 	@echo "=== Adapter health ==="
 	curl -sf http://localhost:8080/health 2>/dev/null || echo "Adapter not responding"
@@ -23,10 +25,13 @@ status:
 	curl -sf http://localhost:7878/query -d "query=SELECT * WHERE {} LIMIT 1" -H "Accept: application/sparql-results+json" 2>/dev/null | head -1 || echo "Oxigraph not responding"
 
 test:
-	pytest tests/ -v
+	$(PYTHON) -m pytest tests/ -v
 
 import:
-	python scripts/vault_import.py
+	$(PYTHON) scripts/vault_import.py
+
+install:
+	uv pip install -e ".[test]"
 
 clean:
 	docker compose down -v

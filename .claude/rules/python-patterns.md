@@ -11,7 +11,28 @@ Two environments — know which one applies:
 | Context | Python | Key packages |
 |---|---|---|
 | **Claude Code tool use** | `~/uvws/.venv/bin/python` (3.12) | rdflib, pyshacl, owlrl, httpx |
-| **Adapter Docker** | Project venv / Docker | FastAPI, uvicorn, httpx, rdflib |
+| **Adapter Docker** | Docker container (Python 3.12-slim) | FastAPI, uvicorn, httpx, rdflib |
+
+## Package management — uv
+
+Global venv at `~/uvws/.venv`, managed by `uv`:
+
+```bash
+# Install project in dev mode
+uv pip install -e ".[test]"
+
+# Add a dependency
+uv pip install <package>
+
+# Run tests
+~/uvws/.venv/bin/python -m pytest tests/ -v
+
+# Ad-hoc RDF/SPARQL work
+~/uvws/.venv/bin/python
+```
+
+Always use `~/uvws/.venv/bin/python` for Claude Code tool invocations, not system Python.
+Never create a project-local venv — use the global uv workspace.
 
 ## Style (fastai philosophy)
 - Brevity facilitates reasoning — one concept per screen
