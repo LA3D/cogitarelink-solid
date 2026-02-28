@@ -22,7 +22,7 @@ Content layer (not RDF): Markdown + YAML frontmatter — the document itself.
 |---|---|---|---|
 | A | LDP container structure (`ldp:contains`) | CSS (automatic) | Turtle |
 | B | Resource metadata (type, frontmatter-derived predicates) | Vault importer | Turtle `.meta` sidecars |
-| C | Navigation indexes (Type Index, JSON-LD, VoID) | Vault importer + adapter | Turtle / JSON-LD |
+| C | Navigation indexes (Type Index, JSON-LD, VoID) | Vault importer + CSS extensions | Turtle / JSON-LD |
 
 ## Frontmatter → RDF Mapping (D7)
 
@@ -55,7 +55,7 @@ Every `.meta` sidecar includes SHA-256 hash:
 <> ni:digestMultibase "z..."^^xsd:string .
 ```
 
-## Named Graph Conventions (Oxigraph fabric metadata, D4)
+## Named Graph Conventions (Oxigraph fabric metadata, D4 — Phase 2)
 - `/graph/catalog` — VoID descriptions of Pod content (DCAT)
 - `/graph/crosswalks` — SSSOM wikilink → Pod URI mappings (D24)
 - `/graph/mappings` — SSSOM vocabulary alignment (tags → SKOS, frontmatter → predicates)
