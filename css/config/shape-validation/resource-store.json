@@ -3,35 +3,7 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^1.0.0/components/context.jsonld"
   ],
-  "import": [
-    "css:config/file.json"
-  ],
   "@graph": [
-    {
-      "comment": "cogitarelink-solid: CSS v8 alpha + SHACL shape validation via ldp:constrainedBy"
-    },
-    {
-      "comment": "Add ldp:constrainedBy to the existing LinkRel metadata writer so it appears as a Link header.",
-      "@type": "Override",
-      "overrideInstance": { "@id": "urn:solid-server:default:MetadataWriter_LinkRel" },
-      "overrideParameters": {
-        "@type": "LinkRelMetadataWriter",
-        "linkRelMap": [
-          {
-            "LinkRelMetadataWriter:_linkRelMap_key": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-            "LinkRelMetadataWriter:_linkRelMap_value": "type"
-          },
-          {
-            "LinkRelMetadataWriter:_linkRelMap_key": "http://www.w3.org/ns/ldp#inbox",
-            "LinkRelMetadataWriter:_linkRelMap_value": "http://www.w3.org/ns/ldp#inbox"
-          },
-          {
-            "LinkRelMetadataWriter:_linkRelMap_key": "http://www.w3.org/ns/ldp#constrainedBy",
-            "LinkRelMetadataWriter:_linkRelMap_value": "http://www.w3.org/ns/ldp#constrainedBy"
-          }
-        ]
-      }
-    },
     {
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:ResourceStore_Patching" },

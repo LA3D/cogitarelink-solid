@@ -1,6 +1,9 @@
 services:
   css:
-    image: solidproject/community-server:7
+    build:
+      context: ./css
+      dockerfile: Dockerfile
+    image: cogitarelink-solid-css:latest
     ports:
       - "3000:3000"
     volumes:
@@ -8,7 +11,7 @@ services:
       - ./css/config:/config:ro
     command: ["-c", "/config/solid-config.json", "-f", "/data", "-b", "http://localhost:3000"]
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3000/.well-known/solid"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -18,7 +21,7 @@ services:
     image: node:20-slim
     ports:
       - "8080:8080"
-    entrypoint: ["npx", "--yes", "@comunica/query-sparql-solid-http"]
+    entrypoint: ["npx", "--yes", "@comunica/query-sparql-link-traversal-solid"]
     command: ["http://css:3000/", "-p", "8080", "--lenient"]
     depends_on:
       css:
