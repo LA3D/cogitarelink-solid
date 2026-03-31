@@ -1,5 +1,5 @@
 {
-  "@context": "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^1.0.0/components/context.jsonld",
+  "@context": "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld",
   "import": [
     "/config/shape-validation/metadata-writer.json",
     "/config/shape-validation/resource-store.json"

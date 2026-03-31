@@ -1,0 +1,34 @@
+{
+  "name": "shape-validation-component",
+  "version": "2.0.0",
+  "description": "SHACL shape validation for CSS v8 constrained containers (ldp:constrainedBy). Forked from CommunitySolidServer/shape-validator-component.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "lsd:module": "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component",
+  "lsd:components": "dist/components/components.jsonld",
+  "lsd:importPaths": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/": "dist/components/",
+    "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/dist/": "dist/"
+  },
+  "lsd:contexts": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld": "dist/components/context.jsonld"
+  },
+  "scripts": {
+    "build": "npm run build:ts && npm run build:components",
+    "build:ts": "tsc --skipLibCheck",
+    "build:components": "componentsjs-generator -s src -c dist/components"
+  },
+  "dependencies": {
+    "rdf-validate-shacl": "^0.6.0"
+  },
+  "peerDependencies": {
+    "@solid/community-server": "*",
+    "asynchronous-handlers": "*",
+    "n3": "*"
+  },
+  "devDependencies": {
+    "componentsjs-generator": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
