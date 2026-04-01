@@ -1,0 +1,25 @@
+@prefix solid: <http://www.w3.org/ns/solid/terms#>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+@prefix vault: <https://pod.vardeman.me/vault/ontology#>.
+
+<> a solid:TypeIndex, solid:ListedDocument.
+
+<#concepts> a solid:TypeRegistration;
+    solid:forClass skos:Concept;
+    solid:instanceContainer <{{base.path}}resources/concepts/>.
+
+<#theories> a solid:TypeRegistration;
+    solid:forClass vault:TheoryNote;
+    solid:instanceContainer <{{base.path}}resources/theories/>.
+
+<#literature> a solid:TypeRegistration;
+    solid:forClass vault:LiteratureNote;
+    solid:instanceContainer <{{base.path}}resources/literature/>.
+
+<#methods> a solid:TypeRegistration;
+    solid:forClass vault:MethodNote;
+    solid:instanceContainer <{{base.path}}resources/methods/>.
+
+<#projects> a solid:TypeRegistration;
+    solid:forClass vault:Project;
+    solid:instanceContainer <{{base.path}}projects/>.
