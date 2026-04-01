@@ -9,13 +9,38 @@ services:
     volumes:
       - css-data:/data
       - ./css/config:/config:ro
-    command: ["-c", "/config/solid-config.json", "-f", "/data", "-b", "http://localhost:3000"]
+    command:
+      - -c
+      - /config/solid-config.json
+      - -f
+      - /data
+      - -b
+      - http://pod.vardeman.me:3000
+      - --seedConfig
+      - /config/seed.json
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 15s
+      retries: 12
+      start_period: 10s
+
+  pod-setup:
+    image: python:3.12-slim
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./shapes:/shapes:ro
+      - ./ontology:/ontology:ro
+    working_dir: /scripts
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        pip install --quiet httpx rdflib pyyaml &&
+        python pod_setup.py --target http://css:3000
+    depends_on:
+      css:
+        condition: service_healthy
+    restart: "no"
 
   comunica:
     image: node:20-slim
