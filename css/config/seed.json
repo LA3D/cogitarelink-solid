@@ -1,0 +1,9 @@
+[
+  {
+    "email": "chuck@vardeman.me",
+    "password": "cogitarelink-dev",
+    "pods": [
+      { "name": "vault" }
+    ]
+  }
+]
