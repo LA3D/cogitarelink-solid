@@ -91,8 +91,8 @@ def verify_pod(client: httpx.Client) -> bool:
 
 def main():
     p = argparse.ArgumentParser(description="Pod setup: upload shapes + ontology")
-    p.add_argument("--target", default="http://css:3000",
-                   help="CSS base URL (default: http://css:3000 for Docker networking)")
+    p.add_argument("--target", default="http://pod.vardeman.me:3000",
+                   help="CSS base URL (default: http://pod.vardeman.me:3000)")
     p.add_argument("--shapes-dir", default="/shapes",
                    help="Path to SHACL shapes directory")
     p.add_argument("--ontology-dir", default="/ontology",

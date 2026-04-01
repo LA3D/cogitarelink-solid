@@ -6,6 +6,10 @@ services:
     image: cogitarelink-solid-css:latest
     ports:
       - "3000:3000"
+    networks:
+      default:
+        aliases:
+          - pod.vardeman.me
     volumes:
       - css-data:/data
       - ./css/config:/config:ro
@@ -19,7 +23,7 @@ services:
       - --seedConfig
       - /config/seed.json
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "-q", "--spider", "--header", "Host: pod.vardeman.me:3000", "http://localhost:3000/"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -36,7 +40,7 @@ services:
     command:
       - |
         pip install --quiet httpx rdflib pyyaml &&
-        python pod_setup.py --target http://css:3000
+        python pod_setup.py --target http://pod.vardeman.me:3000
     depends_on:
       css:
         condition: service_healthy
@@ -46,8 +50,11 @@ services:
     image: node:20-slim
     ports:
       - "8080:8080"
-    entrypoint: ["npx", "--yes", "@comunica/query-sparql-link-traversal-solid"]
-    command: ["http://css:3000/", "-p", "8080", "--lenient"]
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        npm install -g @comunica/query-sparql-link-traversal 2>/dev/null &&
+        comunica-sparql-link-traversal-http http://pod.vardeman.me:3000/ -p 8080 --lenient
     depends_on:
       css:
         condition: service_healthy

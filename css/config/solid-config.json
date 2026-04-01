@@ -4,7 +4,6 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld"
   ],
   "import": [
-    "css:config/file.json",
     "./dev-allow-all.json",
     "./pod-templates-override.json"
   ],
