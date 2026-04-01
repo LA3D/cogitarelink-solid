@@ -1,0 +1,11 @@
+{
+  "@context": "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+  "@graph": [
+    {
+      "comment": "Override default pod template folder with custom PARA structure (D30)",
+      "@id": "urn:solid-server:default:PodResourcesGenerator",
+      "@type": "StaticFolderGenerator",
+      "templateFolder": "/config/pod-templates"
+    }
+  ]
+}
