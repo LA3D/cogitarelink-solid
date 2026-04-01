@@ -30,6 +30,14 @@ D25: VC lifecycle for Pod access — ACP + `acp:vc` matchers; Credo-TS sidecar i
 D26: LDN inbox multiplexing — type-based dispatch for VC delivery, TRS change, IoT notifications; single `POST /inbox`
 D27: Schema-level TRS freshness — re-harvest VoID catalog when Pod data shape changes, not on every resource write
 D28: Comunica SPARQL-over-LDP sidecar — `comunica-sparql-http` pointed at CSS, exposes standard SPARQL Protocol endpoint at port 8080. RLM agents query via httpx POST (same `make_fabric_query_tool` pattern from cogitarelink-fabric). VoID feature flag `fabric:LDPBrowse` distinguishes Pod nodes from triplestore nodes (D15). Link traversal discovers resources via Type Index + `ldp:contains`.
+D29: General-purpose Solid Pod CLI — built on Bashlib + Comunica, not tied to cogitarelink
+D30: PARA as container structure, memory partitions as metadata overlay — PARA (Projects/Areas/Resources/Archive) provides LDP container hierarchy; memory partitions (Symbolic, Procedural, Judge, Task State, Traces, Index) expressed in `.meta` triples via `vault:memoryPartition`, queryable via Comunica SPARQL. Type Index bridges both views.
+D31: `.meta` sidecars as source of truth for metadata — replaces YAML frontmatter as authoritative metadata. Vault importer decomposes frontmatter → `.meta` triples. `.meta` supports full RDF (provenance, qualified relationships, partition membership). Comunica follows `describedby` links automatically.
+D32: Model 1: one-way vault → pod import — Obsidian vault stays authoring environment; importer decomposes content + metadata; changes don't round-trip. Research trajectory: Model 1 → experiments → Model 2 (pod-native).
+D33: Agent-first, self-describing pod — agent discovers memory architecture via standard Solid protocol: WebID → Type Index → VoID → SHACL → SPARQL. Pod describes own structure using resources within itself (self-referential). No `.claude/` injection needed.
+D34: SKOS as foundation vocabulary for pod content — first use of SKOS for end-user content in Solid ecosystem. Vault ontology at `pod.vardeman.me/vault/ontology#` extends SKOS with domain-specific edge types.
+D35: `pim:Workspace` for vault workspace — vault represented as `pim:Workspace` within `pim:Storage`. Pod can host multiple workspaces with distinct access policies.
 
 Full log: ~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md
 Plan: ~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md
+Design: docs/plans/2026-04-01-pod-agentic-memory-structure-design.md
