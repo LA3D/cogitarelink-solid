@@ -1,37 +1,40 @@
 PYTHON := ~/uvws/.venv/bin/python
 
-.PHONY: up down logs status test import clean install
+.PHONY: up down reset status logs import test install clean
 
-up:
+up:  ## Start everything (idempotent)
 	docker compose up -d
 
-down:
+down:  ## Stop services (keep data)
 	docker compose down
 
-logs:
+reset:  ## Clean slate: destroy data, rebuild, reseed
+	docker compose down -v
+	docker compose build css
+	docker compose up -d
+
+status:  ## Health check all services
+	@echo "=== Service Status ==="
+	@echo "CSS:       $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/)"
+	@echo "Pod:       $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/)"
+	@echo "WebID:     $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/profile/card)"
+	@echo "TypeIndex: $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/settings/publicTypeIndex)"
+	@echo "Concepts:  $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/resources/concepts/)"
+	@echo "Shapes:    $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/procedures/shapes/)"
+	@echo "Comunica:  $$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/sparql)"
+	@echo "Setup:     $$(docker compose ps pod-setup --format '{{.State}}' 2>/dev/null || echo 'not run')"
+
+logs:  ## Tail all logs
 	docker compose logs -f
 
-status:
-	@echo "=== Docker services ==="
-	docker compose ps
-	@echo ""
-	@echo "=== CSS health ==="
-	curl -sf http://localhost:3000/.well-known/solid | $(PYTHON) -m json.tool 2>/dev/null || echo "CSS not responding"
-	@echo ""
-	@echo "=== Comunica SPARQL ==="
-	curl -sf http://localhost:8080/sparql -d "query=SELECT * WHERE {} LIMIT 1" -H "Accept: application/sparql-results+json" 2>/dev/null | head -1 || echo "Comunica not responding"
-	@echo ""
-	@echo "=== LDP root ==="
-	curl -sf http://localhost:3000/ -H "Accept: text/turtle" 2>/dev/null | head -5 || echo "LDP not browsable"
+import:  ## Re-run pod-setup init service
+	docker compose run --rm pod-setup
 
-test:
+test:  ## Run Python tests
 	$(PYTHON) -m pytest tests/ -v
 
-import:
-	$(PYTHON) scripts/vault_import.py
-
-install:
+install:  ## Install Python project in dev mode
 	uv pip install -e ".[test]"
 
-clean:
+clean:  ## Stop and destroy all data
 	docker compose down -v
