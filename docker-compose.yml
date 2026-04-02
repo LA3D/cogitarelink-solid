@@ -53,8 +53,8 @@ services:
     entrypoint: ["sh", "-c"]
     command:
       - |
-        npm install -g @comunica/query-sparql-link-traversal 2>/dev/null &&
-        comunica-sparql-link-traversal-http http://pod.vardeman.me:3000/ -p 8080 --lenient
+        npm install -g @comunica/query-sparql 2>/dev/null &&
+        comunica-sparql-http http://pod.vardeman.me:3000/ -p 8080 -t 120 --lenient --contextOverride
     depends_on:
       css:
         condition: service_healthy
