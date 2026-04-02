@@ -1,5 +1,6 @@
 """Frontmatter -> RDF triple generation (D7, D31). Minimal -- replaced by TS CLI (D29)."""
 import re
+from urllib.parse import quote
 from rdflib import Graph, URIRef, Literal, Namespace, BNode
 from rdflib.namespace import RDF, DCTERMS, XSD, SKOS, PROV
 
@@ -72,6 +73,8 @@ def frontmatter_to_graph(fm: dict, title: str, base: str,
                Literal(digest, datatype=XSD.string)))
 
     if source_path:
-        g.add((subj, PROV.wasDerivedFrom, URIRef(f"file://{source_path}")))
+        # URL-encode path components to handle spaces in vault paths
+        encoded = quote(source_path, safe="/:")
+        g.add((subj, PROV.wasDerivedFrom, URIRef(f"file://{encoded}")))
 
     return g

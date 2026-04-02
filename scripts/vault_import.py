@@ -1,50 +1,63 @@
-"""Vault-to-Pod importer: reads Obsidian vault subset, generates LDP resources + RDF metadata.
+"""Vault-to-Pod importer: reads Obsidian vault, generates LDP resources + .meta RDF.
 
 Usage:
-    python scripts/vault_import.py [--source VAULT_PATH] [--target POD_URL] [--subset FOLDER]
-
-Default source: ~/Obsidian/obsidian/03 - Resources/Agentic Memory Systems
-Default target: http://localhost:3000
+    PYTHONPATH=. python scripts/vault_import.py [--source PATH] [--target URL] [--dry-run]
 """
-import argparse
-import hashlib
-import pathlib
-import re
-import sys
-from datetime import datetime, timezone
+import argparse, hashlib, pathlib, sys
+import yaml
 
-# Stub — full implementation in Phase 1 Week 2-3
+from scripts.lib.rdf_gen import frontmatter_to_graph, slug
+from scripts.lib.ldp_client import put_resource, patch_meta
 
-
-def parse_frontmatter(md_text: str) -> dict:
-    """Extract YAML frontmatter from Markdown text."""
-    if not md_text.startswith("---"):
-        return {}
-    end = md_text.find("---", 3)
-    if end == -1:
-        return {}
-    # Lazy import to avoid hard dep
-    import yaml
-    return yaml.safe_load(md_text[3:end]) or {}
+IMPORTABLE_TYPES = {"concept-note", "theory-note"}
 
 
-def resolve_wikilinks(text: str) -> list[str]:
-    """Extract [[wikilink]] targets from Markdown text."""
-    return re.findall(r'\[\[([^\]|]+)(?:\|[^\]]+)?\]\]', text)
+def parse_frontmatter(text: str) -> dict:
+    if not text.startswith("---"): return {}
+    end = text.find("---", 3)
+    if end == -1: return {}
+    return yaml.safe_load(text[3:end]) or {}
 
 
-def compute_digest(content: bytes) -> str:
-    """SHA-256 digest as multibase z-encoded string (D21)."""
-    h = hashlib.sha256(content).hexdigest()
-    return f"z{h}"
+def import_note(path: pathlib.Path, target: str, container: str,
+                dry_run: bool = False) -> bool:
+    text = path.read_text()
+    raw = path.read_bytes()
+    fm = parse_frontmatter(text)
+    note_type = fm.get("type", "unknown")
+
+    if note_type not in IMPORTABLE_TYPES:
+        return False
+
+    title = fm.get("title", path.stem)
+    url = f"{target.rstrip('/')}{container}{slug(title)}.md"
+    digest = f"z{hashlib.sha256(raw).hexdigest()}"
+
+    g = frontmatter_to_graph(fm, title, f"{target.rstrip('/')}{container}",
+                             digest=digest, source_path=str(path))
+
+    if dry_run:
+        print(f"  [dry-run] {title} → {url} ({len(g)} triples)")
+        return True
+
+    try:
+        put_resource(url, raw, "text/markdown")
+        patch_meta(url, g)
+        print(f"  {title} → {len(g)} triples")
+        return True
+    except Exception as e:
+        print(f"  FAILED {title}: {e}", file=sys.stderr)
+        return False
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Import Obsidian vault subset to Solid Pod")
-    parser.add_argument("--source", default="~/Obsidian/obsidian/03 - Resources/Agentic Memory Systems")
-    parser.add_argument("--target", default="http://localhost:3000")
-    parser.add_argument("--subset", default=None, help="Subfolder within source")
-    args = parser.parse_args()
+    p = argparse.ArgumentParser(description="Import vault notes to Solid Pod")
+    p.add_argument("--source",
+                   default="~/Obsidian/obsidian/03 - Resources/Agentic Memory Systems")
+    p.add_argument("--target", default="http://pod.vardeman.me:3000")
+    p.add_argument("--container", default="/vault/resources/concepts/")
+    p.add_argument("--dry-run", action="store_true")
+    args = p.parse_args()
 
     src = pathlib.Path(args.source).expanduser()
     if not src.exists():
@@ -52,17 +65,14 @@ def main():
         sys.exit(1)
 
     md_files = sorted(src.rglob("*.md"))
-    print(f"Found {len(md_files)} Markdown files in {src}")
+    print(f"Found {len(md_files)} files in {src}")
 
+    imported = 0
     for f in md_files:
-        text = f.read_text()
-        fm = parse_frontmatter(text)
-        links = resolve_wikilinks(text)
-        digest = compute_digest(f.read_bytes())
-        note_type = fm.get("type", "unknown")
-        print(f"  {f.name}: type={note_type}, links={len(links)}, digest={digest[:16]}...")
+        if import_note(f, args.target, args.container, args.dry_run):
+            imported += 1
 
-    print(f"\nImport to {args.target} not yet implemented (Phase 1 Week 2-3)")
+    print(f"\nImported {imported} notes to {args.target}{args.container}")
 
 
 if __name__ == "__main__":
