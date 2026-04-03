@@ -5,7 +5,8 @@
   ],
   "import": [
     "./dev-allow-all.json",
-    "./pod-templates-override.json"
+    "./pod-templates-override.json",
+    "./void-description.json"
   ],
   "@graph": [
     {

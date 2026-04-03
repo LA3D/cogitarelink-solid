@@ -1,0 +1,94 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/asynchronous-handlers/^1.0.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "comment": "Override StorageDescriber to add VoID to .well-known/solid (D12, D15)",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:StorageDescriber" },
+      "overrideParameters": {
+        "@type": "StatusArrayUnionHandler",
+        "handlers": [
+          {
+            "comment": "Original: pim:Storage type",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                "StaticStorageDescriber:_terms_value": "http://www.w3.org/ns/pim/space#Storage"
+              }
+            ]
+          },
+          {
+            "comment": "VoID: dataset type",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                "StaticStorageDescriber:_terms_value": "http://rdfs.org/ns/void#Dataset"
+              }
+            ]
+          },
+          {
+            "comment": "VoID: conformance profiles",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://purl.org/dc/terms/conformsTo",
+                "StaticStorageDescriber:_terms_value": "https://w3id.org/cogitarelink/fabric#CoreProfile"
+              }
+            ]
+          },
+          {
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://purl.org/dc/terms/conformsTo",
+                "StaticStorageDescriber:_terms_value": "https://w3id.org/cogitarelink/fabric#SolidPodProfile"
+              }
+            ]
+          },
+          {
+            "comment": "VoID: vocabularies used in this pod",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
+                "StaticStorageDescriber:_terms_value": "http://www.w3.org/2004/02/skos/core#"
+              }
+            ]
+          },
+          {
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
+                "StaticStorageDescriber:_terms_value": "http://purl.org/dc/terms/"
+              }
+            ]
+          },
+          {
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
+                "StaticStorageDescriber:_terms_value": "http://www.w3.org/ns/prov#"
+              }
+            ]
+          },
+          {
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/ontology#"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
