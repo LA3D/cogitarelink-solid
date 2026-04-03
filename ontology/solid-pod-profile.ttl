@@ -5,12 +5,17 @@
 #   URI: <https://w3id.org/cogitarelink/fabric#CoreProfile>
 #
 # This file does NOT redefine CoreProfile. Instead it declares a Pod-specific
-# sub-profile that extends the shared CoreProfile with Pod-only vocabulary
-# requirements (SKOS, Dublin Core) and LDP-specific agent guidance.
+# sub-profile that extends CoreProfile with LDP container browsing, Pod-specific
+# vocabularies (SKOS, Dublin Core, PROV), and document-first agent navigation.
+#
+# Aligned with fabric four-layer self-description (D9):
+#   L1: .well-known/solid — VoID + DCAT (discovery)
+#   L2: this profile — PROF ResourceDescriptors (structure)
+#   L3: /procedures/shapes/ — SHACL shapes with sh:agentInstruction (validation)
+#   L4: /procedures/queries/ — SPARQL examples (guidance)
 #
 # Pod nodes declare:
-#   dct:conformsTo <https://w3id.org/cogitarelink/fabric#CoreProfile> ,
-#                  fabric:SolidPodProfile .
+#   dct:conformsTo fabric:CoreProfile, fabric:SolidPodProfile .
 
 @prefix prof:   <http://www.w3.org/ns/dx/prof/> .
 @prefix role:   <http://www.w3.org/ns/dx/prof/role/> .
@@ -22,11 +27,12 @@
 fabric:SolidPodProfile
     a prof:Profile ;
     rdfs:label "Solid Pod Profile"@en ;
-    dct:description "Extension of CoreProfile for Solid Pod fabric nodes. Adds LDP container browsing, Pod-specific vocabularies (SKOS, Dublin Core), and document-first agent navigation."@en ;
+    dct:description "Extension of CoreProfile for Solid Pod fabric nodes. Adds LDP container browsing, Pod-specific vocabularies (SKOS, Dublin Core, PROV), and document-first agent navigation."@en ;
     prof:isProfileOf fabric:CoreProfile ;
     dct:created "2026-02-28"^^xsd:date ;
 
-    # Pod-specific L2 TBox: vocabularies used for vault content (not in base CoreProfile)
+    # ── L2: Required vocabularies (role:schema) ──────────────────────
+
     prof:hasResource [
         a prof:ResourceDescriptor ;
         rdfs:label "SKOS Core Vocabulary" ;
@@ -43,27 +49,68 @@ fabric:SolidPodProfile
         prof:hasArtifact <http://purl.org/dc/terms/> ;
         dct:format <https://www.iana.org/assignments/media-types/text/turtle> ;
     ] ;
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        rdfs:label "PROV-O" ;
+        dct:description "W3C PROV-O — provenance of imported resources (wasDerivedFrom, wasAttributedTo)." ;
+        prof:hasRole role:schema ;
+        prof:hasArtifact <http://www.w3.org/ns/prov#> ;
+        dct:format <https://www.iana.org/assignments/media-types/text/turtle> ;
+    ] ;
 
-    # Pod-specific agent navigation guidance
+    # ── L2: Pod-specific vocabulary (role:vocabulary) ────────────────
+
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        rdfs:label "Vault Ontology" ;
+        dct:description "Pod-specific vocabulary: note types (TheoryNote, LiteratureNote), PARA/memory-partition SKOS schemes, Breadcrumbs edge properties (extends, supports, criticizes). Extends SKOS." ;
+        prof:hasRole role:vocabulary ;
+        prof:hasArtifact <https://pod.vardeman.me/vault/ontology#> ;
+        dct:format <https://www.iana.org/assignments/media-types/text/turtle> ;
+    ] ;
+
+    # ��─ L3: SHACL shapes (role:constraints) ──────────────────────────
+
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        rdfs:label "Concept Note Shape" ;
+        dct:description "SHACL shape for skos:Concept notes. Defines required properties (prefLabel, created, type) and optional relationships (related, tags, source). Includes sh:agentInstruction with SPARQL query patterns." ;
+        prof:hasRole role:constraints ;
+        prof:hasArtifact <https://pod.vardeman.me/vault/procedures/shapes/concept-note.ttl> ;
+        dct:format <https://www.iana.org/assignments/media-types/text/turtle> ;
+    ] ;
+
+    # ── L4: SPARQL examples (role:example) ───────────────────────────
+
+    prof:hasResource [
+        a prof:ResourceDescriptor ;
+        rdfs:label "SPARQL query templates" ;
+        dct:description "Reusable SPARQL query templates for pod content. Located at /vault/procedures/queries/." ;
+        prof:hasRole role:example ;
+    ] ;
+
+    # ── Agent navigation guidance (role:guidance) ────────���───────────
+
     prof:hasResource [
         a prof:ResourceDescriptor ;
         rdfs:label "Pod agent navigation guidance" ;
-        dct:description """Pod nodes support dual access — document browsing AND graph querying:
+        dct:description """Solid Pod nodes support dual access — LDP document browsing AND SPARQL graph querying.
 
-Document access (LDP):
-1. GET / → root container (ldp:contains)
-2. GET /vault/concepts/ → concept note container
-3. GET /vault/concepts/context-graphs → individual resource (Markdown + .meta)
+Discovery path (progressive disclosure):
+1. GET .well-known/solid → VoID dataset description (vocabularies, conformsTo)
+2. Dereference SolidPodProfile → this file (required vocabularies, shapes, guidance)
+3. GET /vault/settings/publicTypeIndex → class-to-container routing (skos:Concept → /resources/concepts/)
+4. GET container .meta → sh:agentInstruction, dct:type (PARA category, memory partition)
+5. GET /vault/procedures/shapes/ → SHACL shapes with sh:agentInstruction (query patterns)
 
-Graph access (Comunica SPARQL):
-1. Configure Comunica source: {base} (type: ldp)
-2. Query across LDP resources without data duplication
-3. Federate with Oxigraph for catalog/crosswalk queries
+LDP container navigation:
+  GET /vault/ → root container (ldp:contains lists PARA sub-containers)
+  GET /vault/resources/concepts/ → concept notes container
+  GET /vault/resources/concepts/note.md → Markdown content
+  GET /vault/resources/concepts/note.md.meta → RDF metadata (.meta sidecar)
 
-Discovery:
-1. GET .well-known/void → VoID (conformsTo, features, vocabularies)
-2. GET .well-known/shacl → shapes with sh:agentInstruction
-3. Check void:feature for <feature/ldp-browse> (Pod-specific capability)
-4. Use Type Index for class → container routing""" ;
+SPARQL access:
+  Comunica sidecar at port 8080 — pass source URLs via context parameter.
+  Container .meta files contain sh:agentInstruction with suggested query patterns.""" ;
         prof:hasRole role:guidance ;
     ] .

@@ -5,14 +5,14 @@
   ],
   "@graph": [
     {
-      "comment": "Override StorageDescriber to add VoID to .well-known/solid (D12, D15)",
+      "comment": "Override StorageDescriber to add VoID + DCAT to .well-known/solid (D9, D12, D15). Aligned with fabric four-layer self-description pattern.",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:StorageDescriber" },
       "overrideParameters": {
         "@type": "StatusArrayUnionHandler",
         "handlers": [
           {
-            "comment": "Original: pim:Storage type",
+            "comment": "Solid: pim:Storage type",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
@@ -22,7 +22,7 @@
             ]
           },
           {
-            "comment": "VoID: dataset type",
+            "comment": "VoID: dataset type (L1 discovery)",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
@@ -32,7 +32,17 @@
             ]
           },
           {
-            "comment": "VoID: conformance profiles",
+            "comment": "DCAT: this storage is also a DataService (Comunica SPARQL access)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                "StaticStorageDescriber:_terms_value": "http://www.w3.org/ns/dcat#DataService"
+              }
+            ]
+          },
+          {
+            "comment": "Conformance: CoreProfile + SolidPodProfile",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
@@ -84,6 +94,16 @@
               {
                 "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/ontology#"
+              }
+            ]
+          },
+          {
+            "comment": "VoID: LDP browse feature flag (D15 — distinguishes pod from triplestore)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#feature",
+                "StaticStorageDescriber:_terms_value": "https://w3id.org/cogitarelink/fabric#LDPBrowse"
               }
             ]
           }
