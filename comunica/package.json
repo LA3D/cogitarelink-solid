@@ -1,0 +1,14 @@
+{
+  "name": "cogitarelink-comunica",
+  "private": true,
+  "description": "Comunica link-traversal sidecar with traqula version fix",
+  "dependencies": {
+    "@comunica/query-sparql-link-traversal": "0.8.0"
+  },
+  "overrides": {
+    "@traqula/parser-sparql-1-2": "^1.0.0",
+    "@traqula/algebra-sparql-1-2": "^1.0.0",
+    "@traqula/rules-sparql-1-1": "^1.0.0",
+    "@traqula/core": "^1.0.0"
+  }
+}
