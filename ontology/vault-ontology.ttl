@@ -1,0 +1,136 @@
+# Vault ontology — terms for pod container structure and agent navigation
+#
+# Namespace: https://pod.vardeman.me/vault/ontology#
+# Used in container .meta sidecars and Type Index registrations.
+# Extends SKOS (content), Dublin Core (metadata), VoID (statistics),
+# LDP (containment), and Solid (discovery).
+
+@prefix vault: <https://pod.vardeman.me/vault/ontology#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix ldp:   <http://www.w3.org/ns/ldp#> .
+
+# --- Note types (content layer) ---
+
+vault:TheoryNote a rdfs:Class ;
+    rdfs:label "Theory Note" ;
+    rdfs:comment "Synthesized argument combining multiple concepts and sources." ;
+    rdfs:subClassOf skos:Concept .
+
+vault:LiteratureNote a rdfs:Class ;
+    rdfs:label "Literature Note" ;
+    rdfs:comment "Notes on a paper, book, or external source." .
+
+vault:MethodNote a rdfs:Class ;
+    rdfs:label "Method Note" ;
+    rdfs:comment "Description of a method, technique, or process." .
+
+vault:Project a rdfs:Class ;
+    rdfs:label "Project" ;
+    rdfs:comment "Time-bound effort serving an Area of Focus." .
+
+vault:Area a rdfs:Class ;
+    rdfs:label "Area of Focus" ;
+    rdfs:comment "Persistent life area (Pullein/GAPRA framework). Foundation for all projects and resources." .
+
+# --- Container types (structural layer) ---
+
+vault:AreaContainer a rdfs:Class ;
+    rdfs:label "Area Container" ;
+    rdfs:comment "LDP container holding Area of Focus notes." ;
+    rdfs:subClassOf ldp:BasicContainer .
+
+vault:ProjectContainer a rdfs:Class ;
+    rdfs:label "Project Container" ;
+    rdfs:comment "LDP container holding Project notes." ;
+    rdfs:subClassOf ldp:BasicContainer .
+
+vault:ResourceContainer a rdfs:Class ;
+    rdfs:label "Resource Container" ;
+    rdfs:comment "LDP container grouping sub-containers by note type (concepts, theories, literature, etc.)." ;
+    rdfs:subClassOf ldp:BasicContainer .
+
+vault:ArchiveContainer a rdfs:Class ;
+    rdfs:label "Archive Container" ;
+    rdfs:comment "LDP container for inactive/completed items." ;
+    rdfs:subClassOf ldp:BasicContainer .
+
+vault:ProceduralContainer a rdfs:Class ;
+    rdfs:label "Procedural Memory Container" ;
+    rdfs:comment "LDP container for agent behavioral memory — shapes, queries, guidance." ;
+    rdfs:subClassOf ldp:BasicContainer .
+
+# --- Properties (relationship layer) ---
+
+vault:area a owl:ObjectProperty ;
+    rdfs:label "area" ;
+    rdfs:comment "Links a resource to the Area of Focus it serves." ;
+    rdfs:range vault:Area .
+
+vault:extends a owl:ObjectProperty ;
+    rdfs:label "extends" ;
+    rdfs:comment "This note builds upon or extends another." .
+
+vault:supports a owl:ObjectProperty ;
+    rdfs:label "supports" ;
+    rdfs:comment "This note provides evidence for a claim." .
+
+vault:criticizes a owl:ObjectProperty ;
+    rdfs:label "criticizes" ;
+    rdfs:comment "This note challenges or argues against a claim." .
+
+vault:concept a owl:ObjectProperty ;
+    rdfs:label "concept" ;
+    rdfs:comment "Links a note to a related concept." .
+
+# --- Container metadata properties ---
+
+vault:paraCategory a owl:ObjectProperty ;
+    rdfs:label "PARA category" ;
+    rdfs:comment "Links a container to its role in the PARA framework." .
+
+vault:memoryPartition a owl:ObjectProperty ;
+    rdfs:label "memory partition" ;
+    rdfs:comment "Links a container to its agentic memory partition (Symbolic, Procedural, TaskState, etc.)." .
+
+vault:hasSubCollection a owl:ObjectProperty ;
+    rdfs:label "has sub-collection" ;
+    rdfs:comment "Links a container to its typed sub-containers." .
+
+vault:agentGuidance a owl:DatatypeProperty ;
+    rdfs:label "agent guidance" ;
+    rdfs:comment "Free-text guidance for agents interacting with this container or resource. Complements sh:agentInstruction on SHACL shapes." ;
+    rdfs:range rdfs:Literal .
+
+vault:proceduralMemory a owl:ObjectProperty ;
+    rdfs:label "procedural memory" ;
+    rdfs:comment "Links a workspace to its procedural memory container." .
+
+# --- PARA category individuals ---
+
+vault:Projects a vault:paraCategory ;
+    rdfs:label "Projects" .
+
+vault:Areas a vault:paraCategory ;
+    rdfs:label "Areas" .
+
+vault:Resources a vault:paraCategory ;
+    rdfs:label "Resources" .
+
+vault:Archive a vault:paraCategory ;
+    rdfs:label "Archive" .
+
+# --- Memory partition individuals (D30) ---
+
+vault:Symbolic a vault:memoryPartition ;
+    rdfs:label "Symbolic Memory" ;
+    rdfs:comment "Declarative knowledge — concepts, theories, facts." .
+
+vault:Procedural a vault:memoryPartition ;
+    rdfs:label "Procedural Memory" ;
+    rdfs:comment "Behavioral knowledge — shapes, queries, validation rules." .
+
+vault:TaskState a vault:memoryPartition ;
+    rdfs:label "Task State Memory" ;
+    rdfs:comment "Active work state — projects, tasks, progress." .
