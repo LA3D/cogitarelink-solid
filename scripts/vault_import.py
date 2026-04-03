@@ -67,12 +67,27 @@ def main():
     md_files = sorted(src.rglob("*.md"))
     print(f"Found {len(md_files)} files in {src}")
 
-    imported = 0
+    imported, total_triples = 0, 0
     for f in md_files:
         if import_note(f, args.target, args.container, args.dry_run):
             imported += 1
 
     print(f"\nImported {imported} notes to {args.target}{args.container}")
+
+    # Patch container .meta with dynamic stats (void:entities, void:triples)
+    if imported > 0 and not args.dry_run:
+        from rdflib import Graph, URIRef, Literal, Namespace
+        from rdflib.namespace import XSD
+        VOID = Namespace("http://rdfs.org/ns/void#")
+        container_url = f"{args.target.rstrip('/')}{args.container.rstrip('/')}"
+        g = Graph()
+        g.add((URIRef(container_url + "/"), VOID.entities,
+               Literal(imported, datatype=XSD.integer)))
+        try:
+            patch_meta(container_url + "/", g)
+            print(f"  Patched container stats: {imported} entities")
+        except Exception as e:
+            print(f"  WARNING: Could not patch container stats: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
