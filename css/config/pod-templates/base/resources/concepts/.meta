@@ -1,7 +1,6 @@
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix dct:   <http://purl.org/dc/terms/>.
 @prefix void:  <http://rdfs.org/ns/void#>.
-@prefix ldp:   <http://www.w3.org/ns/ldp#>.
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#>.
 @prefix vault: <https://pod.vardeman.me/vault/ontology#>.
 
@@ -10,6 +9,5 @@
     dct:description "Atomic research concepts — each represents one idea. Interlinked via skos:related, organized under MOCs via dct:isPartOf." ;
     void:class skos:Concept ;
     vault:memoryPartition vault:Symbolic ;
-    ldp:constrainedBy <../../procedures/shapes/concept-note.ttl> ;
     void:linkPredicate skos:related ;
     vault:agentGuidance "Query: SELECT ?c ?label WHERE { ?c a skos:Concept ; skos:prefLabel ?label }. Follow skos:related for connections. Use dct:subject for tag filtering." .
