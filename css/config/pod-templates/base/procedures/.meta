@@ -1,2 +1,10 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-<> rdfs:label "Procedures".
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct:   <http://purl.org/dc/terms/>.
+@prefix vault: <https://pod.vardeman.me/vault/ontology#>.
+
+<> a vault:ProceduralContainer ;
+    rdfs:label "Procedures" ;
+    dct:description "Agent behavioral memory — SHACL shapes and SPARQL query templates. Agents read this to learn how to interact with the pod." ;
+    vault:memoryPartition vault:Procedural ;
+    vault:hasSubCollection <shapes/> , <queries/> ;
+    vault:agentGuidance "Read shapes first to understand data structure, then use queries for reusable SPARQL patterns." .

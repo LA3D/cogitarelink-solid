@@ -1,2 +1,5 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-<> rdfs:label "Ontology".
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct:   <http://purl.org/dc/terms/>.
+
+<> rdfs:label "Ontology" ;
+    dct:description "Vocabulary definitions used by this pod — vault ontology, pod profile, cached ontology stubs." .

@@ -1,2 +1,5 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-<> rdfs:label "SPARQL Queries".
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct:   <http://purl.org/dc/terms/>.
+
+<> rdfs:label "SPARQL Queries" ;
+    dct:description "Reusable SPARQL query templates for common pod queries." .

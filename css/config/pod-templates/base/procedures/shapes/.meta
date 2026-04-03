@@ -1,2 +1,5 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-<> rdfs:label "SHACL Shapes".
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct:   <http://purl.org/dc/terms/>.
+
+<> rdfs:label "SHACL Shapes" ;
+    dct:description "SHACL shapes governing pod content. Each shape defines required and optional properties for a note type." .

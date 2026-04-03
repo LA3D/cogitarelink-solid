@@ -1,2 +1,5 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-<> rdfs:label "External Resources".
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct:   <http://purl.org/dc/terms/>.
+
+<> rdfs:label "External Resources" ;
+    dct:description "Links to external tools, repos, and services referenced in the vault." .

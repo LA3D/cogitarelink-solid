@@ -1,2 +1,9 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-<> rdfs:label "Methods".
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct:   <http://purl.org/dc/terms/>.
+@prefix void:  <http://rdfs.org/ns/void#>.
+@prefix vault: <https://pod.vardeman.me/vault/ontology#>.
+
+<> rdfs:label "Methods" ;
+    dct:description "Descriptions of methods, techniques, and processes." ;
+    void:class vault:MethodNote ;
+    vault:memoryPartition vault:Symbolic .

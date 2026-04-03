@@ -1,2 +1,9 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-<> rdfs:label "Literature".
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct:   <http://purl.org/dc/terms/>.
+@prefix void:  <http://rdfs.org/ns/void#>.
+@prefix vault: <https://pod.vardeman.me/vault/ontology#>.
+
+<> rdfs:label "Literature" ;
+    dct:description "Paper notes and literature reviews. Each note summarizes a source and links to concepts it discusses." ;
+    void:class vault:LiteratureNote ;
+    vault:memoryPartition vault:Symbolic .

@@ -1,2 +1,11 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-<> rdfs:label "Resources".
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct:   <http://purl.org/dc/terms/>.
+@prefix vault: <https://pod.vardeman.me/vault/ontology#>.
+
+<> a vault:ResourceContainer ;
+    rdfs:label "Resources" ;
+    dct:description "Knowledge organized by type. Sub-containers partition resources into concepts, theories, literature, methods, people, and external resources." ;
+    vault:paraCategory vault:Resources ;
+    vault:hasSubCollection
+        <concepts/> , <theories/> , <literature/> ,
+        <methods/> , <people/> , <external/> .
