@@ -2,7 +2,6 @@
 @prefix dct:   <http://purl.org/dc/terms/>.
 @prefix vault: <https://pod.vardeman.me/vault/ontology#>.
 
-<> a vault:ArchiveContainer ;
-    rdfs:label "Archive" ;
+<> rdfs:label "Archive" ;
     dct:description "Inactive and completed items. Preserved but not actively navigated." ;
-    vault:paraCategory vault:Archive .
+    dct:type vault:Archive .

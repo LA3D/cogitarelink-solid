@@ -74,18 +74,17 @@ def main():
 
     print(f"\nImported {imported} notes to {args.target}{args.container}")
 
-    # Patch container .meta with dynamic stats (void:entities, void:triples)
+    # Patch container .meta with member count (rdfs:comment summary)
     if imported > 0 and not args.dry_run:
-        from rdflib import Graph, URIRef, Literal, Namespace
-        from rdflib.namespace import XSD
-        VOID = Namespace("http://rdfs.org/ns/void#")
+        from rdflib import Graph, URIRef, Literal
+        from rdflib.namespace import RDFS
         container_url = f"{args.target.rstrip('/')}{args.container.rstrip('/')}"
         g = Graph()
-        g.add((URIRef(container_url + "/"), VOID.entities,
-               Literal(imported, datatype=XSD.integer)))
+        g.add((URIRef(container_url + "/"), RDFS.comment,
+               Literal(f"Contains {imported} imported notes.")))
         try:
             patch_meta(container_url + "/", g)
-            print(f"  Patched container stats: {imported} entities")
+            print(f"  Patched container comment: {imported} notes")
         except Exception as e:
             print(f"  WARNING: Could not patch container stats: {e}", file=sys.stderr)
 

@@ -1,13 +1,11 @@
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix dct:   <http://purl.org/dc/terms/>.
-@prefix void:  <http://rdfs.org/ns/void#>.
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#>.
+@prefix sh:    <http://www.w3.org/ns/shacl#>.
 @prefix vault: <https://pod.vardeman.me/vault/ontology#>.
 
 <> a skos:Collection ;
     rdfs:label "Concepts" ;
     dct:description "Atomic research concepts — each represents one idea. Interlinked via skos:related, organized under MOCs via dct:isPartOf." ;
-    void:class skos:Concept ;
-    vault:memoryPartition vault:Symbolic ;
-    void:linkPredicate skos:related ;
-    vault:agentGuidance "Query: SELECT ?c ?label WHERE { ?c a skos:Concept ; skos:prefLabel ?label }. Follow skos:related for connections. Use dct:subject for tag filtering." .
+    dct:type vault:Resources, vault:Symbolic ;
+    sh:agentInstruction "Query: SELECT ?c ?label WHERE { ?c a skos:Concept ; skos:prefLabel ?label }. Follow skos:related for connections. Use dct:subject for tag filtering." .

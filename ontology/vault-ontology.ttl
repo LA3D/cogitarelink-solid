@@ -1,17 +1,33 @@
-# Vault ontology — terms for pod container structure and agent navigation
+# Vault ontology — terms for pod content and classification
 #
 # Namespace: https://pod.vardeman.me/vault/ontology#
-# Used in container .meta sidecars and Type Index registrations.
-# Extends SKOS (content), Dublin Core (metadata), VoID (statistics),
-# LDP (containment), and Solid (discovery).
+# Design: Maximize reuse of SKOS, Dublin Core, SHACL 1.2, PROV.
+# Only define terms here when no standard vocabulary covers the semantics.
+#
+# Standard vocabularies used (NOT redefined here):
+#   skos:    Content organization (Concept, ConceptScheme, prefLabel, related, inScheme)
+#   dct:     Metadata (created, subject, source, isPartOf, type, description)
+#   sh:      Agent guidance (agentInstruction, intent, description) — SHACL 1.2 §8
+#   void:    Dataset descriptions (on void:Dataset instances only)
+#   prov:    Provenance (wasDerivedFrom, wasAttributedTo)
+#   ldp:     Containment (contains, BasicContainer) — CSS-generated
+#   solid:   Discovery (publicTypeIndex, TypeIndex, TypeRegistration)
+#
+# What IS defined here:
+#   - Note types not covered by SKOS (TheoryNote, LiteratureNote, etc.)
+#   - Relationship properties from vault Breadcrumbs (extends, supports, criticizes)
+#   - SKOS ConceptSchemes for PARA categories and memory partitions (D30, D34)
 
 @prefix vault: <https://pod.vardeman.me/vault/ontology#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
-@prefix ldp:   <http://www.w3.org/ns/ldp#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
 
-# --- Note types (content layer) ---
+# ============================================================
+# Note types (content layer)
+# All knowledge-bearing types are subClassOf skos:Concept (D34)
+# ============================================================
 
 vault:TheoryNote a rdfs:Class ;
     rdfs:label "Theory Note" ;
@@ -20,11 +36,13 @@ vault:TheoryNote a rdfs:Class ;
 
 vault:LiteratureNote a rdfs:Class ;
     rdfs:label "Literature Note" ;
-    rdfs:comment "Notes on a paper, book, or external source." .
+    rdfs:comment "Notes on a paper, book, or external source." ;
+    rdfs:subClassOf skos:Concept .
 
 vault:MethodNote a rdfs:Class ;
     rdfs:label "Method Note" ;
-    rdfs:comment "Description of a method, technique, or process." .
+    rdfs:comment "Description of a method, technique, or process." ;
+    rdfs:subClassOf skos:Concept .
 
 vault:Project a rdfs:Class ;
     rdfs:label "Project" ;
@@ -32,36 +50,14 @@ vault:Project a rdfs:Class ;
 
 vault:Area a rdfs:Class ;
     rdfs:label "Area of Focus" ;
-    rdfs:comment "Persistent life area (Pullein/GAPRA framework). Foundation for all projects and resources." .
+    rdfs:comment "Persistent life area (Pullein/GAPRA framework)." .
 
-# --- Container types (structural layer) ---
-
-vault:AreaContainer a rdfs:Class ;
-    rdfs:label "Area Container" ;
-    rdfs:comment "LDP container holding Area of Focus notes." ;
-    rdfs:subClassOf ldp:BasicContainer .
-
-vault:ProjectContainer a rdfs:Class ;
-    rdfs:label "Project Container" ;
-    rdfs:comment "LDP container holding Project notes." ;
-    rdfs:subClassOf ldp:BasicContainer .
-
-vault:ResourceContainer a rdfs:Class ;
-    rdfs:label "Resource Container" ;
-    rdfs:comment "LDP container grouping sub-containers by note type (concepts, theories, literature, etc.)." ;
-    rdfs:subClassOf ldp:BasicContainer .
-
-vault:ArchiveContainer a rdfs:Class ;
-    rdfs:label "Archive Container" ;
-    rdfs:comment "LDP container for inactive/completed items." ;
-    rdfs:subClassOf ldp:BasicContainer .
-
-vault:ProceduralContainer a rdfs:Class ;
-    rdfs:label "Procedural Memory Container" ;
-    rdfs:comment "LDP container for agent behavioral memory — shapes, queries, guidance." ;
-    rdfs:subClassOf ldp:BasicContainer .
-
-# --- Properties (relationship layer) ---
+# ============================================================
+# Relationship properties (Breadcrumbs edge fields)
+# These map directly to Obsidian vault frontmatter edges.
+# TODO: evaluate CiTO alignment (cito:extends, cito:supports,
+# cito:critiques) for future interoperability.
+# ============================================================
 
 vault:area a owl:ObjectProperty ;
     rdfs:label "area" ;
@@ -84,53 +80,53 @@ vault:concept a owl:ObjectProperty ;
     rdfs:label "concept" ;
     rdfs:comment "Links a note to a related concept." .
 
-# --- Container metadata properties ---
+# ============================================================
+# PARA classification scheme (D30)
+# Modeled as SKOS ConceptScheme per D34. Containers use
+# dct:type to link to their PARA category.
+# ============================================================
 
-vault:paraCategory a owl:ObjectProperty ;
-    rdfs:label "PARA category" ;
-    rdfs:comment "Links a container to its role in the PARA framework." .
+vault:PARAScheme a skos:ConceptScheme ;
+    skos:prefLabel "PARA Framework" ;
+    rdfs:comment "Projects, Areas, Resources, Archive — organizational framework (Pullein/GAPRA)." .
 
-vault:memoryPartition a owl:ObjectProperty ;
-    rdfs:label "memory partition" ;
-    rdfs:comment "Links a container to its agentic memory partition (Symbolic, Procedural, TaskState, etc.)." .
+vault:Projects a skos:Concept ;
+    skos:inScheme vault:PARAScheme ;
+    skos:prefLabel "Projects" .
 
-vault:hasSubCollection a owl:ObjectProperty ;
-    rdfs:label "has sub-collection" ;
-    rdfs:comment "Links a container to its typed sub-containers." .
+vault:Areas a skos:Concept ;
+    skos:inScheme vault:PARAScheme ;
+    skos:prefLabel "Areas" .
 
-vault:agentGuidance a owl:DatatypeProperty ;
-    rdfs:label "agent guidance" ;
-    rdfs:comment "Free-text guidance for agents interacting with this container or resource. Complements sh:agentInstruction on SHACL shapes." ;
-    rdfs:range rdfs:Literal .
+vault:Resources a skos:Concept ;
+    skos:inScheme vault:PARAScheme ;
+    skos:prefLabel "Resources" .
 
-vault:proceduralMemory a owl:ObjectProperty ;
-    rdfs:label "procedural memory" ;
-    rdfs:comment "Links a workspace to its procedural memory container." .
+vault:Archive a skos:Concept ;
+    skos:inScheme vault:PARAScheme ;
+    skos:prefLabel "Archive" .
 
-# --- PARA category individuals ---
+# ============================================================
+# Memory partition scheme (D30)
+# Agentic memory partitions as SKOS concepts. Containers use
+# dct:type to link to their partition.
+# ============================================================
 
-vault:Projects a vault:paraCategory ;
-    rdfs:label "Projects" .
+vault:MemoryPartitionScheme a skos:ConceptScheme ;
+    skos:prefLabel "Agentic Memory Partitions" ;
+    rdfs:comment "Classification of pod containers by memory function (D30)." .
 
-vault:Areas a vault:paraCategory ;
-    rdfs:label "Areas" .
+vault:Symbolic a skos:Concept ;
+    skos:inScheme vault:MemoryPartitionScheme ;
+    skos:prefLabel "Symbolic Memory" ;
+    skos:definition "Declarative knowledge — concepts, theories, facts." .
 
-vault:Resources a vault:paraCategory ;
-    rdfs:label "Resources" .
+vault:Procedural a skos:Concept ;
+    skos:inScheme vault:MemoryPartitionScheme ;
+    skos:prefLabel "Procedural Memory" ;
+    skos:definition "Behavioral knowledge — shapes, queries, validation rules." .
 
-vault:Archive a vault:paraCategory ;
-    rdfs:label "Archive" .
-
-# --- Memory partition individuals (D30) ---
-
-vault:Symbolic a vault:memoryPartition ;
-    rdfs:label "Symbolic Memory" ;
-    rdfs:comment "Declarative knowledge — concepts, theories, facts." .
-
-vault:Procedural a vault:memoryPartition ;
-    rdfs:label "Procedural Memory" ;
-    rdfs:comment "Behavioral knowledge — shapes, queries, validation rules." .
-
-vault:TaskState a vault:memoryPartition ;
-    rdfs:label "Task State Memory" ;
-    rdfs:comment "Active work state — projects, tasks, progress." .
+vault:TaskState a skos:Concept ;
+    skos:inScheme vault:MemoryPartitionScheme ;
+    skos:prefLabel "Task State Memory" ;
+    skos:definition "Active work state — projects, tasks, progress." .

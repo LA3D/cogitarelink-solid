@@ -1,11 +1,9 @@
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix dct:   <http://purl.org/dc/terms/>.
-@prefix void:  <http://rdfs.org/ns/void#>.
+@prefix sh:    <http://www.w3.org/ns/shacl#>.
 @prefix vault: <https://pod.vardeman.me/vault/ontology#>.
 
-<> a vault:AreaContainer ;
-    rdfs:label "Areas of Focus" ;
+<> rdfs:label "Areas of Focus" ;
     dct:description "Eight foundational areas (Pullein/GAPRA). Persistent life priorities — every project and resource connects back to an area." ;
-    vault:paraCategory vault:Areas ;
-    void:class vault:Area ;
-    vault:agentGuidance "Areas define WHY knowledge exists. Trace vault:area edges from projects and concepts back to areas to understand motivation." .
+    dct:type vault:Areas, vault:Symbolic ;
+    sh:agentInstruction "Areas define WHY knowledge exists. Trace vault:area edges from projects and concepts back to areas to understand motivation." .

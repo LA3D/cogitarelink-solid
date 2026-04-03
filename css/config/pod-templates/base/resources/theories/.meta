@@ -1,12 +1,11 @@
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix dct:   <http://purl.org/dc/terms/>.
-@prefix void:  <http://rdfs.org/ns/void#>.
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#>.
+@prefix sh:    <http://www.w3.org/ns/shacl#>.
 @prefix vault: <https://pod.vardeman.me/vault/ontology#>.
 
 <> a skos:Collection ;
     rdfs:label "Theories" ;
     dct:description "Synthesized arguments combining multiple concepts and sources into structured claims." ;
-    void:class vault:TheoryNote ;
-    vault:memoryPartition vault:Symbolic ;
-    vault:agentGuidance "Theory notes synthesize concepts. Follow vault:extends to see what a theory builds on." .
+    dct:type vault:Resources, vault:Symbolic ;
+    sh:agentInstruction "Theory notes synthesize concepts. Follow vault:extends to see what a theory builds on." .

@@ -1,17 +1,10 @@
 @prefix pim:   <http://www.w3.org/ns/pim/space#>.
-@prefix void:  <http://rdfs.org/ns/void#>.
 @prefix dct:   <http://purl.org/dc/terms/>.
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
-@prefix vault: <https://pod.vardeman.me/vault/ontology#>.
 
 <> a pim:Storage, pim:Workspace ;
     rdfs:label "Agentic Memory Research Vault" ;
     dct:description "Knowledge workspace for agentic memory systems research. PARA organization with memory partitions as metadata overlay." ;
-    void:vocabulary
-        <http://www.w3.org/2004/02/skos/core#> ,
-        <http://purl.org/dc/terms/> ,
-        <http://www.w3.org/ns/prov#> ;
-    vault:proceduralMemory <procedures/> ;
     dct:conformsTo
         <https://w3id.org/cogitarelink/fabric#CoreProfile> ,
         <https://w3id.org/cogitarelink/fabric#SolidPodProfile> .
