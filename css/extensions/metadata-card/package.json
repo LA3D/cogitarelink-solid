@@ -1,0 +1,27 @@
+{
+  "name": "metadata-card",
+  "version": "0.1.0",
+  "description": "Render a Solid Pod resource's .meta sidecar as an HTML index card. Sample B (fallback converter) for cogitarelink-solid Phase 2b — works for ANY content type because it only reads .meta.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "metadata-card": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "render": "tsx src/cli.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "n3": "^1.22.0"
+  },
+  "devDependencies": {
+    "@types/n3": "^1.21.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
