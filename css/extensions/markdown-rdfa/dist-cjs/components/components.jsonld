@@ -1,0 +1,11 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-rdfa/^0.1.0/components/context.jsonld"
+  ],
+  "@id": "npmd:markdown-rdfa",
+  "@type": "Module",
+  "requireName": "markdown-rdfa",
+  "import": [
+    "mrc:dist-cjs/converter.jsonld"
+  ]
+}

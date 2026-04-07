@@ -1,0 +1,4 @@
+{
+  "type": "commonjs",
+  "comment": "Overrides parent package's type=module so Node interprets dist-cjs/*.js as CommonJS. Required because Components.js looks for .js files (not .cjs) when resolving class files next to .jsonld metadata."
+}

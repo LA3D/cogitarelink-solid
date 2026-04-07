@@ -1,7 +1,8 @@
 {
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-rdfa/^0.1.0/components/context.jsonld"
   ],
   "import": [
     "./dev-allow-all.json",
@@ -10,7 +11,16 @@
   ],
   "@graph": [
     {
-      "comment": "cogitarelink-solid: CSS v8 alpha + SHACL shape validation via ldp:constrainedBy"
+      "comment": "cogitarelink-solid: CSS v8 alpha + SHACL shape validation via ldp:constrainedBy + custom markdown→HTML converter (markdown-rdfa)"
+    },
+    {
+      "comment": "Replace the default MarkdownToHtmlConverter with our MarkdownRdfaConverter. The Override changes the @type of the existing instance (keeping its @id so the ChainedConverter's converters list still references it) and swaps the templateEngine parameter for our single podBase parameter. Our converter emits a complete HTML document itself — no CSS template wrapping.",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:MarkdownToHtmlConverter" },
+      "overrideParameters": {
+        "@type": "MarkdownRdfaConverter",
+        "podBase": "http://pod.vardeman.me:3000"
+      }
     },
     {
       "comment": "Add ldp:constrainedBy to the existing LinkRel metadata writer so it appears as a Link header.",
