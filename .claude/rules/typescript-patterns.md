@@ -4,6 +4,17 @@ paths: ["**/*.ts", "**/*.js", "**/*.json"]
 
 # TypeScript Patterns
 
+For builder-side details — scaffolding a CSS v8 extension, Components.js Override syntax,
+MetadataWriter composition, MonitoringStore CDC — invoke the on-demand skills:
+
+- `/css-extension` — full scaffold + symlink trick + componentsjs-generator gotchas
+- `/components-override` — Override patterns, parameter @id format, K1 limitation
+- `/metadata-writer` — addHeader vs setHeader composition
+- `/monitoring-store` — subscribe pattern, chain serialization, lock pattern
+
+Vendored upstream: `vendor/solid-llm-skills/solid/integration-guide.md` for `@inrupt/solid-client`,
+authn libraries, LDO, N3.js, Bashlib.
+
 ## CSS Extension Architecture (D19)
 
 Community Solid Server uses Components.js (JSON-LD dependency injection).

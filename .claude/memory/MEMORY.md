@@ -53,6 +53,8 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 - [x] Memento integration design D61–D64 + `Memento Vocabulary Alignment.md` (Rung 1.0)
 - [x] Rung 1.1 — `css/extensions/memento/` with MonitoringStore CDC, per-path git commits, `.git/memento.lock` for multi-worker safety, RFC 7089 §4.1.1 Vary/Link advertisement via MementoLinkMetadataWriter (D65–D68)
 - [x] Code review + Wave 1-5 hardening: timemap async, fsPath HttpError, gitLogBefore opt, per-path staging, attach-before-bootstrap, file lock, TimeMap from/until/timegate, link advertisement, gitDir variable, poll-not-sleep tests
+- [x] Rung 1.2 — Tombstone semantics for DELETE: gitLatestOpForPath probe, ldes:DeletedLDPResource + as:Delete typing in TimeMap, 410 Gone on plain GET of tombstoned resource, worktree-first check for race-safety, 410 with Memento-Datetime for ?version= resolving to a deletion commit
+- [x] Builder-skill layer — `.claude/skills/{css-extension,components-override,metadata-writer,monitoring-store,comunica-sources,shacl-shapes,solid-spec,solid-integration}.md` capture lessons learned; `vendor/solid-llm-skills/` vendors upstream Solid reference (commit `9a1cab17`)
 - [ ] Phase 2c — markdown-flavor shapes + sidecar validation discipline (in flight)
 - [ ] Phase 4a — storage description as harness root (Round 1 Rung 1.4)
 - [ ] Phase 4b — affordance descriptors (Round 1 Rung 1.4)

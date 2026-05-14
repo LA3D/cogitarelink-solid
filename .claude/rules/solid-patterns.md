@@ -4,6 +4,10 @@ paths: ["**/*.py", "**/*.ts"]
 
 # Solid Protocol Patterns
 
+For full spec reference (WebID, Solid-OIDC, ACP, WAC, Type Index), invoke `/solid-spec` —
+routes to vendored `vendor/solid-llm-skills/solid/spec.md` + this codebase's deltas.
+For client integration patterns, invoke `/solid-integration`.
+
 ## LDP Operations (HTTP)
 
 Solid Pods are LDP servers. All operations are standard HTTP:

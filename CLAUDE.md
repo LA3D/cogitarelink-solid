@@ -55,14 +55,14 @@ docs/plans/      — Architecture design documents
 
 | Rules (always loaded) | Scope |
 |---|---|
-| `decisions-index.md` | D1-D64 architectural decisions (vault is canonical) |
+| `decisions-index.md` | D1-D68 + K1 architectural decisions (vault is canonical) |
 | `python-patterns.md` | fastai style, rdflib, httpx, pyshacl (client-only) |
 | `typescript-patterns.md` | CSS extensions, Components.js, N3.js, Comunica |
 | `rdf-patterns.md` | Turtle, JSON-LD, three-layer Pod RDF |
 | `docker-patterns.md` | CSS + Comunica containers |
 | `solid-patterns.md` | LDP, WAC, Solid-OIDC, Type Index |
 
-| Skills (on demand) | Trigger |
+| Operational skills (on demand) | Trigger |
 |---|---|
 | Pod discovery | `/pod-discover` |
 | Pod init | `/pod-init` |
@@ -72,6 +72,19 @@ docs/plans/      — Architecture design documents
 | Pod status | `/pod-status` |
 | Decision lookup | `/decision-lookup` |
 | SBOM update | `/sbom-update` |
+
+| Builder skills (on demand) | Trigger |
+|---|---|
+| Scaffold a CSS v8 extension | `/css-extension` |
+| Components.js Override patterns | `/components-override` |
+| MetadataWriter composition | `/metadata-writer` |
+| MonitoringStore CDC (D17) | `/monitoring-store` |
+| Comunica explicit-source queries | `/comunica-sources` |
+| SHACL shape design for Pod content | `/shacl-shapes` |
+| Solid Protocol reference (vendored upstream) | `/solid-spec` |
+| Solid client integration (`@inrupt/solid-client`, harness skills) | `/solid-integration` |
+
+Upstream Solid documentation is vendored at `vendor/solid-llm-skills/` (synced from `solid/solid-llm-skills` commit `9a1cab17`, 2026-05-14). See `vendor/solid-llm-skills/README.md` for resync instructions.
 
 ## Git Protocol
 
