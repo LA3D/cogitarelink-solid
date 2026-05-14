@@ -93,6 +93,10 @@ D68: Filesystem lock for multi-worker safety — `.git/memento.lock` (in the git
 
 K1: `OverrideListInsertAt` against an empty handlers list reproducibly fails with a Components.js `collectEntries` error in v8.0.0-alpha.3. Worked around by `overrideParameters` (full replacement) of `urn:solid-server:default:WorkerParallelInitializer`; documented in `css/config/memento.json` with a revisit-when-target-exists note.
 
+## Phase 5c — Documentation strategy (D69, 2026-05-14)
+
+D69: Two-layer documentation strategy — Pod-resident agent instructions (Layer 1, Rung 1.4 territory: storage description + container `.meta` + affordance descriptors, served via HTTP, tells runtime agents how to navigate THIS Pod) AND repo-resident builder skills (Layer 2, landed 2026-05-14: `.claude/skills/{css-extension,components-override,metadata-writer,monitoring-store,comunica-sources,shacl-shapes,solid-spec,solid-integration}.md` plus `vendor/solid-llm-skills/`, loaded by Claude Code, tells the author how to BUILD the Pod reliably). Layers are orthogonal; D33's "no .claude/ injection" applies only to Layer 1.
+
 ## Open research questions
 
 RQ-Affordance-1: descriptor format (declarative SHACL vs custom RDF vs hybrid)
