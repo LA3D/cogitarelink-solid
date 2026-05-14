@@ -1,9 +1,9 @@
 [project]
 name = "cogitarelink-solid"
 version = "0.1.0"
-description = "Solid Pod as a knowledge fabric node: bridging document and graph access via navigational meta-structure"
+description = "Reference Solid Pod exploring how agentic applications connect to a federable, standards-based memory substrate"
 readme = "README.md"
-license = "Apache-2.0"
+license = "MIT"
 requires-python = ">=3.12"
 authors = [
     { name = "Charles F. Vardeman II", email = "cvardema@nd.edu" },

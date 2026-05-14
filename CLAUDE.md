@@ -9,12 +9,17 @@ graph access (SPARQL) through a navigational meta-structure at `.well-known/`.
 
 Two-container stack: CSS (Solid Pod server) + Comunica (SPARQL-over-LDP sidecar).
 Python is client-only: vault importer CLI, SHACL development, RLM agent substrate.
-Sibling project: `~/dev/git/LA3D/agents/cogitarelink-fabric` (graph-native fabric nodes).
-Agent substrate: `~/dev/git/LA3D/agents/rlm` (RLM REPL agents).
 
-See @.claude/rules/decisions-index.md for architectural decisions (D1-D28).
-See @.claude/memory/MEMORY.md for experiment state and key patterns.
-See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md
+Sibling repos under `~/dev/git/LA3D/agents/`:
+- `solid-agent-skills` — General-purpose Solid Pod CLI + skills (D29). Phase 2 shipped.
+- `cogitarelink-fabric` — Graph-native fabric nodes (Oxigraph + FastAPI + Credo)
+- `rlm` — RLM agent substrate (dspy.RLM)
+
+See @.claude/rules/decisions-index.md for architectural decisions (D1-D64).
+See @.claude/memory/MEMORY.md for experiment state, active plan, and key patterns.
+See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Unified Externalization Prototype Plan.md (active plan)
+See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md (phase plan)
+See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md (canonical decisions log)
 
 ## Key Commands
 
@@ -50,7 +55,7 @@ docs/plans/      — Architecture design documents
 
 | Rules (always loaded) | Scope |
 |---|---|
-| `decisions-index.md` | D1-D28 architectural decisions |
+| `decisions-index.md` | D1-D64 architectural decisions (vault is canonical) |
 | `python-patterns.md` | fastai style, rdflib, httpx, pyshacl (client-only) |
 | `typescript-patterns.md` | CSS extensions, Components.js, N3.js, Comunica |
 | `rdf-patterns.md` | Turtle, JSON-LD, three-layer Pod RDF |
