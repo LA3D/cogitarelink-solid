@@ -8,15 +8,19 @@ A reference Solid Pod implementation exploring how agentic applications can conn
 
 ## Why this exists
 
-Three threads converge here.
+Four threads converge here. All descend from a single 1945 problem statement.
 
-**Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** named the pattern emerging across agentic systems: an LLM-maintained, persistent, interlinked markdown wiki where the LLM does the bookkeeping humans abandon. Humans curate, sources are immutable, the wiki accumulates. "The wiki is a persistent, compounding artifact." Obsidian is the IDE, the LLM is the programmer, the wiki is the codebase.
+**Vannevar Bush** proposed the *Memex* in "As We May Think" (1945): a personal, curated knowledge store with associative trails between documents, machine-assisted indexing, and a "trail blazer" role that would build and share the associative structure. Bush named the unsolved problem explicitly: maintenance. Sequential filing was tractable; associative indexing required human cognitive labor at scale. Two threads of his vision descended separately. The associative-indexing thread went through Engelbart (NLS, 1968), Nelson (Xanadu / "hypertext," 1965), and Berners-Lee (WWW 1989, Semantic Web 2001), arriving at the agent framing — *"software agents roaming from page to page can readily carry out sophisticated tasks for users."* The personal-store thread was lost in the WWW and recovered by Solid (2015+). Both branches stalled on Bush's original bottleneck: who maintains the structure? LLMs unblock both at once.
+
+**Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** ties the pattern explicitly back to Bush: *"The idea is related in spirit to Vannevar Bush's Memex (1945) … The part he couldn't solve was who does the maintenance. The LLM handles that."* An LLM-maintained, persistent, interlinked markdown wiki where the LLM does the bookkeeping humans abandon. Humans curate; sources are immutable; the wiki accumulates. *"The wiki is a persistent, compounding artifact."* Obsidian is the IDE; the LLM is the programmer; the wiki is the codebase.
 
 **Hermes Agent** (Nous Research, 2026) shipped the pattern as a product — a two-file persistent memory (MEMORY.md + USER.md) plus a swappable provider plugin layer with eight backends ranging from flat markdown to knowledge graphs. The provider contract has six mechanisms (context injection, prefetch, sync, extract, mirror, provider tools) but the architecture is single-agent. There is no protocol for cross-agent change notification, role manifests, or recall provenance.
 
+**Tim Berners-Lee's Charlie** is the current canonical articulation of what Solid means in the agent era. From TBL's March 2025 statement: *"In 2017 I wrote about Charlie — an AI that works for you. @inrupt labs now has Charlie working. Charlie is the evolution of agentic AI. It's built on top of a re-wired data infrastructure using Solid to give people the security and trust they need to share their data."* From the W3C [Charlie Works](https://www.w3.org/DesignIssues/Works.html) Design Issues note: *"The pod full of semantic web data is extremely powerful in driving the LLM … AI is used in both feeding data into the data graph, and then using the data graph as context."* Inrupt rebranded their core product from "active wallet" to **"agentic wallet"** at Web Summit 2024. The 2001 Semantic Web vision of agents traversing typed associations is now framed as personal AI on a pod. The 2024-2026 pitch is unambiguous: the pod is for your agent, not just for you.
+
 **Ruben Verborgh's Solid Apps arc** (2017–2022) is the architectural substrate the pattern needs to federate. Apps become views over personal data. Shapes are *connection points*, not endpoints — apps bind to shapes, not APIs. A pod is **not** a document hierarchy; it is a *hybrid contextualized knowledge graph* whose document boundaries silently conflate five orthogonal concerns (context, permissions, provenance, trust, performance) that deserve independent granularity.
 
-This repo is the synthesis: Karpathy's LLM-maintained wiki pattern realized on Verborgh's hybrid contextualized KG substrate. The vault is the wiki layer; the Solid Pod is the federable substrate; agents (yours, a collaborator's, future ones) interact via shapes, follow-your-nose navigation, and verifiable-credential-gated access.
+This repo is the synthesis: Karpathy's LLM-maintained wiki pattern realized on Verborgh's hybrid contextualized KG substrate, with TBL's Charlie framing as the agent-era target. The vault is the wiki layer; the Solid Pod is the federable substrate; agents (yours, a collaborator's, future ones) interact via shapes, follow-your-nose navigation, and verifiable-credential-gated access. The Memex–Solid synthesis is ours; TBL's last on-record claim that the *Web itself* partly realized Memex was 1995, and he has not re-issued it for Solid. But the structural mapping is hard to miss: personal store (Solid), associative indexing (RDF/SPARQL/Shape Trees), trail blazer (LLM agent), running in one place.
 
 ---
 
@@ -149,6 +153,45 @@ Neither alone is sufficient. The premature commitment to either side is the desi
 The three scales answer *where memory lives*. A separate axis answers *what kind of memory*: **conversational** (session state, ephemeral), **intermediate Zettelkasten** (curated typed notes, persistent), **document corpus** (source material, immutable referent). Each layer can exist at every scale.
 
 Karpathy's wiki pattern lives at the intermediate Zettelkasten layer — that is why it works. Source documents stay opaque referent material with bridge edges carrying structural pointers (page span, section IRI) for demand-driven granularity. KAG-style block atomization is unnecessary overhead: store coarse, retrieve fine when bridge edges point fine.
+
+---
+
+## Bridging symbolic and LLM-based agents
+
+The 2001 Semantic Web paper imagined **symbolic agents** — software that traverses typed RDF, exchanges OWL ontologies, reasons via formal logic, and produces verifiable proofs. That vision stalled, and the obituary writers blamed RDF complexity. What actually stalled was the agent. Symbolic reasoners that could navigate RDF at scale didn't materialize; the maintenance burden Bush named in 1945 reasserted itself one architectural layer up.
+
+**LLM agents are the agents that finally arrived** — but they reason differently. They are statistical, contextual, generative; they prefer prose to triples; they hallucinate vocabulary when ungrounded; they cannot natively run a SHACL validator or compose a federated SPARQL query without help. A pod stuffed with carefully-validated RDF doesn't automatically work for them. The gap between what symbolic agents were specified to consume and what LLM agents actually consume is the practical problem this project addresses.
+
+### Where the gap is
+
+| Symbolic-agent assumption | LLM-agent reality |
+|---|---|
+| Reads RDF natively | Reads markdown natively; RDF is a parse step |
+| Composes SPARQL from intent | Hallucinates SPARQL without examples; needs templates |
+| Resolves vocabulary via ontologies | Hallucinates vocabulary terms when ungrounded; needs explicit vocabulary manifest |
+| Validates via SHACL before publishing | Generates plausible-but-invalid RDF; needs the pod to enforce shapes at the write boundary |
+| Traverses typed links deterministically | Picks paths probabilistically; needs natural-language guidance attached to types |
+| Treats documents as opaque attachments | Treats documents as the primary surface; `.meta` is the secondary view |
+
+### How the architecture closes the gap
+
+The pod doesn't ask LLM agents to become symbolic reasoners. It exposes the symbolic substrate intact for tools that want it (SPARQL endpoint, validated `.meta`, signed VCs) and supplies LLM-readable affordances on top. Six mechanisms compose to close the gap:
+
+1. **`sh:agentInstruction` on SHACL shapes ([D50](.claude/rules/decisions-index.md))** — SHACL 1.2 §8.3 carries natural-language guidance attached to the shape. When the LLM agent fetches the shape for a container, it gets the typing constraint *and* the prose instruction telling it what predicates to use, what they mean, and when. The shape is symbolic-agent-readable; the `sh:agentInstruction` is LLM-readable; same artifact.
+
+2. **Affordance descriptors at storage description root ([D52](.claude/rules/decisions-index.md), [D53](.claude/rules/decisions-index.md))** — per-content-type descriptors tell the agent how to extract affordances from non-RDF bodies. Obsidian-flavored markdown gets one descriptor; PDF gets another; OpenAPI gets a third. The LLM agent reads wikilinks from markdown directly via the descriptor's extraction rules, without first parsing RDF.
+
+3. **Body affordances first-class when descriptor-declared ([D58](.claude/rules/decisions-index.md))** — body wikilinks are equivalent navigation surfaces to `.meta` triples when a descriptor declares them. The LLM agent reads the markdown body; the symbolic agent reads `.meta`; both are legitimate first-class views.
+
+4. **Vocabulary grounding via `void:vocabulary` ([D49](.claude/rules/decisions-index.md))** — the storage description declares every RDF vocabulary the pod uses, and each declared vocabulary is dereferenceable (canonical source or local TBox cache). The LLM can enumerate the term space rather than guessing from pretraining. This directly mitigates the hallucination failure mode that produced the project's own [vocabulary audit incident](.claude/rules/decisions-index.md) (Claude invented `void:shape`, `void:constructTemplate` — terms that don't exist; D49 is the upstream defense; D50 is the downstream backstop).
+
+5. **HATEOAS-correct three-tier access ([D55](.claude/rules/decisions-index.md))** — Tier 1 brute-force lets any spec-compliant LLM navigate the pod via standard HTTP + Link headers, with no pod-specific knowledge required. Tier 2 harness gives descriptor-aware agents fewer-token trajectories. Tier 3 skills encode domain shortcuts for the fastest paths. Lower tiers always work as fallback; the symbolic baseline is preserved.
+
+6. **PROV-O + signed VC leaves ([D20](.claude/rules/decisions-index.md), [D63](.claude/rules/decisions-index.md))** — every assertion carries provenance; high-value claims carry signed VCs with selective disclosure. LLM-generated content is marked as such (`prov:wasGeneratedBy <activity>` with the LLM as agent), so downstream consumers — human, symbolic, or another LLM — can decide whether to trust it. This is how an LLM-generated claim composes with a symbolically-verifiable one without contaminating the substrate.
+
+### The deeper move
+
+The traditional "AI agents will need the Semantic Web" pitch assumed agents would *adapt to* the symbolic substrate. The actual move here is the inverse: the symbolic substrate **stays intact**, and the pod supplies LLM-readable affordances *on top* so LLM agents can consume it natively. Both branches of Bush's lineage — the typed associative indexing the Semantic Web built, and the LLM-as-trail-blazer Karpathy claimed — operate over the same pod, neither subordinated to the other. That coexistence is the practical experiment this project runs.
 
 ---
 
