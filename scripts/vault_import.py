@@ -49,7 +49,10 @@ def parse_frontmatter(text: str) -> dict:
     if not text.startswith("---"): return {}
     end = text.find("---", 3)
     if end == -1: return {}
-    return yaml.safe_load(text[3:end]) or {}
+    try:
+        return yaml.safe_load(text[3:end]) or {}
+    except yaml.YAMLError:
+        return {}
 
 
 def import_note(path: pathlib.Path, target: str, container: str,
