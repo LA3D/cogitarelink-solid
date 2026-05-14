@@ -3,8 +3,8 @@
 ## Project State (as of 2026-05-14)
 
 **Repo**: `~/dev/git/LA3D/agents/cogitarelink-solid`
-**Branch**: main
-**Status**: Phase 1 + 2 + 2b complete; Phase 2c in flight. Pod reproducible, 107 vault notes imported, SPARQL queryable, agent-navigable. Sibling `solid-agent-skills` shipped Phase 2 (11 commands + 5 skills + 53 tests). Active focus: **Unified Externalization Prototype Plan Round 1** (Memento + Affordance Descriptor + Pod-Native Harness Skill).
+**Branch**: main (commits `f94228c` memento extension, `5891e51` vault importer YAML guard)
+**Status**: Phase 1 + 2 + 2b complete; Phase 2c in flight. Pod reproducible, 1243 vault notes re-imported under expanded importer, SPARQL queryable, agent-navigable. **Round 1 Rung 1.1 closed** — read-only Memento (RFC 7089) shipped with 93 vitest unit + 10 pytest integration tests green. Sibling `solid-agent-skills` shipped Phase 2 (11 commands + 5 skills + 53 tests). Active focus: **Unified Externalization Prototype Plan Round 1** — next gating piece is Rung 1.4 (affordance descriptor) per critical-path-to-eval, with Rung 1.2 (tombstones) as parallel/follow-up correctness work.
 
 ## Sibling Projects (all under `~/dev/git/LA3D/agents/`)
 
@@ -22,7 +22,7 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 
 | Round | Claim | Status |
 |---|---|---|
-| **R1 Memento + Affordance Descriptor + Harness Skill** | Pod-published affordance descriptors + RFC 7089 time-travel reduce harness cost vs spec-only navigation | Rung 1.0 ✅ (vocab alignment); Rung 1.1 next (read-only Memento spike) |
+| **R1 Memento + Affordance Descriptor + Harness Skill** | Pod-published affordance descriptors + RFC 7089 time-travel reduce harness cost vs spec-only navigation | Rung 1.0 ✅ (vocab alignment), Rung 1.1 ✅ (read-only Memento, code-reviewed); Rung 1.4 next (affordance descriptor — critical path to eval) |
 | R2 Bridge edges with structural pointers | `cito:hasPageRange`/`cito:hasSection` enable demand-driven document granularity | Blocked on R1 |
 | R3 Typed edges as ground truth | SPARQL over frontmatter edges beats flat semantic retrieval for typed graph queries | Minimal new build |
 | R4 Multi-pod federation | Cross-pod federated queries correct + tractable latency | Blocked on R1–3 |
@@ -30,10 +30,10 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 ### Round 1 rungs
 
 - Rung 1.0 ✅ Vocabulary Alignment — see `Memento Vocabulary Alignment.md` in vault
-- **Rung 1.1 (next, gating)** — Read-only Memento spike: git-wrapped CSS data dir + ~150 LOC TS plugin parsing `Accept-Datetime` → `git log --before` → return `Memento-Datetime`-headered content; TimeMap at `?ext=timemap`; TimeGate 302-redirect
-- Rung 1.2 — Tombstone semantics for DELETE (`ldes:DeletedLDPResource` + `as:Delete`)
-- Rung 1.3 — VC-aware operation gating (routine vs elevated `acp:purgeAllowed`)
-- Rung 1.4 — Affordance descriptor declaration at storage description root
+- Rung 1.1 ✅ Read-only Memento — `css/extensions/memento/` (MementoHttpHandler + MementoCommitListener + MementoLinkMetadataWriter); D65–D68 decisions logged; full code review + Wave 1-5 fixes applied (commit `f94228c`)
+- Rung 1.2 — Tombstone semantics for DELETE (`ldes:DeletedLDPResource` + `as:Delete`) — protocol completeness, not on eval critical path
+- Rung 1.3 — VC-aware operation gating (routine vs elevated `acp:purgeAllowed`) — also folds in `ResponseDescription` refactor (deferred review finding #10) since both require OperationHttpHandler migration
+- **Rung 1.4 (next, gating)** — Affordance descriptor declaration at storage description root. Critical-path piece for Rung 1.5: the descriptor IS the harness contract the eval tests against
 - Rung 1.5 — First measurable evaluation (B1 filesystem / B2 brute-force pod / T harness pod across navigation + temporal task suite)
 
 ## Completed Work (Phase 1 + 2 + 2b)
@@ -51,6 +51,8 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 - [x] `solid-agent-skills` shipped: 11 CLI commands + 5 skills + 53 tests + OpenProse navigator+judge agentic test 5/5 PASS (D29)
 - [x] Architectural pivot D42–D60 (unified Pod, externalization substrate, three-tier access)
 - [x] Memento integration design D61–D64 + `Memento Vocabulary Alignment.md` (Rung 1.0)
+- [x] Rung 1.1 — `css/extensions/memento/` with MonitoringStore CDC, per-path git commits, `.git/memento.lock` for multi-worker safety, RFC 7089 §4.1.1 Vary/Link advertisement via MementoLinkMetadataWriter (D65–D68)
+- [x] Code review + Wave 1-5 hardening: timemap async, fsPath HttpError, gitLogBefore opt, per-path staging, attach-before-bootstrap, file lock, TimeMap from/until/timegate, link advertisement, gitDir variable, poll-not-sleep tests
 - [ ] Phase 2c — markdown-flavor shapes + sidecar validation discipline (in flight)
 - [ ] Phase 4a — storage description as harness root (Round 1 Rung 1.4)
 - [ ] Phase 4b — affordance descriptors (Round 1 Rung 1.4)
@@ -106,6 +108,14 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 - RQ-Pod-5 (procedural memory location): **`/procedures/` container** with `sh:agentInstruction` in shapes
 
 ## Key Research Findings
+
+### 2026-05-14 — Rung 1.1 implementation
+- **MonitoringStore is the right CDC integration point** (D65). CSS already emits AS.Create/Update/Delete events on every resource write — no need for a fswatch/inotify sidecar. The in-repo ShapeValidationStore precedent (`PassthroughStore` subclass) proves the wrap-store pattern works for write-time hooks; the listener variant works for read-only event subscription.
+- **CSS `addHeader` (HeaderUtil) accumulates, `setHeader` overwrites** — this is the key discovery that made RFC 7089 §4.1.1 advertisement clean (D67). A parallel MetadataWriter alongside `LinkRelMetadataWriter` can always append `rel="timemap"`/`rel="timegate"` and `Vary: accept-datetime` without conflicting with whatever CSS itself sets. Design header-bearing extensions around `addHeader` to compose, not collide.
+- **`git add -- <path>` + `commit --only -- <path>` is required for per-path commit semantics** (D66). The naive `git add -A` lumps concurrent writes to sibling resources into the wrong commit, which breaks `git log -- <path>` and therefore per-resource TimeMap. Direct integration-test (`test_concurrent_writes_to_different_paths_produce_separate_commits`).
+- **In-`.git/` lock files survive `git add -A`** — lock files in the worktree get staged into commits (we hit this); lock files inside `.git/` are excluded by git itself. D68 puts the memento mutex at `.git/memento.lock`.
+- **Components.js `OverrideListInsertAt` against an empty list is broken in v8.0.0-alpha.3** (K1 known limitation). Reproducible `collectEntries` error. Worked around with `overrideParameters` (full replacement) of `WorkerParallelInitializer`; risk: silent drop of upstream additions. Revisit when the target list gets an entry to anchor against.
+- **The `:next` Docker tag actually tracks v8.0.0-alpha.3**, not v7.1.9 stable as one research agent initially reported. Verified by reading `/community-server/package.json` in the running container. `markdown-rdfa`'s `@solid/community-server: ^8.0.0-alpha.3` devDep matches exactly.
 
 ### 2026-05-06 — Memento integration design
 - Trellis-style query-string URI minting picked (D61) over path-prefix and child-container conventions — keeps container hierarchy clean for D54 agentic-memory navigation
