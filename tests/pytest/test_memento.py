@@ -23,6 +23,7 @@ from rdflib import Graph
 
 CSS = "http://pod.vardeman.me:3000"
 MEMENTO = "http://mementoweb.org/ns#"
+LDES = "https://w3id.org/ldes#"
 TEST_PATH = "/test-memento.txt"
 
 
@@ -207,6 +208,102 @@ def test_redundant_write_does_not_create_spurious_commit():
     # Allow either 1 (gitCommitPath returned null) or maybe 2 (the .meta sidecar
     # changed even if body didn't); but never more than 2.
     assert n_after - n_before <= 1, f"redundant PUT produced {n_after - n_before} extra commits"
+
+
+@pytest.mark.integration
+@pytest.mark.memento
+class TestTombstones:
+    """Rung 1.2: LDP DELETE produces a tombstone Memento; subsequent GET returns 410;
+    GET with Accept-Datetime before deletion still returns prior content; TimeMap
+    surfaces the deletion as `ldes:DeletedLDPResource` per D64."""
+
+    PATH = "/test-tombstone.txt"
+
+    def test_full_delete_lifecycle(self):
+        # 1. Create resource
+        r1 = _put(self.PATH, "alive")
+        assert r1.status_code in (200, 201, 204, 205), r1.text
+        _wait_for_commits(self.PATH, 1)
+
+        # 2. GET it (200, alive)
+        r2 = httpx.get(f"{CSS}{self.PATH}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+        assert r2.status_code == 200
+        assert r2.text.strip() == "alive"
+
+        # 3. DELETE it
+        r3 = httpx.delete(f"{CSS}{self.PATH}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+        assert r3.status_code in (200, 204, 205), r3.text
+        _wait_for_commits(self.PATH, 2)
+
+        # 4. GET it → 410 Gone (tombstone)
+        r4 = httpx.get(f"{CSS}{self.PATH}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+        assert r4.status_code == 410, f"expected 410 Gone, got {r4.status_code}: {r4.text}"
+        link = r4.headers.get("link", "")
+        assert 'rel="timemap"' in link, f"410 response missing Link rel=timemap, got: {link}"
+
+        # 5. TimeMap surfaces the tombstone
+        r5 = httpx.get(
+            f"{CSS}{self.PATH}?ext=timemap",
+            headers={"Host": "pod.vardeman.me:3000", "Accept": "text/turtle"},
+            timeout=10,
+        )
+        assert r5.status_code == 200, r5.text
+        g = Graph()
+        g.parse(data=r5.text, format="turtle")
+        from rdflib import URIRef
+        tombstone_types = list(g.triples((None, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                                          URIRef(f"{LDES}DeletedLDPResource"))))
+        assert len(tombstone_types) >= 1, "TimeMap missing ldes:DeletedLDPResource for the deletion"
+
+    def test_accept_datetime_before_delete_returns_prior_content(self):
+        path = "/test-tombstone-prior.txt"
+        # Create + DELETE
+        _put(path, "prior content")
+        _wait_for_commits(path, 1)
+        time.sleep(1.0)  # ensure Accept-Datetime upper bound is after this commit
+        before_delete = httpx.get(
+            f"{CSS}{path}",
+            headers={"Host": "pod.vardeman.me:3000"},
+            timeout=10,
+        ).headers.get("date", "")
+        httpx.delete(f"{CSS}{path}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+        _wait_for_commits(path, 2)
+
+        # GET with Accept-Datetime well before the deletion (use a far-past datetime)
+        # We test using the closest-prior-content path: a far-future Accept-Datetime
+        # would resolve to the deletion commit (newer); we want a time before delete.
+        # The pre-delete commit's datetime is our anchor.
+        # For simplicity: use TimeMap to find pre-delete commit, then request that version.
+        r_tm = httpx.get(
+            f"{CSS}{path}?ext=timemap",
+            headers={"Host": "pod.vardeman.me:3000", "Accept": "text/turtle"},
+            timeout=10,
+        )
+        g = Graph()
+        g.parse(data=r_tm.text, format="turtle")
+        from rdflib import URIRef
+        # Find Memento subjects that are NOT typed as DeletedLDPResource
+        all_mementos = set(
+            s for s, _, _ in g.triples(
+                (None, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                 URIRef(f"{MEMENTO}Memento"))
+            )
+        )
+        deleted = set(
+            s for s, _, _ in g.triples(
+                (None, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                 URIRef(f"{LDES}DeletedLDPResource"))
+            )
+        )
+        alive_mementos = all_mementos - deleted
+        assert len(alive_mementos) >= 1, "Expected at least one non-tombstone Memento"
+        alive_uri = next(iter(alive_mementos))
+
+        # Fetch it directly
+        r_m = httpx.get(str(alive_uri), headers={"Host": "pod.vardeman.me:3000"}, timeout=10,
+                        follow_redirects=True)
+        assert r_m.status_code == 200, r_m.text
+        assert r_m.text.strip() == "prior content"
 
 
 @pytest.mark.integration

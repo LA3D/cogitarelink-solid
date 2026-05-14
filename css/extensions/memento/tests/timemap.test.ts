@@ -118,3 +118,67 @@ describe("serializeTimemap", () => {
     expect(store.getQuads(null, `${MEMENTO_NS}until`, null, null).length).toBe(0);
   });
 });
+
+describe("serializeTimemap — tombstone typing", () => {
+  const LDES_NS = "https://w3id.org/ldes#";
+  const AS_NS = "https://www.w3.org/ns/activitystreams#";
+  const DCT_NS = "http://purl.org/dc/terms/";
+  const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+
+  const create: MementoRecord = {
+    hash: "aaa",
+    datetime: new Date(Date.UTC(2026, 0, 1, 12, 0, 0)),
+    op: "create",
+  };
+  const update: MementoRecord = {
+    hash: "bbb",
+    datetime: new Date(Date.UTC(2026, 1, 1, 12, 0, 0)),
+    op: "update",
+  };
+  const remove: MementoRecord = {
+    hash: "ccc",
+    datetime: new Date(Date.UTC(2026, 2, 1, 12, 0, 0)),
+    op: "delete",
+  };
+
+  it("types delete records with ldes:DeletedLDPResource AND as:Delete", async () => {
+    const turtle = await serializeTimemap(ORIGINAL, [create, remove], toMementoUri);
+    const store = parseStore(turtle);
+    const tombstoneTypes = store.getQuads(null, RDF_TYPE, `${LDES_NS}DeletedLDPResource`, null);
+    const asDeleteTypes = store.getQuads(null, RDF_TYPE, `${AS_NS}Delete`, null);
+    expect(tombstoneTypes.length).toBe(1);
+    expect(asDeleteTypes.length).toBe(1);
+    // Same subject for both
+    expect(tombstoneTypes[0].subject.value).toBe(asDeleteTypes[0].subject.value);
+  });
+
+  it("emits dct:issued literal on delete records", async () => {
+    const turtle = await serializeTimemap(ORIGINAL, [create, remove], toMementoUri);
+    const store = parseStore(turtle);
+    const issued = store.getQuads(null, `${DCT_NS}issued`, null, null);
+    expect(issued.length).toBe(1);
+    expect(issued[0].object.value).toBe(remove.datetime.toISOString());
+  });
+
+  it("does not type non-delete records as ldes:DeletedLDPResource", async () => {
+    const turtle = await serializeTimemap(ORIGINAL, [create, update], toMementoUri);
+    const store = parseStore(turtle);
+    const tombstoneTypes = store.getQuads(null, RDF_TYPE, `${LDES_NS}DeletedLDPResource`, null);
+    expect(tombstoneTypes.length).toBe(0);
+  });
+
+  it("preserves memento:Memento typing alongside tombstone typing", async () => {
+    const turtle = await serializeTimemap(ORIGINAL, [create, remove], toMementoUri);
+    const store = parseStore(turtle);
+    const mementoTypes = store.getQuads(null, RDF_TYPE, `${MEMENTO_NS}Memento`, null);
+    expect(mementoTypes.length).toBe(2);  // both records are still Mementos
+  });
+
+  it("works on records without explicit op (legacy/bootstrap) — treats as non-delete", async () => {
+    const legacy: MementoRecord = { hash: "ddd", datetime: new Date(Date.UTC(2026, 3, 1)) };
+    const turtle = await serializeTimemap(ORIGINAL, [legacy], toMementoUri);
+    const store = parseStore(turtle);
+    expect(store.getQuads(null, RDF_TYPE, `${LDES_NS}DeletedLDPResource`, null).length).toBe(0);
+    expect(store.getQuads(null, RDF_TYPE, `${MEMENTO_NS}Memento`, null).length).toBe(1);
+  });
+});

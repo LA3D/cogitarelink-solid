@@ -11,6 +11,7 @@ import {
   gitLogBefore,
   gitShow,
   gitLogForPath,
+  gitLatestOpForPath,
 } from "../src/git";
 
 function freshRepo(): string {
@@ -270,5 +271,72 @@ describe("gitLogForPath", () => {
     writeFileSync(join(dir, "a.txt"), "v");
     await gitCommit({ cwd: dir }, "add a");
     expect(await gitLogForPath({ cwd: dir }, "nonexistent.txt")).toEqual([]);
+  });
+
+  it("tags each record with op (create/update/delete) derived from git --name-status", async () => {
+    const dir = freshRepo();
+    await gitInit({ cwd: dir });
+    writeFileSync(join(dir, "a.txt"), "v1");
+    await gitCommitPath({ cwd: dir }, "a.txt", "create a");
+    writeFileSync(join(dir, "a.txt"), "v2");
+    await gitCommitPath({ cwd: dir }, "a.txt", "update a");
+    execFileSync("rm", [join(dir, "a.txt")]);
+    await gitCommitPath({ cwd: dir }, "a.txt", "delete a");
+
+    const records = await gitLogForPath({ cwd: dir }, "a.txt");
+    expect(records.length).toBe(3);
+    expect(records[0].op).toBe("delete");
+    expect(records[1].op).toBe("update");
+    expect(records[2].op).toBe("create");
+  });
+});
+
+describe("gitLatestOpForPath", () => {
+  it("returns null when no commits touch the path", async () => {
+    const dir = freshRepo();
+    await gitInit({ cwd: dir });
+    writeFileSync(join(dir, "a.txt"), "v");
+    await gitCommitPath({ cwd: dir }, "a.txt", "create a");
+    expect(await gitLatestOpForPath({ cwd: dir }, "nonexistent.txt")).toBeNull();
+  });
+
+  it("returns 'create' after first commit", async () => {
+    const dir = freshRepo();
+    await gitInit({ cwd: dir });
+    writeFileSync(join(dir, "a.txt"), "v1");
+    await gitCommitPath({ cwd: dir }, "a.txt", "create a");
+    expect(await gitLatestOpForPath({ cwd: dir }, "a.txt")).toBe("create");
+  });
+
+  it("returns 'update' after a content change", async () => {
+    const dir = freshRepo();
+    await gitInit({ cwd: dir });
+    writeFileSync(join(dir, "a.txt"), "v1");
+    await gitCommitPath({ cwd: dir }, "a.txt", "create a");
+    writeFileSync(join(dir, "a.txt"), "v2");
+    await gitCommitPath({ cwd: dir }, "a.txt", "update a");
+    expect(await gitLatestOpForPath({ cwd: dir }, "a.txt")).toBe("update");
+  });
+
+  it("returns 'delete' after deletion", async () => {
+    const dir = freshRepo();
+    await gitInit({ cwd: dir });
+    writeFileSync(join(dir, "a.txt"), "v1");
+    await gitCommitPath({ cwd: dir }, "a.txt", "create a");
+    execFileSync("rm", [join(dir, "a.txt")]);
+    await gitCommitPath({ cwd: dir }, "a.txt", "delete a");
+    expect(await gitLatestOpForPath({ cwd: dir }, "a.txt")).toBe("delete");
+  });
+
+  it("returns latest op even after recreate-after-delete", async () => {
+    const dir = freshRepo();
+    await gitInit({ cwd: dir });
+    writeFileSync(join(dir, "a.txt"), "v1");
+    await gitCommitPath({ cwd: dir }, "a.txt", "create a");
+    execFileSync("rm", [join(dir, "a.txt")]);
+    await gitCommitPath({ cwd: dir }, "a.txt", "delete a");
+    writeFileSync(join(dir, "a.txt"), "v3");
+    await gitCommitPath({ cwd: dir }, "a.txt", "recreate a");
+    expect(await gitLatestOpForPath({ cwd: dir }, "a.txt")).toBe("create");
   });
 });

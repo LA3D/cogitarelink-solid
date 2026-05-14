@@ -76,4 +76,54 @@ describe("decide", () => {
       acceptDatetime: null,
     })).toEqual({ kind: "passthrough" });
   });
+
+  describe("tombstone routing", () => {
+    it("routes plain GET on a tombstoned path to tombstone decision", () => {
+      expect(decide({
+        method: "GET",
+        url: "http://pod/note.md",
+        acceptDatetime: null,
+        isTombstoned: true,
+      })).toEqual({ kind: "tombstone", path: "http://pod/note.md" });
+    });
+
+    it("ignores tombstone flag when Accept-Datetime is set — timegate wins", () => {
+      const d = decide({
+        method: "GET",
+        url: "http://pod/note.md",
+        acceptDatetime: "Wed, 15 Apr 2026 12:00:00 GMT",
+        isTombstoned: true,
+      });
+      expect(d.kind).toBe("timegate");
+    });
+
+    it("ignores tombstone flag when ?version= is set — memento wins", () => {
+      const d = decide({
+        method: "GET",
+        url: "http://pod/note.md?version=20260415120000",
+        acceptDatetime: null,
+        isTombstoned: true,
+      });
+      expect(d.kind).toBe("memento");
+    });
+
+    it("ignores tombstone flag when ?ext=timemap — timemap wins (TimeMap should be reachable even after deletion)", () => {
+      const d = decide({
+        method: "GET",
+        url: "http://pod/note.md?ext=timemap",
+        acceptDatetime: null,
+        isTombstoned: true,
+      });
+      expect(d.kind).toBe("timemap");
+    });
+
+    it("does not route to tombstone for non-GET requests", () => {
+      expect(decide({
+        method: "DELETE",
+        url: "http://pod/note.md",
+        acceptDatetime: null,
+        isTombstoned: true,
+      })).toEqual({ kind: "passthrough" });
+    });
+  });
 });

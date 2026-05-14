@@ -5,12 +5,14 @@ export type MementoDecision =
   | { kind: "passthrough" }
   | { kind: "timegate"; location: string; datetime: Date }
   | { kind: "memento"; version: string; path: string }
-  | { kind: "timemap"; path: string };
+  | { kind: "timemap"; path: string }
+  | { kind: "tombstone"; path: string };
 
 export interface RouterInput {
   method: string;
   url: string;
   acceptDatetime: string | null;
+  isTombstoned?: boolean;
 }
 
 export function decide(input: RouterInput): MementoDecision {
@@ -32,6 +34,10 @@ export function decide(input: RouterInput): MementoDecision {
     } catch {
       return { kind: "passthrough" };
     }
+  }
+
+  if (input.isTombstoned) {
+    return { kind: "tombstone", path: input.url };
   }
 
   return { kind: "passthrough" };

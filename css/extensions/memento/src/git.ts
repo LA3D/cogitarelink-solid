@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { access, open, unlink, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type { GitOptions, MementoRecord } from "./types";
+import type { ChangeOp } from "./commit-msg";
 
 const exec = promisify(execFile);
 
@@ -78,28 +79,65 @@ export async function gitCommitPath(opts: GitOptions, path: string, message: str
   });
 }
 
+function parseLog(out: string): MementoRecord[] {
+  const records: MementoRecord[] = [];
+  let pending: MementoRecord | null = null;
+  for (const line of out.split("\n")) {
+    if (line.startsWith("COMMIT\t")) {
+      if (pending) records.push(pending);
+      const [, hash, cIso] = line.split("\t");
+      pending = { hash, datetime: new Date(cIso) };
+    } else if (pending && line.trim()) {
+      const op = parseStatus(line);
+      if (op) pending.op = op;
+    }
+  }
+  if (pending) records.push(pending);
+  return records;
+}
+
 export async function gitLogBefore(opts: GitOptions, datetime: Date, path: string): Promise<MementoRecord | null> {
   const iso = datetime.toISOString();
   const out = (await gitStr(opts, [
     "log", "-1",
     `--before=${iso}`,
-    "--format=%H%x09%cI",
+    "--name-status",
+    "--format=COMMIT%x09%H%x09%cI",
     "--", path,
   ])).trim();
-  if (!out) return null;
-  const [hash, cIso] = out.split("\t");
-  return { hash, datetime: new Date(cIso) };
+  const recs = parseLog(out);
+  return recs[0] ?? null;
 }
 
 export async function gitShow(opts: GitOptions, hash: string, path: string): Promise<Buffer> {
   return gitBuf(opts, ["show", `${hash}:${path}`]);
 }
 
+function parseStatus(s: string): ChangeOp | undefined {
+  if (s.startsWith("A")) return "create";
+  if (s.startsWith("M")) return "update";
+  if (s.startsWith("D")) return "delete";
+  return undefined;
+}
+
 export async function gitLogForPath(opts: GitOptions, path: string): Promise<MementoRecord[]> {
-  const out = (await gitStr(opts, ["log", "--format=%H%x09%cI", "--", path])).trim();
-  if (!out) return [];
-  return out.split("\n").map((line) => {
-    const [hash, cIso] = line.split("\t");
-    return { hash, datetime: new Date(cIso) };
-  });
+  const out = (await gitStr(opts, [
+    "log",
+    "--name-status",
+    "--format=COMMIT%x09%H%x09%cI",
+    "--",
+    path,
+  ])).trim();
+  return parseLog(out);
+}
+
+export async function gitLatestOpForPath(opts: GitOptions, path: string): Promise<ChangeOp | null> {
+  const out = (await gitStr(opts, [
+    "log", "-1",
+    "--name-status",
+    "--format=",
+    "--", path,
+  ])).trim();
+  if (!out) return null;
+  return parseStatus(out.split("\n")[0]) ?? null;
 }

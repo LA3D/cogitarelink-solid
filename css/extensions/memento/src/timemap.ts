@@ -7,11 +7,15 @@ const MEMENTO = "http://mementoweb.org/ns#";
 const RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 const XSD = "http://www.w3.org/2001/XMLSchema#";
 const DCT = "http://purl.org/dc/terms/";
+const LDES = "https://w3id.org/ldes#";
+const AS = "https://www.w3.org/ns/activitystreams#";
 
 const aType = namedNode(`${RDF}type`);
 const aTimeMap = namedNode(`${MEMENTO}TimeMap`);
 const aMemento = namedNode(`${MEMENTO}Memento`);
 const aOriginalResource = namedNode(`${MEMENTO}OriginalResource`);
+const aDeletedLDPResource = namedNode(`${LDES}DeletedLDPResource`);
+const aAsDelete = namedNode(`${AS}Delete`);
 const pOriginal = namedNode(`${MEMENTO}original`);
 const pMementoDatetime = namedNode(`${MEMENTO}mementoDatetime`);
 const pTimemap = namedNode(`${MEMENTO}timemap`);
@@ -19,6 +23,7 @@ const pTimegate = namedNode(`${MEMENTO}timegate`);
 const pFrom = namedNode(`${MEMENTO}from`);
 const pUntil = namedNode(`${MEMENTO}until`);
 const pIsVersionOf = namedNode(`${DCT}isVersionOf`);
+const pIssued = namedNode(`${DCT}issued`);
 const xsdDateTime = namedNode(`${XSD}dateTime`);
 
 export function serializeTimemap(
@@ -26,7 +31,7 @@ export function serializeTimemap(
   records: MementoRecord[],
   toMementoUri: (record: MementoRecord) => string,
 ): Promise<string> {
-  const writer = new Writer({ prefixes: { memento: MEMENTO, dct: DCT, xsd: XSD } });
+  const writer = new Writer({ prefixes: { memento: MEMENTO, dct: DCT, xsd: XSD, ldes: LDES, as: AS } });
 
   const original = namedNode(originalUri);
   const timemapUri = `${originalUri}${originalUri.includes("?") ? "&" : "?"}ext=timemap`;
@@ -51,6 +56,11 @@ export function serializeTimemap(
     writer.addQuad(quad(m, pOriginal, original));
     writer.addQuad(quad(m, pIsVersionOf, original));
     writer.addQuad(quad(m, pMementoDatetime, literal(r.datetime.toISOString(), xsdDateTime)));
+    if (r.op === "delete") {
+      writer.addQuad(quad(m, aType, aDeletedLDPResource));
+      writer.addQuad(quad(m, aType, aAsDelete));
+      writer.addQuad(quad(m, pIssued, literal(r.datetime.toISOString(), xsdDateTime)));
+    }
   }
 
   return new Promise<string>((resolve, reject) => {
