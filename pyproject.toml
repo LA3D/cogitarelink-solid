@@ -30,4 +30,5 @@ testpaths = ["tests/pytest"]
 markers = [
     "integration: tests requiring a running CSS pod",
     "sparql: SPARQL tests requiring Comunica",
+    "memento: Memento (RFC 7089) tests requiring the memento CSS extension",
 ]
