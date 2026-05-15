@@ -98,18 +98,38 @@ docs/plans/      — Architecture design documents
 | Decision lookup | `/decision-lookup` |
 | SBOM update | `/sbom-update` |
 
-| Builder skills (on demand) | Trigger |
+| Solid spec & integration skills (Claude-invokable; `.claude/skills/<name>/SKILL.md`) | Topic |
 |---|---|
-| Scaffold a CSS v8 extension | `/css-extension` |
-| Components.js Override patterns | `/components-override` |
-| MetadataWriter composition | `/metadata-writer` |
-| MonitoringStore CDC (D17) | `/monitoring-store` |
-| Comunica explicit-source queries | `/comunica-sources` |
-| SHACL shape design for Pod content | `/shacl-shapes` |
-| Solid Protocol reference (vendored upstream) | `/solid-spec` |
-| Solid client integration (`@inrupt/solid-client`, harness skills) | `/solid-integration` |
+| `solid-spec` | Solid Protocol, WebID Profile, Solid-OIDC, ACP, WAC (upstream-derived) |
+| `solid-servers` | CSS, Pivot, public servers, Docker, CLI (upstream-derived) |
+| `solid-data-modelling` | Vocabularies, SHACL conventions, Type Index (upstream-derived) |
+| `solid-integration-guide` | Inrupt SDK, solid-client-authn, LDO, N3.js, Bashlib (upstream-derived) |
+| `solid-spec-documents` | Canonical index of Solid specs with version pins (upstream-derived) |
+| `solid-memento` | Memento (RFC 7089) + tombstones (D61-D68, K1) |
+| `solid-affordance-descriptors` | Body-affordance descriptor architecture (D52, D55, D58) |
+| `solid-wiki-memory-l3` | Wiki-memory L3 reference profile (D70-D81, K2-K3) |
+| `solid-storage-description` | Storage description as router (D44, D48, D49) |
 
-Upstream Solid documentation is vendored at `vendor/solid-llm-skills/` (synced from `solid/solid-llm-skills` commit `9a1cab17`, 2026-05-14). See `vendor/solid-llm-skills/README.md` for resync instructions.
+| Builder skills (Claude-invokable; `.claude/skills/<name>/SKILL.md`) | Topic |
+|---|---|
+| `css-extension` | Scaffold a new CSS v8 extension |
+| `components-override` | Components.js Override patterns |
+| `metadata-writer` | MetadataWriter composition (additive Link/Vary headers) |
+| `monitoring-store` | MonitoringStore CDC (D17 + D65) |
+| `comunica-sources` | Comunica explicit-source SPARQL queries |
+| `shacl-shapes` | SHACL shape design conventions |
+
+Upstream solid/solid-llm-skills content lives in `.claude/skills/solid-{spec,servers,data-modelling,integration-guide,spec-documents}/references/spec.md`, synced via `scripts/sync_solid_skills.py`.
+
+## Sync upstream Solid skills
+
+```bash
+~/uvws/.venv/bin/python scripts/sync_solid_skills.py --check  # detect drift
+~/uvws/.venv/bin/python scripts/sync_solid_skills.py          # refresh all
+~/uvws/.venv/bin/python scripts/sync_solid_skills.py solid-spec  # refresh one
+```
+
+Commit message format: `[Agent: Claude] sync: solid-llm-skills <new-sha>`.
 
 ## Git Protocol
 

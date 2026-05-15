@@ -12,7 +12,8 @@ MetadataWriter composition, MonitoringStore CDC — invoke the on-demand skills:
 - `/metadata-writer` — addHeader vs setHeader composition
 - `/monitoring-store` — subscribe pattern, chain serialization, lock pattern
 
-Vendored upstream: `vendor/solid-llm-skills/solid/integration-guide.md` for `@inrupt/solid-client`,
+Upstream reference: invoke the `solid-integration-guide` skill — content at
+`.claude/skills/solid-integration-guide/references/spec.md` covers `@inrupt/solid-client`,
 authn libraries, LDO, N3.js, Bashlib.
 
 ## CSS Extension Architecture (D19)

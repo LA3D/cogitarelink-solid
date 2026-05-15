@@ -3,6 +3,23 @@
 Always loaded. Concise index of all architectural decisions (D1-D81, K1-K3). Vault is canonical source:
 `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
+## Skill cross-reference
+
+Topic-coherent D-clusters surface as Claude Code skills at `.claude/skills/<name>/SKILL.md`:
+
+| Skill | Decisions covered |
+|---|---|
+| `solid-spec` | D14, D44, D75 (Solid Protocol deltas) |
+| `solid-servers` | D1, D28 (CSS architecture + v8 alpha) |
+| `solid-data-modelling` | D34, D46, D77, D78 (vocab + SHACL + class-based targeting) |
+| `solid-integration-guide` | D29, D14 (client libraries + DID bridge) |
+| `solid-storage-description` | D44, D48, D49 (storage description as router) |
+| `solid-affordance-descriptors` | D52, D55, D58 (body-affordance harness) |
+| `solid-memento` | D61-D68, K1, RQ-Memento-1/2 (RFC 7089 + tombstones) |
+| `solid-wiki-memory-l3` | D70-D81, K2-K3, RQ-Listener-1 (L3 reference profile) |
+
+CSS-builder skills (no D-cluster but referenced by many decisions): `css-extension`, `components-override`, `metadata-writer`, `monitoring-store`, `comunica-sources`, `shacl-shapes`.
+
 ## Phase 1 foundation (D1–D28)
 
 D1: CSS + TypeScript extensions + Comunica sidecar — CSS Pod server, CSS extensions for `.well-known/` (WaterfallHandler), Comunica SPARQL-over-LDP sidecar. Python is client-only (importer, SHACL dev, RLM agents)
@@ -95,7 +112,7 @@ K1: `OverrideListInsertAt` against an empty handlers list reproducibly fails wit
 
 ## Phase 5c — Documentation strategy (D69, 2026-05-14)
 
-D69: Two-layer documentation strategy — Pod-resident agent instructions (Layer 1, Rung 1.4 territory: storage description + container `.meta` + affordance descriptors, served via HTTP, tells runtime agents how to navigate THIS Pod) AND repo-resident builder skills (Layer 2, landed 2026-05-14: `.claude/skills/{css-extension,components-override,metadata-writer,monitoring-store,comunica-sources,shacl-shapes,solid-spec,solid-integration}.md` plus `vendor/solid-llm-skills/`, loaded by Claude Code, tells the author how to BUILD the Pod reliably). Layers are orthogonal; D33's "no .claude/ injection" applies only to Layer 1.
+D69: Two-layer documentation strategy — Pod-resident agent instructions (Layer 1, Rung 1.4 territory: storage description + container `.meta` + affordance descriptors, served via HTTP, tells runtime agents how to navigate THIS Pod) AND repo-resident builder skills (Layer 2, restructured 2026-05-15: `.claude/skills/<name>/SKILL.md` subdirectory pattern with frontmatter, including upstream-derived solid-* skills synced via `scripts/sync_solid_skills.py` and local-only deltas; loaded by Claude Code via skill discovery; tells the author how to BUILD the Pod reliably). Layers are orthogonal; D33's "no .claude/ injection" applies only to Layer 1.
 
 ## Phase 5d — Memory substrate stratification (D70–D74, 2026-05-15)
 

@@ -4,9 +4,9 @@ paths: ["**/*.py", "**/*.ts"]
 
 # Solid Protocol Patterns
 
-For full spec reference (WebID, Solid-OIDC, ACP, WAC, Type Index), invoke `/solid-spec` —
-routes to vendored `vendor/solid-llm-skills/solid/spec.md` + this codebase's deltas.
-For client integration patterns, invoke `/solid-integration`.
+For full spec reference (WebID, Solid-OIDC, ACP, WAC, Type Index), invoke the `solid-spec` skill —
+upstream content + this codebase's deltas at `.claude/skills/solid-spec/`.
+For client integration patterns, invoke `solid-integration-guide`.
 
 ## LDP Operations (HTTP)
 
