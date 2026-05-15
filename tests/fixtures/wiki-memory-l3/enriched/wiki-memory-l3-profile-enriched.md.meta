@@ -12,7 +12,7 @@
     dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
     wiki:maturity "draft" ;
     skos:broader </wiki/pages/agentic-memory-systems-moc.md> ;
-    dct:references </wiki/sources/ghumare-llm-wiki-v2-extending-karpathy.md> ;
+    dct:references </wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md> ;
     dct:contributor </wiki/people/karpathy-andrej.md> ;
     prov:wasGeneratedBy </meta/affordances/markdown-projection> ;
     wiki:relevantToProject </project/rung-1-4> .

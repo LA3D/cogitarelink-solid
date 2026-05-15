@@ -8,7 +8,7 @@ Truth function for the `MarkdownProjectionListener`. Tests assert:
 ## Bundle
 - `agentic-memory-systems-moc.md` — `wiki:Concept` (MOC; derives `wiki:Hub` when threshold met)
 - `wiki-memory-l3-profile.md` — `wiki:Concept`
-- `ghumare-llm-wiki-v2-extending-karpathy.md` — `wiki:Source` (external-resource flavor)
+- `ghumare---llm-wiki-v2-extending-karpathy.md` — `wiki:Source` (external-resource flavor; triple-hyphen is the deterministic `slug()` output for "Ghumare - LLM Wiki v2 Extending Karpathy" — the algorithm doesn't collapse consecutive hyphens)
 - `karpathy-andrej.md` — `wiki:Person`
 
 ## Other fixtures
