@@ -1,12 +1,15 @@
 # 01-moc-to-source-titles.rq
 # Start: /wiki/pages/agentic-memory-systems-moc.md
 # Expected: titles of sources cited by concepts that point at this MOC
+# Note: uses absolute URIs — relative IRIs require a base IRI not available
+#       in the Comunica HTTP endpoint context (RQ-Pod-4 explicit-source workaround)
 PREFIX dct:  <http://purl.org/dc/terms/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX wiki: <urn:example:wiki#>
+PREFIX pod:  <http://pod.vardeman.me:3000/wiki/pages/>
 
 SELECT DISTINCT ?source ?title WHERE {
-    ?concept skos:broader </wiki/pages/agentic-memory-systems-moc.md> .
+    ?concept skos:broader <http://pod.vardeman.me:3000/wiki/pages/agentic-memory-systems-moc.md> .
     ?concept dct:references ?source .
     ?source dct:title ?title .
 }

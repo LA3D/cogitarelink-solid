@@ -1,11 +1,16 @@
 # 03-source-creator-roundtrip.rq
 # Start: /wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md
-# Expected: all concepts citing this source AND its creator's name
+# Expected: all concepts citing this source AND its contributor's name
+# Note: uses absolute URIs — relative IRIs require a base IRI not available
+#       in the Comunica HTTP endpoint context (RQ-Pod-4 explicit-source workaround)
+# Note: MarkdownProjectionListener emits dct:contributor for {.author} class hints,
+#       not dct:creator. Query updated accordingly (semantically: contributor =
+#       a person who contributed to or is associated with the source).
 PREFIX dct:  <http://purl.org/dc/terms/>
 
 SELECT ?concept ?conceptTitle ?creatorName WHERE {
-    ?concept dct:references </wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md> .
+    ?concept dct:references <http://pod.vardeman.me:3000/wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md> .
     ?concept dct:title ?conceptTitle .
-    </wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md> dct:creator ?creator .
+    <http://pod.vardeman.me:3000/wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md> dct:contributor ?creator .
     ?creator dct:title ?creatorName .
 }
