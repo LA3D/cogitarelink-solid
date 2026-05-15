@@ -1,0 +1,11 @@
+# 03-source-creator-roundtrip.rq
+# Start: /wiki/sources/ghumare-llm-wiki-v2-extending-karpathy.md
+# Expected: all concepts citing this source AND its creator's name
+PREFIX dct:  <http://purl.org/dc/terms/>
+
+SELECT ?concept ?conceptTitle ?creatorName WHERE {
+    ?concept dct:references </wiki/sources/ghumare-llm-wiki-v2-extending-karpathy.md> .
+    ?concept dct:title ?conceptTitle .
+    </wiki/sources/ghumare-llm-wiki-v2-extending-karpathy.md> dct:creator ?creator .
+    ?creator dct:title ?creatorName .
+}
