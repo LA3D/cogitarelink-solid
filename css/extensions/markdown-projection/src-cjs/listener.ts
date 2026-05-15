@@ -40,7 +40,7 @@ interface ProjectionModule {
     projectionPipeline: { run(uri: string, body: string): Promise<import("n3").Quad[]> };
     governedPredicates: (cls: string) => string[];
     detectClass: (triples: import("n3").Quad[]) => string | undefined;
-    MetaWriter: new() => { replaceGoverned(target: string, projected: import("n3").Quad[], governed: string[]): Promise<void> };
+    MetaWriter: new() => { replaceGoverned(target: string, projected: import("n3").Quad[], governed: string[], resourceUrl?: string): Promise<void> };
 }
 
 let pipelineCache: Promise<ProjectionModule> | null = null;
@@ -191,7 +191,7 @@ export class MarkdownProjectionListener extends Initializer {
         }
 
         const writer = new MetaWriter();
-        await writer.replaceGoverned(fsPath, triples, governed);
+        await writer.replaceGoverned(fsPath, triples, governed, target.path);
         debug(`wrote .meta for ${target.path} (class=${cls}, ${triples.length} triples)`);
     }
 }

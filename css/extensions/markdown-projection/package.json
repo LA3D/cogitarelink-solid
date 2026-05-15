@@ -30,6 +30,7 @@
   "dependencies": {
     "@solid/community-server": "^8.0.0-alpha.3",
     "n3": "^1.17.0",
+    "unist-util-visit": "^5.0.0",
     "yaml": "^2.3.0"
   },
   "devDependencies": {

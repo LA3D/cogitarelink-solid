@@ -32,20 +32,28 @@ export class MetaWriter {
      * Replace all governed-predicate triples in the .meta file with the
      * projected quads, leaving non-governed triples untouched.
      *
-     * @param target    Absolute path to the resource file (NOT the .meta file)
-     * @param projected New triples to write for governed predicates
-     * @param governed  Set of predicate URIs this caller owns
+     * @param target      Absolute path to the resource file (NOT the .meta file)
+     * @param projected   New triples to write for governed predicates
+     * @param governed    Set of predicate URIs this caller owns
+     * @param resourceUrl HTTP URL of the resource (used as base IRI for .meta parsing
+     *                    so that relative URIs in agent-owned triples survive the
+     *                    parse → write → re-parse cycle unchanged)
      */
     async replaceGoverned(
         target: string,
         projected: Quad[],
         governed: string[],
+        resourceUrl?: string,
     ): Promise<void> {
         const metaPath = `${target}.meta`;
         const lockPath = `${metaPath}.lock`;
+        // Base IRI for parsing existing .meta: use the meta-file URL so that
+        // CSS-style relative subjects (<wiki-memory-l3-profile.md>) and PATCH-inserted
+        // self-references (<>) both resolve to absolute URIs and survive the write cycle.
+        const metaBaseIri = resourceUrl ? `${resourceUrl}.meta` : undefined;
 
         await this.withLock(lockPath, async () => {
-            const existing = this.readExisting(metaPath);
+            const existing = this.readExisting(metaPath, metaBaseIri);
             const govSet   = new Set(governed);
 
             // Keep triples whose predicate is NOT in the governed set
@@ -60,11 +68,12 @@ export class MetaWriter {
 
     // -------------------------------------------------------------------------
 
-    private readExisting(metaPath: string): Store {
+    private readExisting(metaPath: string, baseIRI?: string): Store {
         if (!existsSync(metaPath)) return new Store();
         try {
             const ttl = readFileSync(metaPath, "utf8");
-            return new Store(new Parser().parse(ttl));
+            const parser = baseIRI ? new Parser({ baseIRI }) : new Parser();
+            return new Store(parser.parse(ttl));
         } catch {
             return new Store();
         }
