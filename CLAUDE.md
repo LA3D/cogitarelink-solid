@@ -1,7 +1,23 @@
 # cogitarelink-solid
 
-Solid Pod as a knowledge fabric node — bridging document access (LDP containers) and
-graph access (SPARQL) through a navigational meta-structure at `.well-known/`.
+Solid Pod as a general-purpose memory substrate for agentic applications.
+Built from first principles on W3C web standards (LDP, RDF, SHACL, Memento, LDN,
+Solid Notifications) which happen to align with the patterns that
+[[Karpathy LLM Wiki|wiki-memory]], [[ByteRover]], [[AKBP]], [[Supermemory]] and
+others arrive at empirically.
+
+**Three layers** (stratification matters — see [[Memory Substrate vs Memory Profile]]):
+- **L1 — Pod substrate**: LDP / WAC / SPARQL / Memento / `.well-known/` (universal)
+- **L2 — Memory substrate**: seven invariants (bounded branching, tiered retrieval,
+  lifecycle metadata, explicit write + implicit signals, hybrid blob+graph storage,
+  separable procedural memory, OOD honesty)
+- **L3 — Memory profile**: wiki-memory is the canonical reference profile.
+  Vault PARA+SKOS is one application of the wiki-memory L3.
+
+**Dual-layer linking** is the architectural commitment that distinguishes this work:
+markdown wikilinks at the token layer (cheap for LLMs to read, low-ceremony to write) +
+RDF predicates in `.meta` at the data layer (queryable, validatable). Unified by D58's
+body-affordance projection: agent writes typed wikilinks; substrate generates Turtle.
 
 **Vault**: `~/Obsidian/obsidian` — launch with `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`
 
@@ -10,12 +26,15 @@ graph access (SPARQL) through a navigational meta-structure at `.well-known/`.
 Two-container stack: CSS (Solid Pod server) + Comunica (SPARQL-over-LDP sidecar).
 Python is client-only: vault importer CLI, SHACL development, RLM agent substrate.
 
+Build order (current direction): build the wiki-memory L3 reference Pod first;
+vault import becomes a use case of the wiki-memory L3, not the project's MVP.
+
 Sibling repos under `~/dev/git/LA3D/agents/`:
 - `solid-agent-skills` — General-purpose Solid Pod CLI + skills (D29). Phase 2 shipped.
 - `cogitarelink-fabric` — Graph-native fabric nodes (Oxigraph + FastAPI + Credo)
 - `rlm` — RLM agent substrate (dspy.RLM)
 
-See @.claude/rules/decisions-index.md for architectural decisions (D1-D64).
+See @.claude/rules/decisions-index.md for architectural decisions (D1-D74).
 See @.claude/memory/MEMORY.md for experiment state, active plan, and key patterns.
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Unified Externalization Prototype Plan.md (active plan)
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md (phase plan)
@@ -55,7 +74,7 @@ docs/plans/      — Architecture design documents
 
 | Rules (always loaded) | Scope |
 |---|---|
-| `decisions-index.md` | D1-D68 + K1 architectural decisions (vault is canonical) |
+| `decisions-index.md` | D1-D74 + K1 architectural decisions; D5/D32 superseded by D70-D74 wiki-memory L3 framing (vault is canonical) |
 | `python-patterns.md` | fastai style, rdflib, httpx, pyshacl (client-only) |
 | `typescript-patterns.md` | CSS extensions, Components.js, N3.js, Comunica |
 | `rdf-patterns.md` | Turtle, JSON-LD, three-layer Pod RDF |

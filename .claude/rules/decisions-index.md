@@ -9,7 +9,7 @@ D1: CSS + TypeScript extensions + Comunica sidecar — CSS Pod server, CSS exten
 D2: Pod as fabric node type — participates in fabric via `.well-known/` (revised by D42: every node is a Pod)
 D3: Comunica for Pod SPARQL — client-side SPARQL federation over LDP; no data duplication
 D4: Oxigraph deferred — fabric metadata only (revised by D43: Oxigraph is first-class Pod backend)
-D5: Vault-to-Pod as MVP — Agentic Memory Systems concept notes
+D5: Vault-to-Pod as MVP — Agentic Memory Systems concept notes (SUPERSEDED by D70/D71/D72; vault import is one application of wiki-memory L3, not the project MVP)
 D6: Markdown as primary document format — Markdown + YAML; Turtle `.meta` sidecars; JSON-LD navigation
 D7: Frontmatter → RDF via SHACL shape — shape defines predicate vocabulary; default wikilink = `skos:related`
 D8: Solid Type Index as primary machine-actionable navigation — RDF class → container URL (expanded by D45/D48 as view catalog)
@@ -39,7 +39,7 @@ D28: CSS v8 Alpha for development — chosen server, includes `@solidlab/policy-
 D29: General-purpose Solid Pod CLI — `solid-agent-skills` repo under LA3D, built on Bashlib + Comunica; not tied to cogitarelink
 D30: PARA as container structure, memory partitions as metadata overlay — PARA = LDP layout; partitions = `.meta` triples via `vault:memoryPartition`
 D31: `.meta` sidecars as source of truth — replaces YAML frontmatter as authoritative metadata. File-backed: `.meta` is source; graph-backed (D43): named graph is source, `.meta` is projected view
-D32: Model 1 — one-way vault → pod import — vault stays authoring environment; importer decomposes content; no round-trip
+D32: Model 1 — one-way vault → pod import — vault stays authoring environment; importer decomposes content; no round-trip (REFRAMED by D73: round-trip writes are the default at L2 working-memory; one-way is the vault L3's specific authoring discipline)
 D33: Agent-first, self-describing pod — agent discovers memory architecture via WebID → Type Index → VoID → SHACL → SPARQL. No `.claude/` injection
 D34: SKOS as foundation vocabulary — first use of SKOS for end-user content in Solid ecosystem
 D35: `pim:Workspace` for vault workspace — vault as `pim:Workspace` within `pim:Storage`; supports multiple workspaces
@@ -71,7 +71,7 @@ D54: Agentic-memory view — declarative policy at Pod (typed-edge vocab, Fano b
 D55: HATEOAS-correct three-tier access architecture — Tier 1 brute-force (spec-only) + Tier 2 harness (descriptor-aware) + Tier 3 skills (domain-specific). Lower tiers always functional even when higher used
 D56: Adopt Solid Notifications Protocol for change feeds — WebSocket/Webhook/WebPush/LDN channels per use case. D17 TRS remains internal CDC; D56 is external delivery
 D57: Hybrid storage as Verborgh's "hybrid contextualized KG" — blobs (markdown/PDF/iCal) are first-class citizens; `.meta` contextualizes them; both views first-class (formalizes D6/D10/D31/D43)
-D58: Body affordances first-class when descriptor-declared — REVISES D41. With D52 descriptor in place, body wikilinks are equivalent navigation surface to `.meta` triples. CLI reads both, merges with provenance
+D58: Body affordances first-class when descriptor-declared — REVISES D41. With D52 descriptor in place, body wikilinks are equivalent navigation surface to `.meta` triples. CLI reads both, merges with provenance. SHARPENED by D70/D71: implemented via `MarkdownProjectionListener` (analogous to `MementoCommitListener` in Rung 1.1) that materializes `.meta` triples from body wikilinks on write — enables dual-layer linking at single-request cost
 D59: `solid/object` adoption — Phase 4 refactor detail for D47; integrate shape-generation pipeline into `solid-agent-skills` build
 D60: Evaluation methodology — clean Claude Code sub-agents + metric harness + GEPA skill refinement. Compare agent performance across D55 tiers
 
@@ -96,6 +96,20 @@ K1: `OverrideListInsertAt` against an empty handlers list reproducibly fails wit
 ## Phase 5c — Documentation strategy (D69, 2026-05-14)
 
 D69: Two-layer documentation strategy — Pod-resident agent instructions (Layer 1, Rung 1.4 territory: storage description + container `.meta` + affordance descriptors, served via HTTP, tells runtime agents how to navigate THIS Pod) AND repo-resident builder skills (Layer 2, landed 2026-05-14: `.claude/skills/{css-extension,components-override,metadata-writer,monitoring-store,comunica-sources,shacl-shapes,solid-spec,solid-integration}.md` plus `vendor/solid-llm-skills/`, loaded by Claude Code, tells the author how to BUILD the Pod reliably). Layers are orthogonal; D33's "no .claude/ injection" applies only to Layer 1.
+
+## Phase 5d — Memory substrate stratification (D70–D74, 2026-05-15)
+
+Forced by cross-system pattern research (Hermes/Supermemory provider interfaces; ByteRover/MemGPT/xMemory/Hindsight benchmark systems; Karpathy/Ghumare/AKBP/agentmemory wiki-memory). Three independent traditions converge on the same substrate; the layer stratification names what each was groping at.
+
+D70: L1/L2/L3 substrate stratification — **L1** = Pod substrate (LDP/WAC/SPARQL/Memento/`.well-known/`/Solid-OIDC/LDN/Notifications Protocol — universal). **L2** = Memory substrate (seven invariants: bounded branching with typed containment, tiered/progressive retrieval, lifecycle metadata as first-class, explicit write + implicit signals, hybrid blob+graph storage, separable procedural memory, OOD honesty). **L3** = Memory profile (specific edge vocabulary + container layout + consolidation policy). Multiple L3 profiles can coexist on one Pod, scoped via Type Index + SHACL shape catalog + per-container affordance descriptors. The vault PARA+SKOS arrangement is one L3 specialization sitting on top of [[Wiki-Memory L3 Profile|wiki-memory L3]].
+
+D71: Wiki-memory as canonical L3 reference profile — built from first principles on W3C web standards (not copied from Karpathy/AKBP). Page-as-unit; **dual-layer linking** is the architectural commitment: markdown wikilinks at the token layer + RDF predicates in `.meta` at the data layer, unified by D58's body-affordance projection. The convergence with Karpathy/Ghumare/AKBP/agentmemory/Supermemory/ByteRover is empirical evidence for the design, not its source — the W3C stack happens to align because the standards were designed for the same distributed-knowledge problem.
+
+D72: Compile-once principle as substrate guarantee — the substrate maintains compiled, cross-referenced state (`.meta` triples projected from body; Type Index updated on resource creation; SHACL shape catalog cached); agents don't re-derive at query time. Karpathy's "stop re-deriving, start compiling" framing applied as L2 contract. Already true in practice via the importer pipeline; D72 elevates it to a stated substrate guarantee.
+
+D73: Two-stage commit for memory writes — `working-memory/` container accepts low-ceremony body-only writes with permissive SHACL shape (cribbed from [[AKBP - Agent Knowledge Base Protocol|AKBP]]'s `remember`); `mem:Crystallize` operation validates against strict L3 profile shape and promotes to durable container (cribbed from AKBP's `crystallize`). Solves the Mattia83it critique on Ghumare's gist ("event-driven auto-ingest corrupts wikis when LLMs hallucinate") without abandoning the low-ceremony ergonomics agents need.
+
+D74: Memory-substrate trigger vocabulary — `mem:*` AS2 extension delivered via LDN inbox (durable) and Solid Notifications Protocol (real-time): `mem:ConsolidationSuggested`, `mem:BoundExceeded`, `mem:ContradictionDetected`, `mem:ReflectionDue`, `mem:OODQuerySignal`. Each subclasses `as:Announce` / `as:Offer` and carries a SHACL shape. Substrate emits when SHACL rules flip (via MonitoringStore listener — same pattern as Memento commit listener). Agent dispatches by `rdf:type` to skill family. Agent identity has its own WebID + separate inbox, distinct from user inbox. Extends D26 (LDN multiplexing) with the memory-substrate vocabulary; closes the implicit-signals half of D70 invariant #4.
 
 ## Open research questions
 

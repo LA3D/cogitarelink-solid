@@ -1,10 +1,14 @@
 # cogitarelink-solid — Session Memory
 
-## Project State (as of 2026-05-14)
+## Project State (as of 2026-05-15)
 
 **Repo**: `~/dev/git/LA3D/agents/cogitarelink-solid`
-**Branch**: main (commits `f94228c` memento extension, `5891e51` vault importer YAML guard)
-**Status**: Phase 1 + 2 + 2b complete; Phase 2c in flight. Pod reproducible, 1243 vault notes re-imported under expanded importer, SPARQL queryable, agent-navigable. **Round 1 Rung 1.1 closed** — read-only Memento (RFC 7089) shipped with 93 vitest unit + 10 pytest integration tests green. Sibling `solid-agent-skills` shipped Phase 2 (11 commands + 5 skills + 53 tests). Active focus: **Unified Externalization Prototype Plan Round 1** — next gating piece is Rung 1.4 (affordance descriptor) per critical-path-to-eval, with Rung 1.2 (tombstones) as parallel/follow-up correctness work.
+**Branch**: main (commits `f94228c` memento extension, `741e9b8` tombstones, `571385c` decisions-index D69)
+**Status**: Phase 1 + 2 + 2b complete; Phase 2c in flight; **Round 1 Rung 1.1 + 1.2 closed**. Read-only Memento (RFC 7089) + tombstone semantics shipped with 93 vitest unit + 10 pytest integration tests green. Sibling `solid-agent-skills` shipped Phase 2 (11 commands + 5 skills + 53 tests).
+
+**Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to **wiki-memory L3 as canonical reference profile, vault as one application**. Forced by cross-system pattern research across memory-provider plugins, benchmark-tuned memory systems, and wiki-memory implementations — three independent traditions converge on the same substrate. D70–D74 record the stratification. See [[Memory Substrate vs Memory Profile]] and [[Wiki-Memory L3 Profile]] in the vault.
+
+**Active focus**: **Round 1 Rung 1.4 reframed** — affordance descriptor that publishes the L2 substrate contract, with wiki-memory as the test L3 profile. Critical path to Rung 1.5 (first measurable eval). Rung 1.2 tombstones already shipped as parallel correctness work.
 
 ## Sibling Projects (all under `~/dev/git/LA3D/agents/`)
 
@@ -18,11 +22,11 @@
 
 ## Active Plan — Unified Externalization Prototype Plan
 
-Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026-externalization]] framing). Evidence-first publication path. Four rounds compose with Phase 4–6 of `SOLID-Pod-PLAN.md`.
+Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026-externalization]] framing). Built from first principles on W3C web standards (LDP/RDF/SHACL/Memento/LDN/Notifications Protocol), which happen to align with the patterns Karpathy/Ghumare/AKBP/Supermemory/ByteRover have arrived at empirically. Evidence-first publication path. Four rounds compose with Phase 4–6 of `SOLID-Pod-PLAN.md`.
 
 | Round | Claim | Status |
 |---|---|---|
-| **R1 Memento + Affordance Descriptor + Harness Skill** | Pod-published affordance descriptors + RFC 7089 time-travel reduce harness cost vs spec-only navigation | Rung 1.0 ✅ (vocab alignment), Rung 1.1 ✅ (read-only Memento, code-reviewed); Rung 1.4 next (affordance descriptor — critical path to eval) |
+| **R1 Wiki-Memory L3 + Memento + Affordance Descriptor** | Pod-published affordance descriptors over wiki-memory L3 reduce harness cost vs spec-only navigation; RFC 7089 time-travel as substrate-level capability | Rung 1.0 ✅ (vocab alignment), Rung 1.1 ✅ (read-only Memento), Rung 1.2 ✅ (tombstones); Rung 1.4 next (affordance descriptor publishing wiki-memory L3) |
 | R2 Bridge edges with structural pointers | `cito:hasPageRange`/`cito:hasSection` enable demand-driven document granularity | Blocked on R1 |
 | R3 Typed edges as ground truth | SPARQL over frontmatter edges beats flat semantic retrieval for typed graph queries | Minimal new build |
 | R4 Multi-pod federation | Cross-pod federated queries correct + tractable latency | Blocked on R1–3 |
@@ -31,10 +35,10 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 
 - Rung 1.0 ✅ Vocabulary Alignment — see `Memento Vocabulary Alignment.md` in vault
 - Rung 1.1 ✅ Read-only Memento — `css/extensions/memento/` (MementoHttpHandler + MementoCommitListener + MementoLinkMetadataWriter); D65–D68 decisions logged; full code review + Wave 1-5 fixes applied (commit `f94228c`)
-- Rung 1.2 — Tombstone semantics for DELETE (`ldes:DeletedLDPResource` + `as:Delete`) — protocol completeness, not on eval critical path
+- Rung 1.2 ✅ Tombstone semantics for DELETE — `ldes:DeletedLDPResource` + `as:Delete` typing; 410 Gone on plain GET; worktree-first race-safety check (commit `741e9b8`)
 - Rung 1.3 — VC-aware operation gating (routine vs elevated `acp:purgeAllowed`) — also folds in `ResponseDescription` refactor (deferred review finding #10) since both require OperationHttpHandler migration
-- **Rung 1.4 (next, gating)** — Affordance descriptor declaration at storage description root. Critical-path piece for Rung 1.5: the descriptor IS the harness contract the eval tests against
-- Rung 1.5 — First measurable evaluation (B1 filesystem / B2 brute-force pod / T harness pod across navigation + temporal task suite)
+- **Rung 1.4 (next, gating) — REFRAMED**: build wiki-memory L3 reference profile from first principles, then publish its affordance descriptor at storage description root. Per D70–D74, the descriptor expresses both the universal L2 substrate contract AND the wiki-memory L3 vocabulary. The vault becomes one consumer of this L3, not its driver. Critical path to Rung 1.5
+- Rung 1.5 — First measurable evaluation (B1 filesystem / B2 brute-force pod / T harness pod across navigation + temporal task suite, run against wiki-memory L3 reference)
 
 ## Completed Work (Phase 1 + 2 + 2b)
 
@@ -55,22 +59,31 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 - [x] Code review + Wave 1-5 hardening: timemap async, fsPath HttpError, gitLogBefore opt, per-path staging, attach-before-bootstrap, file lock, TimeMap from/until/timegate, link advertisement, gitDir variable, poll-not-sleep tests
 - [x] Rung 1.2 — Tombstone semantics for DELETE: gitLatestOpForPath probe, ldes:DeletedLDPResource + as:Delete typing in TimeMap, 410 Gone on plain GET of tombstoned resource, worktree-first check for race-safety, 410 with Memento-Datetime for ?version= resolving to a deletion commit
 - [x] Builder-skill layer — `.claude/skills/{css-extension,components-override,metadata-writer,monitoring-store,comunica-sources,shacl-shapes,solid-spec,solid-integration}.md` capture lessons learned; `vendor/solid-llm-skills/` vendors upstream Solid reference (commit `9a1cab17`)
+- [x] Cross-system memory-pattern research (2026-05-15) — Hermes/Supermemory provider interfaces, ByteRover/MemGPT/xMemory/Hindsight benchmark systems, Karpathy/Ghumare/AKBP/agentmemory wiki-memory. Three traditions converge. New design notes: `[[Memory Substrate vs Memory Profile]]`, `[[Wiki-Memory L3 Profile]]` in vault Core Concepts. Three new external-resource notes: Ghumare LLM Wiki v2, AKBP, agentmemory
+- [x] D70–D74 substrate stratification (L1/L2/L3 + wiki-memory L3 + compile-once + two-stage commit + memory-substrate trigger vocab)
 - [ ] Phase 2c — markdown-flavor shapes + sidecar validation discipline (in flight)
-- [ ] Phase 4a — storage description as harness root (Round 1 Rung 1.4)
-- [ ] Phase 4b — affordance descriptors (Round 1 Rung 1.4)
+- [ ] **Rung 1.4 (REFRAMED)** — wiki-memory L3 profile spec + affordance descriptor at storage description root publishing both L2 substrate contract and wiki-memory L3 vocabulary
+- [ ] Wiki-memory L3 reference Pod (template + scripts) — built from first principles before vault import work resumes
+- [ ] Vault import path migration — write through wiki-memory L3 surface rather than direct LDP POST
 - [ ] Phase 6a — eval harness (Round 1 Rung 1.5)
 
 ## Key Architecture Patterns
 
-- **Three-tier access (D55)**: brute-force (spec) → harness (descriptors) → skills (`solid-agent-skills`). Lower tiers always functional
+- **L1/L2/L3 stratification (D70)**: L1 = Pod substrate (LDP/WAC/SPARQL/Memento/`.well-known/`); L2 = memory substrate (seven invariants); L3 = memory profile (wiki-memory is canonical reference). Multiple L3 profiles can coexist on one Pod
+- **Wiki-memory as canonical L3 (D71)**: page-as-unit, dual-layer linking (markdown wikilinks at token layer + RDF predicates in `.meta` at data layer, unified by D58 projection), backlinks as first-class, low-ceremony writes. Vault PARA+SKOS is an L4 specialization sitting on top
+- **Dual-layer linking — the architectural commitment**: markdown body carries LLM-readable typed wikilinks; `.meta` sidecar carries SPARQL-queryable typed predicates; `MarkdownProjectionListener` (D58 sharpened) projects body→`.meta` on write
+- **Two-stage commit (D73)**: `working-memory/` permissive shape + `mem:Crystallize` operation to durable container — wiki-edit ergonomics with SHACL guardrails at the durable boundary
+- **Memory-substrate triggers (D74)**: `mem:*` AS2 vocab on LDN inbox (durable) + Solid Notifications Protocol (real-time); agent dispatches by `rdf:type`; agent identity has its own WebID + separate inbox
+- **Three-tier access (D55)**: brute-force (spec) → harness (descriptors) → skills (`solid-agent-skills`). Maps cleanly onto L1 / L1+L2 / L1+L2+L3. Lower tiers always functional
 - **TypeScript-first server** (D1): CSS + extensions + Comunica. Python is client-only (importer + SHACL dev)
 - **Three-layer Pod RDF** (D10): blob content + LDP container structure + `.meta` sidecars + navigation indexes (now Type Index + Storage Description per D44)
-- **PARA as containers, partitions as SKOS** (D30, D34): PARA = hierarchy; partitions = `skos:ConceptScheme` + `dct:type` in `.meta`
 - **Hybrid contextualized KG** (D57): blobs first-class (markdown, PDF, iCal); `.meta` contextualizes; both views legitimate per Verborgh 2022
+- **Compile-once principle (D72)**: substrate maintains compiled, cross-referenced state; agents don't re-derive at query time
 - **Agent-first, self-describing** (D33, D48): every concern is a linked-data resource; follow-your-nose; standard slots over invented endpoints
 - **SHACL as guardrails** (D50): primary defense against agent hallucination at write boundary
 - **`.meta` validation, never body** (D38): RDF Source vs Non-RDF Source split; body affordances first-class when descriptor-declared (D58)
 - **Memento via Trellis convention** (D61): `?ext=timemap`, `?version=<14-digit>`; OriginalResource doubles as TimeGate
+- **PARA + SKOS as L3-specific (D30, D34)**: PARA hierarchy + SKOS ConceptScheme partitions are the vault's L3 specialization — NOT substrate-level
 
 ## Key Files
 
@@ -110,6 +123,13 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 - RQ-Pod-5 (procedural memory location): **`/procedures/` container** with `sh:agentInstruction` in shapes
 
 ## Key Research Findings
+
+### 2026-05-15 — Memory-substrate stratification from cross-system research
+- **Three independent research traditions converge on the same substrate**: memory-provider plugins (Hermes ABC, Supermemory API), benchmark-tuned memory systems (ByteRover, MemGPT, xMemory, Hindsight, Mnemis, MemoryAgentBench, MemoryArena), and wiki-memory implementations (Karpathy, Ghumare, AKBP, agentmemory). Each tradition calls it differently — "provider abstraction", "structural commitments", "knowledge contract below the tools" — but the seven L2 invariants are the same set. AKBP's phrase is cleanest: substrate = the contract that survives when tools change.
+- **W3C web standards are the natural carrier**: built from first principles, the Pod substrate (LDP + RDF + SHACL + Memento + LDN + Notifications + ACP) gives us all seven invariants because the standards were designed for the same distributed-knowledge problem. The convergence is structural, not coincidental. This is not "we copied Karpathy"; this is "first principles plus W3C primitives lands in the same place Karpathy and AKBP land empirically."
+- **Dual-layer linking is the novel architectural commitment**: markdown wikilinks at the token layer + RDF predicates at the data layer, unified by D58 projection. AKBP and agentmemory each have one layer; our wiki-memory L3 has both — token-layer is what LLMs naturally read/write, data-layer is what SPARQL queries over and what federates. `MarkdownProjectionListener` is the concrete mechanism (analogous to `MementoCommitListener`).
+- **Vault import role changes**: the vault is one L3 (or L4) consumer of wiki-memory, not the project's MVP. D5 superseded; D32 reframed. The importer becomes "vault → wiki-memory L3 → Pod" rather than "vault → Pod direct."
+- **`.well-known/solid` already does most of what AKBP's `capabilities` endpoint does**. The Solid stack has been hiding the answer in plain sight; we just had to stratify it correctly.
 
 ### 2026-05-14 — Rung 1.1 implementation
 - **MonitoringStore is the right CDC integration point** (D65). CSS already emits AS.Create/Update/Delete events on every resource write — no need for a fswatch/inotify sidecar. The in-repo ShapeValidationStore precedent (`PassthroughStore` subclass) proves the wrap-store pattern works for write-time hooks; the listener variant works for read-only event subscription.
