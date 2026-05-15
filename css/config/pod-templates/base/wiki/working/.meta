@@ -1,0 +1,9 @@
+@prefix ldp:  <http://www.w3.org/ns/ldp#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix wiki: <urn:example:wiki#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+<> a ldp:Container, ldp:BasicContainer ;
+   dct:title "Working Memory" ;
+   wiki:shape <../../meta/shapes/working.shacl.ttl> ;
+   sh:agentInstruction "Low-ceremony working memory for transient notes, observations, and drafts (D73). Permissive shape: any wiki:WorkingNote. Use mem:Crystallize to promote to a durable container after validation." .

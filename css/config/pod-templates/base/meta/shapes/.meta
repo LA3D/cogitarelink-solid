@@ -1,0 +1,6 @@
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+
+<> a ldp:Container, ldp:BasicContainer ;
+   dct:title "SHACL Shape Catalog" ;
+   dct:description "wiki-memory L3 SHACL shapes (D77). Five shapes: page, source, person, procedure, working." .

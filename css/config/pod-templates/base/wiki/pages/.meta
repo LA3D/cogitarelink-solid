@@ -1,0 +1,9 @@
+@prefix ldp:  <http://www.w3.org/ns/ldp#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix wiki: <urn:example:wiki#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+<> a ldp:Container, ldp:BasicContainer ;
+   dct:title "Wiki Pages" ;
+   wiki:shape <../../meta/shapes/page.shacl.ttl> ;
+   sh:agentInstruction "General wiki content (concepts, MOCs, theory notes, daily notes). Shape: wiki:PageShape (permissive). Use dct:title for the page title, skos:broader for parent concept, skos:related for lateral links." .
