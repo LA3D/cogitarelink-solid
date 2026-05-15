@@ -1,0 +1,31 @@
+{
+  "@context": {
+    "wiki":  "urn:example:wiki#",
+    "dct":   "http://purl.org/dc/terms/",
+    "skos":  "http://www.w3.org/2004/02/skos/core#",
+    "cito":  "http://purl.org/spar/cito/",
+    "foaf":  "http://xmlns.com/foaf/0.1/",
+    "prov":  "http://www.w3.org/ns/prov#",
+    "ldp":   "http://www.w3.org/ns/ldp#",
+    "sh":    "http://www.w3.org/ns/shacl#",
+
+    "title":      "dct:title",
+    "subject":    "dct:subject",
+    "references": "dct:references",
+    "broader":    "skos:broader",
+    "related":    "skos:related",
+    "contributor":"dct:contributor",
+    "creator":    "dct:creator",
+    "extends":    "cito:extends",
+    "supports":   "cito:agreesWith",
+    "criticizes": "cito:disagreesWith",
+
+    "Concept":    "wiki:Concept",
+    "Source":     "wiki:Source",
+    "Person":     "wiki:Person",
+    "Procedure":  "wiki:Procedure",
+    "WorkingNote":"wiki:WorkingNote",
+    "Hub":        "wiki:Hub",
+    "maturity":   "wiki:maturity"
+  }
+}
