@@ -1,0 +1,12 @@
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix wiki:  <urn:example:wiki#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+wiki:PersonShape
+    a sh:NodeShape ;
+    sh:targetClass wiki:Person ;
+    sh:property [ sh:path foaf:nick ; sh:datatype xsd:string ; ] ;
+    sh:property [ sh:path foaf:affiliation ; sh:nodeKind sh:IRI ; ] ;
+    sh:agentInstruction "Person records. foaf:nick captures aliases (Twitter handles, citekey patterns, alternate spellings). Substrate-governed predicates: rdf:type, dct:title, dct:identifier, dct:created, dct:modified, wiki:maturity, foaf:nick, prov:wasGeneratedBy." .
