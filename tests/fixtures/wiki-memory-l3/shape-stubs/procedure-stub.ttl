@@ -1,0 +1,13 @@
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix wiki:  <urn:example:wiki#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+</wiki/procedures/example-procedure>
+    a wiki:Procedure ;
+    dct:title "Example Procedure" ;
+    dct:identifier "example-procedure" ;
+    dct:created "2026-05-15T00:00:00Z"^^xsd:dateTime ;
+    dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
+    wiki:maturity "draft" ;
+    sh:agentInstruction "Execute steps in order. Confirm each step before proceeding." .
