@@ -31,18 +31,7 @@
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
     },
     {
-      "comment": "Replace WorkerParallelInitializer's handlers list with [MementoCommitListener]. KNOWN LIMITATION: this silently drops any upstream additions to ParallelHandler.handlers in future CSS releases. Tried OverrideListInsertAt against the empty list — reproducibly hits a Components.js collectEntries error (likely Components.js bug; see W5.1 task notes). Switch back to InsertAt when fixed upstream or when this list has any upstream entry to anchor to.",
-      "@type": "Override",
-      "overrideInstance": { "@id": "urn:solid-server:default:WorkerParallelInitializer" },
-      "overrideParameters": {
-        "@type": "ParallelHandler",
-        "handlers": [
-          { "@id": "urn:cogitarelink:MementoCommitListener" }
-        ]
-      }
-    },
-    {
-      "comment": "Per RFC 7089 §4.1.1, the OriginalResource must advertise its TimeMap and TimeGate via Link headers on every response, plus Vary: accept-datetime. This writer runs alongside the default LinkRelMetadataWriter; CSS's addHeader accumulates so both contribute to the final Link header.",
+      "comment": "Per RFC 7089 §4.1.1, the OriginalResource must advertise its TimeMap and TimeGate via Link headers on every response, plus Vary: accept-datetime. This writer runs alongside the default LinkRelMetadataWriter; CSS's addHeader accumulates so both contribute to the final Link header. NOTE: WorkerParallelInitializer override moved to markdown-projection.json (both listeners must be in one place).",
       "@id": "urn:cogitarelink:MementoLinkMetadataWriter",
       "@type": "MementoLinkMetadataWriter",
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }

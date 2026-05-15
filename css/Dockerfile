@@ -25,24 +25,32 @@ RUN cd extensions/shape-validator && npx componentsjs-generator -s src -c dist/c
 RUN ln -sf /community-server/extensions/shape-validator /community-server/node_modules/shape-validation-component
 
 # ============================================================================
-# markdown-rdfa — custom markdown→HTML converter with wikilink resolution
+# markdown-render — custom markdown→HTML converter with wikilink resolution
+# (D75: rendered HTML for humans; no RDFa; renamed from markdown-rdfa)
 #
 # Replaces the default MarkdownToHtmlConverter. The converter class is a CJS
-# wrapper (dist-cjs/converter.cjs) that lazy-loads the ESM render pipeline
+# wrapper (dist-cjs/converter.js) that lazy-loads the ESM render pipeline
 # (dist/render.js) via dynamic import(). Components.js metadata is hand-
 # written under dist-cjs/ — we intentionally skip componentsjs-generator
 # because it can't parse dynamic import expressions correctly.
 # ============================================================================
 
-COPY extensions/markdown-rdfa /community-server/extensions/markdown-rdfa
+# shared — markdown-parsing utilities (wikilinks, resolver, predicates) used by
+# both markdown-render and markdown-projection. Must be copied and installed
+# before either extension builds because their tsconfig rootDir=../.. includes
+# ../shared/markdown-parsing/src/*.ts, which imports unified/unist types.
+COPY extensions/shared /community-server/extensions/shared
+RUN cd extensions/shared/markdown-parsing && npm install --ignore-scripts
+
+COPY extensions/markdown-render /community-server/extensions/markdown-render
 
 # Install runtime deps for the ESM rendering pipeline (unified/remark/rehype)
 # plus build-time typescript. @solid/community-server is installed as a
 # devDependency so tsc can type-check against its declarations.
-RUN cd extensions/markdown-rdfa && npm install --ignore-scripts
+RUN cd extensions/markdown-render && npm install --ignore-scripts
 
 # Build both ESM pipeline (src/ → dist/) and CJS wrapper (src-cjs/ → dist-cjs/)
-RUN cd extensions/markdown-rdfa && npm run build
+RUN cd extensions/markdown-render && npm run build
 
 # CRITICAL: replace the extension's @solid/community-server copy with a
 # symlink to the host CSS. We need it at build time for type checking, but at
@@ -53,11 +61,11 @@ RUN cd extensions/markdown-rdfa && npm run build
 # separate class definitions → isRepresentationMetadata(...) returns false
 # inside BasicRepresentation's constructor → falls into the wrong branch →
 # "premature close" on the response pipe.
-RUN rm -rf /community-server/extensions/markdown-rdfa/node_modules/@solid/community-server && \
-    ln -sf /community-server /community-server/extensions/markdown-rdfa/node_modules/@solid/community-server
+RUN rm -rf /community-server/extensions/markdown-render/node_modules/@solid/community-server && \
+    ln -sf /community-server /community-server/extensions/markdown-render/node_modules/@solid/community-server
 
-# Symlink into node_modules so Components.js require('markdown-rdfa') resolves
-RUN ln -sf /community-server/extensions/markdown-rdfa /community-server/node_modules/markdown-rdfa
+# Symlink into node_modules so Components.js require('markdown-render') resolves
+RUN ln -sf /community-server/extensions/markdown-render /community-server/node_modules/markdown-render
 
 # ============================================================================
 # memento — read-only RFC 7089 Memento + git-versioned data dir (Rung 1.1).
@@ -76,3 +84,26 @@ RUN rm -rf /community-server/extensions/memento/node_modules/@solid/community-se
     ln -sf /community-server /community-server/extensions/memento/node_modules/@solid/community-server
 
 RUN ln -sf /community-server/extensions/memento /community-server/node_modules/memento
+
+# ============================================================================
+# markdown-projection — MarkdownProjectionListener (D58/D71/D72).
+# Projects body wikilinks + frontmatter to .meta Turtle on every wiki/*.md write.
+# ESM projection pipeline (src/) + CJS wrapper (src-cjs/) same layering as
+# markdown-render. Components.js metadata hand-written under dist-cjs/.
+# ============================================================================
+
+COPY extensions/markdown-projection /community-server/extensions/markdown-projection
+
+RUN cd extensions/markdown-projection && npm install --ignore-scripts
+
+RUN cd extensions/markdown-projection && npm run build
+
+# Same @solid/community-server symlink trick — class identity must match CSS host
+RUN rm -rf /community-server/extensions/markdown-projection/node_modules/@solid/community-server && \
+    ln -sf /community-server /community-server/extensions/markdown-projection/node_modules/@solid/community-server
+
+# Symlink into node_modules so Components.js require('@cogitarelink/markdown-projection') resolves.
+# npm scoped packages live under node_modules/@cogitarelink/markdown-projection
+RUN mkdir -p /community-server/node_modules/@cogitarelink && \
+    ln -sf /community-server/extensions/markdown-projection \
+       /community-server/node_modules/@cogitarelink/markdown-projection
