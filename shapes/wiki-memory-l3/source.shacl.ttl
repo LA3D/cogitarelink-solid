@@ -1,0 +1,15 @@
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix wiki:  <urn:example:wiki#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+wiki:SourceShape
+    a sh:NodeShape ;
+    sh:targetClass wiki:Source ;
+    sh:property [
+        sh:path dct:identifier ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] ;
+    sh:property [ sh:path dct:creator ; sh:nodeKind sh:IRI ; sh:class wiki:Person ; ] ;
+    sh:agentInstruction "Source records (citations, papers, external resources). dct:identifier is required and unique — citekey for literature, URL for external resources. Substrate-governed predicates: rdf:type, dct:title, dct:identifier, dct:created, dct:modified, wiki:maturity, dct:creator, prov:wasGeneratedBy." .
