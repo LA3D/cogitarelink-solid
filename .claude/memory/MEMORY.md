@@ -4,11 +4,11 @@
 
 **Repo**: `~/dev/git/LA3D/agents/cogitarelink-solid`
 **Branch**: main (commits `f94228c` memento extension, `741e9b8` tombstones, `571385c` decisions-index D69)
-**Status**: Phase 1 + 2 + 2b complete; Phase 2c in flight; **Round 1 Rung 1.1 + 1.2 closed**. Read-only Memento (RFC 7089) + tombstone semantics shipped with 93 vitest unit + 10 pytest integration tests green. Sibling `solid-agent-skills` shipped Phase 2 (11 commands + 5 skills + 53 tests).
+**Status**: Phase 1 + 2 + 2b + Rung 1.4 complete. Read-only Memento (RFC 7089) + tombstone semantics + wiki-memory L3 reference profile (D78–D81) shipped. 134 vitest unit + 19 pytest integration tests green. Sibling `solid-agent-skills` shipped Phase 2 (11 commands + 5 skills + 53 tests).
 
 **Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to **wiki-memory L3 as canonical reference profile, vault as one application**. Forced by cross-system pattern research across memory-provider plugins, benchmark-tuned memory systems, and wiki-memory implementations — three independent traditions converge on the same substrate. D70–D74 record the stratification. See [[Memory Substrate vs Memory Profile]] and [[Wiki-Memory L3 Profile]] in the vault.
 
-**Active focus**: **Round 1 Rung 1.4 reframed** — affordance descriptor that publishes the L2 substrate contract, with wiki-memory as the test L3 profile. Critical path to Rung 1.5 (first measurable eval). Rung 1.2 tombstones already shipped as parallel correctness work.
+**Active focus**: **Round 1 Rung 1.5** — first measurable evaluation (B1 filesystem / B2 brute-force pod / T harness pod across navigation + temporal task suite, run against wiki-memory L3 reference). Rung 1.4 closed 2026-05-15.
 
 ## Sibling Projects (all under `~/dev/git/LA3D/agents/`)
 
@@ -26,7 +26,7 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 
 | Round | Claim | Status |
 |---|---|---|
-| **R1 Wiki-Memory L3 + Memento + Affordance Descriptor** | Pod-published affordance descriptors over wiki-memory L3 reduce harness cost vs spec-only navigation; RFC 7089 time-travel as substrate-level capability | Rung 1.0 ✅ (vocab alignment), Rung 1.1 ✅ (read-only Memento), Rung 1.2 ✅ (tombstones); Rung 1.4 next (affordance descriptor publishing wiki-memory L3) |
+| **R1 Wiki-Memory L3 + Memento + Affordance Descriptor** | Pod-published affordance descriptors over wiki-memory L3 reduce harness cost vs spec-only navigation; RFC 7089 time-travel as substrate-level capability | Rung 1.0 ✅ (vocab alignment), Rung 1.1 ✅ (read-only Memento), Rung 1.2 ✅ (tombstones), Rung 1.4 ✅ closed 2026-05-15 (wiki-memory L3 + affordance descriptor); Rung 1.5 next |
 | R2 Bridge edges with structural pointers | `cito:hasPageRange`/`cito:hasSection` enable demand-driven document granularity | Blocked on R1 |
 | R3 Typed edges as ground truth | SPARQL over frontmatter edges beats flat semantic retrieval for typed graph queries | Minimal new build |
 | R4 Multi-pod federation | Cross-pod federated queries correct + tractable latency | Blocked on R1–3 |
@@ -37,7 +37,7 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 - Rung 1.1 ✅ Read-only Memento — `css/extensions/memento/` (MementoHttpHandler + MementoCommitListener + MementoLinkMetadataWriter); D65–D68 decisions logged; full code review + Wave 1-5 fixes applied (commit `f94228c`)
 - Rung 1.2 ✅ Tombstone semantics for DELETE — `ldes:DeletedLDPResource` + `as:Delete` typing; 410 Gone on plain GET; worktree-first race-safety check (commit `741e9b8`)
 - Rung 1.3 — VC-aware operation gating (routine vs elevated `acp:purgeAllowed`) — also folds in `ResponseDescription` refactor (deferred review finding #10) since both require OperationHttpHandler migration
-- **Rung 1.4 (next, gating) — REFRAMED**: build wiki-memory L3 reference profile from first principles, then publish its affordance descriptor at storage description root. Per D70–D74, the descriptor expresses both the universal L2 substrate contract AND the wiki-memory L3 vocabulary. The vault becomes one consumer of this L3, not its driver. Critical path to Rung 1.5
+- Rung 1.4 ✅ Wiki-memory L3 reference profile — `css/extensions/markdown-projection/` (MarkdownProjectionListener), `css/extensions/markdown-render/` (renamed from markdown-rdfa; RDFa dropped), `css/extensions/shared/markdown-parsing/`, `shapes/wiki-memory-l3/` (6 shapes), JSON-LD context + affordance catalog at `/meta/`; D78–D81 + K2/K3 decisions logged; 41 vitest + 19 pytest tests green (1 xfailed RQ-Listener-1)
 - Rung 1.5 — First measurable evaluation (B1 filesystem / B2 brute-force pod / T harness pod across navigation + temporal task suite, run against wiki-memory L3 reference)
 
 ## Completed Work (Phase 1 + 2 + 2b)
@@ -63,8 +63,15 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 - [x] D70–D74 substrate stratification (L1/L2/L3 + wiki-memory L3 + compile-once + two-stage commit + memory-substrate trigger vocab)
 - [x] D75 (rendered HTML serves humans; RDFa dropped — revises D37); D76 (wiki-memory L3 URI layout, slug algorithm with explicit `@`-strip rule S3a, class-hint resolver, attachment co-location); D77 (five-shape SHACL catalog: page/source/person/procedure/working). L3 spec input for Rung 1.4 implementation now complete
 - [x] Audit of vault-import Python pipeline + markdown-rdfa extension (2026-05-15) — confirmed `MarkdownProjectionListener` doesn't exist yet; the markdown-rdfa extension renders HTML+RDFa (D37 scope) but doesn't project body wikilinks to `.meta` (D58/D71 scope). Reusable modules: `wikilinks.ts`, `predicates.ts`, `resolver.ts`. Importer is frontmatter-only — body wikilinks invisible to SPARQL across 1243 vault notes
+- [x] D78–D81 + K2/K3: class-based shape targeting, hybrid vocab + JSON-LD context, substrate-derived navigation, Model A predicate governance with RQ-Listener-1 caveat
+- [x] markdown-projection extension: MarkdownProjectionListener, MetaWriter with file lock, governed-predicate replacement; 20 unit tests
+- [x] markdown-render extension (renamed from markdown-rdfa): rehype-rdfa dropped, rehype-wikilink-classes added, wikilinks.css shipped; 21 unit tests
+- [x] shared/markdown-parsing module: wikilinks, predicates, resolver, extractWikilinks reused across renderer and projection listener
+- [x] shapes/wiki-memory-l3/: 6 SHACL shape files (ResourceShape + 5 entity shapes)
+- [x] tests/fixtures/wiki-memory-l3/: 4 bundle fixtures, enriched fixture, 2 shape stubs, 3 traversal queries
+- [x] JSON-LD context at /meta/context.jsonld; storage description extended; affordance catalog at /meta/affordances/ with 4 descriptors (markdown-projection, hub-view, breadcrumb-view, memento)
+- [x] Integration tests: round-trip (4), discovery (4), traversal (3), shape validation (6); 6 listener integration tests with 1 xfailed (RQ-Listener-1)
 - [ ] Phase 2c — markdown-flavor shapes + sidecar validation discipline (in flight)
-- [ ] **Rung 1.4 implementation** — (a) rename `css/extensions/markdown-rdfa/` → `markdown-render/`; drop rehype-rdfa step; ship `wikilinks.css` (D75). (b) Build `MarkdownProjectionListener` reusing `wikilinks.ts` + `predicates.ts` + `resolver.ts` modules; wire as MonitoringStore listener parallel to `MementoCommitListener` (D58 sharpened). (c) Ship five-shape catalog at `shapes/wiki-memory-l3/` (D77). (d) Publish L2 substrate contract + L3 affordance descriptor at storage description root
 - [ ] Wiki-memory L3 reference Pod (template + scripts) — built from first principles before vault import work resumes
 - [ ] Vault import path migration — write through wiki-memory L3 surface rather than direct LDP POST; importer becomes a translation table mapping 12+ vault L4 types into 5 L3 shapes
 - [ ] Phase 6a — eval harness (Round 1 Rung 1.5)
@@ -108,14 +115,17 @@ Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026
 
 ## Open Research Questions
 
-- **RQ-Affordance-1**: descriptor format — declarative SHACL vs custom RDF vs hybrid (Round 1 Rung 1.4 forces resolution)
+- **RQ-Affordance-1**: descriptor format — declarative SHACL vs custom RDF vs hybrid (resolved for v1 by D79 hybrid stance; revisit for Rung 1.5)
 - **RQ-Harness-1**: fabric namespace minting at `https://cogitarelink.org/ns/fabric#` — blocks all `fabric:*` predicates past prototype
 - **RQ-Memento-1**: ACP fragmentation across time (D62 known limitation)
 - **RQ-Memento-2**: Comunica `-d` propagation to federated sources (Round 4)
 - **RQ-Federation-1**: cross-pod SPARQL federation works at all (gate for RQ-Memento-2)
 - **RQ-Eval-1/2/3**: task suite, sub-agent config, GEPA convergence (Round 1 Rung 1.5)
-- **RQ-Pod-4**: `.meta` traversal vs pre-built index (blocked by link-traversal `.meta` gap — Comunica skips unparseable content types)
+- **RQ-Pod-4**: `.meta` traversal vs pre-built index (confirmed in Rung 1.4 — Comunica skips `text/markdown` `describedby`; workaround: explicit `default-graph-uri` params; deferred to Rung 1.5+)
 - **RQ-Pod-6**: `.meta` richness vs query overhead (needs 100+ resource benchmarks)
+- **RQ-Listener-1** (new, 2026-05-15): CSS `FileDataAccessor.writeMetadataFile()` overwrites `.meta` on every resource PUT before MonitoringStore event fires — Model A's preserve-agent-triples behavior requires reading pre-write state from alternate source. Mitigation paths: (a) pre-write Memento/git read; (b) `.meta.agent` sidecar CSS never touches; (c) PassthroughStore interception. Integration test xfailed. Rung 1.5 design question.
+- **RQ-Hub-1** (new): Is N=3 the right hub threshold? Eval question for Rung 1.5.
+- **RQ-Discovery-1** (new): Does the 7-step first-arrival ritual scale to agents arriving on cold Pods? Eval question for Rung 1.5.
 
 ## Resolved Research Questions
 

@@ -1,6 +1,6 @@
 # SOLID Pod Decisions Index
 
-Always loaded. Concise index of all architectural decisions. Vault is canonical source:
+Always loaded. Concise index of all architectural decisions (D1-D81, K1-K3). Vault is canonical source:
 `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
 ## Phase 1 foundation (D1–D28)
@@ -119,6 +119,22 @@ D76: Wiki-memory L3 URI layout, slug algorithm, resolver, and attachment convent
 
 D77: Wiki-memory L3 SHACL shape catalog — five shapes, one per D76 container: `wiki:PageShape` (general wiki content, permissive), `wiki:SourceShape` (citation records with `dct:identifier` required), `wiki:PersonShape` (FOAF-based with `foaf:nick` aliases for cross-system linking), `wiki:ProcedureShape` (procedural memory with `sh:agentInstruction` carrying the procedure body), `wiki:WorkingMemoryShape` (permissive per D73). Each carries `sh:agentInstruction` per D50. Flavor-within-shape pattern: 12+ vault L4 note types collapse into 5 L3 shapes distinguished by `.meta` predicates (`vault:kind`, `vault:isMOC`, `vault:isOrganization`) rather than separate containers. The vault L4 specialization extends via shape subclassing without modifying the L3 baseline. Shape files at `shapes/wiki-memory-l3/{page,source,person,procedure,working}.shacl.ttl`.
 
+## Phase 5f — Rung 1.4 implementation decisions (D78–D81, 2026-05-15)
+
+D78: **Class-based shape targeting** — shapes target `rdf:type` (wiki:Concept, wiki:Source, wiki:Person, wiki:Procedure, wiki:WorkingNote) rather than container paths. REVISES D77. Solid Type Index does double duty for routing; SHACL `sh:targetClass` with `rdfs:subClassOf` inference gives automatic shape dispatch. L4 specialization via subclass. **Implementation note**: `sh:class` value-type constraints (e.g., "the target of dct:references must be a wiki:Source") cannot be enforced in per-resource validation because cross-resource targets aren't in the data graph. Shapes use `sh:nodeKind sh:IRI` only; cross-resource integrity belongs in whole-Pod SPARQL ASK checks (deferred to Rung 1.5).
+
+D79: **Hybrid vocabulary stance + JSON-LD context discovery** — DCT/SKOS/CiTO/FOAF/PROV by default; mint `wiki:*` (Resource/Concept/Source/Person/Procedure/WorkingNote/Hub/maturity) only for genuine gaps. JSON-LD context document at `/meta/context.jsonld` is the canonical prefix→IRI registry and the agent's vocabulary discovery surface. REVISES D71. Closes RQ-Vocab-1 by deferring namespace minting via `urn:example:wiki#` placeholder. **Implementation note**: Listener uses hardcoded class-hint table in `wikilinkProjection.ts` rather than reading the JSON-LD context at runtime. Context-driven dispatch is functionally equivalent and deferred to Rung 1.5 (no behavior change, just refactor).
+
+D80: **Substrate-derived navigation classes** — `wiki:Hub` and breadcrumb chains are computed by Comunica CONSTRUCT views (D45 pattern), declared as `wiki:DerivedClassAffordance` / `wiki:DerivedNavigationAffordance` in the affordance catalog. Agent invocation pattern: on-demand for v1 — when agent needs hub info, runs the CONSTRUCT against `/sparql`. No materialization, no push, no D74 trigger. Materialize-then-push deferred to Rung 1.5+ once eval shows latency matters. REVISES D77's `vault:isMOC` predicate.
+
+D81: **Predicate-level governance (Model A)** — SHACL shape declares which predicates the substrate governs. Listener owns triples where (subject = this resource) AND (predicate ∈ governed-set); agent owns everything else. On body write: DELETE governed-predicates, INSERT projection, leave non-governed alone. Sidesteps reification (no named graphs, no RDF-star, no per-triple prov tags). SHACL shapes stay `sh:closed false`; each shape documents its governed set via `sh:agentInstruction`. **Known limitation (RQ-Listener-1)**: CSS `FileDataAccessor.writeMetadataFile()` overwrites the `.meta` file completely on every resource PUT, before the MonitoringStore event fires. So agent enrichment via direct PATCH to `.meta` is lost when the body is rewritten. Mitigation paths for Rung 1.5: (a) read pre-write `.meta` state from Memento/git history before projection; (b) separate `.meta.agent` sidecar that CSS never touches; (c) intercept the PUT at the store layer (PassthroughStore pattern) so projection runs before CSS clears .meta. Unit tests validate Model A logic; integration test marked xfail with this diagnosis.
+
+## Phase 5g — Rung 1.4 implementation notes (2026-05-15)
+
+K2: `slug()` algorithm does not collapse consecutive hyphens. "Ghumare - LLM Wiki v2 Extending Karpathy" produces `ghumare---llm-wiki-v2-extending-karpathy` (triple-hyphen) because " - " (space-hyphen-space) maps each space to `-` independently. Trade-off accepted for v1; collapsing consecutive hyphens is a future refinement.
+
+K3: `.author` class hint projects to `dct:contributor` (not `dct:creator`) in `wikilinkProjection.ts` HINT_TO_PREDICATE. SourceShape allows `dct:creator` (substrate-governed) but the listener never emits it from `.author` class hints. Result: the Phase 1 Ghumare fixture's `dct:creator` was changed to `dct:contributor` to match listener emission. Subsequent SPARQL queries for source authorship must use `dct:contributor`. Rung 1.5 may introduce a distinct `.creator` class hint for sources.
+
 ## Open research questions
 
 RQ-Affordance-1: descriptor format (declarative SHACL vs custom RDF vs hybrid)
@@ -131,8 +147,11 @@ RQ-App-1/2: multi-application composition mechanics; cross-application agent rou
 RQ-View-1: algebraic flows as richer alternative to CONSTRUCT (Phase 3 territory)
 RQ-ACP-1: per-triple ACP via query-rewriting (meccano 2016 pattern)
 RQ-Spec-1: spec issue #715 — SPARQL Update returning to Solid Protocol
-RQ-Pod-4: Comunica `.meta` traversal vs pre-built index (blocked by link-traversal `.meta` gap)
+RQ-Pod-4: Comunica `.meta` traversal vs pre-built index (blocked by link-traversal `.meta` gap; confirmed in Phase 7 — workaround: explicit `default-graph-uri` parameters pointing at `.meta` URLs; materialized SPARQL index deferred to Rung 1.5+)
 RQ-Pod-6: `.meta` richness vs query overhead — needs benchmarks with 100+ resources
+RQ-Listener-1 (new): CSS `.meta` overwrite-order forces Model A's preserve-agent-triples behavior to read pre-write state from an alternate source. Solutions to evaluate: pre-write Memento read, agent-sidecar `.meta.agent`, or PassthroughStore interception.
+RQ-Hub-1 (from spec): Is N=3 the right hub threshold? Eval question for Rung 1.5.
+RQ-Discovery-1 (from spec): Does the 7-step first-arrival ritual scale to agents arriving on cold Pods? Eval question for Rung 1.5.
 
 ## References
 
