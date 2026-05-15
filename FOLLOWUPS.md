@@ -7,8 +7,10 @@ Things to come back to. Open items only; closed items move to commit history and
 ### Critical — deferred to Rung 1.5 eval
 
 - [ ] **RQ-Listener-1: Model A preservation across CSS .meta overwrite**.
-  `test_agent_enrichment_survives_body_rewrite` xfailed with diagnosis. Three mitigation paths analyzed in `docs/plans/2026-05-15-rq-listener-1-mitigation-design.md`.
-  Decision criterion: if Rung 1.5 eval surfaces real agent-extension use cases (agents PATCHing `.meta` outside the governed set), pick option (B) `.meta.agent` sidecar — clean semantics, revises D81 with successor D82. If eval shows agents never extend, reframe the xfail as documentation.
+  `test_agent_enrichment_survives_body_rewrite` xfailed with diagnosis. Mitigation paths:
+  - Paths (A) Memento-history read, (B) `.meta.agent` sidecar, (C) PassthroughStore wrap analyzed in `docs/plans/2026-05-15-rq-listener-1-mitigation-design.md`.
+  - Path (D) RDF-star triple-level provenance + reification shim explored in `docs/plans/2026-05-15-rdf-star-provenance-exploration.md` — **candidate, not committed**. Avoids the `.meta.agent` sidecar entirely by partitioning substrate vs agent triples via `prov:wasGeneratedBy` annotations on quoted triples. Tooling probe: N3.js ready, CSS conneg ready with overrides, rdflib lacks RDF-star (hard blocker for Python clients) — ~50 LOC reification shim closes that gap by serving classical `rdf:Statement` reification to non-star clients. Decision criteria documented; promotes to D82 only when Rung 1.5 eval evidence justifies.
+  Decision criterion (general): if Rung 1.5 eval surfaces real agent-extension use cases (agents PATCHing `.meta` outside the governed set), pick between paths (B) and (D) based on whether per-triple provenance is load-bearing for RLM behavior. If eval shows agents never extend, reframe the xfail as documentation.
 
 ### Small — fix when needed
 
