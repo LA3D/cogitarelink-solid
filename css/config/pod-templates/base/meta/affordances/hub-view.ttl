@@ -1,0 +1,22 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix wiki: <urn:example:wiki#> .
+
+<> a wiki:DerivedClassAffordance ;
+   rdfs:label "Hub derivation for wiki resources" ;
+   wiki:deriveClass wiki:Hub ;
+   wiki:targetClass wiki:Resource ;
+   wiki:invokedAt </sparql> ;
+   wiki:threshold 3 ;
+   sh:agentInstruction "A wiki:Resource is a wiki:Hub when at least 3 distinct wiki:Resource instances point at it via skos:broader. Run the CONSTRUCT below against /sparql to materialize hub triples in-memory." ;
+   wiki:constructQuery """
+        PREFIX wiki: <urn:example:wiki#>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        CONSTRUCT { ?hub a wiki:Hub . }
+        WHERE {
+            SELECT ?hub (COUNT(DISTINCT ?child) AS ?n) WHERE {
+                ?child skos:broader ?hub .
+                ?hub a wiki:Resource .
+            } GROUP BY ?hub HAVING (?n >= 3)
+        }
+   """ .

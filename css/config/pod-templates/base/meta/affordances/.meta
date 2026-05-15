@@ -1,0 +1,6 @@
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+
+<> a ldp:Container, ldp:BasicContainer ;
+   dct:title "Affordance Catalog" ;
+   dct:description "Discoverable L3 capabilities of this Pod." .
