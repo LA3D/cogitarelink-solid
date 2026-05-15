@@ -32,6 +32,6 @@
         "aliases" ,
         "identifier" ,
         "citekey" ;
-    wiki:classHintTable <../context.jsonld> ;
+    wiki:classHintTable </meta/context.jsonld> ;
     sh:agentInstruction
         "Substrate writes the predicates listed in wiki:governs. To express any of those, edit the body+frontmatter; do not PATCH .meta directly. Other predicates are agent-extensible." .
