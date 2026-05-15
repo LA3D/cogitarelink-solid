@@ -1,274 +1,261 @@
-# Rung 1.5 Eval Matrix — Testing the Wiki-Memory L3 Hypotheses
+# Rung 1.5 Eval Matrix — Prioritize the Unknown
 
-**Surfaced**: 2026-05-15 evening (after second epistemic audit)
-**Status**: Plan — to be reviewed/refined before any eval runs
-**Relates to**: H-D82, D58, D71, D77, D78, D81, RQ-Listener-1, RQ-Affordance-2/3/4, RQ-Hub-1, RQ-Discovery-1
+**Surfaced**: 2026-05-15 evening
+**Revised**: 2026-05-15 evening (second revision — corrected cost framing + reprioritized around actual unknowns)
+**Status**: Plan — execution-ready via Claude Code skill-creator harness
+**Relates to**: H-D82, D44, D52, D58, D71, D77, D78, D81, RQ-Listener-1, RQ-Affordance-2/3/4, RQ-Hub-1, RQ-Discovery-1
 **Sibling docs**: `2026-05-15-d82-listener-extension-plan.md`, `2026-05-15-akbp-to-w3c-mapping.md`; vault `[[Affordance Spectrum for Agentic Memory]]`
 
 ---
 
-## Purpose
+## Revision history
 
-Most of the wiki-memory L3 spec (D70–D82) is **design-space conjecture**, not measurement. Only two cited systems carry peer-reviewed benchmark evidence: ByteRover (96.1% LoCoMo, with flat untyped pointers) and xMemory (BLEU+23%, hierarchical theme clustering). AKBP, Penfield, DOT-LD, Karpathy gist, and Ghumare gist are all unmeasured design proposals. The original "research convergence" framing in the L3 spec aggregated measured + unmeasured systems with equal evidentiary weight.
+**v1 (superseded)**: 6-arm matrix (B0/B1/B2/T-meta/T-class/T-jsonld) × 20 tasks × 5–10 reps = ~1,200 sub-agent runs. Priced naively against raw Anthropic API token rates ($1,800–6,000). **Two problems**: (1) wrong execution model — Claude Code's skill-creator pattern runs evals as sub-agents under the existing subscription, no per-token billing; (2) wrong priority — most of the arms test architectural questions where prior evidence already exists.
 
-This document specifies the **Rung 1.5 eval matrix that turns the L3 spec from "ratified decisions" into "hypotheses to test."** The eval result determines which architectural commitments survive contact with measurement.
-
----
-
-## The six arms
-
-Each arm is a fully-functional system the agent can author to and query from. All arms get the same task suite; the only differences are storage architecture and authoring affordance.
-
-### B0 — Plain filesystem (zero structure)
-
-| Aspect | Spec |
-|---|---|
-| Storage | Plain markdown files in a directory tree |
-| Body markdown | Bare `[[Note]]` wikilinks only; no typing |
-| Frontmatter | None (or only `created:` timestamp) |
-| Graph layer | None |
-| Authoring | Agent uses Edit / Write directly on files |
-| Retrieval | Agent uses grep / Glob / Read |
-
-**Floor**: tests whether ANY of our architecture beats raw filesystem.
-
-### B1 — ByteRover replica
-
-| Aspect | Spec |
-|---|---|
-| Storage | Plain markdown files (same as B0) |
-| Body markdown | Bare `[[Note]]` + flat untyped `@domain/topic/file.md` cross-references in a "Relations" section |
-| Frontmatter | AKL lifecycle: `importance` (0–100), `maturity` (draft/validated/core with hysteresis), `recency` (decay), `access_count`, `update_count`, `created_at`, `updated_at` |
-| Graph layer | None (frontmatter is the only typed data) |
-| Authoring | Agent generates body + frontmatter directly |
-| Retrieval | 5-tier: exact hash cache → fuzzy cache (Jaccard ≥ 0.6) → BM25 (MiniSearch) → single LLM call → full agentic loop |
-
-**Tests**: does ByteRover's measured architecture transfer to our task suite? If yes, this is the new floor and any T-arm must beat it.
-
-### B2 — AKBP-replica Pod
-
-| Aspect | Spec |
-|---|---|
-| Storage | Solid Pod (CSS) — same infrastructure as T-arms |
-| Body markdown | **Plain prose only**, no wikilinks, no typing in body |
-| Frontmatter | Minimal (created, modified) |
-| Graph layer | `.meta` Turtle written via `solid-agent-skills` CLI structured operations (parallel to AKBP's `akbp.remember` / `akbp.crystallize`) |
-| Authoring | Agent calls `solid-pod create` for new resource, `solid-pod patch` for typed-edge writes — never types in body |
-| Retrieval | Comunica SPARQL over `.meta` |
-
-**Tests**: does the AKBP-style architecture (which we just argued against) actually perform worse? If B2 ≈ T-class, our D58 body→`.meta` projection commitment is unjustified.
-
-### T-meta — Frontmatter-only typing on Pod
-
-| Aspect | Spec |
-|---|---|
-| Storage | Solid Pod |
-| Body markdown | Plain prose + bare `[[Note]]` wikilinks for navigation |
-| Frontmatter | Typed edge fields (`concept:`, `extends:`, `supports:`, etc.) — same as the Obsidian vault uses today |
-| Graph layer | `.meta` projected from frontmatter via existing `frontmatterProjection.ts` |
-| Authoring | Agent writes body + typed frontmatter |
-| Retrieval | Comunica SPARQL over `.meta` |
-
-**Tests**: does in-band class-hint syntax (T-class) add value over frontmatter-only typing? If T-meta ≈ T-class, the body wikilink projection complexity is unjustified.
-
-### T-class — Rung 1.4 baseline (what we shipped)
-
-| Aspect | Spec |
-|---|---|
-| Storage | Solid Pod |
-| Body markdown | `[[Note]]{.class}` typed wikilinks per D36/D58 + bare wikilinks |
-| Frontmatter | Typed edge fields (same as T-meta) |
-| Graph layer | `.meta` projected from BOTH class-hint wikilinks AND frontmatter |
-| Authoring | Agent writes body with class hints + frontmatter |
-| Retrieval | Comunica SPARQL over `.meta` |
-
-**Tests**: this is the *current* shipped state. Whether to extend it (T-jsonld) or simplify it (T-meta, B2) depends on the surrounding arms.
-
-### T-jsonld — D82 hypothesized extension
-
-| Aspect | Spec |
-|---|---|
-| Storage | Solid Pod |
-| Body markdown | `[[Note]]{.class}` + inline `json-ld` code blocks for rich claims |
-| Frontmatter | Typed edge fields (same as T-class) |
-| Graph layer | `.meta` projected from class-hint wikilinks + frontmatter + extracted JSON-LD blocks |
-| Authoring | Agent writes body + class hints + inline JSON-LD for confidence/evidence/supersession |
-| Retrieval | Comunica SPARQL over `.meta` |
-
-**Tests**: H-D82.b — does the level-4 affordance add value over level-2 alone?
-
-**Implementation gate**: T-jsonld requires the listener extension specified in `2026-05-15-d82-listener-extension-plan.md`, which requires RQ-Listener-1 resolution. **Phase-2 of this eval; run only after Phase-1 (B0/B1/B2/T-meta/T-class) results justify the implementation cost.**
+**v2 (this revision)**: focus on what we actually don't know. Use Claude Code skill-creator harness. Defer architectural-comparison arms.
 
 ---
 
-## Task suite
+## What we already have evidence for (do NOT re-test)
 
-Six task categories. Each category has 3–5 specific tasks; specific tasks pre-registered before any arm runs to prevent post-hoc selection.
-
-### Category 1 — Navigation
-
-Given a starting resource, traverse N hops to reach a target.
-
-- **N1**: 1-hop forward — "Starting from `[[Context Graphs]]`, what does it extend?" → expect `[[Knowledge Graphs]]`.
-- **N2**: 1-hop reverse (backlinks) — "What notes extend `[[Knowledge Graphs]]`?"
-- **N3**: 2-hop with type discrimination — "From `[[Context Graphs]]`, find the literature note that establishes its provenance" (requires following `dct:source` not `skos:related`).
-- **N4**: 3-hop — "From `[[Context Graphs]]`, find what criticizes a paper that influenced it."
-
-**What this tests**: whether typed edges help discrimination at 2+ hops. ByteRover's flat `@path` should fail N3-style discrimination tasks; the question is whether real agent task distributions actually contain these patterns or if 1-hop navigation dominates.
-
-### Category 2 — Multi-hop reasoning
-
-Synthesize information across multiple resources to answer a question.
-
-- **M1**: "What do we know about the Fano bound across vault notes?" (requires aggregating from xMemory note + Memory Partitions + Hierarchical Retrieval theory)
-- **M2**: "Compare the typed-edge approaches in ByteRover vs Supermemory vs our wiki-memory L3" (requires reading 3+ notes, identifying salient differences)
-- **M3**: "What are the unresolved research questions in cogitarelink-solid?" (requires aggregating RQ-* across decisions log + plans)
-
-**What this tests**: whether structured retrieval beats flat retrieval when the question needs cross-document synthesis.
-
-### Category 3 — Temporal (Memento)
-
-Answer questions about resource state at a specific time.
-
-- **T1**: "What did `[[Wiki-Memory L3 Profile]]` say about Penfield Labs syntax on 2026-05-15 morning vs evening?" (validates Memento time-travel + finding the correction)
-- **T2**: "When was the convergence-framing claim corrected in the L3 spec?" (requires temporal predicate + change detection)
-- **T3**: "Show the version history of the affordance spectrum scale across this session."
-
-**What this tests**: whether the Memento infrastructure shipped in Rung 1.1+1.2 is usable for actual agent tasks. (Pod-only; B0/B1 don't have Memento, so this category only compares B2/T-meta/T-class/T-jsonld.)
-
-### Category 4 — Contradiction-handling
-
-Identify and resolve conflicting claims.
-
-- **C1**: "Find two notes that disagree about X" (substrate must surface the disagreement, not just retrieve top-k)
-- **C2**: "Given a new claim that contradicts an existing one, propose a supersession edge"
-- **C3**: "What claims in the vault have been superseded but not removed?"
-
-**What this tests**: whether structured supersession (Memento + `dct:isReplacedBy`) outperforms flat similarity retrieval (which would return both contradictory claims as equally valid).
-
-### Category 5 — OOD honesty
-
-Recognize when a query is outside stored knowledge.
-
-- **O1**: "What does this vault say about quantum chromodynamics in agent memory?" → expect "no relevant notes" or "out of scope"
-- **O2**: "Find sources on Byzantine consensus protocols" → expect OOD signal
-- **O3**: "What's the optimal embedding dimensionality for RAG?" (tangentially relevant — measure whether the agent hallucinates a confident answer or signals uncertainty)
-
-**What this tests**: whether the substrate gives the agent enough information to refuse / signal OOD vs. confabulate. ByteRover has explicit OOD detection (BM25 confidence < 0.85); our Pod has `void:vocabulary` declarations + `mem:OODQuerySignal` triggers. Open question whether either actually triggers honest OOD behavior at the agent layer.
-
-### Category 6 — Authoring
-
-Agent creates new memory from a conversation snippet or external source.
-
-- **A1**: "Write a new concept note about X" — measure schema compliance, link quality, typing completeness
-- **A2**: "Update note Y to reflect new claim Z with confidence 0.8 and evidence from source W" — measure correct use of confidence/evidence affordances per arm
-- **A3**: "Mark claim X as superseded by claim Y" — measure correct supersession typing per arm
-
-**What this tests**: authoring affordance quality. Particularly informs H-D82.b/c — can agents reliably emit inline JSON-LD for rich claims (T-jsonld) vs. using structured API (B2) vs. just frontmatter (T-meta)?
-
----
-
-## Metrics
-
-For every task in every arm, record:
-
-| Metric | What it measures | How |
+| Prior evidence | Source | What it establishes |
 |---|---|---|
-| **Success (binary)** | Did agent produce the correct answer? | LLM-as-judge with rubric per task; human spot-check on N=20% |
-| **Success (graded)** | Quality of partial answers | 1–5 Likert scale per task; LLM-as-judge |
-| **Tokens (input)** | Cost of context loaded | Sum from API responses |
-| **Tokens (output)** | Cost of agent reasoning | Sum from API responses |
-| **Latency p50/p95** | Wall-clock per task | N=5–10 runs per (arm, task) cell |
-| **Schema compliance (authoring only)** | Does the produced artifact validate? | SHACL validation against the arm's shape catalog |
-| **Predicate accuracy (authoring only)** | Right predicates for right relationships | LLM-as-judge against ground truth |
-| **SPARQL-queryability (authoring only)** | Can subsequent queries find the agent's claims? | Re-run a probe query against the resulting graph |
+| Markdown-as-substrate works for agent memory | ByteRover, peer-reviewed, 96.1% LoCoMo / 92.8% LongMemEval-S | A flat markdown corpus + BM25 + LLM curation outperforms specialized memory systems on standard benchmarks |
+| Bounded hierarchical retrieval beats flat top-k | xMemory, peer-reviewed ICML 2026 | Fano bound $n_k \leq 12$ holds empirically; structure-first dominates retrieval-algorithm choice (60% of gain comes from organization) |
+| Knowledge graphs work for retrieval | GraphRAG literature (LightRAG, HippoRAG, KAG, MAGMA, etc.) | Typed-edge KGs improve multi-hop reasoning over flat embedding retrieval |
+| LLMs understand W3C vocabularies well | Proto-knowledge paper + qualitative observation | Pre-training exposure to DC/SKOS/PROV-O/CITO/FOAF/schema.org means W3C predicates are *not* foreign to current LLMs |
+| Lifecycle metadata helps | ByteRover AKL (importance/maturity/recency with hysteresis) | Active consolidation + decay outperforms flat append-only |
+| W3C standards substrate is viable | LDP, SHACL, JSON-LD, Memento, LDN spec ratifications + this project's Rung 1.1+1.2 shipped | Mechanical foundations work |
+
+**Implication**: do not waste eval budget re-testing whether markdown-with-typing beats plain filesystem, whether KGs help retrieval, or whether LLMs can read W3C vocab. These are settled. The original B0/B1/B2/T-* matrix was largely re-running settled questions.
 
 ---
 
-## Controls
+## What we don't have evidence for — the actual targets
 
-- **Same LLM across arms.** Pick one — Opus 4.7 by default; Sonnet 4.6 as a cheaper secondary run. Document which.
-- **Same eval harness.** Reuse the `cogitarelink-fabric` Claude Code sub-agent harness pattern.
-- **Same task suite.** Pre-register tasks before any arm runs.
-- **N=5–10 repetitions per (arm, task) cell** for variance estimation.
-- **Random task ordering per arm** to avoid order effects.
-- **Identical retrieval budgets across arms** where applicable (max tokens, max iterations).
-- **No human-in-the-loop intervention** — fully autonomous agent runs.
-- **Pre-registered task seeds** so reruns are reproducible.
+The novel architectural commitments of cogitarelink-solid wiki-memory L3 are **affordance discovery, schema interpretation, and round-trip consistency**. These are the unknowns:
+
+| Unknown | Why it matters |
+|---|---|
+| **Affordance navigation** — does an agent arriving cold actually discover and use storage description + Type Index + per-container affordance descriptors (D44, D52)? | If agents don't follow `.well-known/solid` → storage description → catalog → descriptors → schema → resource as designed, the Pod self-description architecture is fiction |
+| **Schema interpretation** — does `sh:agentInstruction` (SHACL 1.2 §8.3) actually guide agents to produce conformant resources? | This is the load-bearing mechanism of D50, D77, D78. Untested whether agents read and apply shape guidance correctly |
+| **Round-trip consistency** — does what the agent writes round-trip correctly through SPARQL retrieval, and is the agent's behavior reliable across reps? | Basic functionality gate. If consistency < 80%, no architectural comparison matters yet |
+| **In-band class-hint value** (H-D82.a) | Does `[[Note]]{.class}` add value over plain `[[Note]]` for typed navigation? Distinct from "does typing help" (settled) — specifically about the body-vs-frontmatter location choice |
+| **Inline JSON-LD authoring quality** (RQ-Affordance-2) | Can LLM agents reliably emit valid JSON-LD code blocks with W3C predicates? Gate for H-D82.b |
+
+These are the high-value experiments. Each tests something not previously measured.
 
 ---
 
-## Decision rules
+## Execution model — Claude Code skill-creator harness
 
-What each result pattern implies. Pre-register these before running so we can't rationalize post-hoc:
+The skill-creator skill (`~/.claude/plugins/marketplaces/anthropic-agent-skills/skills/skill-creator/SKILL.md`) provides the eval pattern Claude Code uses internally. Reuse it:
 
-| Observation | Conclusion | Action |
+1. **Sub-agent spawning** via the `Agent` tool — each eval task = one sub-agent invocation.
+2. **Workspace layout**: `wiki-memory-l3-eval-workspace/iteration-N/eval-<ID>/{arm-A,arm-B,...}/outputs/`.
+3. **Eval metadata** per task in `eval_metadata.json` — prompt + assertions + arm config.
+4. **Token/duration capture** from sub-agent completion notifications → `timing.json`.
+5. **Grader sub-agent** (per `agents/grader.md`) — evaluates assertions, writes `grading.json`.
+6. **Programmatic assertions** preferred over LLM-as-judge wherever possible (e.g., SHACL validation pass, SPARQL probe queries).
+7. **Aggregation** via `scripts/aggregate_benchmark` → `benchmark.json` + `.md`.
+8. **HTML viewer** via `eval-viewer/generate_review.py` for human review of outputs.
+
+**Why this matters for cost**: each sub-agent run is folded into the existing Claude Code subscription, not metered separately. The v1 dollar estimates ($1,800–6,000) were wrong because they used raw API per-token pricing. Real costs are:
+
+- **Quota** — sub-agent calls consume Max subscription quota; ~5-hour rolling windows matter at scale. 50–100 runs is comfortable; 1,000+ in a tight window will hit limits.
+- **Wall-clock** — each agent run is ~30s–5min. 50 runs ≈ 2–4 hours of wall-clock if serial; ~30–60 min if parallelized to ~5 concurrent.
+- **Human review** — viewing outputs in the HTML viewer + leaving feedback. Real but bounded.
+- **Engineering** — writing the assertions, setting up arm-specific Pod states, interpreting results. The biggest real cost.
+
+No per-token dollar billing.
+
+---
+
+## The four high-value experiments
+
+Each spec'd to be ready-to-run with existing Rung 1.4 infrastructure (no new code for E1/E2/E3; light setup for E4).
+
+### E1 — Cold-start affordance discovery
+
+**Unknown**: does an agent arriving at a Pod with zero out-of-band instruction discover and use `.well-known/solid` → storage description → Type Index → per-container affordance descriptors?
+
+**Arms** (Pod states):
+
+| Arm | Pod state |
+|---|---|
+| A1.1 — Bare LDP | LDP containers only. No `.well-known/`, no Type Index, no `/meta/affordances/`. Pod root returns `ldp:contains` listing |
+| A1.2 — Storage description router | + D44 storage description at `.well-known/solid` with `rdfs:seeAlso` to catalog containers; + Type Index for class→container routing |
+| A1.3 — Full affordance catalog | A1.2 + per-container affordance descriptors at `/meta/affordances/` with `sh:agentInstruction` (full Rung 1.4 state) |
+
+**Tasks** (n=3 reps each):
+
+- T1.1 "Find all concepts in this Pod" — tests Type Index discovery
+- T1.2 "What resource types does this Pod support?" — tests storage description reading
+- T1.3 "Find the source cited by `<context-graphs.md>`" — tests cross-resource navigation via descriptors
+
+**Assertions** (programmatic where possible):
+
+- ✅ **Found correct answer** (LLM-as-judge against ground truth)
+- ✅ **Steps to answer** (count tool calls from transcript — programmatic)
+- ✅ **Read storage description** (check transcript for `.well-known/solid` GET — programmatic)
+- ✅ **Read affordance descriptor** (check for `/meta/affordances/` access — programmatic)
+- ✅ **Used correct query pattern** (LLM-as-judge or pattern-match)
+
+**Decision rule** (pre-registered):
+
+- If A1.1 ≈ A1.2 ≈ A1.3 on success rate → affordance investment is not justified. Defer further investment in storage description / affordance catalog.
+- If A1.3 > A1.2 > A1.1 → affordance investment is justified at full richness. Continue with current direction.
+- If A1.2 ≈ A1.3 on success but A1.3 uses fewer steps → per-container descriptors add efficiency but storage description is sufficient. Decide based on agent latency tolerance.
+
+**Runs**: 3 arms × 3 tasks × 3 reps = **27 sub-agent runs.** Plus 27 grader runs = 54 total.
+
+### E2 — Schema interpretation → valid authoring
+
+**Unknown**: does an agent given SHACL shapes with `sh:agentInstruction` produce conformant resources, or does it hallucinate predicates/structure?
+
+**Arms**:
+
+| Arm | Available schema documentation |
+|---|---|
+| A2.1 — No schema docs | Agent given only the task prompt + existing example resources in the container; must reverse-engineer |
+| A2.2 — SHACL + `sh:agentInstruction` | Shape file with embedded procedural guidance |
+| A2.3 — SHACL + JSON-LD context + worked example | Full Rung 1.4 documentation surface |
+
+**Tasks** (n=3 reps each):
+
+- T2.1 "Create a literature note for paper X by author Y in venue Z" — tests SourceShape conformance
+- T2.2 "Create a concept note about X that extends Y and is criticized by Z" — tests ConceptShape + multiple edge predicates
+- T2.3 "Add a procedure note for workflow X with three steps" — tests ProcedureShape with `sh:agentInstruction` body
+
+**Assertions** (mostly programmatic):
+
+- ✅ **SHACL validation pass** (run `pyshacl` over produced `.meta`)
+- ✅ **Required predicates present** (SPARQL ASK probe)
+- ✅ **No hallucinated predicates outside vocabulary** (filter against context.jsonld registry)
+- ✅ **Correct subject = current resource** (D81 Model A check)
+- ✅ **Subjective: well-structured prose body** (LLM-as-judge)
+
+**Decision rule**:
+
+- If A2.1 ≈ A2.3 on SHACL pass rate → agents can reverse-engineer from examples, schema docs add little
+- If A2.3 > A2.1 but A2.2 ≈ A2.3 → SHACL alone is sufficient; JSON-LD context is extra ceremony with no agent benefit
+- If A2.3 > A2.2 > A2.1 → full descriptor set is justified
+
+**Runs**: 3 arms × 3 tasks × 3 reps = **27 sub-agent runs.** Plus grader = 54 total.
+
+### E3 — Round-trip consistency
+
+**Unknown**: does the substrate behave reliably? Does what the agent writes round-trip correctly? Does the same task at different times give the same answer?
+
+**Single arm**: T-class (Rung 1.4 baseline). This isn't a comparative experiment — it's a reliability gate.
+
+**Tasks** (n=5 reps each, same task identical reps):
+
+- T3.1 "Create a concept note X. Then in the same session, retrieve and summarize X." — tests single-session round-trip
+- T3.2 "What concepts exist in this Pod?" — run 5 identical reps with no Pod state changes — tests inter-rep consistency
+- T3.3 "What's the most-extended concept in this Pod?" — tests SPARQL discovery consistency across reps
+
+**Assertions**:
+
+- ✅ **Round-trip success** (does retrieval find what was written? — programmatic SPARQL probe)
+- ✅ **Inter-rep consistency** (did 5 reps give the same answer? — programmatic string-similarity / set-equality)
+- ✅ **Variance bounds** (tool-call count stddev / N runs; output token stddev / N runs — programmatic)
+
+**Decision rule** (gate, not comparative):
+
+- If round-trip success < 95% → there's a substrate bug, not a research result. Fix first.
+- If inter-rep consistency < 80% on identical tasks → behavior is too noisy for further comparison; investigate root cause (LLM nondeterminism vs prompt sensitivity vs substrate randomness) before running E1/E2/E4.
+- If both are ≥ 80% → we're good to run comparative experiments.
+
+**Runs**: 3 tasks × 5 reps = **15 sub-agent runs.** Plus grader = 30 total.
+
+### E4 — In-band class-hint value (H-D82.a)
+
+**Unknown**: do body-located `[[Note]]{.class}` hints outperform frontmatter-only typing for agent navigation tasks?
+
+**Run only if E1 shows affordances work at all** (otherwise the substrate-level signal is the bottleneck, not the typing-location detail).
+
+**Arms**:
+
+| Arm | Body typing | Frontmatter typing |
 |---|---|---|
-| B0 ≈ B1 ≈ B2 ≈ T-* | All architecture is overhead for our tasks | Abandon project, or rescope to tasks where structure matters |
-| B0 < B1 ≪ B2 ≈ T-* | Lifecycle metadata + Pod help; typed edges don't | Adopt B1 (ByteRover) or B2 (AKBP); drop wiki-memory L3 |
-| B1 ≈ T-meta < T-class | Frontmatter typing ≈ no typing; body typing helps | Keep T-class; drop the frontmatter-typing simplification |
-| B2 ≈ T-class | Body→`.meta` projection adds no value over parallel surfaces | Drop D58; adopt AKBP-style architecture; ship `solid-pod` CLI as primary interface |
-| T-meta ≈ T-class | In-band class hints don't help over frontmatter | Drop the listener; agents write frontmatter, not body class hints |
-| T-class < T-jsonld | Inline JSON-LD blocks add measurable value | Ratify H-D82; ship listener extension |
-| T-class ≥ T-jsonld | JSON-LD overhead not justified | Refute H-D82.b; do not ship listener; document negative result; revisit affordance-spectrum framing |
-| Authoring quality decreases as affordance level rises | Higher-cost affordances harder for LLM to author correctly | Cap affordance ceiling at the level where authoring stays reliable |
+| A4.1 — Plain wikilinks | `[[Note]]` only | None |
+| A4.2 — Frontmatter only (T-meta) | `[[Note]]` only | Typed edge fields |
+| A4.3 — Class-hint (T-class, Rung 1.4 baseline) | `[[Note]]{.class}` | Typed edge fields |
+
+**Tasks** (n=3 reps each):
+
+- T4.1 "From `[[X]]`, find what it extends" — `.extends` discrimination required
+- T4.2 "From `[[X]]`, find what criticizes it" — `.criticizes` reverse-edge discrimination
+- T4.3 "What sources are cited across all concepts in this Pod?" — `.source` aggregation across body
+- T4.4 "Find any related note to `[[X]]`" — control: bare wikilink should suffice
+
+**Assertions**:
+
+- ✅ **Found correct answer** (LLM-as-judge against ground truth)
+- ✅ **Used typed edge discrimination** (transcript inspection — did agent leverage edge types or brute-force?)
+- ✅ **Steps to answer** (tool-call count)
+
+**Decision rule**:
+
+- If A4.1 ≈ A4.3 → typing doesn't help our task domain; drop both projection and frontmatter typing
+- If A4.2 ≈ A4.3 → frontmatter typing is sufficient; drop class-hint projection (D58 unjustified)
+- If A4.3 > A4.2 > A4.1 → class-hint projection is justified; **this is the result that supports keeping D58**
+- T4.4 (control) should be ≈ across all arms — if it isn't, there's a confound
+
+**Runs**: 3 arms × 4 tasks × 3 reps = **36 sub-agent runs.** Plus grader = 72 total.
 
 ---
 
-## Sequencing
+## Sequencing — pilot to full
 
-Two phases. Phase 1 runs with existing infrastructure; Phase 2 is conditional.
+| Tier | What runs | Run count | Purpose |
+|---|---|---|---|
+| **Pilot (smoke)** | E1 × 1 task × 1 rep × 3 arms | 3 + grader = 6 | Validates harness wiring; checks output format; reveals task-prompt issues before scaling |
+| **E3 (gate)** | Round-trip consistency | 15 + grader = 30 | Confirms substrate is reliable enough for comparative experiments. If it fails, stop here and debug substrate |
+| **E1 (full)** | Cold-start affordance discovery | 27 + grader = 54 | First high-value comparison — does the affordance architecture work? |
+| **E2** | Schema interpretation | 27 + grader = 54 | Second high-value comparison — does `sh:agentInstruction` actually guide authoring? |
+| **E4** | In-band class-hint value (H-D82.a) | 36 + grader = 72 | H-D82.a test, conditional on E1 showing affordances work |
+| **Total** | | **~210 sub-agent runs** | Across 3–5 hours of wall-clock if parallelized to ~5 concurrent |
 
-### Phase 1 — Eval with existing arms (B0, B1, B2, T-meta, T-class)
+If E4 is positive and we want to test inline JSON-LD blocks (H-D82.b):
+- Requires implementing the listener extension (`2026-05-15-d82-listener-extension-plan.md`)
+- Requires RQ-Listener-1 resolution
+- Adds ~30–50 more runs
 
-**Effort estimate**: ~2 weeks total
+If we want the original B0/B1/B2 architectural comparison (substrate-choice arms):
+- Adds B1 (ByteRover replica) + B2 (AKBP-replica) builds — significant engineering work
+- Adds ~50–100 more runs
+- Deferred unless E1/E2 results suggest the choice between Pod-with-affordances vs ByteRover-with-lifecycle is genuinely contested
 
-1. **Build B0 harness** (~1 day) — markdown directory + grep/Glob retrieval skill
-2. **Build B1 harness** (~3–5 days) — ByteRover replica. Could reimplement minimal subset (frontmatter lifecycle + BM25 via MiniSearch + 2-tier retrieval; skip the LLM-curation pipeline for v1)
-3. **Build B2 harness** (~2 days) — existing Pod, agent uses `solid-agent-skills` CLI only, no body wikilinks
-4. **Set up T-meta harness** (~1 day) — existing Pod with frontmatter-only projection (turn off class-hint extraction in `wikilinkProjection.ts`)
-5. **T-class is current Rung 1.4 state** — no work needed
-6. **Pre-register task suite** (~2 days) — write concrete tasks for all 6 categories
-7. **Run eval** (~3–5 days) — automated, but needs human checking for quality
-8. **Analyze + write up results** (~2–3 days)
+---
 
-**Output of Phase 1**: data on B0/B1/B2/T-meta/T-class. Decision: do we proceed to Phase 2 (T-jsonld)?
+## Cost (realistic estimate)
 
-### Phase 2 — T-jsonld (conditional on Phase 1 results)
+No per-token billing — these run under the existing Claude Code subscription. Real costs:
 
-Run ONLY if:
-- T-class > B2 in Phase 1 (body→`.meta` projection has value), AND
-- The "rich claims" task categories (4, 6) show ceiling on T-class that JSON-LD might address
+| Cost dimension | Pilot + E3 + E1 + E2 + E4 (~210 runs) |
+|---|---|
+| **Quota (Max subscription)** | Tractable; not pushing limits if spread over 1–2 days |
+| **Wall-clock** | ~3–5 hours total if parallelized to ~5 concurrent sub-agents; ~half-day to a full day if serial |
+| **Human review time** | ~1–2 hours total (viewer interaction across iterations) |
+| **Engineering setup** | ~1 day to write assertions + spin up A1.1/A1.2/A1.3 Pod variants + write tasks + set up workspace |
+| **Total elapsed (calendar)** | ~2–3 working days from "let's run E1–E4" to "we have benchmark.json + analyst pass" |
 
-If both conditions hold:
-1. **Resolve RQ-Listener-1** (~1 week — pick A/B/C/D from mitigation menu, implement)
-2. **Build T-jsonld harness** (~1 week — listener extension per `2026-05-15-d82-listener-extension-plan.md`)
-3. **Run T-jsonld arm against same task suite** (~3–5 days)
-4. **Analyze + compare T-jsonld vs T-class** — decide whether to ratify H-D82 as D82
+The 210-run figure is right-sized for actual decisions — large enough for statistical signal with n=3 reps; small enough to fit in a focused work block.
 
 ---
 
 ## What this eval will NOT settle
 
-Honest scoping — things outside the scope of this eval:
+Out of scope for Rung 1.5 (deferred to later rounds):
 
-- **Federation across pods** (Round 4 territory). Single-pod eval only.
-- **Multi-agent coordination** (deferred to later rounds).
-- **Production scale** — synthetic task suite, not 100B+ tokens/mo.
-- **Vault-flavored L4** — eval uses generic wiki-memory L3 content; vault-specific PARA/SKOS layering tested separately.
-- **Agent identity / WebID flows** — single fixed identity per arm.
-- **Notification protocol triggers** — D74 `mem:*` trigger vocabulary tested in a different round.
-
----
-
-## Risks / open questions
-
-- **Q1**: Are LLM-as-judge graded scores reliable across the 6 task categories? May need human spot-checks beyond 20%, especially for authoring quality.
-- **Q2**: Is the B1 ByteRover replica faithful enough to their measured architecture? Their 5-tier retrieval is complex; minimal subset may miss what makes them strong.
-- **Q3**: How do we ensure the agent doesn't preferentially use whichever affordance it was shown last (priming effects)? Random task ordering helps but isn't perfect.
-- **Q4**: Tasks are written by us — selection bias toward tasks where our preferred architecture wins. Mitigate by having someone external (vault collaborator) review the task suite before pre-registration.
-- **Q5**: Should we include real Obsidian vault content as task fixtures, or synthetic? Synthetic is cleaner but may not transfer to actual use. Compromise: bootstrap with synthetic, validate with vault subset.
-- **Q6**: How do we measure "rich claim authoring quality" objectively? Schema compliance is binary; quality is graded. Need clear rubric.
+- **Federation across Pods** — Round 4 territory
+- **Multi-agent coordination** — later round
+- **Production-scale latency** — synthetic task suite, not 100B+ tokens/mo
+- **GEPA convergence** (RQ-Eval-3) — substantial separate eval; defer until single-shot eval shows the architecture is worth optimizing
+- **Vault-flavored L4 specialization** — generic wiki-memory L3 here; vault PARA/SKOS tested separately
+- **The original 6-arm architectural comparison (B0/B1/B2 vs T-*)** — most of those arms re-test settled questions; defer unless E1/E2 results surface genuine architectural alternatives to evaluate
 
 ---
 
@@ -276,24 +263,61 @@ Honest scoping — things outside the scope of this eval:
 
 Pre-stating expected payoffs:
 
-1. **Whether the Pod architecture beats plain filesystem** for our task domain (B1/B2/T-* vs B0).
-2. **Whether body typing beats `.meta`-only typing** (T-class vs T-meta).
-3. **Whether body→`.meta` projection beats parallel surfaces** (T-class vs B2).
-4. **Whether inline JSON-LD blocks add value** (T-jsonld vs T-class) — IF Phase 2 runs.
-5. **Whether W3C vocab is no worse than `wiki:*`** — sub-eval in Phase 2.
-6. **Which task categories most distinguish architectures** — informs future eval design.
+1. **Whether agents actually discover and use Pod affordances** (E1) — gates the entire wiki-memory L3 thesis
+2. **Whether `sh:agentInstruction` works as guidance** (E2) — gates D50, D77, D78
+3. **Whether the substrate is reliable enough for further work** (E3) — gates everything
+4. **Whether body class-hint typing is justified** (E4) — gates H-D82.a and D58 projection
+5. **Where the agent's affordance-interpretation bottleneck actually is** — informs what to optimize next
 
-This is the doc that turns the wiki-memory L3 from a spec we believe in to a spec we've measured. Until it runs, **all of D70–D82 are v1 design choices, not validated decisions**.
+This is the doc that turns the wiki-memory L3 from a spec we believe in into a spec we've measured *on the right questions*. Until it runs, **all of D70–D82 are v1 design choices, not validated decisions**.
+
+---
+
+## Workspace layout (per skill-creator pattern)
+
+```
+~/dev/git/LA3D/agents/cogitarelink-solid/
+└── eval-workspace/wiki-memory-l3/
+    └── iteration-1/
+        ├── eval-E1-T1.1-cold-discovery/
+        │   ├── A1.1-bare-ldp/
+        │   │   ├── outputs/        # agent's final response + any artifacts
+        │   │   ├── transcript.txt  # full agent turn-by-turn
+        │   │   ├── timing.json     # total_tokens, duration_ms
+        │   │   └── grading.json    # assertions + pass/fail
+        │   ├── A1.2-storage-desc/
+        │   └── A1.3-full-catalog/
+        ├── eval-E1-T1.2-supported-types/
+        ├── eval-E2-T2.1-literature-note/
+        ├── ...
+        ├── benchmark.json          # aggregated stats
+        ├── benchmark.md            # human-readable summary
+        └── eval-viewer-output.html # generated by generate_review.py
+```
+
+Each eval directory holds the three or so arms compared on that task. `benchmark.json` aggregates across all evals for the iteration.
+
+---
+
+## Pre-registration
+
+To prevent post-hoc rationalization:
+
+1. Before any eval runs, this document gets committed (it's now committed) with all tasks, arms, assertions, and decision rules.
+2. Modifications during a run are recorded as `iteration-1-amendments.md` with date and rationale.
+3. Results are written up regardless of outcome — negative results are valuable.
 
 ---
 
 ## References
 
-- [[Affordance Spectrum for Agentic Memory]] — foundational concept note (vault); design vocabulary
+- `~/.claude/plugins/marketplaces/anthropic-agent-skills/skills/skill-creator/SKILL.md` — eval harness pattern
+- `~/.claude/plugins/marketplaces/anthropic-agent-skills/skills/skill-creator/agents/grader.md` — grader sub-agent spec
+- `~/.claude/plugins/marketplaces/anthropic-agent-skills/skills/skill-creator/references/schemas.md` — JSON schema for eval_metadata.json, grading.json, benchmark.json
+- [[Affordance Spectrum for Agentic Memory]] — design vocabulary
 - `decisions-index.md` Phase 5h — H-D82 hypothesis spec
-- `2026-05-15-d82-listener-extension-plan.md` — T-jsonld implementation plan, eval-gated
-- `2026-05-15-akbp-to-w3c-mapping.md` — vocabulary translation reference (structural; behavioral pending eval)
-- `2026-05-15-rq-listener-1-mitigation-design.md` — RQ-Listener-1 mitigation menu
-- [[@nguyen-2026-byterover|ByteRover paper]] — B1 replica source
-- [[AKBP - Agent Knowledge Base Protocol]] — B2 replica source
-- `cogitarelink-fabric` repo — eval harness pattern
+- `2026-05-15-d82-listener-extension-plan.md` — T-jsonld implementation plan, gated on E4 + RQ-Listener-1
+- `2026-05-15-akbp-to-w3c-mapping.md` — vocabulary translation reference
+- [[@nguyen-2026-byterover|ByteRover]] — prior evidence: markdown-as-substrate works
+- [[@hu-2026-beyond-rag|xMemory]] — prior evidence: bounded hierarchical retrieval works
+- `cogitarelink-fabric` repo — eval harness reuse pattern

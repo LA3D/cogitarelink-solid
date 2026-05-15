@@ -175,9 +175,13 @@ H-D82 (HYPOTHESIS, not ratified decision): **Dual body affordance + W3C vocabula
 
 **Why hypothesis-not-decision**: AKBP (a primary source of the affordance framing) is itself unmeasured. The 0–6 affordance spectrum is useful *design vocabulary* but predicts no measurement outcome. Ratifying H-D82 without eval data would label speculation as commitment. **D77/D78/D81 are also v1 choices, not ratified decisions** — same epistemological status as H-D82; all tested in the Rung 1.5 eval matrix.
 
-**Implementation gates** (BOTH must hold before any code lands):
-1. **RQ-Listener-1 mitigation chosen and shipped** — agent triples must survive body rewrites.
-2. **Rung 1.5 eval must show T-jsonld > T-class** on at least one task category. If T-class ≥ T-jsonld, H-D82.b is refuted; ship T-class as final.
+**Implementation gates** (ALL must hold before listener extension code lands):
+1. **Rung 1.5 E1 must show affordances work** — if cold-start affordance discovery (E1: A1.1 vs A1.2 vs A1.3) shows the affordance architecture doesn't actually help agents navigate, the entire wiki-memory L3 direction is in doubt and H-D82.b is moot.
+2. **Rung 1.5 E4 must support H-D82.a** — if body class-hints `{.class}` don't add value over frontmatter typing, then inline JSON-LD blocks (which build on the same in-band typing thesis) won't either.
+3. **RQ-Listener-1 mitigation chosen and shipped** — agent triples must survive body rewrites.
+4. **Rung 1.5 E5 (conditional) must show inline JSON-LD adds value** beyond class-hints. If not, ship class-hints as final, document the negative result.
+
+See `docs/plans/2026-05-15-rung-1-5-eval-matrix.md` for the experiment-by-experiment specification, decision rules, and sequencing (Pilot → E3 gate → E1 → E2 → E4 → optionally E5). Total ~210 sub-agent runs via Claude Code skill-creator harness; no per-token billing (folded into existing subscription).
 
 **See also**: [[Affordance Spectrum for Agentic Memory]] (foundational design vocabulary, also reframed as hypothesis-bearing); `docs/plans/2026-05-15-d82-listener-extension-plan.md` (implementation design, eval-gated); `docs/plans/2026-05-15-akbp-to-w3c-mapping.md` (vocabulary translation table, structurally correct; behavioral claims pending eval); `docs/plans/2026-05-15-rung-1-5-eval-matrix.md` (the eval matrix that tests this hypothesis along with D77/D78/D81 et al).
 

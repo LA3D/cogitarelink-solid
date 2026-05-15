@@ -129,11 +129,15 @@ This subtly changes D81: agent-owned predicates can now arrive via body write, n
 
 ## Dependencies
 
-### Hard blockers (BOTH required before any code lands)
+### Hard blockers (ALL required before any code lands)
 
-1. **Rung 1.5 eval must support H-D82.b.** Specifically: T-jsonld arm > T-class arm on at least one task category (rich-claim retrieval, evidence-aware reasoning, or supersession-aware update). If T-class ≥ T-jsonld, this plan is shelved as a documented negative result. See `docs/plans/2026-05-15-rung-1-5-eval-matrix.md`.
+1. **Rung 1.5 E1 must show affordances work** — if cold-start affordance discovery doesn't beat bare LDP (E1 A1.3 ≈ A1.1), the entire wiki-memory L3 direction is in doubt and JSON-LD blocks won't fix it.
 
-2. **RQ-Listener-1 must be resolved.** Inline JSON-LD that includes agent-owned predicates needs the same preservation guarantee as direct PATCH. See `docs/plans/2026-05-15-rq-listener-1-mitigation-design.md` for the (A)/(B)/(C) mitigation menu — pick one before shipping the listener extension.
+2. **Rung 1.5 E4 must support H-D82.a** — if in-band class-hint typing doesn't beat frontmatter-only typing, inline JSON-LD blocks (which build on the same in-band typing thesis) won't either. E4 is the precursor to H-D82.b; if E4 negative, this plan is shelved.
+
+3. **Rung 1.5 E5 (added experiment, conditional on E4 positive) must show JSON-LD blocks add value over class-hints.** Define E5 task suite focused on rich claims (confidence-aware retrieval, evidence-aware reasoning, supersession-aware update). If class-hints ≈ JSON-LD on rich claims, this plan is shelved as a documented negative result.
+
+4. **RQ-Listener-1 must be resolved.** Inline JSON-LD that includes agent-owned predicates needs the same preservation guarantee as direct PATCH. See `docs/plans/2026-05-15-rq-listener-1-mitigation-design.md` for the (A)/(B)/(C) mitigation menu — pick one before shipping the listener extension.
 
 ### Implementation-time prerequisites
 
