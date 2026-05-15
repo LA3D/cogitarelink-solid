@@ -1,7 +1,16 @@
 @prefix dct:   <http://purl.org/dc/terms/> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:    <http://www.w3.org/ns/shacl#> .
 @prefix wiki:  <urn:example:wiki#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+# Class hierarchy — required for rdfs:subClassOf inference so that
+# ResourceShape applies automatically to all entity sub-classes.
+wiki:Concept      a rdfs:Class ; rdfs:subClassOf wiki:Resource .
+wiki:Source       a rdfs:Class ; rdfs:subClassOf wiki:Resource .
+wiki:Person       a rdfs:Class ; rdfs:subClassOf wiki:Resource .
+wiki:Procedure    a rdfs:Class ; rdfs:subClassOf wiki:Resource .
+wiki:WorkingNote  a rdfs:Class ; rdfs:subClassOf wiki:Resource .
 
 wiki:ResourceShape
     a sh:NodeShape ;

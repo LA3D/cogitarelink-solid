@@ -11,5 +11,5 @@ wiki:SourceShape
         sh:minCount 1 ; sh:maxCount 1 ;
         sh:datatype xsd:string ;
     ] ;
-    sh:property [ sh:path dct:creator ; sh:nodeKind sh:IRI ; sh:class wiki:Person ; ] ;
+    sh:property [ sh:path dct:creator ; sh:nodeKind sh:IRI ; ] ;
     sh:agentInstruction "Source records (citations, papers, external resources). dct:identifier is required and unique — citekey for literature, URL for external resources. Substrate-governed predicates: rdf:type, dct:title, dct:identifier, dct:created, dct:modified, wiki:maturity, dct:creator, prov:wasGeneratedBy." .

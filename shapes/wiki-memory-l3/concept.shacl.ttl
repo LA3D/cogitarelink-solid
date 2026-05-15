@@ -7,12 +7,12 @@
 wiki:ConceptShape
     a sh:NodeShape ;
     sh:targetClass wiki:Concept ;
-    sh:property [ sh:path skos:broader ;     sh:nodeKind sh:IRI ; sh:class wiki:Resource ; ] ;
-    sh:property [ sh:path skos:related ;     sh:nodeKind sh:IRI ; sh:class wiki:Resource ; ] ;
+    sh:property [ sh:path skos:broader ;     sh:nodeKind sh:IRI ; ] ;
+    sh:property [ sh:path skos:related ;     sh:nodeKind sh:IRI ; ] ;
     sh:property [ sh:path dct:subject ;      sh:nodeKind sh:IRI ; ] ;
-    sh:property [ sh:path dct:references ;   sh:nodeKind sh:IRI ; sh:class wiki:Source ; ] ;
-    sh:property [ sh:path dct:contributor ;  sh:nodeKind sh:IRI ; sh:class wiki:Person ; ] ;
-    sh:property [ sh:path cito:extends ;     sh:nodeKind sh:IRI ; sh:class wiki:Concept ; ] ;
+    sh:property [ sh:path dct:references ;   sh:nodeKind sh:IRI ; ] ;
+    sh:property [ sh:path dct:contributor ;  sh:nodeKind sh:IRI ; ] ;
+    sh:property [ sh:path cito:extends ;     sh:nodeKind sh:IRI ; ] ;
     sh:property [ sh:path cito:agreesWith ;  sh:nodeKind sh:IRI ; ] ;
     sh:property [ sh:path cito:disagreesWith ; sh:nodeKind sh:IRI ; ] ;
     sh:agentInstruction "Concept pages. Substrate writes these predicates by projecting body+frontmatter: rdf:type, dct:title, dct:identifier, dct:created, dct:modified, wiki:maturity, skos:broader, skos:related, dct:subject, dct:references, dct:contributor, cito:extends, cito:agreesWith, cito:disagreesWith, prov:wasGeneratedBy. To express any of these, edit the body or frontmatter; do not PATCH .meta directly. Other predicates are agent-extensible." .
