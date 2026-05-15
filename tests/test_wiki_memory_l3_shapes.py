@@ -11,7 +11,7 @@ SHAPE_ROOT = Path(__file__).parent.parent / "shapes" / "wiki-memory-l3"
 BUNDLE_FIXTURES = [
     "agentic-memory-systems-moc.md.meta",
     "wiki-memory-l3-profile.md.meta",
-    "ghumare-llm-wiki-v2-extending-karpathy.md.meta",
+    "ghumare---llm-wiki-v2-extending-karpathy.md.meta",
     "karpathy-andrej.md.meta",
 ]
 
