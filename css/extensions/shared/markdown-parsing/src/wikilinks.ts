@@ -20,6 +20,32 @@ import type { WikilinkResolver } from "./resolver.js";
 const WIKILINK_RE =
   /\[\[([^\]\|]+?)(?:\|([^\]]+?))?\]\](?:\{\.([a-zA-Z][\w-]*)\})?/g;
 
+// ---------------------------------------------------------------------------
+// Light-weight extraction — used by MarkdownProjectionListener (D58/D71) to
+// pull wikilink targets + class hints from a raw markdown string WITHOUT
+// running the full remark AST pipeline. No resolver is needed; the caller
+// (wikilinkProjection.ts) applies the S3a slug algorithm and container routing.
+// ---------------------------------------------------------------------------
+export interface WikilinkRef {
+  /** Raw wikilink target text, e.g. "Agentic Memory Systems MOC" or "@zhang-2025-rlm" */
+  title: string;
+  /** Optional Pandoc class hint, e.g. "broader" | "source" | "author" | undefined */
+  classHint?: string;
+}
+
+/**
+ * Extract all wikilink references from a raw markdown body string.
+ * Does not resolve URIs — returns title + optional class hint only.
+ */
+export function extractWikilinks(body: string): WikilinkRef[] {
+  const out: WikilinkRef[] = [];
+  for (const m of body.matchAll(WIKILINK_RE)) {
+    const [, target, , klass] = m;
+    out.push({ title: target.trim(), classHint: klass ?? undefined });
+  }
+  return out;
+}
+
 export interface WikilinkOptions {
   resolver: WikilinkResolver;
 }

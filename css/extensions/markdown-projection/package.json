@@ -1,0 +1,23 @@
+{
+  "name": "@cogitarelink/markdown-projection",
+  "version": "0.1.0",
+  "description": "MarkdownProjectionListener: projects body wikilinks + frontmatter to .meta Turtle triples (D58/D71). CSS v8 MonitoringStore listener extension.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@solid/community-server": "^8.0.0-alpha.3",
+    "n3": "^1.17.0",
+    "yaml": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
