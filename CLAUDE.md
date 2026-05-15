@@ -34,7 +34,7 @@ Sibling repos under `~/dev/git/LA3D/agents/`:
 - `cogitarelink-fabric` — Graph-native fabric nodes (Oxigraph + FastAPI + Credo)
 - `rlm` — RLM agent substrate (dspy.RLM)
 
-See @.claude/rules/decisions-index.md for architectural decisions (D1-D77).
+See @.claude/rules/decisions-index.md for architectural decisions (D1-D81).
 See @.claude/memory/MEMORY.md for experiment state, active plan, and key patterns.
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Unified Externalization Prototype Plan.md (active plan)
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md (phase plan)
@@ -62,8 +62,14 @@ See @.claude/rules/python-patterns.md for details.
 
 ```
 css/config/      — CSS Components.js configuration (file backend, WAC)
-css/extensions/  — TypeScript CSS component package (Phase 2: .well-known/ handlers)
-shapes/          — SHACL shapes for Pod content (concept-note, project-note, daily-note)
+css/extensions/
+  markdown-render/          — (renamed from markdown-rdfa) rehype-based markdown→HTML; wikilinks.css (D75)
+  markdown-projection/      — body wikilinks → .meta projection via MonitoringStore listener (D58/D71/D81)
+  memento/                  — RFC 7089 Memento support (MementoCommitListener + TimeGate + TimeMap)
+  shared/markdown-parsing/  — wikilinks, predicates, resolver modules (reused by renderer + projection)
+shapes/
+  wiki-memory-l3/           — 6 SHACL shapes: resource + concept + source + person + procedure + working (D77/D78)
+  *.ttl                     — legacy shapes (concept-note, project-note, daily-note)
 ontology/        — PROF SolidPodProfile + cached ontology stubs (SKOS, DC, PROV-O)
 scripts/         — Python CLI tools (vault importer, SPARQL query)
 tests/           — pytest conformance + integration tests
@@ -74,7 +80,7 @@ docs/plans/      — Architecture design documents
 
 | Rules (always loaded) | Scope |
 |---|---|
-| `decisions-index.md` | D1-D77 + K1 architectural decisions; D5/D32 superseded by D70-D74 wiki-memory L3 framing; D37 revised by D75 (RDFa dropped); D75-D77 specify L3 reference profile (vault is canonical) |
+| `decisions-index.md` | D1-D81 + K1-K3 architectural decisions; D5/D32 superseded by D70-D74; D37 revised by D75; D71/D77 revised by D78-D80; D81 Model A predicate governance; K2/K3 implementation notes |
 | `python-patterns.md` | fastai style, rdflib, httpx, pyshacl (client-only) |
 | `typescript-patterns.md` | CSS extensions, Components.js, N3.js, Comunica |
 | `rdf-patterns.md` | Turtle, JSON-LD, three-layer Pod RDF |
