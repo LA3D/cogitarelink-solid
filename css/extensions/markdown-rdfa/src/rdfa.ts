@@ -20,7 +20,7 @@
 import type { Plugin } from "unified";
 import type { Root, Element } from "hast";
 import { visit } from "unist-util-visit";
-import { PREDICATE_MAP, DEFAULT_PREDICATE } from "./predicates.js";
+import { PREDICATE_MAP, DEFAULT_PREDICATE } from "../../shared/markdown-parsing/src/predicates.js";
 
 export const rehypeRdfa: Plugin<[], Root> = () => {
   return (tree) => {

@@ -21,10 +21,10 @@ import remarkRehype from "remark-rehype";
 import rehypeDocument from "rehype-document";
 import rehypeFormat from "rehype-format";
 import rehypeStringify from "rehype-stringify";
-import { remarkTypedWikilinks } from "./wikilinks.js";
+import { remarkTypedWikilinks } from "../../shared/markdown-parsing/src/wikilinks.js";
 import { rehypeRdfa } from "./rdfa.js";
 import { rehypePrefixDecl } from "./prefix-decl.js";
-import { HardcodedResolver, type WikilinkResolver } from "./resolver.js";
+import { HardcodedResolver, type WikilinkResolver } from "../../shared/markdown-parsing/src/resolver.js";
 
 export interface RenderOptions {
   resolver?: WikilinkResolver;

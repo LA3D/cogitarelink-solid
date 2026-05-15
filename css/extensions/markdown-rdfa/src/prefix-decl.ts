@@ -4,7 +4,7 @@
 import type { Plugin } from "unified";
 import type { Root, Element } from "hast";
 import { visit } from "unist-util-visit";
-import { RDFA_PREFIX } from "./predicates.js";
+import { RDFA_PREFIX } from "../../shared/markdown-parsing/src/predicates.js";
 
 export const rehypePrefixDecl: Plugin<[], Root> = () => {
   return (tree) => {

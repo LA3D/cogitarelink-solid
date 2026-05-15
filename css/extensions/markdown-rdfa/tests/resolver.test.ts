@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { slug, HardcodedResolver } from "../src/resolver.js";
+import { slug, HardcodedResolver } from "../../shared/markdown-parsing/src/resolver.js";
 
 describe("slug", () => {
   it("lowercases and hyphenates simple titles", () => {
