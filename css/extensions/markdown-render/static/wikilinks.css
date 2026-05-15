@@ -1,0 +1,29 @@
+/* Default browser-viewable styling for typed wikilinks per D75.
+ *
+ * Each wikilink <a> element carries class="wikilink" plus an optional
+ * class="wikilink-{type}" that maps to the relationship vocabulary. Visual
+ * differentiation helps human readers see the typed edge at a glance.
+ *
+ * Serving at /static/wikilinks.css requires CSS static-file serving config
+ * (TODO: wire in Components.js; see comment in solid-config.json). Until
+ * wired, the stylesheet can be served by any static-file middleware or CDN.
+ */
+
+a.wikilink {
+  color: #2563eb;
+  text-decoration: none;
+  border-bottom: 1px dotted #2563eb;
+}
+
+a.wikilink:hover { text-decoration: underline; }
+
+/* Typed variants — one colour per relationship class */
+a.wikilink-source     { color: #7c3aed; border-bottom-color: #7c3aed; }
+a.wikilink-author     { color: #059669; border-bottom-color: #059669; }
+a.wikilink-broader    { color: #ea580c; border-bottom-color: #ea580c; }
+a.wikilink-extends    { color: #db2777; border-bottom-color: #db2777; }
+a.wikilink-supports   { color: #16a34a; border-bottom-color: #16a34a; }
+a.wikilink-criticizes { color: #dc2626; border-bottom-color: #dc2626; }
+a.wikilink-subject    { color: #4f46e5; border-bottom-color: #4f46e5; }
+a.wikilink-related    { color: #0891b2; border-bottom-color: #0891b2; }
+a.wikilink-partof     { color: #92400e; border-bottom-color: #92400e; }
