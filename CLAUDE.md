@@ -34,7 +34,7 @@ Sibling repos under `~/dev/git/LA3D/agents/`:
 - `cogitarelink-fabric` — Graph-native fabric nodes (Oxigraph + FastAPI + Credo)
 - `rlm` — RLM agent substrate (dspy.RLM)
 
-See @.claude/rules/decisions-index.md for architectural decisions (D1-D74).
+See @.claude/rules/decisions-index.md for architectural decisions (D1-D77).
 See @.claude/memory/MEMORY.md for experiment state, active plan, and key patterns.
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Unified Externalization Prototype Plan.md (active plan)
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md (phase plan)
@@ -74,7 +74,7 @@ docs/plans/      — Architecture design documents
 
 | Rules (always loaded) | Scope |
 |---|---|
-| `decisions-index.md` | D1-D74 + K1 architectural decisions; D5/D32 superseded by D70-D74 wiki-memory L3 framing (vault is canonical) |
+| `decisions-index.md` | D1-D77 + K1 architectural decisions; D5/D32 superseded by D70-D74 wiki-memory L3 framing; D37 revised by D75 (RDFa dropped); D75-D77 specify L3 reference profile (vault is canonical) |
 | `python-patterns.md` | fastai style, rdflib, httpx, pyshacl (client-only) |
 | `typescript-patterns.md` | CSS extensions, Components.js, N3.js, Comunica |
 | `rdf-patterns.md` | Turtle, JSON-LD, three-layer Pod RDF |
