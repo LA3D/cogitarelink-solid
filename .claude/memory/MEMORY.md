@@ -8,7 +8,7 @@
 
 **Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to **wiki-memory L3 as canonical reference profile, vault as one application**. Forced by cross-system pattern research across memory-provider plugins, benchmark-tuned memory systems, and wiki-memory implementations — three independent traditions converge on the same substrate. D70–D74 record the stratification. See [[Memory Substrate vs Memory Profile]] and [[Wiki-Memory L3 Profile]] in the vault.
 
-**Active focus**: **Round 1 Rung 1.5** — first measurable evaluation (B1 filesystem / B2 brute-force pod / T harness pod across navigation + temporal task suite, run against wiki-memory L3 reference). Rung 1.4 closed 2026-05-15.
+**Active focus**: **Round 1 Rung 1.5** — eval matrix v2 + supporting docs committed 2026-05-15 evening. **Entry point for next session: `docs/plans/2026-05-15-rung-1-5-session-handoff.md`** — covers state, open Strategy A (build all prereqs ~3–5 days) vs Strategy B (minimum viable Pilot, ~half-day) decision, kickoff prompt, guard rails to avoid repeating origin-session mistakes. Rung 1.4 closed 2026-05-15.
 
 ## Sibling Projects (all under `~/dev/git/LA3D/agents/`)
 
