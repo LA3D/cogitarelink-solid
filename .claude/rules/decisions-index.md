@@ -16,7 +16,7 @@ Topic-coherent D-clusters surface as Claude Code skills at `.claude/skills/<name
 | `solid-storage-description` | D44, D48, D49 (storage description as router) |
 | `solid-affordance-descriptors` | D52, D55, D58 (body-affordance harness) |
 | `solid-memento` | D61-D68, K1, RQ-Memento-1/2 (RFC 7089 + tombstones) |
-| `solid-wiki-memory-l3` | D70-D81, K2-K3, RQ-Listener-1 (L3 reference profile) |
+| `solid-wiki-memory-l3` | D70-D81 (v1 choices, tested in Rung 1.5), H-D82 (hypothesis pending eval), K2-K3, RQ-Listener-1, RQ-Affordance-2/3/4 (L3 reference profile + affordance-spectrum hypothesis) |
 
 CSS-builder skills (no D-cluster but referenced by many decisions): `css-extension`, `components-override`, `metadata-writer`, `monitoring-store`, `comunica-sources`, `shacl-shapes`.
 
@@ -116,11 +116,11 @@ D69: Two-layer documentation strategy — Pod-resident agent instructions (Layer
 
 ## Phase 5d — Memory substrate stratification (D70–D74, 2026-05-15)
 
-Forced by cross-system pattern research (Hermes/Supermemory provider interfaces; ByteRover/MemGPT/xMemory/Hindsight benchmark systems; Karpathy/Ghumare/AKBP/agentmemory wiki-memory). Three independent traditions converge on the same substrate; the layer stratification names what each was groping at.
+Forced by cross-system pattern research (Hermes/Supermemory provider interfaces; ByteRover/MemGPT/xMemory/Hindsight benchmark systems; Karpathy/Ghumare/AKBP/agentmemory wiki-memory). Concept-level support from three research traditions for the seven L2 invariants (memory-provider plugins, benchmark-tuned memory systems, wiki-memory). **Important caveat (2026-05-15 evening audit)**: no single source names all seven invariants; the synthesis is ours. AKBP — the most concrete implementation in the lineage — explicitly took a *different* operational direction (parallel surfaces, structured API) than D71's body-projection choice. The convergence is real at the pattern layer, fictitious at the operational layer. See [[Affordance Spectrum for Agentic Memory]] and [[Memory Substrate vs Memory Profile]] for the corrected attribution.
 
 D70: L1/L2/L3 substrate stratification — **L1** = Pod substrate (LDP/WAC/SPARQL/Memento/`.well-known/`/Solid-OIDC/LDN/Notifications Protocol — universal). **L2** = Memory substrate (seven invariants: bounded branching with typed containment, tiered/progressive retrieval, lifecycle metadata as first-class, explicit write + implicit signals, hybrid blob+graph storage, separable procedural memory, OOD honesty). **L3** = Memory profile (specific edge vocabulary + container layout + consolidation policy). Multiple L3 profiles can coexist on one Pod, scoped via Type Index + SHACL shape catalog + per-container affordance descriptors. The vault PARA+SKOS arrangement is one L3 specialization sitting on top of [[Wiki-Memory L3 Profile|wiki-memory L3]].
 
-D71: Wiki-memory as canonical L3 reference profile — built from first principles on W3C web standards (not copied from Karpathy/AKBP). Page-as-unit; **dual-layer linking** is the architectural commitment: markdown wikilinks at the token layer + RDF predicates in `.meta` at the data layer, unified by D58's body-affordance projection. The convergence with Karpathy/Ghumare/AKBP/agentmemory/Supermemory/ByteRover is empirical evidence for the design, not its source — the W3C stack happens to align because the standards were designed for the same distributed-knowledge problem.
+D71: Wiki-memory as canonical L3 reference profile — built from first principles on W3C web standards (not copied from Karpathy/AKBP). Page-as-unit; **body→`.meta` projection** is our distinct architectural commitment: markdown wikilinks at the token layer + RDF predicates in `.meta` at the data layer, unified by D58's body-affordance projection. AKBP — the most concrete implementation in the lineage — took the *opposite* direction (parallel surfaces, no projection; structured API for graph writes). v1 framing claimed "AKBP has one layer; we have both" — this is factually wrong, corrected by the 2026-05-15 evening audit. AKBP has two unprojected layers; we have two projected layers (our novel choice). Concept-level support from Karpathy/Ghumare/AKBP/agentmemory/Supermemory/ByteRover at the pattern layer (page-as-unit, typed edges, lifecycle, two-stage commit) does NOT extend to syntax, vocabulary, or projection mechanism — those are our committed choices. **FURTHER REVISED by D82** (affordance spectrum + inline JSON-LD blocks as second body affordance).
 
 D72: Compile-once principle as substrate guarantee — the substrate maintains compiled, cross-referenced state (`.meta` triples projected from body; Type Index updated on resource creation; SHACL shape catalog cached); agents don't re-derive at query time. Karpathy's "stop re-deriving, start compiling" framing applied as L2 contract. Already true in practice via the importer pipeline; D72 elevates it to a stated substrate guarantee.
 
@@ -152,6 +152,35 @@ K2: `slug()` algorithm does not collapse consecutive hyphens. "Ghumare - LLM Wik
 
 K3: `.author` class hint projects to `dct:contributor` (not `dct:creator`) in `wikilinkProjection.ts` HINT_TO_PREDICATE. SourceShape allows `dct:creator` (substrate-governed) but the listener never emits it from `.author` class hints. Result: the Phase 1 Ghumare fixture's `dct:creator` was changed to `dct:contributor` to match listener emission. Subsequent SPARQL queries for source authorship must use `dct:contributor`. Rung 1.5 may introduce a distinct `.creator` class hint for sources.
 
+## Phase 5h — Hypothesis: Affordance spectrum + W3C vocabulary reuse (H-D82, 2026-05-15 evening)
+
+Forced by the 2026-05-15 evening primary-source audit (Wiki-Memory L3 spec claims-vs-sources). Findings: Penfield Labs misattribution in v1; ByteRover validation overreach; AKBP repo audit revealed parallel-surface architecture (not body-projection) — see [[Affordance Spectrum for Agentic Memory]] and `docs/plans/2026-05-15-akbp-to-w3c-mapping.md`. **Second audit pass (same evening)**: realized AKBP/Penfield/DOT-LD/Karpathy/Ghumare are all **unmeasured** design proposals; only ByteRover (peer-reviewed 96.1% LoCoMo) and xMemory (peer-reviewed BLEU+23%) carry actual benchmark evidence. The "concept-level convergence" framing aggregates measured + unmeasured systems as if they had equal evidentiary weight; they don't. **Decisions in this phase are reframed as hypotheses pending Rung 1.5 measurement.**
+
+H-D82 (HYPOTHESIS, not ratified decision): **Dual body affordance + W3C vocabulary reuse over `wiki:*` invention may improve agent memory authoring.** Three testable sub-hypotheses:
+
+- **H-D82.a**: In-band class-hint wikilinks `[[Note]]{.class}` at affordance level 2 outperform plain `[[Note]]` (level 1) on agent navigation tasks. Status: untested; eval arm T-class vs B0/B1.
+- **H-D82.b**: Inline `json-ld` code blocks at level 4 outperform class-hints-only on rich-claim tasks (confidence, evidence, supersession). Status: untested; eval arm T-jsonld vs T-class.
+- **H-D82.c**: W3C standard vocabulary (`cred:credibility`, `dct:isReplacedBy`, `cito:disagreesWith`, etc.) is no worse for agent reliability than minted `wiki:*` aliases. Status: untested; sub-eval comparing vocab variants if H-D82.b holds.
+
+**Status**: Hypothesis to *test* in Rung 1.5, not decision to *implement*. Design fully specified in `docs/plans/2026-05-15-d82-listener-extension-plan.md` + `docs/plans/2026-05-15-akbp-to-w3c-mapping.md` so implementation is unblocked *if* the eval supports H-D82. If eval refutes H-D82.b, the listener extension is not built — D82 ships as documented "design we considered but eval didn't support."
+
+**The proposed design content** (concrete enough to test):
+
+- (a) Class-hint wikilinks `[[Note]]{.class}` at level 2 (existing D36 form, kept).
+- (b) Inline `json-ld` code blocks at level 4 (new, conditional on H-D82.b).
+- Both project to `.meta` via `MarkdownProjectionListener`.
+- Level-4 vocabulary: PROV-O, SKOS, DCT, CITO, FOAF, schema.org standards.
+- Substitution candidates: `wiki:confidence` → `cred:credibility`; `wiki:supersedes` → `dct:isReplacedBy`; `wiki:contradicts` → `prov:wasInvalidatedBy` or `cito:disagreesWith`; lifecycle status → SKOS concept scheme; entity types → existing FOAF/schema.org/SKOS classes.
+- Direct N3 PATCH to `.meta` (level 6) as escape hatch.
+
+**Why hypothesis-not-decision**: AKBP (a primary source of the affordance framing) is itself unmeasured. The 0–6 affordance spectrum is useful *design vocabulary* but predicts no measurement outcome. Ratifying H-D82 without eval data would label speculation as commitment. **D77/D78/D81 are also v1 choices, not ratified decisions** — same epistemological status as H-D82; all tested in the Rung 1.5 eval matrix.
+
+**Implementation gates** (BOTH must hold before any code lands):
+1. **RQ-Listener-1 mitigation chosen and shipped** — agent triples must survive body rewrites.
+2. **Rung 1.5 eval must show T-jsonld > T-class** on at least one task category. If T-class ≥ T-jsonld, H-D82.b is refuted; ship T-class as final.
+
+**See also**: [[Affordance Spectrum for Agentic Memory]] (foundational design vocabulary, also reframed as hypothesis-bearing); `docs/plans/2026-05-15-d82-listener-extension-plan.md` (implementation design, eval-gated); `docs/plans/2026-05-15-akbp-to-w3c-mapping.md` (vocabulary translation table, structurally correct; behavioral claims pending eval); `docs/plans/2026-05-15-rung-1-5-eval-matrix.md` (the eval matrix that tests this hypothesis along with D77/D78/D81 et al).
+
 ## Open research questions
 
 RQ-Affordance-1: descriptor format (declarative SHACL vs custom RDF vs hybrid)
@@ -169,6 +198,9 @@ RQ-Pod-6: `.meta` richness vs query overhead — needs benchmarks with 100+ reso
 RQ-Listener-1 (new): CSS `.meta` overwrite-order forces Model A's preserve-agent-triples behavior to read pre-write state from an alternate source. Solutions to evaluate: pre-write Memento read, agent-sidecar `.meta.agent`, or PassthroughStore interception.
 RQ-Hub-1 (from spec): Is N=3 the right hub threshold? Eval question for Rung 1.5.
 RQ-Discovery-1 (from spec): Does the 7-step first-arrival ritual scale to agents arriving on cold Pods? Eval question for Rung 1.5.
+RQ-Affordance-2 (new, 2026-05-15 evening): Can an LLM agent reliably emit valid inline JSON-LD code blocks? Eval question for Rung 1.5. Hypothesis: yes for simple triple insertions; quality degrades for nested graphs or complex `@context` resolution.
+RQ-Affordance-3 (new, 2026-05-15 evening): Should the listener project from JSON-LD code blocks back to body class-hint wikilinks when both express the same edge? Or preserve them as parallel-but-coexisting surfaces in the body? Affects whether the listener has a canonical form vs respects agent authoring choice.
+RQ-Affordance-4 (new, 2026-05-15 evening): Does inline JSON-LD block extraction bypass D81 Model A's subject = current page invariant? JSON-LD `@graph` can express arbitrary subjects; this is the same reification problem D81 sidestepped. Mitigation candidates: (a) listener only extracts triples where `@id` matches resource URI; (b) listener extracts all but warns when subject ≠ resource; (c) accept arbitrary subjects and revisit D81 governance.
 
 ## References
 
