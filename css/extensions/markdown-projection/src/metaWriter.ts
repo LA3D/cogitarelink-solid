@@ -1,0 +1,115 @@
+// metaWriter.ts
+//
+// Writes projected triples to .meta sidecar files with:
+//   - File lock (O_CREAT | O_EXCL) mirroring D68 .git/memento.lock pattern
+//   - Model A predicate replacement: only governed predicates are replaced;
+//     agent-owned triples (predicates NOT in the governed set) are preserved
+//
+// The "replace-governed" contract means:
+//   - Old governed triples are removed
+//   - New projected triples are inserted
+//   - Non-governed triples are left untouched
+//
+// This lets agents annotate resources without their edits being wiped by
+// the next body-projection pass (D50/D71/D72).
+
+import {
+    openSync,
+    closeSync,
+    readFileSync,
+    writeFileSync,
+    existsSync,
+    statSync,
+    unlinkSync,
+    constants,
+} from "fs";
+import { Parser, Quad, Store, Writer } from "n3";
+
+const STALE_LOCK_MS = 30_000;
+
+export class MetaWriter {
+    /**
+     * Replace all governed-predicate triples in the .meta file with the
+     * projected quads, leaving non-governed triples untouched.
+     *
+     * @param target    Absolute path to the resource file (NOT the .meta file)
+     * @param projected New triples to write for governed predicates
+     * @param governed  Set of predicate URIs this caller owns
+     */
+    async replaceGoverned(
+        target: string,
+        projected: Quad[],
+        governed: string[],
+    ): Promise<void> {
+        const metaPath = `${target}.meta`;
+        const lockPath = `${metaPath}.lock`;
+
+        await this.withLock(lockPath, async () => {
+            const existing = this.readExisting(metaPath);
+            const govSet   = new Set(governed);
+
+            // Keep triples whose predicate is NOT in the governed set
+            const preserved = existing
+                .getQuads(null, null, null, null)
+                .filter(q => !govSet.has(q.predicate.value));
+
+            const merged = new Store([...preserved, ...projected]);
+            await this.write(metaPath, merged);
+        });
+    }
+
+    // -------------------------------------------------------------------------
+
+    private readExisting(metaPath: string): Store {
+        if (!existsSync(metaPath)) return new Store();
+        try {
+            const ttl = readFileSync(metaPath, "utf8");
+            return new Store(new Parser().parse(ttl));
+        } catch {
+            return new Store();
+        }
+    }
+
+    private async write(metaPath: string, store: Store): Promise<void> {
+        const writer = new Writer();
+        for (const q of store.getQuads(null, null, null, null)) {
+            writer.addQuad(q);
+        }
+        await new Promise<void>((resolve, reject) => {
+            writer.end((err, result) => {
+                if (err) return reject(err);
+                writeFileSync(metaPath, result);
+                resolve();
+            });
+        });
+    }
+
+    private async withLock<T>(lockPath: string, fn: () => Promise<T>): Promise<T> {
+        // Recover stale lock (e.g. crash during previous write)
+        if (existsSync(lockPath)) {
+            const age = Date.now() - statSync(lockPath).mtimeMs;
+            if (age > STALE_LOCK_MS) {
+                try { unlinkSync(lockPath); } catch {}
+            }
+        }
+
+        let fd: number;
+        try {
+            fd = openSync(lockPath, constants.O_CREAT | constants.O_EXCL | constants.O_RDWR);
+        } catch (e: any) {
+            if (e.code === "EEXIST") {
+                // Lock held by another writer — back off and retry
+                await new Promise(r => setTimeout(r, 50));
+                return this.withLock(lockPath, fn);
+            }
+            throw e;
+        }
+
+        try {
+            return await fn();
+        } finally {
+            try { closeSync(fd); } catch {}
+            try { unlinkSync(lockPath); } catch {}
+        }
+    }
+}
