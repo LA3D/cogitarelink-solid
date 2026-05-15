@@ -106,6 +106,126 @@
                 "StaticStorageDescriber:_terms_value": "https://w3id.org/cogitarelink/fabric#LDPBrowse"
               }
             ]
+          },
+          {
+            "comment": "VoID: wiki-memory L3 vocabulary (D70-D77)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
+                "StaticStorageDescriber:_terms_value": "urn:example:wiki#"
+              }
+            ]
+          },
+          {
+            "comment": "VoID: CiTO vocabulary for typed wikilinks",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
+                "StaticStorageDescriber:_terms_value": "http://purl.org/spar/cito/"
+              }
+            ]
+          },
+          {
+            "comment": "L3: JSON-LD context document for wiki-memory wikilink vocabulary (D76)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "urn:example:wiki#contextDocument",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/meta/context.jsonld"
+              }
+            ]
+          },
+          {
+            "comment": "L3: SHACL shape catalog container (D77)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "urn:example:wiki#shapeCatalog",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/meta/shapes/"
+              }
+            ]
+          },
+          {
+            "comment": "L3: affordance catalog container (D52)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "urn:example:wiki#affordanceCatalog",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/meta/affordances/"
+              }
+            ]
+          },
+          {
+            "comment": "L3: Solid Type Index (D8)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "urn:example:wiki#typeIndex",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/settings/publicTypeIndex"
+              }
+            ]
+          },
+          {
+            "comment": "L3: wiki-memory L3 profile conformance declaration (D71)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "urn:example:wiki#conformsTo",
+                "StaticStorageDescriber:_terms_value": "urn:example:wiki#L3Profile"
+              }
+            ]
+          },
+          {
+            "comment": "L3: wiki pages container (D76)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/pages/"
+              }
+            ]
+          },
+          {
+            "comment": "L3: wiki sources container (D76)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/sources/"
+              }
+            ]
+          },
+          {
+            "comment": "L3: wiki people container (D76)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/people/"
+              }
+            ]
+          },
+          {
+            "comment": "L3: wiki procedures container (D76)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/procedures/"
+              }
+            ]
+          },
+          {
+            "comment": "L3: wiki working-memory container (D76)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/working/"
+              }
+            ]
           }
         ]
       }
