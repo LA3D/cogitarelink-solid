@@ -1,0 +1,18 @@
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix wiki:  <urn:example:wiki#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<>
+    a wiki:Concept ;
+    dct:title "Agentic Memory Systems MOC" ;
+    dct:identifier "agentic-memory-systems-moc" ;
+    dct:created "2026-04-01T00:00:00Z"^^xsd:dateTime ;
+    dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
+    wiki:maturity "validated" ;
+    skos:related </wiki/pages/wiki-memory-l3-profile.md> ;
+    skos:related </wiki/pages/memory-substrate-vs-memory-profile.md> ;
+    skos:related </wiki/pages/procedural-memory.md> ;
+    skos:related </wiki/pages/compile-once-principle.md> ;
+    prov:wasGeneratedBy </meta/affordances/markdown-projection> .
