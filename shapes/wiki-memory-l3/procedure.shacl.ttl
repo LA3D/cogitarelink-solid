@@ -1,0 +1,14 @@
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix wiki:  <urn:example:wiki#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+wiki:ProcedureShape
+    a sh:NodeShape ;
+    sh:targetClass wiki:Procedure ;
+    sh:property [
+        sh:path sh:agentInstruction ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+    ] ;
+    sh:agentInstruction "Procedure records carry executable agent instructions. Substrate-governed: rdf:type, dct:title, dct:identifier, dct:created, dct:modified, wiki:maturity, sh:agentInstruction (body of the procedure), prov:wasGeneratedBy." .
