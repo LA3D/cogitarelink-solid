@@ -1,0 +1,11 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/markdown-projection/^0.1.0/components/context.jsonld"
+  ],
+  "@id": "npmd:@cogitarelink/markdown-projection",
+  "@type": "Module",
+  "requireName": "@cogitarelink/markdown-projection",
+  "import": [
+    "mpl:dist-cjs/listener.jsonld"
+  ]
+}

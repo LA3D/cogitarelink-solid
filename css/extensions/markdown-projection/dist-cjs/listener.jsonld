@@ -1,0 +1,36 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/markdown-projection/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld"
+  ],
+  "@id": "npmd:@cogitarelink/markdown-projection",
+  "components": [
+    {
+      "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener",
+      "@type": "Class",
+      "requireElement": "MarkdownProjectionListener",
+      "extends": [
+        "css:dist/init/Initializer.jsonld#Initializer"
+      ],
+      "parameters": [
+        {
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_store",
+          "range": "css:dist/storage/MonitoringStore.jsonld#MonitoringStore"
+        },
+        {
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_baseUrl",
+          "range": "xsd:string"
+        },
+        {
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_dataDir",
+          "range": "xsd:string"
+        }
+      ],
+      "constructorArguments": [
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_store" },
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_baseUrl" },
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_dataDir" }
+      ]
+    }
+  ]
+}

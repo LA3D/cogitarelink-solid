@@ -1,0 +1,24 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/componentsjs/^6.0.0/components/context.jsonld",
+    {
+      "npmd": "https://linkedsoftwaredependencies.org/bundles/npm/",
+      "mpl": "npmd:@cogitarelink/markdown-projection/^0.1.0/",
+      "MarkdownProjectionListener": {
+        "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener",
+        "@prefix": true,
+        "@context": {
+          "store": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_store"
+          },
+          "baseUrl": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_baseUrl"
+          },
+          "dataDir": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_dataDir"
+          }
+        }
+      }
+    }
+  ]
+}

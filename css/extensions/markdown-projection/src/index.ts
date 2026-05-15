@@ -4,3 +4,4 @@ export type { Frontmatter } from "./frontmatterProjection.js";
 export { projectWikilinks } from "./wikilinkProjection.js";
 export { projectionPipeline } from "./projectionPipeline.js";
 export { MetaWriter } from "./metaWriter.js";
+export { detectClass } from "./detectClass.js";
