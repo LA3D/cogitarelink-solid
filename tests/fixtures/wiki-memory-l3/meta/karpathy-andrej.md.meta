@@ -8,7 +8,7 @@
     a wiki:Person ;
     dct:title "Karpathy, Andrej" ;
     dct:identifier "karpathy-andrej" ;
-    dct:created "2026-04-01T00:00:00Z"^^xsd:dateTime ;
+    dct:created "2026-03-20T00:00:00Z"^^xsd:dateTime ;
     dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
     wiki:maturity "draft" ;
     foaf:nick "karpathy" , "Andrej Karpathy" , "@karpathy" ;

@@ -1,0 +1,96 @@
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "fs";
+import { join } from "path";
+import { Parser, Store } from "n3";
+import { projectionPipeline } from "../src/projectionPipeline.js";
+
+const FIX_ROOT = join(__dirname, "../../../../tests/fixtures/wiki-memory-l3");
+
+function loadStore(path: string, baseIRI: string): Store {
+    const ttl = readFileSync(path, "utf8");
+    const s = new Store();
+    s.addQuads(new Parser({ baseIRI }).parse(ttl));
+    return s;
+}
+
+function isographic(a: Store, b: Store): boolean {
+    if (a.size !== b.size) return false;
+    const aQuads = a.getQuads(null, null, null, null);
+    return aQuads.every(q =>
+        b.countQuads(q.subject, q.predicate, q.object, null) > 0
+    );
+}
+
+function dumpStore(label: string, store: Store): void {
+    console.error(`\n--- ${label} (${store.size} triples) ---`);
+    for (const q of store.getQuads(null, null, null, null)) {
+        console.error(`  <${q.subject.value}> <${q.predicate.value}> ${
+            q.object.termType === "Literal"
+                ? JSON.stringify(q.object.value)
+                : `<${q.object.value}>`
+        }`);
+    }
+}
+
+describe("projectionPipeline", () => {
+    it("Wiki-Memory L3 Profile body+frontmatter projects to graph-equal .meta", async () => {
+        const body = readFileSync(join(FIX_ROOT, "bodies", "wiki-memory-l3-profile.md"), "utf8");
+        const baseIRI = "http://localhost:3000/wiki/pages/wiki-memory-l3-profile.md";
+        const expected = loadStore(join(FIX_ROOT, "meta", "wiki-memory-l3-profile.md.meta"), baseIRI);
+        const triples = await projectionPipeline.run(baseIRI, body);
+        const actual = new Store(triples);
+        if (!isographic(actual, expected)) {
+            dumpStore("ACTUAL", actual);
+            dumpStore("EXPECTED", expected);
+        }
+        expect(isographic(actual, expected)).toBe(true);
+    });
+
+    it("Agentic Memory Systems MOC projects to graph-equal .meta", async () => {
+        const body = readFileSync(join(FIX_ROOT, "bodies", "agentic-memory-systems-moc.md"), "utf8");
+        const baseIRI = "http://localhost:3000/wiki/pages/agentic-memory-systems-moc.md";
+        const expected = loadStore(join(FIX_ROOT, "meta", "agentic-memory-systems-moc.md.meta"), baseIRI);
+        const triples = await projectionPipeline.run(baseIRI, body);
+        const actual = new Store(triples);
+        if (!isographic(actual, expected)) {
+            dumpStore("ACTUAL", actual);
+            dumpStore("EXPECTED", expected);
+        }
+        expect(isographic(actual, expected)).toBe(true);
+    });
+
+    it("Ghumare source projects to graph-equal .meta", async () => {
+        const body = readFileSync(join(FIX_ROOT, "bodies", "ghumare---llm-wiki-v2-extending-karpathy.md"), "utf8");
+        const baseIRI = "http://localhost:3000/wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md";
+        const expected = loadStore(join(FIX_ROOT, "meta", "ghumare---llm-wiki-v2-extending-karpathy.md.meta"), baseIRI);
+        const triples = await projectionPipeline.run(baseIRI, body);
+        const actual = new Store(triples);
+        if (!isographic(actual, expected)) {
+            dumpStore("ACTUAL", actual);
+            dumpStore("EXPECTED", expected);
+        }
+        expect(isographic(actual, expected)).toBe(true);
+    });
+
+    it("Karpathy person projects to graph-equal .meta", async () => {
+        const body = readFileSync(join(FIX_ROOT, "bodies", "karpathy-andrej.md"), "utf8");
+        const baseIRI = "http://localhost:3000/wiki/people/karpathy-andrej.md";
+        const expected = loadStore(join(FIX_ROOT, "meta", "karpathy-andrej.md.meta"), baseIRI);
+        const triples = await projectionPipeline.run(baseIRI, body);
+        const actual = new Store(triples);
+        if (!isographic(actual, expected)) {
+            dumpStore("ACTUAL", actual);
+            dumpStore("EXPECTED", expected);
+        }
+        expect(isographic(actual, expected)).toBe(true);
+    });
+
+    it("running the pipeline twice on same input produces identical output", async () => {
+        const body = readFileSync(join(FIX_ROOT, "bodies", "wiki-memory-l3-profile.md"), "utf8");
+        const uri = "http://localhost:3000/wiki/pages/wiki-memory-l3-profile.md";
+        const t1 = await projectionPipeline.run(uri, body);
+        const t2 = await projectionPipeline.run(uri, body);
+        expect(new Store(t1).size).toBe(new Store(t2).size);
+        expect(isographic(new Store(t1), new Store(t2))).toBe(true);
+    });
+});
