@@ -1,4 +1,10 @@
-# /comunica-sources
+---
+name: comunica-sources
+description: Comunica explicit-source SPARQL queries against this Pod — works around the link-traversal `.meta` gap (RQ-Pod-4). default-graph-uri parameter pattern. The comunica-sparql-link-traversal sidecar (port 8080) requires sources per request, not as global config.
+when_to_use: When writing a SPARQL query that needs to read `.meta` content, debugging "no quads in source" errors, or designing federated queries that span resource + `.meta` graphs.
+---
+
+# Comunica Explicit-Source Queries
 
 How to drive Comunica SPARQL queries against this Pod with explicit source lists. The `comunica-sparql-link-traversal` sidecar (port 8080) requires sources per request, not as global config.
 

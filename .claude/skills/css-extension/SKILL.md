@@ -1,6 +1,12 @@
-# /css-extension
+---
+name: css-extension
+description: Scaffold a new Community Solid Server (CSS) v8 extension that loads via Components.js DI. Codifies the pattern used by markdown-projection, markdown-render, shape-validator, metadata-card, and memento extensions in this repo. Covers package.json lsd:* fields, tsconfig CommonJS settings, componentsjs-generator gotchas, Dockerfile symlink trick, Components.js wiring.
+when_to_use: When building a new CSS extension — defining package.json lsd:* fields, tsconfig CommonJS settings, Components.js wiring, Dockerfile symlink trick. Also for debugging componentsjs-generator "Could not load class or interface" failures or constructor "ErrorResourcesContext: Detected more than one key value in collectEntries" errors.
+---
 
-How to scaffold a new Community Solid Server (CSS) v8 extension that loads via Components.js DI. Codifies the pattern used by `markdown-rdfa`, `shape-validator`, `metadata-card`, and `memento`.
+# CSS Extension Scaffolding
+
+How to scaffold a new Community Solid Server (CSS) v8 extension that loads via Components.js DI. Codifies the pattern used by `markdown-projection`, `markdown-render`, `shape-validator`, `metadata-card`, and `memento`.
 
 ## Usage
 

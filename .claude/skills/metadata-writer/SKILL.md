@@ -1,4 +1,10 @@
-# /metadata-writer
+---
+name: metadata-writer
+description: MetadataWriter composition in CSS — additive Link/Vary headers via parallel writers, the addHeader vs setHeader distinction (D67). Reference implementation MementoLinkMetadataWriter shows how to advertise rel="timemap"/"timegate" without conflicting with CSS's LinkRelMetadataWriter.
+when_to_use: When emitting response headers from a CSS extension, especially Link/Vary that must coexist with CSS's own LinkRelMetadataWriter. Also for debugging header collisions between extensions.
+---
+
+# MetadataWriter Composition
 
 How CSS's response-header pipeline works and how to extend it composably. The critical mechanic: `addHeader` accumulates, `setHeader` overwrites — design around that.
 

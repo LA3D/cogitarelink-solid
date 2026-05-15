@@ -1,4 +1,10 @@
-# /components-override
+---
+name: components-override
+description: Components.js Override patterns for CSS v8 — InsertBefore, InsertAfter, InsertAt, full replacement. Parameter @id format. Workaround for OverrideListInsertAt against empty list (K1).
+when_to_use: When inserting a custom handler into an existing CSS WaterfallHandler, ParallelHandler, or initializer chain without forking CSS. Also when overrideParameters error messages are confusing or InsertAt fails against an empty target list.
+---
+
+# Components.js Override Patterns
 
 How to insert a new component into an existing CSS Components.js chain (handler waterfall, metadata writer ParallelHandler, init sequence, etc.) without forking CSS itself. The Override mechanism lives in `componentsjs/lib/preprocess/overridesteps/`.
 

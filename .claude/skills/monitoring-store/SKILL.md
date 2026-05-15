@@ -1,4 +1,10 @@
-# /monitoring-store
+---
+name: monitoring-store
+description: MonitoringStore CDC pattern (D17 + D65) — subscribe to CSS's native 'changed' event for write-time hooks. Reference implementations MementoCommitListener and MarkdownProjectionListener.
+when_to_use: When implementing a write-time hook on a CSS extension (Memento commit, projection listener, notification generator, audit logger). Also for understanding the difference between MonitoringStore (event subscriber) and PassthroughStore (synchronous wrap-store).
+---
+
+# MonitoringStore CDC Pattern
 
 How to subscribe to resource-write events via CSS's `MonitoringStore` and build change-data-capture (CDC) handlers without forking CSS. This is D17's internal CDC; D56 will eventually expose it externally via Solid Notifications.
 
