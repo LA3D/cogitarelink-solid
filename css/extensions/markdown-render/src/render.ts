@@ -6,10 +6,12 @@
 //     → remark-typed-wikilinks (parse [[...]]{.class})
 //     → remark-rehype
 //     → rehype-document (wrap in <html>)
-//     → rehype-prefix-decl (add CURIE prefixes)
-//     → rehype-rdfa (add property/typeof/resource on <a>)
+//     → rehype-wikilink-classes (add class="wikilink wikilink-{type}" on <a>)
 //     → rehype-format
 //     → rehype-stringify
+//
+// D75: rendered HTML carries semantic CSS classes only — no RDFa. The data
+// layer lives exclusively in .meta Turtle projected by MarkdownProjectionListener.
 //
 // Returns a complete HTML document as a string.
 
@@ -22,8 +24,7 @@ import rehypeDocument from "rehype-document";
 import rehypeFormat from "rehype-format";
 import rehypeStringify from "rehype-stringify";
 import { remarkTypedWikilinks } from "../../shared/markdown-parsing/src/wikilinks.js";
-import { rehypeRdfa } from "./rdfa.js";
-import { rehypePrefixDecl } from "./prefix-decl.js";
+import { rehypeWikilinkClasses } from "./rehype-wikilink-classes.js";
 import { HardcodedResolver, type WikilinkResolver } from "../../shared/markdown-parsing/src/resolver.js";
 
 export interface RenderOptions {
@@ -47,11 +48,10 @@ export async function renderMarkdown(
     .use(remarkRehype, { allowDangerousHtml: false })
     .use(rehypeDocument, {
       title,
-      css: [],
+      css: ["/static/wikilinks.css"],
       meta: [{ name: "generator", content: "markdown-render (cogitarelink-solid)" }],
     })
-    .use(rehypePrefixDecl)
-    .use(rehypeRdfa)
+    .use(rehypeWikilinkClasses)
     .use(rehypeFormat)
     .use(rehypeStringify)
     .process(source);

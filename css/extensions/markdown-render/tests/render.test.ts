@@ -20,30 +20,33 @@ describe("renderMarkdown", () => {
     expect(html).toContain("Body text.");
   });
 
-  it("renders untyped wikilinks with default skos:related predicate", async () => {
+  it("renders untyped wikilinks with class=wikilink only (D75: no RDFa)", async () => {
     const md = "See [[Context Graphs]] for background.";
     const html = await renderMarkdown(md);
     expect(html).toContain("class=\"wikilink\"");
-    expect(html).toContain("property=\"skos:related\"");
+    // D75: no RDFa properties in rendered HTML
+    expect(html).not.toContain("property=");
     expect(html).toContain("href=\"http://pod.vardeman.me:3000/vault/resources/concepts/context-graphs.md\"");
     expect(html).toContain(">Context Graphs</a>");
   });
 
-  it("renders typed wikilinks with the right predicate", async () => {
+  it("renders typed wikilinks with semantic CSS classes (D75)", async () => {
     const md = [
       "Based on [[Zhang 2025 RLM]]{.source}, RLM agents benefit.",
       "This contradicts [[RAG as default]]{.criticizes}.",
       "It extends [[Progressive Disclosure]]{.extends}.",
     ].join("\n\n");
     const html = await renderMarkdown(md);
-    expect(html).toContain("property=\"dct:source\"");
-    expect(html).toContain("property=\"vault:criticizes\"");
-    expect(html).toContain("property=\"vault:extends\"");
+    expect(html).toContain("class=\"wikilink wikilink-source\"");
+    expect(html).toContain("class=\"wikilink wikilink-criticizes\"");
+    expect(html).toContain("class=\"wikilink wikilink-extends\"");
+    // D75: no RDFa properties in rendered HTML
+    expect(html).not.toContain("property=");
   });
 
-  it("attaches RDFa CURIE prefixes on the html element", async () => {
+  it("does not attach RDFa prefix on html element (D75)", async () => {
     const html = await renderMarkdown("Body");
-    expect(html).toMatch(/<html[^>]+prefix="[^"]*skos:[^"]*dct:[^"]*vault:[^"]*"/);
+    expect(html).not.toMatch(/prefix="/);
   });
 
   it("preserves wikilink alias as link text", async () => {
@@ -59,14 +62,17 @@ describe("renderMarkdown", () => {
     expect(html).toContain(">Context Graphs</a>");
     expect(html).toContain(">RLM</a>");
     expect(html).toContain(">Progressive Disclosure</a>");
-    expect(html).toContain("property=\"vault:criticizes\"");
-    expect(html).toContain("property=\"vault:extends\"");
+    expect(html).toContain("class=\"wikilink wikilink-criticizes\"");
+    expect(html).toContain("class=\"wikilink wikilink-extends\"");
+    // D75: no RDFa properties in rendered HTML
+    expect(html).not.toContain("property=");
   });
 
   it("does not break on text without any wikilinks", async () => {
     const html = await renderMarkdown("Just regular markdown with **bold** text.");
     expect(html).toContain("<strong>bold</strong>");
-    expect(html).not.toContain("wikilink");
+    // No wikilink <a> elements in the body (stylesheet link in <head> is expected)
+    expect(html).not.toContain("class=\"wikilink\"");
   });
 
   it("emits a complete HTML document with title", async () => {
