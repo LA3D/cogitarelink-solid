@@ -1,0 +1,28 @@
+{
+  "name": "@cogitarelink/markdown-parsing",
+  "version": "0.1.0",
+  "description": "Shared markdown-parsing utilities for cogitarelink-solid: wikilink parser, predicate map, URI resolver. Reused by markdown-render (D75) and MarkdownProjectionListener (D71).",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/mdast": "^4.0.4",
+    "@types/hast": "^3.0.4",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
