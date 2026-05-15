@@ -1,8 +1,8 @@
 # cogitarelink-solid
 
-A reference Solid Pod implementation exploring how agentic applications can connect to a federable, standards-based memory substrate.
+A reference Solid Pod as a general-purpose memory substrate for agentic applications. Built from first principles on W3C web standards; the wiki-memory pattern is the canonical reference profile.
 
-> Research prototype, not a production Pod hosting service. Phase 1 complete: 107 vault notes imported, agent-navigable via the standard Solid discovery stack. Active work: [Round 1 Memento spike](#research-rounds).
+> Research prototype, not a production Pod hosting service. Pod reproducible with 1243 vault notes imported and agent-navigable via the standard Solid discovery stack. **Round 1 Rungs 1.1 + 1.2 closed** (read-only Memento + tombstone semantics). Active work: Rung 1.4 — wiki-memory L3 reference profile + affordance descriptor. See [research rounds](#research-rounds).
 
 ---
 
@@ -14,13 +14,27 @@ Four threads converge here. All descend from a single 1945 problem statement.
 
 **Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** ties the pattern explicitly back to Bush: *"The idea is related in spirit to Vannevar Bush's Memex (1945) … The part he couldn't solve was who does the maintenance. The LLM handles that."* An LLM-maintained, persistent, interlinked markdown wiki where the LLM does the bookkeeping humans abandon. Humans curate; sources are immutable; the wiki accumulates. *"The wiki is a persistent, compounding artifact."* Obsidian is the IDE; the LLM is the programmer; the wiki is the codebase.
 
-**Hermes Agent** (Nous Research, 2026) shipped the pattern as a product — a two-file persistent memory (MEMORY.md + USER.md) plus a swappable provider plugin layer with eight backends ranging from flat markdown to knowledge graphs. The provider contract has six mechanisms (context injection, prefetch, sync, extract, mirror, provider tools) but the architecture is single-agent. There is no protocol for cross-agent change notification, role manifests, or recall provenance.
+**Three traditions converge on the same substrate.** Karpathy's framing is one of three independent research arcs that arrive at the same conclusion. Memory-provider plugins ([Hermes Agent](https://hermes-agent.nousresearch.com/docs/) ships eight backends behind one `MemoryProvider` ABC; [Supermemory](https://supermemory.ai/) runs an ontology-aware memory graph at 100B+ tokens/month) treat the contract as a six-operation provider interface. Benchmark-tuned memory systems ([ByteRover](https://arxiv.org/abs/2604.01599) 96.1% on LoCoMo with markdown + 5-tier retrieval; xMemory's bounded-branching hierarchy; MemoryAgentBench's four cognitive competencies) treat it as a structural commitment. Wiki-memory implementations ([Karpathy's gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f); [AKBP](https://github.com/rohitg00/akbp); [agentmemory](https://github.com/rohitg00/agentmemory)) treat it as *"the durable knowledge contract below your tools."* Each picks one transport (JSONL, SQLite, custom vector graph, filesystem). The shared substrate is seven invariants: bounded branching with typed containment, tiered/progressive retrieval, lifecycle metadata as first-class, explicit write + implicit signals, hybrid blob+graph storage, separable procedural memory, out-of-domain honesty.
 
 **Tim Berners-Lee's Charlie** is the current canonical articulation of what Solid means in the agent era. From TBL's March 2025 statement: *"In 2017 I wrote about Charlie — an AI that works for you. @inrupt labs now has Charlie working. Charlie is the evolution of agentic AI. It's built on top of a re-wired data infrastructure using Solid to give people the security and trust they need to share their data."* From the W3C [Charlie Works](https://www.w3.org/DesignIssues/Works.html) Design Issues note: *"The pod full of semantic web data is extremely powerful in driving the LLM … AI is used in both feeding data into the data graph, and then using the data graph as context."* Inrupt rebranded their core product from "active wallet" to **"agentic wallet"** at Web Summit 2024. The 2001 Semantic Web vision of agents traversing typed associations is now framed as personal AI on a pod. The 2024-2026 pitch is unambiguous: the pod is for your agent, not just for you.
 
 **Ruben Verborgh's Solid Apps arc** (2017–2022) is the architectural substrate the pattern needs to federate. Apps become views over personal data. Shapes are *connection points*, not endpoints — apps bind to shapes, not APIs. A pod is **not** a document hierarchy; it is a *hybrid contextualized knowledge graph* whose document boundaries silently conflate five orthogonal concerns (context, permissions, provenance, trust, performance) that deserve independent granularity.
 
-This repo is the synthesis: Karpathy's LLM-maintained wiki pattern realized on Verborgh's hybrid contextualized KG substrate, with TBL's Charlie framing as the agent-era target. The vault is the wiki layer; the Solid Pod is the federable substrate; agents (yours, a collaborator's, future ones) interact via shapes, follow-your-nose navigation, and verifiable-credential-gated access. The Memex–Solid synthesis is ours; TBL's last on-record claim that the *Web itself* partly realized Memex was 1995, and he has not re-issued it for Solid. But the structural mapping is hard to miss: personal store (Solid), associative indexing (RDF/SPARQL/Shape Trees), trail blazer (LLM agent), running in one place.
+This repo is the synthesis: a memory substrate derived from first principles on Verborgh's hybrid contextualized KG architecture, with wiki-memory as the canonical reference profile, in the agent-era frame TBL's Charlie names. The W3C web standards (LDP / RDF / SHACL / Memento / LDN / Solid Notifications / ACP) supply all seven substrate invariants — not because we copied any system, but because the standards were designed for the same distributed-knowledge problem. The convergence with Karpathy/Hermes/AKBP/agentmemory/Supermemory/ByteRover is empirical evidence for the design, not its source.
+
+The distinguishing architectural commitment is **dual-layer linking**: markdown wikilinks at the token layer (low-ceremony to write, cheap for LLMs to read) plus RDF predicates in `.meta` at the data layer (queryable, validatable, federatable). The two layers are unified by a server-side projection — agents write typed wikilinks in markdown; the substrate generates Turtle. AKBP and agentmemory each have one layer; this substrate has both. The Memex–Solid synthesis is ours; TBL's last on-record claim that the *Web itself* partly realized Memex was 1995, and he has not re-issued it for Solid. But the structural mapping is hard to miss: personal store (Solid), associative indexing (RDF/SPARQL/Shape Trees), trail blazer (LLM agent), running in one place.
+
+---
+
+## Three layers
+
+The program stratifies into three architectural layers. The stratification is what dissolves the "is the Pod a vault or a substrate?" question:
+
+- **L1 — Pod substrate**. The W3C Solid stack: LDP containers, WAC/ACP, SPARQL, Memento, `.well-known/`, Solid-OIDC, LDN, Solid Notifications Protocol. Universal across any application. Owns resources, namespaces, versioning, access control, discovery, notifications.
+- **L2 — Memory substrate**. A specialization of L1 that adds the seven invariants every agent-memory system needs (bounded branching, tiered retrieval, lifecycle metadata, explicit write + implicit signals, hybrid storage, separable procedural memory, OOD honesty). Owns universal lifecycle predicates, the shape protocol, the affordance descriptor, the trigger vocabulary.
+- **L3 — Memory profile**. A specific application of L2: a particular edge vocabulary, container layout, consolidation policy, body-affordance descriptor. **Wiki-memory** is the canonical L3 reference profile in this program. The Obsidian vault's PARA + SKOS + concept-note / literature-note vocabulary is one L4 specialization sitting on top of wiki-memory L3.
+
+Multiple L3 profiles can coexist on one Pod, scoped via Type Index + per-container SHACL shape catalog + per-container affordance descriptors. A to-do L3 in one container hierarchy, a calendar L3 in another, a wiki-memory L3 in a third — same Pod, same L1/L2, different L3 contracts.
 
 ---
 
@@ -30,26 +44,27 @@ This repo is the synthesis: Karpathy's LLM-maintained wiki pattern realized on V
 
 The pod is the externalization *substrate*, not the memory backend itself. Zhou et al. 2026 frames LLM agents as composing four externalizable substrates — Memory, Skills, Protocols, Harness. Most current systems put the harness at the center and let it orchestrate the others. This project inverts that: **the pod sits at the center as the unification layer**, and the harness becomes a consumer that reads the pod's affordance descriptors and routes accordingly. The six bidirectional couplings Zhou names (memory↔skills, skills↔protocols, etc.) collapse into one operation on a SOLID substrate: typed CRUD + LDN notification + PROV-O lineage + SHACL validation. Zhou's explicit open gaps — §8.4 governance and §8.5 shared infrastructure — are filled by SOLID by construction.
 
-### The vault is already a proto-pod
+### The vault is one consumer of wiki-memory L3
 
-The Obsidian vault that drives this work already demonstrates the core pattern. What a Solid Pod adds:
+The Obsidian vault that drives this work is one L4 application of the wiki-memory L3 reference profile — specifically, an L3-on-L2-on-L1 specialization with PARA layout and the research-domain edge vocabulary (`concept:` / `extends:` / `supports:` / `criticizes:`). The vault demonstrates the wiki-memory pattern locally; the Pod is the federable substrate. What a Solid Pod adds *over the local vault*:
 
 | What the vault has | What the Pod adds |
 |---|---|
-| PARA structure (semantic organization) | Web-native HTTP access |
-| Wikilink graph (navigable network) | Formal access control (WAC/ACP) |
-| Frontmatter metadata (typed edges) | Stable URIs (dereferenceable IRIs) |
-| Git version history | Multi-agent authentication (WebID, Solid-OIDC) |
-| Skills system (procedural memory) | Cross-pod change notifications (Solid Notifications) |
-| Local Claude Code access | PROV-O lineage and VC-gated delegation |
+| PARA structure (one container layout) | Type Index + per-profile container catalog (many layouts coexist) |
+| Wikilink graph (typed edges in markdown) | Body→`.meta` projection: same wikilinks become RDF predicates (dual-layer linking) |
+| Frontmatter metadata (typed YAML edges) | Stable URIs (dereferenceable IRIs); SHACL-validated `.meta` |
+| Git version history | Memento (RFC 7089) at HTTP layer + multi-agent authentication (WebID, Solid-OIDC) |
+| Skills system (procedural memory) | LDN inbox + Notifications Protocol with `mem:*` AS2 trigger vocab |
+| Local Claude Code access | Federable WAC/ACP access control; PROV-O lineage; VC-gated delegation |
 
-The Pod is the federable evolution of the vault. Vault content is the first hosted application; other applications (to-do lists, calendars, project workspaces) compose as additional views over the same substrate.
+The Pod is the federable substrate; the vault is the first L4 consumer. Other applications (to-do lists, calendars, project workspaces) compose as additional L3 profiles on the same Pod.
 
 ### What this repo is *not*
 
 - **Not a CLI** — that's [`solid-agent-skills`](https://github.com/LA3D/solid-agent-skills) (sibling repo): 11 commands + 5 Claude Code skills + 53 tests
 - **Not a fabric of graph-native nodes** — that's `cogitarelink-fabric` (sibling repo): Oxigraph + FastAPI + Credo
-- **Not a memory provider** — providers (Hermes-style) target the pod via standard LDP + SPARQL + Solid Notifications
+- **Not a memory provider** — providers (Hermes/Supermemory/AKBP/agentmemory style) target the pod via standard LDP + SPARQL + Solid Notifications. The substrate is the contract beneath the providers
+- **Not vault-import-as-MVP** — wiki-memory L3 (built from first principles) is the canonical reference profile. Vault import is one use case of wiki-memory L3, not the project's center of gravity
 - **Not a production Pod hosting service** — it is a research prototype with disposable local config
 
 ---
@@ -86,13 +101,13 @@ Two-container stack:
                 └─────────────────────────────┘
 ```
 
-Three-layer Pod RDF model:
+Three-layer Pod RDF model (orthogonal to the L1/L2/L3 substrate stratification above — this is the *RDF storage* layering inside L1, not the substrate architecture):
 
 - **Layer A** — LDP container hierarchy, generated automatically by CSS
-- **Layer B** — `.meta` sidecars carry per-resource RDF, validated by SHACL, addressable via the `describedby` Link header
+- **Layer B** — `.meta` sidecars carry per-resource RDF, validated by SHACL, addressable via the `describedby` Link header. Per D58 (sharpened by D71), a `MarkdownProjectionListener` (analogous to the `MementoCommitListener` shipped in Rung 1.1) projects body wikilinks into `.meta` triples on write
 - **Layer C** — Navigation indexes: Type Index (machines), Storage Description (apps + agents + fabric), VAULT-INDEX.md (humans)
 
-The architecture is documented across 64 [decisions](.claude/rules/decisions-index.md) covering server choice, content discipline, the unified-pod pivot, externalization substrate framing, and Memento integration.
+The architecture is documented across 74 [decisions](.claude/rules/decisions-index.md) covering server choice, content discipline, the unified-pod pivot, externalization substrate framing, Memento integration, and the L1/L2/L3 memory substrate stratification.
 
 ---
 
@@ -107,7 +122,7 @@ docker compose logs -f                          # tail logs
 curl http://localhost:3000/                      # CSS root
 curl http://localhost:8080/sparql -d 'query=SELECT * WHERE { ?s ?p ?o } LIMIT 5'
 
-# Import vault content (107 notes)
+# Import vault content (1243 notes; vault is one L4 application of wiki-memory L3)
 ~/uvws/.venv/bin/python scripts/vault_import.py
 
 # Run the test suite
@@ -124,6 +139,8 @@ A successful import gives you a pod at `http://localhost:3000/` with PARA contai
 ## Why this design
 
 ### Memory operates at three scales
+
+> Note: these are *deployment scales* (where memory lives along the in-agent → cross-agent axis). They are orthogonal to the L1/L2/L3 substrate stratification above (which is the architectural layering inside one Pod). The scales tell you what kind of system you're building; the layers tell you which contract surface you're touching.
 
 Memory is not one thing. Three scales matter, and each escapes the same theoretical ceiling differently:
 
@@ -175,7 +192,7 @@ The 2001 Semantic Web paper imagined **symbolic agents** — software that trave
 
 ### How the architecture closes the gap
 
-The pod doesn't ask LLM agents to become symbolic reasoners. It exposes the symbolic substrate intact for tools that want it (SPARQL endpoint, validated `.meta`, signed VCs) and supplies LLM-readable affordances on top. Six mechanisms compose to close the gap:
+The pod doesn't ask LLM agents to become symbolic reasoners. It exposes the symbolic substrate intact for tools that want it (SPARQL endpoint, validated `.meta`, signed VCs) and supplies LLM-readable affordances on top. Nine mechanisms compose to close the gap:
 
 1. **`sh:agentInstruction` on SHACL shapes ([D50](.claude/rules/decisions-index.md))** — SHACL 1.2 §8.3 carries natural-language guidance attached to the shape. When the LLM agent fetches the shape for a container, it gets the typing constraint *and* the prose instruction telling it what predicates to use, what they mean, and when. The shape is symbolic-agent-readable; the `sh:agentInstruction` is LLM-readable; same artifact.
 
@@ -188,6 +205,12 @@ The pod doesn't ask LLM agents to become symbolic reasoners. It exposes the symb
 5. **HATEOAS-correct three-tier access ([D55](.claude/rules/decisions-index.md))** — Tier 1 brute-force lets any spec-compliant LLM navigate the pod via standard HTTP + Link headers, with no pod-specific knowledge required. Tier 2 harness gives descriptor-aware agents fewer-token trajectories. Tier 3 skills encode domain shortcuts for the fastest paths. Lower tiers always work as fallback; the symbolic baseline is preserved.
 
 6. **PROV-O + signed VC leaves ([D20](.claude/rules/decisions-index.md), [D63](.claude/rules/decisions-index.md))** — every assertion carries provenance; high-value claims carry signed VCs with selective disclosure. LLM-generated content is marked as such (`prov:wasGeneratedBy <activity>` with the LLM as agent), so downstream consumers — human, symbolic, or another LLM — can decide whether to trust it. This is how an LLM-generated claim composes with a symbolically-verifiable one without contaminating the substrate.
+
+7. **Dual-layer linking via `MarkdownProjectionListener` ([D71](.claude/rules/decisions-index.md), sharpening D58)** — the agent writes typed wikilinks in markdown (`[[Note]]{.concept}`, `[[Note]]{.extends}`); a server-side listener parses the body on write and PATCHes the equivalent RDF predicates into `.meta`. The agent never has to write Turtle. The data-layer view materializes from the token-layer view automatically. AKBP and agentmemory each have one layer; this substrate has both at single-request cost.
+
+8. **Two-stage commit (working-memory + `mem:Crystallize`) ([D73](.claude/rules/decisions-index.md))** — the substrate provides a `/working-memory/` container with a permissive SHACL shape (body-only writes accepted) plus a `mem:Crystallize` operation that validates against the strict L3 profile shape and promotes to a durable container on success. Solves the wiki-memory ergonomics problem — agents can drop notes without ceremony — without weakening the SHACL guardrails at the durable boundary. Cribbed from [AKBP](https://github.com/rohitg00/akbp)'s `remember` → `crystallize`.
+
+9. **Memory-substrate trigger vocabulary ([D74](.claude/rules/decisions-index.md))** — `mem:*` AS2 extension (`mem:ConsolidationSuggested`, `mem:BoundExceeded`, `mem:ContradictionDetected`, `mem:ReflectionDue`, `mem:OODQuerySignal`) delivered on the agent's LDN inbox (durable) and Solid Notifications Protocol channels (real-time). The substrate's MonitoringStore listener emits when SHACL rules flip; the agent dispatches by `rdf:type` to a skill family. This is the substrate-to-agent push channel that makes wake-sleep consolidation, contradiction detection, and curator behaviors possible without polling.
 
 ### The deeper move
 
@@ -219,7 +242,11 @@ Empirical questions the rounds (below) are designed to answer:
 - **RQ-Memory-2** — Does typed-edge navigation over `st:references` (or frontmatter-edge equivalents) improve retrieval accuracy or token efficiency over flat semantic retrieval for cross-document queries? Round 3 measures this directly.
 - **RQ-Federation-1** — Do cross-pod SPARQL federations work in our setup *at all*? Phase 1 validated single-pod SPARQL; federation is unvalidated. Round 4 builds on this.
 - **RQ-Memento-1** — Does Comunica propagate `Accept-Datetime` correctly across federated sources, so cross-pod time-scoped queries return coherent results?
-- **RQ-Affordance-1** — What is the right descriptor format for affordance harness — declarative SHACL with `sh:rule` extensions, custom RDF vocabulary, embedded executable code, or hybrid? Round 1 Rung 1.4 forces resolution.
+- **RQ-Affordance-1** — What is the right descriptor format for affordance harness? **Resolved 2026-05-15 per D70/D71**: hybrid by necessity. SHACL for the data model (substrate shapes + L3 profile shapes) plus a small operational RDF vocabulary for the verbs/hooks/triggers — SHACL can't say "prefetch goes here."
+- **RQ-Substrate-1** — Can a single affordance descriptor format carry L2 (universal substrate contract) AND L3 (profile-specific overlay)? Or do we need a two-document handshake — base descriptor at storage description root, profile descriptors per container?
+- **RQ-Substrate-2** — What is the minimum required predicate set in the L2 substrate shape? Bounded branching and lifecycle metadata are obvious; is OOD declaration substrate-level or profile-level?
+- **RQ-Substrate-3** — Multi-profile coexistence on one Pod — do profile boundaries follow container hierarchy strictly, or can a single container belong to multiple profiles via Type Index multi-class?
+- **RQ-Substrate-4** — Federation across Pods that conform to L2 but use different L3 profiles — what cross-profile vocabulary mapping is needed?
 - **RQ-Eval-1/2/3** — Task suite design, sub-agent configuration, and GEPA convergence for evaluating across the three access tiers ([D55](.claude/rules/decisions-index.md)).
 
 ---
@@ -230,7 +257,7 @@ Rounds turn capability milestones into measurable evidence. Each picks one archi
 
 | Round | Claim | Status |
 |---|---|---|
-| **Round 1** — Memento + Affordance Descriptor + Pod-Native Harness Skill | Pod-published affordance descriptors plus RFC 7089 time-travel reduce harness cost vs spec-only navigation | Rung 1.0 ✅ Vocabulary alignment; Rung 1.1 next (read-only Memento spike) |
+| **Round 1** — Wiki-Memory L3 + Memento + Affordance Descriptor | Pod-published affordance descriptors over a wiki-memory L3 reference profile, with RFC 7089 time-travel as substrate-level capability, reduce harness cost vs spec-only navigation | Rung 1.0 ✅ Vocabulary alignment; Rung 1.1 ✅ Read-only Memento (commit `f94228c`); Rung 1.2 ✅ Tombstone semantics (commit `741e9b8`); **Rung 1.4 next (reframed 2026-05-15)** — wiki-memory L3 reference + affordance descriptor publishing L2 substrate contract |
 | Round 2 — Bridge edges with structural pointers | Demand-driven document granularity via `cito:hasPageRange` / `cito:hasSection` reduces tokens for grounded retrieval | Blocked on R1 |
 | Round 3 — Typed edges as ground truth | SPARQL over frontmatter typed edges beats flat semantic retrieval for cross-document typed queries | Minimal new build |
 | Round 4 — Multi-pod federation | Cross-pod federated queries return correct results within tractable latency | Blocked on R1–3 |
@@ -253,7 +280,7 @@ Three things this architecture does not close. Naming them keeps the positioning
 
 2. **Trust model for cross-pod skill federation**. Pods can host skills; harnesses can read skills from multiple pods. Which pods do you trust to publish skills you will execute? ODRL plus VC-based delegation chains gesture at the answer but do not close it. This is a federation-trust problem the Verborgh group has flagged but not solved.
 
-3. **Consolidation cadence for the working ↔ episodic boundary**. When does an agent's working state get promoted to pod-resident episodic memory? Wake-sleep timing is unsolved at the principled level. ByteRover and Hermes use heuristics; the principled answer is genuinely open.
+3. **Consolidation cadence for the working ↔ episodic boundary**. When does an agent's working state get promoted to pod-resident episodic memory? D73 (two-stage commit: working-memory + `mem:Crystallize`) gives the *mechanism* — agents drop into working-memory with permissive shape, crystallize to durable when ready. The principled *timing* answer remains open. ByteRover and Hermes use heuristics; D74's `mem:ReflectionDue` trigger lets the substrate suggest, but the substrate can't decide *for* the agent.
 
 The whole project is about figuring out, in practice, how agentic applications can connect to pods. Naming what doesn't yet work keeps the practical question sharp.
 
@@ -292,15 +319,17 @@ All under `~/dev/git/LA3D/agents/`:
 
 ## Architectural decisions
 
-64 decisions (D1–D64) cover server choice (CSS v8 alpha), content discipline (SHACL shapes as guardrails), the unified-pod pivot (Pod backends as implementation detail), the externalization substrate framing, three-tier access architecture, and the Memento integration design. See [`.claude/rules/decisions-index.md`](.claude/rules/decisions-index.md) for the index.
+74 decisions (D1–D74) cover server choice (CSS v8 alpha), content discipline (SHACL shapes as guardrails), the unified-pod pivot (Pod backends as implementation detail), the externalization substrate framing, three-tier access architecture, the Memento integration design, and the L1/L2/L3 memory substrate stratification. See [`.claude/rules/decisions-index.md`](.claude/rules/decisions-index.md) for the index.
 
 Phases of the decision log:
 
-- D1–D28 — Foundation (CSS + Comunica + Python clients; vault-to-pod MVP)
-- D29–D41 — CLI, structure, content discipline (PARA + memory partitions, `.meta` as source of truth, SKOS foundation)
+- D1–D28 — Foundation (CSS + Comunica + Python clients; **D5 vault-to-pod MVP** superseded by D70/D71)
+- D29–D41 — CLI, structure, content discipline (PARA + memory partitions, `.meta` as source of truth, SKOS foundation; **D32 one-way import** reframed by D73)
 - D42–D50 — Unified Pod architecture (storage backend as implementation detail; storage description as router; vocabulary grounding; shapes as guardrails)
-- D51–D60 — Externalization substrate (pod as general-purpose substrate; affordance harness; three-tier access; evaluation methodology)
+- D51–D60 — Externalization substrate (pod as general-purpose substrate; affordance harness; three-tier access; evaluation methodology; **D58 body-affordance projection** sharpened by D71)
 - D61–D64 — Memento integration (URI minting; ACP inheritance; standards-aligned vocabulary; soft-delete + hard-purge)
+- D65–D69 — Rung 1.1/1.2 implementation + builder-skill layer + documentation strategy
+- **D70–D74 — Memory substrate stratification** (L1/L2/L3; wiki-memory as canonical L3; compile-once principle; two-stage commit; memory-substrate trigger vocabulary)
 
 ---
 
@@ -318,7 +347,7 @@ If this work is useful to your research:
 }
 ```
 
-A publication articulating the three-scale architecture and the evaluation results follows the round work. Evidence first, paper after.
+A publication articulating the L1/L2/L3 memory substrate stratification, the convergence with three independent research traditions (memory-provider plugins, benchmark-tuned memory systems, wiki-memory implementations), the dual-layer linking architectural commitment, and the evaluation results follows the round work. Evidence first, paper after.
 
 ---
 
@@ -343,25 +372,42 @@ CI-Compass ROR: [001zwgm84](https://ror.org/001zwgm84)
 
 External anchors that motivated the design:
 
-- Karpathy, *LLM Wiki* — [gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
+**Wiki-memory tradition:**
+- Karpathy, *LLM Wiki* — [gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). The Memex-LLM synthesis pitch
+- Ghumare, *LLM Wiki v2 Extending Karpathy* — [gist](https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2). Typed edges, lifecycle hooks, supersession links
+- *AKBP — Agent Knowledge Base Protocol* — [github](https://github.com/rohitg00/akbp). *"The durable knowledge contract below your tools"*; two-stage commit (`remember` → `crystallize`); same architecture, JSONL transport
+- *agentmemory — Persistent Memory for Coding Agents* — [github](https://github.com/rohitg00/agentmemory). 12 PostToolUse hooks for auto-capture; 51 MCP tools; LongMemEval 95.2% R@5
+
+**Memory-provider tradition:**
+- Hermes Agent docs — [hermes-agent.nousresearch.com](https://hermes-agent.nousresearch.com/docs/). `MemoryProvider` ABC with six operational hooks
+- Supermemory — [supermemory.ai](https://supermemory.ai/). Ontology-aware vector graph engine; 100B+ tokens/month
+
+**Benchmark-tuned memory systems:**
+- Nguyen et al., *ByteRover* (arXiv 2604.01599, 2026). 96.1% on LoCoMo with markdown
+- Hu et al., *xMemory: Beyond RAG with Bounded-Branching Hierarchical Memory* (ICML 2026)
+- Hu, Wang, McAuley, *MemoryAgentBench* (2025). Four cognitive competencies
+- He et al., *MemoryArena* (2026). 0D/1D/2D taxonomy and dependency depth
+
+**Solid / web-standards lineage:**
 - Verborgh, *Paradigm Shifts for the Decentralized Web* (2017) — [blog](https://ruben.verborgh.org/blog/2017/12/20/paradigm-shifts-for-the-decentralized-web/)
 - Verborgh, *Designing a Linked Data Developer Experience* (2018) — [blog](https://ruben.verborgh.org/blog/2018/12/28/designing-a-linked-data-developer-experience/)
 - Verborgh, *Shaping Linked Data Apps* (2019) — [blog](https://ruben.verborgh.org/blog/2019/06/17/shaping-linked-data-apps/)
-- Verborgh, *Let's talk about pods* (2022) — [blog](https://ruben.verborgh.org/blog/2022/12/30/lets-talk-about-pods/)
+- Verborgh, *Let's talk about pods* (2022) — [blog](https://ruben.verborgh.org/blog/2022/12/30/lets-talk-about-pods/). The hybrid contextualized KG framing
 - Dedecker, Slabbinck, Wright, Hochstenbach, Colpaert, Verborgh — *What's in a Pod?* (QuWeDa 2022)
-- Hermes Agent docs — [hermes-agent.nousresearch.com](https://hermes-agent.nousresearch.com/docs/)
-- Zhou et al., *Externalization for LLM Agents* (2026)
-- Nguyen et al., *ByteRover* (arXiv 2604.01599, 2026)
-- Hu et al., *xMemory: Beyond RAG with Bounded-Branching Hierarchical Memory* (ICML 2026)
-- Barman et al., *The Price of Meaning* (2026) — the no-escape theorem this architecture is designed to evade
+
+**Theoretical grounding:**
+- Zhou et al., *Externalization for LLM Agents* (2026). The four externalizable substrates
+- Barman et al., *The Price of Meaning* (2026). The no-escape theorem this architecture is designed to evade
 
 Internal design documents (vault notes; not public):
 
+- `Memory Substrate vs Memory Profile` — the L1/L2/L3 stratification with seven invariants and the evidence table
+- `Wiki-Memory L3 Profile` — first-principles design of the canonical L3 reference, with dual-layer linking
 - `Unified Externalization Prototype Plan` — active plan with the four rounds
-- `SOLID-Pod-Decisions` — canonical log for D1–D64
-- `Three-Scale Agent Memory Architecture` — the synthesis these rounds test
+- `SOLID-Pod-Decisions` — canonical log for D1–D74
+- `Three-Scale Agent Memory Architecture` — the deployment-scales synthesis (orthogonal to L1/L2/L3)
 - `Hybrid Contextualized KG as Agent Memory Substrate` — the architectural character
 - `The Pod as Externalization Substrate` — the harness-as-consumer inversion
-- `Solid Pods as Agent Memory Substrate` — vault-as-proto-pod framing
+- `Solid Pods as Agent Memory Substrate` — pre-stratification exploration; superseded by `Memory Substrate vs Memory Profile`
 - `Hierarchical Retrieval Escapes the No-Escape Theorem` — the structural thesis the prototype tests
 - `Memento Vocabulary Alignment` — standards mapping for Round 1
