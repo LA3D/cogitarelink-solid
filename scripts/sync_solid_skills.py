@@ -66,13 +66,24 @@ def write_upstream_md(skill: str, sha: str, upstream_path: str, date: str) -> No
     local_upstream_path(skill).write_text(body)
 
 def update_skill_frontmatter(skill: str, sha: str, date: str) -> None:
-    """Rewrite `upstream.sha` and `upstream.date` lines in SKILL.md frontmatter, preserve everything else."""
+    """Rewrite `upstream.sha` and `upstream.date` lines inside the YAML frontmatter only.
+
+    Frontmatter is delimited by a leading `---` on line 1 and a closing `---`. If
+    no frontmatter is found, the file is left unchanged.
+    """
     skill_md = SKILLS_ROOT / skill / "SKILL.md"
     if not skill_md.exists():
         return  # SKILL.md created by hand; nothing to update yet
     text = skill_md.read_text()
     lines = text.splitlines()
-    for i, line in enumerate(lines):
+    if not lines or lines[0].strip() != "---":
+        return  # no frontmatter
+    try:
+        end = next(i for i in range(1, len(lines)) if lines[i].strip() == "---")
+    except StopIteration:
+        return  # unterminated frontmatter, leave alone
+    for i in range(1, end):
+        line = lines[i]
         if line.strip().startswith("sha:"):
             indent = line[: len(line) - len(line.lstrip())]
             lines[i] = f"{indent}sha: {sha}"
