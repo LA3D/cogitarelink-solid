@@ -3,7 +3,7 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/componentsjs/^6.0.0/components/context.jsonld",
     {
       "npmd": "https://linkedsoftwaredependencies.org/bundles/npm/",
-      "mrc": "npmd:markdown-rdfa/^0.1.0/",
+      "mrc": "npmd:markdown-render/^0.1.0/",
       "MarkdownRdfaConverter": {
         "@id": "mrc:dist-cjs/converter.jsonld#MarkdownRdfaConverter",
         "@prefix": true,

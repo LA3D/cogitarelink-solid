@@ -1,7 +1,7 @@
 {
-  "name": "markdown-rdfa",
+  "name": "markdown-render",
   "version": "0.1.0",
-  "description": "Render Solid Pod markdown notes to semantically-annotated HTML with resolved wikilinks and RDFa attributes. CSS v8 RepresentationConverter extension.",
+  "description": "Render Solid Pod markdown notes to HTML with wikilink class annotations (no RDFa; D75). CSS v8 RepresentationConverter extension.",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
@@ -15,14 +15,14 @@
       "require": "./dist-cjs/converter.js"
     }
   },
-  "lsd:module": "https://linkedsoftwaredependencies.org/bundles/npm/markdown-rdfa",
+  "lsd:module": "https://linkedsoftwaredependencies.org/bundles/npm/markdown-render",
   "lsd:components": "dist-cjs/components/components.jsonld",
   "lsd:contexts": {
-    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-rdfa/^0.1.0/components/context.jsonld": "dist-cjs/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-render/^0.1.0/components/context.jsonld": "dist-cjs/components/context.jsonld"
   },
   "lsd:importPaths": {
-    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-rdfa/^0.1.0/components/": "dist-cjs/components/",
-    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-rdfa/^0.1.0/dist-cjs/": "dist-cjs/"
+    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-render/^0.1.0/components/": "dist-cjs/components/",
+    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-render/^0.1.0/dist-cjs/": "dist-cjs/"
   },
   "bin": {
     "md-rdfa": "./dist/cli.js"

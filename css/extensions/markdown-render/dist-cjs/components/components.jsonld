@@ -1,0 +1,11 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-render/^0.1.0/components/context.jsonld"
+  ],
+  "@id": "npmd:markdown-render",
+  "@type": "Module",
+  "requireName": "markdown-render",
+  "import": [
+    "mrc:dist-cjs/converter.jsonld"
+  ]
+}

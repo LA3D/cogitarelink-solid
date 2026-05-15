@@ -1,10 +1,8 @@
-# markdown-rdfa
+# markdown-render
 
-Sample A for cogitarelink-solid Phase 2b.
-
-Renders Solid Pod markdown notes to semantically-annotated HTML with resolved
-wikilinks and RDFa attributes. Standalone TypeScript pipeline — not yet wired
-into CSS as a `RepresentationConverter`.
+Renders Solid Pod markdown notes to HTML with typed wikilink class annotations
+(D75 — no RDFa; data layer lives exclusively in `.meta` Turtle). CSS v8
+RepresentationConverter extension.
 
 ## What it does
 

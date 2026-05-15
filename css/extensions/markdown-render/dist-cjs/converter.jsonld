@@ -1,9 +1,9 @@
 {
   "@context": [
-    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-rdfa/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-render/^0.1.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld"
   ],
-  "@id": "npmd:markdown-rdfa",
+  "@id": "npmd:markdown-render",
   "components": [
     {
       "@id": "mrc:dist-cjs/converter.jsonld#MarkdownRdfaConverter",
@@ -12,7 +12,7 @@
       "extends": [
         "css:dist/storage/conversion/BaseTypedRepresentationConverter.jsonld#BaseTypedRepresentationConverter"
       ],
-      "comment": "Renders Markdown to semantically-annotated HTML with resolved wikilinks and RDFa attributes, using the unified/remark/rehype pipeline from markdown-rdfa. CJS wrapper that lazy-loads the ESM pipeline via dynamic import.",
+      "comment": "Renders Markdown to semantically-annotated HTML with resolved wikilinks and RDFa attributes, using the unified/remark/rehype pipeline from markdown-render. CJS wrapper that lazy-loads the ESM pipeline via dynamic import.",
       "parameters": [
         {
           "@id": "mrc:dist-cjs/converter.jsonld#MarkdownRdfaConverter_podBase",

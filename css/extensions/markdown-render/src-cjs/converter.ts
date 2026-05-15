@@ -27,7 +27,7 @@ import * as path from "path";
 // package doesn't export the logging module in the published dist.
 function debug(...args: unknown[]): void {
   // eslint-disable-next-line no-console
-  console.error("[markdown-rdfa]", ...args);
+  console.error("[markdown-render]", ...args);
 }
 
 const TEXT_MARKDOWN = "text/markdown";

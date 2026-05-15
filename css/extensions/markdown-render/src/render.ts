@@ -48,7 +48,7 @@ export async function renderMarkdown(
     .use(rehypeDocument, {
       title,
       css: [],
-      meta: [{ name: "generator", content: "markdown-rdfa (cogitarelink-solid)" }],
+      meta: [{ name: "generator", content: "markdown-render (cogitarelink-solid)" }],
     })
     .use(rehypePrefixDecl)
     .use(rehypeRdfa)
