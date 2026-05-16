@@ -69,3 +69,21 @@ def test_overlay_schema_has_installs_profile_and_role_scheme():
     rdf_property = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#Property")
     for predicate in [OVERLAY_NS.installsProfile, OVERLAY_NS.installsRoleScheme]:
         assert (predicate, RDF.type, rdf_property) in g, f"missing predicate: {predicate}"
+
+
+MANIFEST_TTL = Path(__file__).parent.parent / "overlays" / "wiki-memory" / "manifest.ttl"
+
+
+def test_manifest_declares_role_scheme_and_six_profiles():
+    g = Graph()
+    g.parse(MANIFEST_TTL, format="turtle")
+    overlay = URIRef("https://pod.vardeman.me/vault/ontology/overlay#wiki-memory")
+
+    role_schemes = set(g.objects(overlay, OVERLAY_NS.installsRoleScheme))
+    assert role_schemes == {URIRef("file:///vault/ontology/wikirole")}, \
+        f"unexpected role schemes: {role_schemes}"
+
+    profiles = set(g.objects(overlay, OVERLAY_NS.installsProfile))
+    expected = {URIRef(f"file:///vault/meta/profiles/{name}") for name in
+                ["page", "concept", "source", "person", "procedure", "working"]}
+    assert profiles == expected, f"diff: missing={expected - profiles}, extra={profiles - expected}"

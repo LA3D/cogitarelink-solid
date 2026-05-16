@@ -49,6 +49,17 @@
         </vault/meta/affordances/breadcrumb-view.ttl> ,
         </vault/meta/affordances/memento.ttl> ;
 
+    overlay:installsRoleScheme
+        </vault/ontology/wikirole> ;
+
+    overlay:installsProfile
+        </vault/meta/profiles/page> ,
+        </vault/meta/profiles/concept> ,
+        </vault/meta/profiles/source> ,
+        </vault/meta/profiles/person> ,
+        </vault/meta/profiles/procedure> ,
+        </vault/meta/profiles/working> ;
+
     overlay:installsTypeRegistration
         [ solid:forClass wiki:Page       ; solid:instanceContainer </vault/wiki/pages/> ] ,
         [ solid:forClass wiki:Source     ; solid:instanceContainer </vault/wiki/sources/> ] ,
