@@ -1,0 +1,13 @@
+{
+  "skill_name": "solid-profiles-and-conneg",
+  "evals": [
+    {
+      "id": 0,
+      "name": "resource-kind-via-http",
+      "prompt": "We're building a Solid Pod for project management. We have markdown resources that come in four flavors: Project, Task, Milestone, Person. Each has its own SHACL shape and JSON-LD context. Right now they're distinguished only by `rdf:type` in the resource's `.meta` sidecar — but we want HTTP clients to be able to tell what kind of resource they're getting just from the HTTP response, without parsing the body. What's the right design? Give me example Turtle for one of the resource types (say Task) showing how the resource declares its kind, plus what HTTP response headers our server should emit.",
+      "expected_output": "Use W3C PROF + RFC 6906 + conneg-by-profile pattern. Class IRI (app:Task) is distinct from Profile IRI (app:TaskProfile or similar). Instance declares both: rdf:type AND dct:conformsTo. SHACL shape wired as prof:ResourceDescriptor with role:validation, not as the profile itself. HTTP response emits Link: <profile-IRI>; rel=\"profile\". Should NOT emit Content-Profile header (expired draft). Should mention prof:isTransitiveProfileOf for explicit chain emission.",
+      "files": [],
+      "assertions": []
+    }
+  ]
+}

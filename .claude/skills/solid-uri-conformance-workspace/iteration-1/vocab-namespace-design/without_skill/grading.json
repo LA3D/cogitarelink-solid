@@ -1,0 +1,36 @@
+{
+  "expectations": [
+    {
+      "text": "recommends_pod_hosted_vocab",
+      "passed": false,
+      "evidence": "No Pod-hosted IRI; BUT recommends w3id"
+    },
+    {
+      "text": "uses_hash_namespace",
+      "passed": true,
+      "evidence": "Hash IRI found"
+    },
+    {
+      "text": "https_no_port_no_extension",
+      "passed": true,
+      "evidence": "IRI: https://pods.acme.org/alice/vocab#"
+    },
+    {
+      "text": "mnemonic_class_names",
+      "passed": true,
+      "evidence": "All 4 classes named mnemonically"
+    },
+    {
+      "text": "addresses_w3id_question_correctly",
+      "passed": true,
+      "evidence": "Engages w3id with reasoning"
+    },
+    {
+      "text": "includes_example_turtle",
+      "passed": true,
+      "evidence": "Turtle present"
+    }
+  ],
+  "passed": 5,
+  "total": 6
+}

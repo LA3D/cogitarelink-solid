@@ -1,0 +1,32 @@
+{
+  "eval_id": 0,
+  "eval_name": "node-trust-comunica",
+  "prompt": "I just turned on HTTPS for my Community Solid Server Pod using mkcert. curl works fine without -k, my browser is happy, but when I run a Node.js script that uses Comunica to do SPARQL federation against the Pod, it throws `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`. The CA is definitely in Keychain — `security find-certificate -c 'mkcert development CA'` finds it. What's going on and how do I fix it without disabling cert validation? I run Comunica in a Docker sibling container if that matters.",
+  "assertions": [
+    {
+      "name": "identifies_node_keychain_gap",
+      "description": "Identifies the root cause: Node.js doesn't read macOS Keychain (uses bundled OpenSSL)",
+      "check": "answer mentions Node.js using OpenSSL trust store separate from macOS Keychain, OR explains why curl/browsers work but Node doesn't"
+    },
+    {
+      "name": "recommends_node_extra_ca_certs",
+      "description": "Recommends NODE_EXTRA_CA_CERTS env var as the fix",
+      "check": "answer contains `NODE_EXTRA_CA_CERTS`"
+    },
+    {
+      "name": "references_mkcert_caroot",
+      "description": "Points at $(mkcert -CAROOT)/rootCA.pem as the path",
+      "check": "answer mentions `mkcert -CAROOT` OR `rootCA.pem`"
+    },
+    {
+      "name": "addresses_docker_sibling_container",
+      "description": "Notes the env var must be set INSIDE the Comunica container, not just the host shell",
+      "check": "answer specifically addresses setting NODE_EXTRA_CA_CERTS in the Docker container env (volume mount + environment block)"
+    },
+    {
+      "name": "does_not_recommend_disabling_validation",
+      "description": "Does NOT recommend NODE_TLS_REJECT_UNAUTHORIZED=0 or rejectUnauthorized: false as the primary fix",
+      "check": "answer does not present these as the recommended fix (may mention them as anti-patterns)"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "skill_name": "solid-uri-conformance",
+  "evals": [
+    {
+      "id": 0,
+      "name": "vocab-namespace-design",
+      "prompt": "I'm setting up a Solid Pod for a citation management app I'm building. The Pod will be at https://pods.acme.org/alice/. I need to design a vocabulary for my app — I'll have classes for Citation, Author, Venue, and Journal, plus some predicates like `cites`, `affiliatedWith`. What should the vocabulary namespace IRI be, and where should I host the vocabulary file? Also, should I just use w3id.org for stability? Give me a concrete plan with example Turtle for the vocabulary file.",
+      "expected_output": "Concrete recommendation: Pod-hosted hash-namespace IRI (https://pods.acme.org/alice/ontology/citation# or similar), extension-less file path, HTTPS, no port, mnemonic class names; w3id.org NOT needed for app-local vocab; example Turtle showing the @prefix and a few class declarations.",
+      "files": [],
+      "assertions": []
+    }
+  ]
+}

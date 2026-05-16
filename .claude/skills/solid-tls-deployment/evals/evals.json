@@ -1,0 +1,13 @@
+{
+  "skill_name": "solid-tls-deployment",
+  "evals": [
+    {
+      "id": 0,
+      "name": "node-trust-comunica",
+      "prompt": "I just turned on HTTPS for my Community Solid Server Pod using mkcert. curl works fine without -k, my browser is happy, but when I run a Node.js script that uses Comunica to do SPARQL federation against the Pod, it throws `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`. The CA is definitely in Keychain — `security find-certificate -c 'mkcert development CA'` finds it. What's going on and how do I fix it without disabling cert validation? I run Comunica in a Docker sibling container if that matters.",
+      "expected_output": "Identify root cause: Node.js doesn't read macOS Keychain (uses bundled OpenSSL trust). Fix: NODE_EXTRA_CA_CERTS env var pointing at $(mkcert -CAROOT)/rootCA.pem, set in shell AND in the Docker container env (since Comunica runs in a sibling container). Should NOT recommend rejectUnauthorized: false or NODE_TLS_REJECT_UNAUTHORIZED=0 as the primary fix.",
+      "files": [],
+      "assertions": []
+    }
+  ]
+}

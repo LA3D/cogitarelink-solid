@@ -1,0 +1,47 @@
+{
+  "eval_id": 0,
+  "eval_name": "resource-kind-via-http",
+  "prompt": "We're building a Solid Pod for project management. We have markdown resources that come in four flavors: Project, Task, Milestone, Person. Each has its own SHACL shape and JSON-LD context. Right now they're distinguished only by `rdf:type` in the resource's `.meta` sidecar — but we want HTTP clients to be able to tell what kind of resource they're getting just from the HTTP response, without parsing the body. What's the right design? Give me example Turtle for one of the resource types (say Task) showing how the resource declares its kind, plus what HTTP response headers our server should emit.",
+  "assertions": [
+    {
+      "name": "uses_prof_vocabulary",
+      "description": "Uses W3C PROF vocabulary (prof:Profile or prof:hasResource)",
+      "check": "answer contains `prof:Profile` OR `prof:hasResource` OR references W3C PROF spec"
+    },
+    {
+      "name": "class_iri_distinct_from_profile_iri",
+      "description": "Distinguishes the class IRI (app:Task) from the profile IRI (separate resource)",
+      "check": "answer explicitly mints a separate IRI for the profile, distinct from the class IRI; explains why they're not the same"
+    },
+    {
+      "name": "instance_declares_both",
+      "description": "Instance data shows both rdf:type AND dct:conformsTo",
+      "check": "example Turtle for Task has `a app:Task` (or similar) AND `dct:conformsTo <…Profile>`"
+    },
+    {
+      "name": "shape_as_artifact_not_profile",
+      "description": "SHACL shape is wired as a prof:ResourceDescriptor with role:validation, not treated as the profile itself",
+      "check": "answer shows shape via `prof:hasResource [ … prof:hasRole role:validation ; prof:hasArtifact <shape> ]`"
+    },
+    {
+      "name": "link_rel_profile_header",
+      "description": "Server emits Link: <profile-IRI>; rel=\"profile\" header",
+      "check": "answer mentions `Link:` HTTP header with `rel=\"profile\"`"
+    },
+    {
+      "name": "no_content_profile_header",
+      "description": "Does NOT recommend emitting Content-Profile header (lives only in expired IETF draft)",
+      "check": "answer does not present Content-Profile as a recommended header (may mention it as deprecated/expired)"
+    },
+    {
+      "name": "mentions_transitive_chain",
+      "description": "Mentions prof:isTransitiveProfileOf for explicit chain emission OR avoids the at-risk axiom by other means",
+      "check": "answer either uses prof:isTransitiveProfileOf or doesn't rely on dct:conformsTo chain inference"
+    },
+    {
+      "name": "concrete_turtle_for_task",
+      "description": "Provides concrete Turtle for the Task case as requested",
+      "check": "answer includes a Turtle example specifically for a Task instance"
+    }
+  ]
+}
