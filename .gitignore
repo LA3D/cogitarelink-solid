@@ -43,3 +43,6 @@ htmlcov/
 
 # Claude Code
 .claude/settings.local.json
+
+# TLS certs — generated locally via mkcert, never committed
+css/certs/

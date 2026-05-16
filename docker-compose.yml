@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     image: cogitarelink-solid-css:latest
     ports:
-      - "3000:3000"
+      - "443:443"
     networks:
       default:
         aliases:
@@ -13,17 +13,26 @@ services:
     volumes:
       - css-data:/data
       - ./css/config:/config:ro
+      - ./css/certs:/certs:ro
+    environment:
+      NODE_EXTRA_CA_CERTS: /certs/rootCA.pem
     command:
       - -c
       - /config/solid-config.json
       - -f
       - /data
       - -b
-      - http://pod.vardeman.me:3000
+      - https://pod.vardeman.me
+      - -p
+      - "443"
+      - --httpsKey
+      - /certs/pod.key
+      - --httpsCert
+      - /certs/pod.crt
       - --seedConfig
       - /config/seed.json
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "--header", "Host: pod.vardeman.me:3000", "http://localhost:3000/"]
+      test: ["CMD", "wget", "--no-check-certificate", "-q", "--spider", "--header", "Host: pod.vardeman.me", "https://localhost/"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -36,13 +45,17 @@ services:
       - ./shapes:/shapes:ro
       - ./ontology:/ontology:ro
       - ./overlays:/overlays:ro
+      - ./css/certs:/certs:ro
+    environment:
+      SSL_CERT_FILE: /certs/rootCA.pem
+      REQUESTS_CA_BUNDLE: /certs/rootCA.pem
     working_dir: /scripts
     entrypoint: ["sh", "-c"]
     command:
       - |
         pip install --quiet httpx rdflib pyyaml &&
-        (python pod_setup.py --target http://pod.vardeman.me:3000 || echo "pod_setup verify warned; continuing to overlay apply") &&
-        cd / && python -m scripts.overlay.apply /overlays/wiki-memory --target http://pod.vardeman.me:3000/vault/
+        (python pod_setup.py --target https://pod.vardeman.me || echo "pod_setup verify warned; continuing to overlay apply") &&
+        cd / && python -m scripts.overlay.apply /overlays/wiki-memory --target https://pod.vardeman.me/vault/
     depends_on:
       css:
         condition: service_healthy

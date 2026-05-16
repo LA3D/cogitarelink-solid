@@ -15,12 +15,12 @@ reset:  ## Clean slate: destroy data, rebuild, reseed
 
 status:  ## Health check all services
 	@echo "=== Service Status ==="
-	@echo "CSS:       $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/)"
-	@echo "Pod:       $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/)"
-	@echo "WebID:     $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/profile/card)"
-	@echo "TypeIndex: $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/settings/publicTypeIndex)"
-	@echo "Shapes:    $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/meta/shapes/)"
-	@echo "Capabilities: $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/meta/capabilities/)"
+	@echo "CSS:       $$(curl -s -o /dev/null -w '%{http_code}' https://pod.vardeman.me/)"
+	@echo "Pod:       $$(curl -s -o /dev/null -w '%{http_code}' https://pod.vardeman.me/vault/)"
+	@echo "WebID:     $$(curl -s -o /dev/null -w '%{http_code}' https://pod.vardeman.me/vault/profile/card)"
+	@echo "TypeIndex: $$(curl -s -o /dev/null -w '%{http_code}' https://pod.vardeman.me/vault/settings/publicTypeIndex)"
+	@echo "Shapes:    $$(curl -s -o /dev/null -w '%{http_code}' https://pod.vardeman.me/vault/meta/shapes/)"
+	@echo "Capabilities: $$(curl -s -o /dev/null -w '%{http_code}' https://pod.vardeman.me/vault/meta/capabilities/)"
 	@echo "Setup:     $$(docker compose ps pod-setup --format '{{.State}}' 2>/dev/null || echo 'not run')"
 	@echo "(Comunica is client-side via solid-agent-skills; no Pod sidecar — D3/D29.)"
 
