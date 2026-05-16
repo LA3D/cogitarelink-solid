@@ -43,6 +43,8 @@ overlay:dependsOnOverlay a rdf:Property ;
 overlay:installsContainer    a rdf:Property ; rdfs:label "Pod path of a container this overlay creates" ; rdfs:isDefinedBy <> .
 overlay:installsShape        a rdf:Property ; rdfs:label "Pod URL of a SHACL shape file this overlay uploads" ; rdfs:isDefinedBy <> .
 overlay:installsAffordance   a rdf:Property ; rdfs:label "Pod URL of an affordance descriptor this overlay uploads" ; rdfs:isDefinedBy <> .
+overlay:installsProfile        a rdf:Property ; rdfs:label "Pod URL of a PROF profile descriptor this overlay uploads" ; rdfs:isDefinedBy <> .
+overlay:installsRoleScheme     a rdf:Property ; rdfs:label "Pod URL of a SKOS role-concept scheme this overlay publishes" ; rdfs:isDefinedBy <> .
 overlay:installsTypeRegistration a rdf:Property ;
     rdfs:label "Type Index registration this overlay adds" ;
     rdfs:comment "Object is a blank node with solid:forClass + solid:instanceContainer." ;

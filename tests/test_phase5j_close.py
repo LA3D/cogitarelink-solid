@@ -7,8 +7,10 @@ from rdflib.namespace import RDF, RDFS, SKOS, OWL
 PROF = Namespace("http://www.w3.org/ns/dx/prof/")
 DCT = Namespace("http://purl.org/dc/terms/")
 WIKIROLE = Namespace("https://pod.vardeman.me/vault/ontology/wikirole#")
+OVERLAY_NS = Namespace("https://pod.vardeman.me/vault/ontology/overlay#")
 
 OVERLAY_ROOT = Path(__file__).parent.parent / "overlays" / "wiki-memory"
+OVERLAY_TTL = Path(__file__).parent.parent / "css" / "config" / "pod-templates" / "base" / "ontology" / "overlay.ttl"
 
 
 def test_wikirole_scheme_has_five_role_concepts():
@@ -59,3 +61,11 @@ def test_wikirole_scheme_has_five_role_concepts():
         assert (child, SKOS.broader, parent) in g, f"{child} missing skos:broader :affordance"
     assert not list(g.triples((parent, SKOS.broader, None))), \
         "parent :affordance should not have skos:broader"
+
+
+def test_overlay_schema_has_installs_profile_and_role_scheme():
+    g = Graph()
+    g.parse(OVERLAY_TTL, format="turtle")
+    rdf_property = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#Property")
+    for predicate in [OVERLAY_NS.installsProfile, OVERLAY_NS.installsRoleScheme]:
+        assert (predicate, RDF.type, rdf_property) in g, f"missing predicate: {predicate}"
