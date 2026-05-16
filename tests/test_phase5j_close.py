@@ -218,3 +218,36 @@ def test_importer_emits_content_level_conformsTo(class_hint, profile_slug):
     expected_profile = URIRef(f"{_PROFILE_BASE}/{profile_slug}")
     assert (resource, DCT.conformsTo, expected_profile) in g, \
         f"importer did not emit dct:conformsTo <{expected_profile}>"
+
+
+# --- Task 12: storage description advertises wikirole + 6 PROF profiles ---
+
+@pytest.mark.integration
+def test_storage_description_advertises_wikirole_and_profiles():
+    """Storage description lists wikirole vocab and all 6 PROF profile descriptors (D86).
+
+    CSS only serves .well-known/solid on storage containers (pim:Storage).
+    The vault at /vault/ is the storage root, so its description is at /vault/.well-known/solid.
+    """
+    import httpx
+    sd_url = f"{POD}/vault/.well-known/solid"
+    r = httpx.get(sd_url, headers={"Accept": "text/turtle"}, timeout=5, verify=False)
+    assert r.status_code == 200
+    g = Graph()
+    g.parse(data=r.text, format="turtle", publicID=sd_url)
+
+    void_vocab = URIRef("http://rdfs.org/ns/void#vocabulary")
+    vocabs = set(str(o) for o in g.objects(predicate=void_vocab))
+    assert "https://pod.vardeman.me/vault/ontology/wiki#" in vocabs, \
+        f"wiki vocab missing from storage description; found: {vocabs}"
+    assert "https://pod.vardeman.me/vault/ontology/wikirole#" in vocabs, \
+        f"wikirole vocab missing from storage description; found: {vocabs}"
+
+    prof_has_resource = URIRef("http://www.w3.org/ns/dx/prof/hasResource")
+    profiles = set(str(o) for o in g.objects(predicate=prof_has_resource))
+    expected_profiles = {
+        f"https://pod.vardeman.me/vault/meta/profiles/{name}"
+        for name in ["page", "concept", "source", "person", "procedure", "working"]
+    }
+    missing = expected_profiles - profiles
+    assert not missing, f"profiles missing from prof:hasResource: {missing}"

@@ -118,6 +118,16 @@
             ]
           },
           {
+            "comment": "VoID: wikirole SKOS concept scheme vocabulary (D86)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/ontology/wikirole#"
+              }
+            ]
+          },
+          {
             "comment": "VoID: CiTO vocabulary for typed wikilinks",
             "@type": "StaticStorageDescriber",
             "terms": [
@@ -234,6 +244,66 @@
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/working/"
+              }
+            ]
+          },
+          {
+            "comment": "PROF: page profile descriptor (D86)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/dx/prof/hasResource",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/page"
+              }
+            ]
+          },
+          {
+            "comment": "PROF: concept profile descriptor (D86)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/dx/prof/hasResource",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/concept"
+              }
+            ]
+          },
+          {
+            "comment": "PROF: source profile descriptor (D86)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/dx/prof/hasResource",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/source"
+              }
+            ]
+          },
+          {
+            "comment": "PROF: person profile descriptor (D86)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/dx/prof/hasResource",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/person"
+              }
+            ]
+          },
+          {
+            "comment": "PROF: procedure profile descriptor (D86)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/dx/prof/hasResource",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/procedure"
+              }
+            ]
+          },
+          {
+            "comment": "PROF: working-memory profile descriptor (D86)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/dx/prof/hasResource",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/working"
               }
             ]
           }
