@@ -1,0 +1,43 @@
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix role: <http://www.w3.org/ns/dx/prof/role/> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+<https://pod.vardeman.me/vault/meta/profiles/working>
+  a prof:Profile ;
+  rdfs:label "Wiki-Memory L3 — Working memory profile" ;
+  rdfs:comment "Profile for wiki:WorkingNote — D73 two-stage commit staging shape. Permissive constraints; promotion to durable container via mem:Crystallize converts to a stricter profile (concept, source, person, procedure)." ;
+  dct:publisher <https://orcid.org/0000-0003-4091-6059> ;
+  prof:hasToken "wiki-working"^^xsd:token ;
+  prof:isProfileOf <https://pod.vardeman.me/vault/meta/profiles/page> ;
+  prof:isTransitiveProfileOf
+    <https://pod.vardeman.me/vault/meta/profiles/page> ,
+    <https://solidproject.org/TR/protocol> ;
+  prof:hasResource
+    <https://pod.vardeman.me/vault/meta/profiles/working#shape> ,
+    <https://pod.vardeman.me/vault/meta/profiles/working#context> ,
+    <https://pod.vardeman.me/vault/meta/profiles/working#vocab> .
+
+<https://pod.vardeman.me/vault/meta/profiles/working#shape>
+  a prof:ResourceDescriptor ;
+  rdfs:label "SHACL shape for wiki:WorkingNote (permissive)" ;
+  dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+  dct:format "text/turtle" ;
+  prof:hasRole role:validation ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/meta/shapes/working.shacl.ttl> .
+
+<https://pod.vardeman.me/vault/meta/profiles/working#context>
+  a prof:ResourceDescriptor ;
+  rdfs:label "JSON-LD context" ;
+  dct:format "application/ld+json" ;
+  prof:hasRole role:schema ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/meta/context.jsonld> .
+
+<https://pod.vardeman.me/vault/meta/profiles/working#vocab>
+  a prof:ResourceDescriptor ;
+  rdfs:label "wiki vocabulary" ;
+  dct:format "text/turtle" ;
+  prof:hasRole role:vocabulary ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/ontology/wiki> .
