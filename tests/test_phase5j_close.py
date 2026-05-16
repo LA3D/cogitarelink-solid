@@ -189,3 +189,32 @@ def test_affordance_additive_prof_typing(filename, role):
         f"{filename} missing prof:hasRole wikirole:{role}"
     assert (doc_uri, DCT.conformsTo, PROF_SPEC) in g, \
         f"{filename} missing dct:conformsTo <PROF>"
+
+
+# --- Task 10: importer emits content-level dct:conformsTo per wiki:* class ---
+
+from scripts.lib.rdf_gen import frontmatter_to_graph  # noqa: E402
+
+_PROFILE_BASE = "https://pod.vardeman.me/vault/meta/profiles"
+_FIXTURE_BASE = "https://pod.vardeman.me/vault/wiki/pages"
+_FIXTURE_IRI  = f"{_FIXTURE_BASE}/fixture"
+
+
+@pytest.mark.parametrize("class_hint,profile_slug", [
+    ("concept",   "concept"),
+    ("source",    "source"),
+    ("person",    "person"),
+    ("procedure", "procedure"),
+    ("working",   "working"),
+])
+def test_importer_emits_content_level_conformsTo(class_hint, profile_slug):
+    """Imported wiki:X resources declare dct:conformsTo on the matching wiki:XProfile (D86)."""
+    g = frontmatter_to_graph(
+        fm={"type": class_hint, "title": "Fixture"},
+        title="Fixture",
+        base=_FIXTURE_BASE,
+    )
+    resource = URIRef(f"{_FIXTURE_IRI}.md")
+    expected_profile = URIRef(f"{_PROFILE_BASE}/{profile_slug}")
+    assert (resource, DCT.conformsTo, expected_profile) in g, \
+        f"importer did not emit dct:conformsTo <{expected_profile}>"

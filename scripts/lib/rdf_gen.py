@@ -5,6 +5,7 @@ from rdflib import Graph, URIRef, Literal, Namespace, BNode
 from rdflib.namespace import RDF, DCTERMS, XSD, SKOS, PROV
 
 VAULT = Namespace("https://pod.vardeman.me/vault/ontology#")
+_PROFILE_BASE = "https://pod.vardeman.me/vault/meta/profiles"
 
 TYPE_MAP = {
     "concept-note": SKOS.Concept,
@@ -12,6 +13,21 @@ TYPE_MAP = {
     "literature-note": VAULT.LiteratureNote,
     "method-note": VAULT.MethodNote,
     "project": VAULT.Project,
+}
+
+# Maps frontmatter type values (both vault-style and L3 class-hint forms) to
+# the PROF profile IRI slug for that resource kind (D86).
+CONTENT_PROFILE_MAP = {
+    "concept":       f"{_PROFILE_BASE}/concept",
+    "concept-note":  f"{_PROFILE_BASE}/concept",
+    "source":        f"{_PROFILE_BASE}/source",
+    "literature-note": f"{_PROFILE_BASE}/source",
+    "book-note":     f"{_PROFILE_BASE}/source",
+    "person":        f"{_PROFILE_BASE}/person",
+    "author-note":   f"{_PROFILE_BASE}/person",
+    "procedure":     f"{_PROFILE_BASE}/procedure",
+    "method-note":   f"{_PROFILE_BASE}/procedure",
+    "working":       f"{_PROFILE_BASE}/working",
 }
 
 FIELD_MAP = {
@@ -50,9 +66,14 @@ def frontmatter_to_graph(fm: dict, title: str, base: str,
     g.bind("vault", VAULT); g.bind("prov", PROV)
 
     subj = URIRef(f"{base.rstrip('/')}/{slug(title)}.md")
-    rdf_class = TYPE_MAP.get(fm.get("type", "concept-note"), SKOS.Concept)
+    note_type = fm.get("type", "concept-note")
+    rdf_class = TYPE_MAP.get(note_type, SKOS.Concept)
     g.add((subj, RDF.type, rdf_class))
     g.add((subj, SKOS.prefLabel, Literal(title, datatype=XSD.string)))
+
+    profile_iri = CONTENT_PROFILE_MAP.get(note_type)
+    if profile_iri:
+        g.add((subj, DCTERMS.conformsTo, URIRef(profile_iri)))
 
     for key, (pred, handler) in FIELD_MAP.items():
         val = fm.get(key)
