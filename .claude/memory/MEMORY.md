@@ -7,29 +7,56 @@ For decision IDs, invoke the `decision-lookup` skill.
 
 ## Project state (as of 2026-05-16)
 
-- **Branch**: main, tag `substrate-cleanup-complete` (`74e5722`)
-- **Shipped**: Phase 1 + 2 + 2b + Rung 1.4 + substrate cleanup. Read-only Memento,
-  tombstone semantics, wiki-memory L3 reference profile (D78–D81), Pod-as-toolkit
-  capability catalog (D83). 134 vitest + 19 pytest tests green.
+- **Branch**: main
+- **Shipped**: Phase 1 + 2 + 2b + Rung 1.4 + Phase 5j (URI conformance + TLS + PROF
+  close-out). Read-only Memento, tombstone semantics, wiki-memory L3 reference
+  profile (D78–D81), Pod-as-toolkit capability catalog (D83), PROF profile
+  descriptors + ProfileLinkMetadataWriter + wikirole scheme (D84–D86). 32 Phase 5j
+  integration tests green.
 - **Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to
   **wiki-memory L3 as canonical reference profile, vault as one application**
   (D70–D74).
 
-## Active focus — Phase 5j (URI conformance + TLS + PROF)
+## Phase 5j — Closed (2026-05-16)
 
-Forced by RQ-Substrate-3 (namespace mismatch baked deployment details into class
-identifiers). Three new decisions ratified:
+All 9 tasks of the URI conformance + TLS + PROF round shipped, plus close-out:
 
-- **D84** — URI conformance: HTTPS, port-less, hash-namespace, extension-less,
-  mnemonic; Pod hosts its own vocab. Closes RQ-Substrate-3.
-- **D85** — TLS deployment: mkcert dev, Caddy+LE prod.
-- **D86** — PROF + RFC 6906 profile-based resource-kind declaration. Class IRI
-  ≠ Profile IRI. SHACL shapes as artifacts inside profiles.
+- **D84/D85/D86 ratified** — URI conformance, TLS deployment, PROF-based
+  resource-kind hints
+- **Namespace migration** to https Pod-hosted IRIs (commit 4cb3a40)
+- **TLS turn-up** mkcert + CSS native HTTPS (c172ff5)
+- **PROF profile descriptors** (4abde5e) — 6 wiki-memory L3 profiles
+- **Wikirole SKOS scheme** at `/vault/ontology/wikirole` — 5 `prof:ResourceRole`
+  concepts as layer-2 substrate vocabulary
+- **ProfileLinkMetadataWriter** at `css/extensions/profile-link/` — emits
+  `Link: rel=profile` per `dct:conformsTo` in `.meta`; wired via memento.json
+- **Overlay machinery** extended (`installsProfile` + `installsRoleScheme`;
+  apply.py patches `.meta` for shapes/affordances/profiles — idempotent)
+- **Storage description** advertises wikirole + 6 profiles at `/vault/.well-known/solid`
+- **Framing-1.5 affordance enrichment** — additive PROF typing, `wiki:*Affordance`
+  preserved (Framing-2 pure-PROF refactor deferred to post-Rung-1.5)
+- **Substrate-level `dct:conformsTo`** on shapes, vocab, profiles, affordances,
+  JSON-LD context, wikirole
 
-**9-task plan progress**: 1–3 done (skills, decisions index, MEMORY update);
-4–9 pending: empirical CSS v8 conformance test → namespace audit → TLS turn-up →
-namespace migration → PROF descriptors + `Link: rel="profile"` MetadataWriter →
-final commit.
+Key implementation findings (see FOLLOWUPS.md for full cleanup list):
+- Body triples on RDF resources don't reach `RepresentationMetadata` — only `.meta`
+  triples do. Apply.py now patches `.meta` for substrate-governed resources.
+- Components.js forbids multiple `Override` declarations against the same component
+  instance; profile-link wiring consolidated into memento.json overrideSteps.
+- CSS `DC` export is a 3-term subset; construct `dct:conformsTo` via
+  `DataFactory.namedNode(...)` directly.
+- CSS `.well-known/solid` served per `pim:Storage` container, not server root.
+
+Open Phase 5j follow-ups deferred to post-Rung-1.5 decision points.
+See FOLLOWUPS.md "Phase 5j close-out (2026-05-16)" section.
+
+## Active focus — Rung 1.5 (next round)
+
+First measurable evaluation. Conditions: B1 filesystem baseline / B2 brute-force
+Pod / T Pod-harness. Task classes: typed-edge navigation, citation traversal,
+temporal navigation. Reuses cogitarelink-fabric eval harness + OpenProse
+navigator+judge pattern. See Active Plan (vault) for the full Rung 1.5
+design (when written).
 
 ## Standards-stack caveats (Phase 5j)
 
