@@ -20,7 +20,7 @@ The Comunica HTTP endpoint runs with `--contextOverride`, which means each HTTP 
 curl -X POST http://localhost:8080/sparql \
   -H "Accept: application/sparql-results+json" \
   --data-urlencode 'query=SELECT * WHERE { ?s ?p ?o } LIMIT 10' \
-  --data-urlencode 'context={"sources":["http://pod.vardeman.me:3000/vault/resources/concepts/foo.md.meta"]}'
+  --data-urlencode 'context={"sources":["https://pod.vardeman.me/vault/resources/concepts/foo.md.meta"]}'
 ```
 
 In Python (see `tests/pytest/test_sparql.py`):
@@ -43,7 +43,7 @@ In TypeScript (programmatic engine):
 import { QueryEngine } from "@comunica/query-sparql-link-traversal";
 const engine = new QueryEngine();
 const bindings = await engine.queryBindings(sparql, {
-  sources: ["http://pod.vardeman.me:3000/vault/resources/concepts/foo.md.meta"],
+  sources: ["https://pod.vardeman.me/vault/resources/concepts/foo.md.meta"],
   lenient: true,
 });
 ```

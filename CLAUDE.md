@@ -86,7 +86,7 @@ docs/plans/      — Architecture design documents
 
 | Rules (always loaded) | Scope |
 |---|---|
-| `decisions-index.md` | D1-D81 + K1-K3 architectural decisions; D5/D32 superseded by D70-D74; D37 revised by D75; D71/D77 revised by D78-D80; D81 Model A predicate governance; K2/K3 implementation notes |
+| `decisions-index.md` | D1-D86 + K1-K3 architectural decisions; D5/D32 superseded by D70-D74; D37 revised by D75; D71/D77 revised by D78-D80; D81 Model A predicate governance; D83 Pod-as-toolkit + capability catalog; D84/D85/D86 URI conformance + TLS + PROF-based resource-kind hints; K2/K3 implementation notes |
 | `python-patterns.md` | fastai style, rdflib, httpx, pyshacl (client-only) |
 | `typescript-patterns.md` | CSS extensions, Components.js, N3.js, Comunica |
 | `rdf-patterns.md` | Turtle, JSON-LD, three-layer Pod RDF |
@@ -115,6 +115,7 @@ docs/plans/      — Architecture design documents
 | `solid-affordance-descriptors` | Body-affordance descriptor architecture (D52, D55, D58) |
 | `solid-wiki-memory-l3` | Wiki-memory L3 reference profile (D70-D81, K2-K3) |
 | `solid-storage-description` | Storage description as router (D44, D48, D49) |
+| `solid-uri-conformance` | URI conformance + TLS + PROF-based resource-kind hints (D84, D85, D86; closes RQ-Substrate-3) |
 
 | Builder skills (Claude-invokable; `.claude/skills/<name>/SKILL.md`) | Topic |
 |---|---|

@@ -26,6 +26,7 @@ Project-specific deltas — D34, D46, D77, D78: [`references/deltas.md`](referen
 
 ## Related skills
 
+- `solid-uri-conformance` — URI structure, hash vs slash, Pod-as-namespace-authority, PROF + RFC 6906 resource-kind hints (D84/D85/D86)
 - `solid-wiki-memory-l3` — 5-shape SHACL catalog (D77, D78)
 - `shacl-shapes` — shape design conventions in this repo
 - `solid-spec` — Type Index registration and discovery patterns

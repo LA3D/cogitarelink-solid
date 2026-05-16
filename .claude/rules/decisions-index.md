@@ -1,6 +1,6 @@
 # SOLID Pod Decisions Index
 
-Always loaded. Concise index of all architectural decisions (D1-D81, K1-K3). Vault is canonical source:
+Always loaded. Concise index of all architectural decisions (D1-D86, K1-K3). Vault is canonical source:
 `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
 ## Skill cross-reference
@@ -17,6 +17,7 @@ Topic-coherent D-clusters surface as Claude Code skills at `.claude/skills/<name
 | `solid-affordance-descriptors` | D52, D55, D58 (body-affordance harness) |
 | `solid-memento` | D61-D68, K1, RQ-Memento-1/2 (RFC 7089 + tombstones) |
 | `solid-wiki-memory-l3` | D70-D81 (v1 choices, tested in Rung 1.5), H-D82 (hypothesis pending eval), K2-K3, RQ-Listener-1, RQ-Affordance-2/3/4 (L3 reference profile + affordance-spectrum hypothesis) |
+| `solid-uri-conformance` | D84, D85, D86 (URI conformance + TLS + PROF-based resource-kind hints; closes RQ-Substrate-3) |
 
 CSS-builder skills (no D-cluster but referenced by many decisions): `css-extension`, `components-override`, `metadata-writer`, `monitoring-store`, `comunica-sources`, `shacl-shapes`.
 
@@ -247,6 +248,87 @@ Mechanically:
 7. Skills bridge substrate self-description to agent action patterns. Generic
    agents using only L1 still succeed; skills are accelerants, not gatekeepers.
 
+## Phase 5j — URI conformance + TLS + profile-based resource-kind hints (D84–D86, 2026-05-16)
+
+Forced by RQ-Substrate-3 (namespace mismatch between `void-description.json` and
+overlay-managed `.meta`) which surfaced a deeper problem: vocabulary IRIs baked
+deployment details (port 3000, http scheme) into class identifiers. Research
+across Solid official guidance, W3C profile stack (PROF + conneg-by-profile +
+RFC 6906), and OGC SELFIE conventions consolidated in
+`.claude/skills/solid-uri-conformance/` (authoritative reference + templates +
+project deltas).
+
+### D84 — URI conformance commitments
+
+Per-Pod application vocabularies live on the Pod itself (Pod is the namespace
+authority); cross-Pod shared profiles live at `w3id.org/cogitarelink/`. All
+vocabulary IRIs are **HTTPS, port-less, hash-namespaced, mnemonic-classed,
+extension-less**. Three app-local vocabs:
+
+- `https://pod.vardeman.me/vault/ontology/wiki#`
+- `https://pod.vardeman.me/vault/ontology/capability#`
+- `https://pod.vardeman.me/vault/ontology/overlay#`
+
+Vocabulary files at extension-less paths (`/vault/ontology/wiki` with `Content-Type: text/turtle`).
+CSS handles RDF conneg automatically. Solid Protocol §3.1 trailing-slash MUST is honored
+(document vs container cannot coexist at the same stem). URI normalization (Solid spec
+issue #22 unresolved) — always normalize before compare. Closes **RQ-Substrate-3**. Full
+guidance lives in the `solid-uri-conformance` skill; this entry is the canonical commitment.
+
+### D85 — TLS deployment
+
+Solid Protocol §3 mandates HTTPS. Dev: **mkcert** local CA + CSS native `--httpsKey`/`--httpsCert`
+flags, certs cover `pod.vardeman.me` + `localhost` + `127.0.0.1` + `::1`, 825-day validity
+(macOS user-CA cap). Production: **Caddy + Let's Encrypt DNS-01** against a real registered
+subdomain — same hostname dev↔prod so vocabulary IRIs don't change again. Critical client gotcha:
+**Node.js doesn't read macOS Keychain** — Comunica, Bashlib, inrupt-client-authn-node all need
+`NODE_EXTRA_CA_CERTS=$(mkcert -CAROOT)/rootCA.pem` in shell + container env. Python httpx needs
+`SSL_CERT_FILE` likewise. HSTS off in dev (Chrome pinning), on in prod (start `max-age=300`,
+ratchet). CSS healthcheck switches from `http://localhost:3000/` to `https://localhost:3443/`
+(container-internal `-k` is fine; not user-facing). Fallback if CSS v8 alpha lacks `--httpsKey`:
+Caddy as TLS terminator + CSS plain-http behind, same external URL.
+
+### D86 — Profile-based resource kind declaration (PROF + RFC 6906)
+
+Every typed resource declares **both** what KIND of thing it is (`rdf:type wiki:Concept`)
+and what CONSTRAINTS apply (`dct:conformsTo wiki:ConceptProfile`). Class IRI ≠ Profile IRI —
+`prof:Profile rdfs:subClassOf dct:Standard` requires the profile be its own resource. SHACL
+shapes are **artifacts inside profiles**, not profiles themselves — `prof:hasResource →
+prof:ResourceDescriptor → prof:hasRole role:validation → prof:hasArtifact <shape-file>`.
+
+**Implementation surface**:
+
+- 5 PROF profile descriptors at `/vault/meta/profiles/{page,concept,source,person,procedure,working}`
+- New CSS extension `css/extensions/profile-link/` — `MetadataWriter` emits `Link: <profile-IRI>; rel="profile"`
+  on every resource GET (parallels D67 `MementoLinkMetadataWriter`, additive `addHeader` not `setHeader`)
+- `?_profile=alt` introspection view (spec-reserved token is `alt`, not `alternates`)
+- Profile catalog discovery: `<storage> rdfs:seeAlso </vault/meta/profiles/>` + typed `wiki:profileCatalog` pointer
+- Custom role `wikirole:affordance` for D52 affordance descriptors (none of the 8 standard PROF
+  roles fit; GeoSPARQL precedent for minting custom roles)
+
+**Standards-stack caveats (cited honestly in the skill)**:
+
+- W3C PROF is a Working Group Note, not a Recommendation (§7/§8/§11 normative, rest informative)
+- W3C Conneg-by-Profile is a Working Draft, not REC
+- RFC 6906 (`Link: rel="profile"`) is the only IETF-ratified piece
+- IETF `draft-svensson-accept-profile-00` **expired Sept 2019**; `Content-Profile` header lives
+  nowhere live — DO NOT emit it
+- PROF `dct:conformsTo` property chain axiom (§8.4.2) is "at risk" (Issue 1078) — emit
+  `prof:isTransitiveProfileOf` explicitly instead of relying on reasoners
+- PROF role registry "at risk" (Issue 1073) but extension is permitted by §8.5
+
+Sharpens **D44** (storage description as router) and **D52** (affordance descriptors) at the
+per-resource level. D44 declares the Pod has profiles; D86 declares each individual resource's
+profile membership.
+
+### Authoritative skill
+
+`.claude/skills/solid-uri-conformance/` — full URI conformance reference. Invoke before
+minting any IRI, authoring a SHACL shape, designing an affordance descriptor, or answering
+"what kind of resource is this?". Cross-references `solid-spec`, `solid-data-modelling`,
+`solid-storage-description`, `solid-affordance-descriptors`, `solid-wiki-memory-l3`,
+`metadata-writer`.
+
 ## Open research questions
 
 RQ-Affordance-1: descriptor format (declarative SHACL vs custom RDF vs hybrid)
@@ -269,7 +351,7 @@ RQ-Affordance-3 (new, 2026-05-15 evening): Should the listener project from JSON
 RQ-Affordance-4 (new, 2026-05-15 evening): Does inline JSON-LD block extraction bypass D81 Model A's subject = current page invariant? JSON-LD `@graph` can express arbitrary subjects; this is the same reification problem D81 sidestepped. Mitigation candidates: (a) listener only extracts triples where `@id` matches resource URI; (b) listener extracts all but warns when subject ≠ resource; (c) accept arbitrary subjects and revisit D81 governance.
 RQ-Substrate-2 (filed + RESOLVED 2026-05-16): GET on `/vault/.well-known/solid` returned 501 Not Implemented despite the Pod advertising this URL via Link rel="solid:storageDescription". Surfaced universally in Sprint 1 iteration-2 eval (all 6 agents hit it). **Root cause**: Phase 1's `css/config/pod-templates/base/.meta` wrote `<../> a pim:Storage` instead of `<>`. Against base `/vault/.meta`, `<../>` resolves to the server root, not `/vault/`, so CSS's StorageDescriptionHandler.canHandle() couldn't find `pim:Storage` on `/vault/` and threw `NotImplementedHttpError("Only supports descriptions of storage containers")`. Fix (substrate-cleanup-step-6): one-character template edit (`<../>` → `<>`) + add `cap:catalog` StaticStorageDescriber to `void-description.json` so D83's catalog pointer surfaces at `.well-known/solid` per D44. Note: README's `RQ-Substrate-1` is a different question (descriptor format L2/L3), no relation.
 
-RQ-Substrate-3 (new, 2026-05-16): `css/config/void-description.json` declares L3 pointers (`wiki:contextDocument`, `wiki:shapeCatalog`, `wiki:affordanceCatalog`, `wiki:typeIndex`) under the `urn:example:wiki#` namespace, while the wiki-memory overlay (Phase 3 + namespace-fix step 4b) writes container/shape/affordance triples under `http://pod.vardeman.me:3000/vault/ontology/wiki#`. So `.well-known/solid` and the overlay-managed `.meta` files use different IRI schemes for the same predicates. Agents joining triples across the two surfaces won't see them as the same property. Resolution candidates: (a) migrate `void-description.json` to the http:// namespace; (b) move the L3 pointers into the overlay's `storage-patch.ttl` and drop them from `void-description.json` (single source of truth). (b) is the architecturally cleaner choice but requires verifying the StorageDescriptionHandler reads `.meta` triples vs. only the StorageDescriber output.
+RQ-Substrate-3 (filed 2026-05-16, RESOLVED-BY D84): namespace mismatch between `css/config/void-description.json` (using `urn:example:wiki#`) and overlay-managed `.meta` (using `http://pod.vardeman.me:3000/vault/ontology/wiki#`). Root analysis: vocabulary IRIs baked deployment details (port, scheme) into class identifiers; per-app vocab was treated as a resource URL rather than a stable namespace identifier. Resolution: **D84** commits to HTTPS, port-less, hash-namespace, extension-less vocabulary IRIs hosted on the Pod itself (`https://pod.vardeman.me/vault/ontology/{wiki,capability,overlay}#`); per-app vocab lives on the Pod (Pod is namespace authority), cross-Pod shared profiles use w3id.org. Implementation in Phase 5j (skill + decisions land first; data-layer migration via volume wipe + regenerate happens during D85 TLS turn-up).
 
 ## References
 

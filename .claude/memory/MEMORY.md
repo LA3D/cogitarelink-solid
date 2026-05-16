@@ -1,26 +1,46 @@
 # cogitarelink-solid — Session Memory
 
-## Project State (as of 2026-05-15)
+## Project State (as of 2026-05-16)
 
 **Repo**: `~/dev/git/LA3D/agents/cogitarelink-solid`
-**Branch**: main (commits `f94228c` memento extension, `741e9b8` tombstones, `571385c` decisions-index D69)
-**Status**: Phase 1 + 2 + 2b + Rung 1.4 complete. Read-only Memento (RFC 7089) + tombstone semantics + wiki-memory L3 reference profile (D78–D81) shipped. 134 vitest unit + 19 pytest integration tests green. Sibling `solid-agent-skills` shipped Phase 2 (11 commands + 5 skills + 53 tests).
+**Branch**: main (substrate-cleanup-complete tag at `74e5722`; Phase 5j URI conformance work in progress)
+**Status**: Phase 1 + 2 + 2b + Rung 1.4 + substrate cleanup complete. Read-only Memento + tombstone semantics + wiki-memory L3 reference profile (D78–D81) + Pod-as-toolkit capability catalog (D83) shipped. 134 vitest unit + 19 pytest integration tests green.
 
-**Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to **wiki-memory L3 as canonical reference profile, vault as one application**. Forced by cross-system pattern research across memory-provider plugins, benchmark-tuned memory systems, and wiki-memory implementations — three independent traditions converge on the same substrate. D70–D74 record the stratification. See [[Memory Substrate vs Memory Profile]] and [[Wiki-Memory L3 Profile]] in the vault.
+**Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to **wiki-memory L3 as canonical reference profile, vault as one application**. Forced by cross-system pattern research. D70–D74 record the stratification.
 
-**Active focus**: **Round 1 Rung 1.5** — eval matrix v2 + supporting docs committed 2026-05-15 evening. **Entry point for next session: `docs/plans/2026-05-15-rung-1-5-session-handoff.md`** — covers state, open Strategy A (build all prereqs ~3–5 days) vs Strategy B (minimum viable Pilot, ~half-day) decision, kickoff prompt, guard rails to avoid repeating origin-session mistakes. Rung 1.4 closed 2026-05-15.
+**Active focus (2026-05-16)**: **Phase 5j — URI conformance + TLS + PROF-based resource-kind hints.** Forced by RQ-Substrate-3 (namespace mismatch between `void-description.json` and overlay-managed `.meta`) which surfaced a deeper problem: vocabulary IRIs baked deployment details (port 3000, http scheme) into class identifiers. Three new decisions:
+
+- **D84** — URI conformance commitments: HTTPS, port-less, hash-namespace, extension-less, mnemonic, Pod-hosts-its-own-vocab. Closes RQ-Substrate-3.
+- **D85** — TLS deployment: mkcert dev, Caddy+LE prod.
+- **D86** — PROF + RFC 6906 profile-based resource kind declaration. Class IRI ≠ Profile IRI. SHACL shapes as artifacts inside profiles.
+
+**Implementation in progress** (9-task plan):
+1. ✅ Write `solid-uri-conformance` skill (SKILL.md + spec.md + deltas.md + templates.md)
+2. ✅ Add D84/D85/D86 to decisions-index.md; close RQ-Substrate-3
+3. 🚧 Update MEMORY.md (this update)
+4. ⏳ Empirical CSS v8 alpha conformance test (extension-less PUT/GET)
+5. ⏳ Pre-flight namespace migration audit
+6. ⏳ TLS turn-up via mkcert + CSS native HTTPS
+7. ⏳ Namespace migration (wipe css-data, rewrite IRIs, regenerate)
+8. ⏳ PROF descriptors + `Link: rel="profile"` MetadataWriter
+9. ⏳ Cross-reference + final commit
+
+**Standards-stack caveats to remember** (cited honestly in skill):
+- W3C PROF is a WG Note, not a Rec (§7/§8/§11 normative)
+- W3C Conneg-by-Profile is a WD
+- RFC 6906 (`Link: rel="profile"`) is the only ratified IETF piece
+- `draft-svensson-accept-profile-00` expired Sept 2019 — **never emit `Content-Profile`**
+- PROF `dct:conformsTo` property chain is "at risk" (Issue 1078) — emit `prof:isTransitiveProfileOf` explicitly
+- PROF role registry "at risk" (Issue 1073) but extensible — `wikirole:affordance` for D52
+
+**Critical TLS client gotcha**: Node.js (Comunica, Bashlib, inrupt-client-authn-node) doesn't read macOS Keychain. Set `NODE_EXTRA_CA_CERTS=$(mkcert -CAROOT)/rootCA.pem` in shell AND in any sibling container. Python httpx needs `SSL_CERT_FILE` likewise.
 
 ## Substrate Cleanup (shipped 2026-05-16)
 
 - **Tag**: `substrate-cleanup-complete` — six commits (`0f4c318` strip PARA → `74e5722` D83 + Phase 5i decisions log)
 - **What landed**: PARA-era infrastructure stripped from base pod template; overlay machinery (`scripts/overlay/{apply,remove,verify}.py`) installs/removes wiki-memory as a peer overlay; capability catalog at `/vault/meta/capabilities/` with three shipped primitives (`ContentProjection`, `DerivedView`, `TimeTravel`); Comunica removed as Pod sidecar (now client-side in `solid-agent-skills`); namespace fixes for http-only dev Pod
-- **Decisions**: D83 (Pod as self-describing toolkit / capability catalog) + Phase 5i added to `decisions-index.md`. D83 capability list reconciled 2026-05-16 follow-up to "3 shipped + 4 planned" matching actual catalog
-- **Sprint 1 iter-2 eval result**: with-skill vs without-skill delta collapsed from −50.9s (iter-1, before cleanup) to **−0.1s** — confirms cleanup achieved its goal of making the substrate self-describing enough that the bare-agent baseline matches skill-augmented performance
-- **RQ-Substrate-2 surfaced**: CSS returns 501 on GET `/vault/.well-known/solid` despite advertising the URL via Link rel="solid:storageDescription"; all six iter-2 agents hit this and all six recovered via root `.meta` fallback. Logged in `decisions-index.md` Open research questions
-
-**Next focus options** (user direction):
-1. **Sprint 2 — `pod-read` skill** in `solid-agent-skills` (continue the skill-rebuild sequence)
-2. **Resolve RQ-Substrate-2** (501 bug on `.well-known/solid`) before more eval work
+- **Decisions**: D83 (Pod as self-describing toolkit / capability catalog) + Phase 5i added to `decisions-index.md`
+- **Sprint 1 iter-2 eval result**: with-skill vs without-skill delta collapsed from −50.9s (iter-1, before cleanup) to **−0.1s**
 
 ## Sibling Projects (all under `~/dev/git/LA3D/agents/`)
 
