@@ -1,0 +1,34 @@
+{
+  "name": "@cogitarelink/profile-link",
+  "version": "0.1.0",
+  "description": "Link: rel=\"profile\" MetadataWriter for CSS v8 — emits one Link header per dct:conformsTo value. Phase 5j close-out of cogitarelink-solid (D86).",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "lsd:module": "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/profile-link",
+  "lsd:components": "dist/components/components.jsonld",
+  "lsd:importPaths": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/profile-link/^0.1.0/components/": "dist/components/",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/profile-link/^0.1.0/dist/": "dist/"
+  },
+  "lsd:contexts": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/profile-link/^0.1.0/components/context.jsonld": "dist/components/context.jsonld"
+  },
+  "scripts": {
+    "build": "npm run build:ts && npm run build:components",
+    "build:ts": "tsc --skipLibCheck",
+    "build:components": "componentsjs-generator -s src -c dist/components",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@solid/community-server": "*",
+    "asynchronous-handlers": "*"
+  },
+  "devDependencies": {
+    "@solid/community-server": "^8.0.0-alpha.3",
+    "@types/node": "^22.0.0",
+    "componentsjs-generator": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}
