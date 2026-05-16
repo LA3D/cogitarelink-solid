@@ -2,7 +2,7 @@
 
 A reference Solid Pod as a general-purpose memory substrate for agentic applications. Built from first principles on W3C web standards; the wiki-memory pattern is the canonical reference profile.
 
-> Research prototype, not a production Pod hosting service. Pod reproducible with 1243 vault notes imported and agent-navigable via the standard Solid discovery stack. **Round 1 Rungs 1.1 + 1.2 closed** (read-only Memento + tombstone semantics). Active work: Rung 1.4 — wiki-memory L3 reference profile + affordance descriptor. See [research rounds](#research-rounds).
+> Research prototype, not a production Pod hosting service. Pod reproducible and agent-navigable via the standard Solid discovery stack. **Round 1 Rungs 1.1 + 1.2 + 1.4 closed** (read-only Memento + tombstone semantics + wiki-memory L3 reference profile). **Substrate cleanup complete (2026-05-16, tag `substrate-cleanup-complete`)** — PARA residue stripped, Comunica moved client-side, capability catalog + overlay machinery shipped (D83). Active work: Sprint 2 — `pod-read` skill in `solid-agent-skills`. See [research rounds](#research-rounds).
 
 ---
 
@@ -71,34 +71,33 @@ The Pod is the federable substrate; the vault is the first L4 consumer. Other ap
 
 ## Architecture
 
-Two-container stack:
+Single-container Pod (Comunica was removed in substrate cleanup step 4 — it is now a client-side library in `solid-agent-skills`, not a Pod sidecar):
 
 ```
-┌─────────────────────────────┐    ┌─────────────────────────────┐
-│  CSS (Community Solid       │    │  Comunica SPARQL Sidecar    │
-│  Server v8 alpha)           │←──→│  (link-traversal over LDP)  │
-│  - LDP containers           │    │  - SPARQL Protocol :8080    │
-│  - WebID + Solid-OIDC       │    │  - npm overrides for        │
-│  - WAC/ACP                  │    │    traqula version fix      │
-│  - SHACL validation         │    │                             │
-│  - .meta sidecars           │    │                             │
-│  - Type Index + Storage     │    │                             │
-│    Description              │    │                             │
-└──────────────┬──────────────┘    └──────────────┬──────────────┘
-               │                                  │
-               └──────────────┬───────────────────┘
-                              │
-                              ↓ HTTP
-                ┌─────────────────────────────┐
-                │  Clients (Python, all       │
-                │  client-only — no Python    │
-                │  in the server stack)       │
-                │                             │
-                │  - scripts/vault_import.py  │
-                │  - solid-agent-skills CLI   │
-                │  - RLM agent (httpx)        │
-                │  - Tests (pytest)           │
-                └─────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│  CSS (Community Solid Server v8 alpha)      │
+│  - LDP containers                            │
+│  - WebID + Solid-OIDC                        │
+│  - WAC/ACP                                   │
+│  - SHACL validation                          │
+│  - .meta sidecars                            │
+│  - Type Index + Storage Description          │
+│  - Capability catalog (/meta/capabilities/)  │
+│  - Overlay manifests (wiki-memory L3)        │
+└──────────────────────┬──────────────────────┘
+                       │
+                       ↓ HTTP
+        ┌─────────────────────────────┐
+        │  Clients (Python + TS,      │
+        │  all client-only — no       │
+        │  Python in the server)      │
+        │                             │
+        │  - solid-agent-skills CLI   │
+        │    (Comunica embedded here) │
+        │  - scripts/overlay/*.py     │
+        │  - RLM agent (httpx)        │
+        │  - Tests (pytest)           │
+        └─────────────────────────────┘
 ```
 
 Three-layer Pod RDF model (orthogonal to the L1/L2/L3 substrate stratification above — this is the *RDF storage* layering inside L1, not the substrate architecture):

@@ -51,10 +51,15 @@ def upload_file(client: httpx.Client, local_path: pathlib.Path,
 
 
 def upload_shapes(client: httpx.Client, shapes_dir: pathlib.Path) -> int:
-    """Upload SHACL shapes to /vault/procedures/shapes/."""
+    """Upload SHACL shapes to /vault/meta/shapes/.
+
+    Deprecated post-substrate-cleanup (2026-05-16): shape upload moved to the
+    wiki-memory overlay (scripts/overlay/apply.py). Kept as a fallback helper
+    only; not called from main(). Apply the overlay instead.
+    """
     count = 0
     for f in sorted(shapes_dir.glob("*.ttl")):
-        pod_path = f"/vault/procedures/shapes/{f.name}"
+        pod_path = f"/vault/meta/shapes/{f.name}"
         if upload_file(client, f, pod_path, "text/turtle"):
             count += 1
     return count

@@ -19,8 +19,8 @@ status:  ## Health check all services
 	@echo "Pod:       $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/)"
 	@echo "WebID:     $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/profile/card)"
 	@echo "TypeIndex: $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/settings/publicTypeIndex)"
-	@echo "Concepts:  $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/resources/concepts/)"
-	@echo "Shapes:    $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/procedures/shapes/)"
+	@echo "Shapes:    $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/meta/shapes/)"
+	@echo "Capabilities: $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/meta/capabilities/)"
 	@echo "Setup:     $$(docker compose ps pod-setup --format '{{.State}}' 2>/dev/null || echo 'not run')"
 	@echo "(Comunica is client-side via solid-agent-skills; no Pod sidecar — D3/D29.)"
 

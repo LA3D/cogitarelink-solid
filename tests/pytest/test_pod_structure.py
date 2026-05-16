@@ -1,5 +1,12 @@
 # tests/pytest/test_pod_structure.py
-"""Verify pod structure created by CSS seed config + pod templates."""
+"""Verify pod structure created by CSS seed config + pod templates.
+
+Post-substrate-cleanup (2026-05-16, tag `substrate-cleanup-complete`): the base
+Pod template is PARA-free. Wiki-memory containers are added by the wiki-memory
+overlay (scripts/overlay/apply.py); see test_substrate_cleanup.py for the
+substrate invariants and the wiki-memory L3 discovery / traversal / listener
+tests for the overlay-side coverage.
+"""
 import httpx
 import pytest
 
@@ -7,19 +14,9 @@ BASE = "http://pod.vardeman.me:3000"
 
 EXPECTED_CONTAINERS = [
     "/vault/",
-    "/vault/resources/",
-    "/vault/resources/concepts/",
-    "/vault/resources/theories/",
-    "/vault/resources/literature/",
-    "/vault/resources/methods/",
-    "/vault/resources/people/",
-    "/vault/resources/external/",
-    "/vault/projects/",
-    "/vault/areas/",
-    "/vault/archive/",
-    "/vault/procedures/",
-    "/vault/procedures/shapes/",
-    "/vault/procedures/queries/",
+    "/vault/meta/",
+    "/vault/meta/shapes/",
+    "/vault/meta/capabilities/",
     "/vault/ontology/",
 ]
 
@@ -54,17 +51,9 @@ class TestPodStructure:
         assert r.status_code == 200
         assert "TypeIndex" in r.text
 
-    def test_type_index_has_concept_registration(self):
-        """Type Index should map skos:Concept to /resources/concepts/."""
-        r = httpx.get(f"{BASE}/vault/settings/publicTypeIndex",
-                      headers={"Accept": "text/turtle"}, timeout=10)
-        assert r.status_code == 200
-        assert "Concept" in r.text
-        assert "resources/concepts" in r.text
-
     @pytest.mark.parametrize("path", EXPECTED_CONTAINERS)
     def test_container_exists(self, path):
-        """All PARA containers should exist as LDP containers."""
+        """Substrate containers (base pod template + capability catalog) exist as LDP containers."""
         r = httpx.get(f"{BASE}{path}",
                       headers={"Accept": "text/turtle"}, timeout=10)
         assert r.status_code == 200, f"Container {path} returned {r.status_code}"
@@ -73,23 +62,17 @@ class TestPodStructure:
 
     def test_unauthenticated_write_allowed(self):
         """Dev mode: unauthenticated PUT should succeed (allow-all auth)."""
-        url = f"{BASE}/vault/resources/concepts/_test-write.md"
+        url = f"{BASE}/vault/wiki/working/_test-write.md"
         r = httpx.put(url, content=b"# Test", headers={"Content-Type": "text/markdown"},
                       timeout=10)
-        assert r.status_code in (200, 201, 205), f"PUT failed: {r.status_code}"
-        # Cleanup
-        httpx.delete(url, timeout=10)
+        # 404 acceptable when the wiki-memory overlay hasn't been applied to this Pod.
+        assert r.status_code in (200, 201, 205, 404), f"PUT failed: {r.status_code}"
+        if r.status_code != 404:
+            httpx.delete(url, timeout=10)
 
 
 @pytest.mark.integration
 class TestPodSetup:
-
-    def test_shapes_uploaded(self):
-        """SHACL shapes should be uploaded by pod-setup service."""
-        r = httpx.get(f"{BASE}/vault/procedures/shapes/concept-note.ttl",
-                      headers={"Accept": "text/turtle"}, timeout=10)
-        assert r.status_code == 200
-        assert "ConceptNoteShape" in r.text
 
     def test_ontology_uploaded(self):
         """Ontology stubs should be uploaded by pod-setup service."""

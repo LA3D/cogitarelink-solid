@@ -10,6 +10,18 @@
 
 **Active focus**: **Round 1 Rung 1.5** — eval matrix v2 + supporting docs committed 2026-05-15 evening. **Entry point for next session: `docs/plans/2026-05-15-rung-1-5-session-handoff.md`** — covers state, open Strategy A (build all prereqs ~3–5 days) vs Strategy B (minimum viable Pilot, ~half-day) decision, kickoff prompt, guard rails to avoid repeating origin-session mistakes. Rung 1.4 closed 2026-05-15.
 
+## Substrate Cleanup (shipped 2026-05-16)
+
+- **Tag**: `substrate-cleanup-complete` — six commits (`0f4c318` strip PARA → `74e5722` D83 + Phase 5i decisions log)
+- **What landed**: PARA-era infrastructure stripped from base pod template; overlay machinery (`scripts/overlay/{apply,remove,verify}.py`) installs/removes wiki-memory as a peer overlay; capability catalog at `/vault/meta/capabilities/` with three shipped primitives (`ContentProjection`, `DerivedView`, `TimeTravel`); Comunica removed as Pod sidecar (now client-side in `solid-agent-skills`); namespace fixes for http-only dev Pod
+- **Decisions**: D83 (Pod as self-describing toolkit / capability catalog) + Phase 5i added to `decisions-index.md`. D83 capability list reconciled 2026-05-16 follow-up to "3 shipped + 4 planned" matching actual catalog
+- **Sprint 1 iter-2 eval result**: with-skill vs without-skill delta collapsed from −50.9s (iter-1, before cleanup) to **−0.1s** — confirms cleanup achieved its goal of making the substrate self-describing enough that the bare-agent baseline matches skill-augmented performance
+- **RQ-Substrate-2 surfaced**: CSS returns 501 on GET `/vault/.well-known/solid` despite advertising the URL via Link rel="solid:storageDescription"; all six iter-2 agents hit this and all six recovered via root `.meta` fallback. Logged in `decisions-index.md` Open research questions
+
+**Next focus options** (user direction):
+1. **Sprint 2 — `pod-read` skill** in `solid-agent-skills` (continue the skill-rebuild sequence)
+2. **Resolve RQ-Substrate-2** (501 bug on `.well-known/solid`) before more eval work
+
 ## Sibling Projects (all under `~/dev/git/LA3D/agents/`)
 
 | Repo | Role |

@@ -14,7 +14,7 @@ You're designing a new resource type for the Pod (e.g., a new note category, a n
 
 ## Where shapes live
 
-- `shapes/` — canonical shape files in Turtle. One file per resource type. Files get uploaded to the Pod at `/vault/procedures/shapes/<name>.ttl` by `scripts/pod_setup.py`.
+- `shapes/wiki-memory-l3/` — canonical shape files in Turtle (one shape per wiki-memory class). Uploaded to the Pod at `/vault/meta/shapes/<name>.shacl.ttl` by the wiki-memory overlay (`scripts/overlay/apply.py overlays/wiki-memory`). Post-substrate-cleanup the legacy `/vault/procedures/shapes/` path no longer exists.
 - `css/extensions/shape-validator/` — the CSS extension that enforces validation at write time via `ldp:constrainedBy`.
 - Container `.meta` sidecars reference shapes via `ldp:constrainedBy` so the validator knows which shape applies to which container's writes.
 
@@ -104,7 +104,7 @@ To enforce a shape on writes to a container, add `ldp:constrainedBy` in the cont
 
 ```turtle
 <> a ldp:Container, ldp:BasicContainer ;
-   ldp:constrainedBy <http://pod.example/vault/procedures/shapes/concept-note.ttl> ;
+   ldp:constrainedBy <http://pod.example/vault/meta/shapes/page.shacl.ttl> ;
    sh:agentInstruction "..." .
 ```
 

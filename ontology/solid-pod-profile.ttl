@@ -11,8 +11,8 @@
 # Aligned with fabric four-layer self-description (D9):
 #   L1: .well-known/solid — VoID + DCAT (discovery)
 #   L2: this profile — PROF ResourceDescriptors (structure)
-#   L3: /procedures/shapes/ — SHACL shapes with sh:agentInstruction (validation)
-#   L4: /procedures/queries/ — SPARQL examples (guidance)
+#   L3: /meta/shapes/ — SHACL shapes with sh:agentInstruction (validation)
+#   L4: /meta/capabilities/ — capability descriptors (D83 — guidance + behavior)
 #
 # Pod nodes declare:
 #   dct:conformsTo fabric:CoreProfile, fabric:SolidPodProfile .
@@ -73,20 +73,11 @@ fabric:SolidPodProfile
 
     prof:hasResource [
         a prof:ResourceDescriptor ;
-        rdfs:label "Concept Note Shape" ;
-        dct:description "SHACL shape for skos:Concept notes. Defines required properties (prefLabel, created, type) and optional relationships (related, tags, source). Includes sh:agentInstruction with SPARQL query patterns." ;
+        rdfs:label "Wiki-Memory Page Shape" ;
+        dct:description "SHACL shape for wiki:Page (and subclasses wiki:Concept, wiki:MOC, etc.). Class-targeted per D78; covers required properties (dct:title, dct:created, rdf:type) and edge predicates governed by D81 Model A. Includes sh:agentInstruction with SPARQL query patterns." ;
         prof:hasRole role:constraints ;
-        prof:hasArtifact <https://pod.vardeman.me/vault/procedures/shapes/concept-note.ttl> ;
+        prof:hasArtifact <https://pod.vardeman.me/vault/meta/shapes/page.shacl.ttl> ;
         dct:format <https://www.iana.org/assignments/media-types/text/turtle> ;
-    ] ;
-
-    # ── L4: SPARQL examples (role:example) ───────────────────────────
-
-    prof:hasResource [
-        a prof:ResourceDescriptor ;
-        rdfs:label "SPARQL query templates" ;
-        dct:description "Reusable SPARQL query templates for pod content. Located at /vault/procedures/queries/." ;
-        prof:hasRole role:example ;
     ] ;
 
     # ── Agent navigation guidance (role:guidance) ────────���───────────
@@ -99,18 +90,19 @@ fabric:SolidPodProfile
 Discovery path (progressive disclosure):
 1. GET .well-known/solid → VoID dataset description (vocabularies, conformsTo)
 2. Dereference SolidPodProfile → this file (required vocabularies, shapes, guidance)
-3. GET /vault/settings/publicTypeIndex → class-to-container routing (skos:Concept → /resources/concepts/)
-4. GET container .meta → sh:agentInstruction, dct:type (PARA category, memory partition)
-5. GET /vault/procedures/shapes/ → SHACL shapes with sh:agentInstruction (query patterns)
+3. GET /vault/settings/publicTypeIndex → class-to-container routing (wiki:Page → /vault/wiki/pages/)
+4. GET container .meta → sh:agentInstruction, rdf:type (wiki-memory L3 overlay)
+5. GET /vault/meta/shapes/ → SHACL shapes with sh:agentInstruction (query patterns)
+6. GET /vault/meta/capabilities/ → capability descriptors (D83 — Content Projection, Derived View, Time Travel)
 
 LDP container navigation:
-  GET /vault/ → root container (ldp:contains lists PARA sub-containers)
-  GET /vault/resources/concepts/ → concept notes container
-  GET /vault/resources/concepts/note.md → Markdown content
-  GET /vault/resources/concepts/note.md.meta → RDF metadata (.meta sidecar)
+  GET /vault/ → root container (ldp:contains lists wiki-memory containers post-cleanup)
+  GET /vault/wiki/pages/ → wiki:Page container
+  GET /vault/wiki/pages/note.md → Markdown content
+  GET /vault/wiki/pages/note.md.meta → RDF metadata (.meta sidecar)
 
 SPARQL access:
-  Comunica sidecar at port 8080 — pass source URLs via context parameter.
+  Comunica is client-side (in solid-agent-skills) — no Pod-side SPARQL endpoint.
   Container .meta files contain sh:agentInstruction with suggested query patterns.""" ;
         prof:hasRole role:guidance ;
     ] .

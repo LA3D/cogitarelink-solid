@@ -200,10 +200,12 @@ Implementation tracked in `docs/superpowers/plans/2026-05-15-substrate-cleanup-p
 The Pod is a **self-describing toolkit**, not a database. Three discoverable layers:
 
 1. **L1** = standard Solid Protocol (LDP, WAC, Memento, storage description, etc.).
-2. **Substrate capabilities** = generic primitives the Pod offers (Content Projection,
-   Derived View, Time Travel, Two-Stage Commit, Trigger Emission, Validation Hook,
-   Reference Catalog). Each implemented by a CSS extension + advertised via a
-   `cap:Capability` descriptor at `/vault/meta/capabilities/<name>.ttl`.
+2. **Substrate capabilities** = generic primitives the Pod offers. Three shipped in v1
+   (`cap:ContentProjection`, `cap:DerivedView`, `cap:TimeTravel`), each implemented by a
+   CSS extension + advertised via a `cap:Capability` descriptor at
+   `/vault/meta/capabilities/<name>.ttl`. Four planned but not yet shipped
+   (`cap:TwoStageCommit`, `cap:TriggerEmission`, `cap:ValidationHook`, `cap:ReferenceCatalog`)
+   — D74's `mem:Crystallize` is the candidate first implementation of `cap:TwoStageCommit`.
 3. **Installed applications** = composable peer overlays declaring `cap:requires`
    against the catalog. Wiki-memory is the canonical first overlay (pre-installed).
 
@@ -265,6 +267,7 @@ RQ-Discovery-1 (from spec): Does the 7-step first-arrival ritual scale to agents
 RQ-Affordance-2 (new, 2026-05-15 evening): Can an LLM agent reliably emit valid inline JSON-LD code blocks? Eval question for Rung 1.5. Hypothesis: yes for simple triple insertions; quality degrades for nested graphs or complex `@context` resolution.
 RQ-Affordance-3 (new, 2026-05-15 evening): Should the listener project from JSON-LD code blocks back to body class-hint wikilinks when both express the same edge? Or preserve them as parallel-but-coexisting surfaces in the body? Affects whether the listener has a canonical form vs respects agent authoring choice.
 RQ-Affordance-4 (new, 2026-05-15 evening): Does inline JSON-LD block extraction bypass D81 Model A's subject = current page invariant? JSON-LD `@graph` can express arbitrary subjects; this is the same reification problem D81 sidestepped. Mitigation candidates: (a) listener only extracts triples where `@id` matches resource URI; (b) listener extracts all but warns when subject ≠ resource; (c) accept arbitrary subjects and revisit D81 governance.
+RQ-Substrate-2 (new, 2026-05-16): CSS returns 501 Not Implemented for GET on `/vault/.well-known/solid` despite the Pod advertising this URL via Link rel="solid:storageDescription" on every resource. Storage description data is reachable via root's describedby Link → `/vault/.meta`, so substrate is correct in the data layer. Surfaced universally in Sprint 1 iteration-2 eval (all 6 agents hit it; all 6 recovered via root .meta fallback). Effort estimate pending investigation. Note: README's `RQ-Substrate-1` is a different question (descriptor format L2/L3), no relation.
 
 ## References
 
