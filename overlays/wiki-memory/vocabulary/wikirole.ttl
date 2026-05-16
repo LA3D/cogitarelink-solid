@@ -1,0 +1,47 @@
+@prefix :        <https://pod.vardeman.me/vault/ontology/wikirole#> .
+@prefix prof:    <http://www.w3.org/ns/dx/prof/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://pod.vardeman.me/vault/ontology/wikirole>
+    a skos:ConceptScheme , owl:Ontology ;
+    dct:title "Wiki-Memory L3 — Resource Roles" ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    dct:publisher <https://orcid.org/0000-0003-4091-6059> ;
+    rdfs:comment "Resource roles specific to wiki-memory L3, supplementing the W3C PROF role registry (http://www.w3.org/ns/dx/prof/role/) with substrate-specific kinds. Each concept is an instance of prof:ResourceRole and skos:Concept, mirroring the pattern at the W3C role registry. Designed as a SKOS ConceptScheme so additions are additive and discoverable via skos:topConceptOf." .
+
+:affordance
+    a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
+    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:prefLabel "Affordance descriptor" ;
+    skos:definition "An artifact that declares a substrate capability — predicates governed, capability required, classes operated on. Parent concept; concrete affordance descriptors take a narrower sub-role." .
+
+:write-affordance
+    a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
+    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:broader :affordance ;
+    skos:prefLabel "Write-time affordance" ;
+    skos:definition "An affordance invoked at write time — a MonitoringStore listener or projection that fires on resource Create/Update/Delete events." .
+
+:version-affordance
+    a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
+    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:broader :affordance ;
+    skos:prefLabel "Versioning affordance" ;
+    skos:definition "An affordance providing temporal access — Memento-style time-travel via TimeGate/TimeMap." .
+
+:derived-class-affordance
+    a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
+    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:broader :affordance ;
+    skos:prefLabel "Derived-class affordance" ;
+    skos:definition "An affordance computing a derived class view — hub view, type rollup, instance aggregation." .
+
+:derived-navigation-affordance
+    a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
+    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:broader :affordance ;
+    skos:prefLabel "Derived-navigation affordance" ;
+    skos:definition "An affordance computing derived navigation structure — breadcrumb trails, link maps, traversal indices." .
