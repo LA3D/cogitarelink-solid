@@ -4,14 +4,16 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/markdown-render/^0.1.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/memento/^0.1.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/markdown-projection/^0.1.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/markdown-projection/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/profile-link/^0.1.0/components/context.jsonld"
   ],
   "import": [
     "./dev-allow-all.json",
     "./pod-templates-override.json",
     "./void-description.json",
     "./memento.json",
-    "./markdown-projection.json"
+    "./markdown-projection.json",
+    "./profile-link.json"
   ],
   "@graph": [
     {

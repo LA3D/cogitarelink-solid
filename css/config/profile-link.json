@@ -1,0 +1,26 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/asynchronous-handlers/^1.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/profile-link/^0.1.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "comment": "Per D86: every response carries Link: rel=\"profile\" headers, one per dct:conformsTo value on the resource's RepresentationMetadata. Substrate-level kinds (shapes, ontologies, profiles, affordances) AND content-level (wiki:*Profile) handled by one writer.",
+      "@id": "urn:cogitarelink:ProfileLinkMetadataWriter",
+      "@type": "ProfileLinkMetadataWriter",
+      "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
+    },
+    {
+      "comment": "Insert after the MementoLinkMetadataWriter so PROF profile Links are appended after Memento's timegate/timemap. Standard pattern per metadata-writer skill.",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:MetadataWriter" },
+      "overrideSteps": [{
+        "@type": "OverrideListInsertAfter",
+        "overrideParameter": { "@id": "ah:dist/ParallelHandler.jsonld#ParallelHandler_handlers" },
+        "overrideTarget": { "@id": "urn:cogitarelink:MementoLinkMetadataWriter" },
+        "overrideValue": { "@id": "urn:cogitarelink:ProfileLinkMetadataWriter" }
+      }]
+    }
+  ]
+}
