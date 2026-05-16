@@ -1,7 +1,6 @@
 """Phase 5j close-out integration tests — wikirole scheme + PROF Link writer."""
 from pathlib import Path
 
-import pytest
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
 
@@ -34,7 +33,15 @@ def test_wikirole_scheme_has_five_role_concepts():
     for role in expected:
         assert (role, RDF.type, SKOS.Concept) in g
         assert (role, RDF.type, OWL.NamedIndividual) in g
-        assert (role, SKOS.topConceptOf, scheme) in g
+        assert (role, SKOS.inScheme, scheme) in g, f"{role} missing skos:inScheme"
+        assert (role, RDFS.isDefinedBy, scheme) in g, f"{role} missing rdfs:isDefinedBy"
+
+    # SKOS hierarchy: only :affordance is a top concept (SKOS §B.3.2.3)
+    parent = WIKIROLE["affordance"]
+    assert (parent, SKOS.topConceptOf, scheme) in g
+    for child in expected - {parent}:
+        assert (child, SKOS.topConceptOf, scheme) not in g, \
+            f"{child} should not be skos:topConceptOf when it has skos:broader"
 
     # Scheme metadata
     assert (scheme, DCT.publisher, URIRef("https://orcid.org/0000-0003-4091-6059")) in g

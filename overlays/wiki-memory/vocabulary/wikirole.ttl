@@ -14,34 +14,40 @@
 
 :affordance
     a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wikirole> ;
     skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
     skos:prefLabel "Affordance descriptor" ;
     skos:definition "An artifact that declares a substrate capability — predicates governed, capability required, classes operated on. Parent concept; concrete affordance descriptors take a narrower sub-role." .
 
 :write-affordance
     a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
-    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
     skos:broader :affordance ;
     skos:prefLabel "Write-time affordance" ;
     skos:definition "An affordance invoked at write time — a MonitoringStore listener or projection that fires on resource Create/Update/Delete events." .
 
 :version-affordance
     a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
-    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
     skos:broader :affordance ;
     skos:prefLabel "Versioning affordance" ;
     skos:definition "An affordance providing temporal access — Memento-style time-travel via TimeGate/TimeMap." .
 
 :derived-class-affordance
     a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
-    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
     skos:broader :affordance ;
     skos:prefLabel "Derived-class affordance" ;
     skos:definition "An affordance computing a derived class view — hub view, type rollup, instance aggregation." .
 
 :derived-navigation-affordance
     a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
-    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
     skos:broader :affordance ;
     skos:prefLabel "Derived-navigation affordance" ;
     skos:definition "An affordance computing derived navigation structure — breadcrumb trails, link maps, traversal indices." .
