@@ -15,10 +15,10 @@ The standards stack here is partly ratified, partly draft, partly expired. Cite 
 
 | Document | Status | Stance |
 |---|---|---|
-| RFC 6906 (`Link: rel="profile"`) | IETF Proposed Standard | **Authoritative.** Use as-is. |
+| RFC 6906 (`Link: rel="profile"`) | IETF Informational (March 2013) | **Authoritative.** The `profile` link relation is IANA-registered. Use as-is. |
 | W3C PROF (Profiles Vocabulary) | WG Note (Dec 2019) | Best-aligned vocabulary; §7/§8/§11 normative, rest informative. |
 | W3C Conneg-by-Profile | Working Draft (Oct 2023) | Never advanced to REC. Patterns are stable in practice. |
-| `draft-svensson-accept-profile-00` (IETF) | **Expired Sept 2019** | **DO NOT use.** `Content-Profile` header lives only here; the W3C WD uses `Link: rel="profile"` instead. |
+| `draft-svensson-profiled-representations-01` (IETF) | **Expired 10 Sept 2021** | **DO NOT use.** `Content-Profile` header lives only here; never adopted as a WG document; the W3C WD chose `Link: rel="profile"` instead. |
 | PROF `dct:conformsTo` chain axiom (§8.4.2) | Marked at-risk (Issue 1078) | Emit `prof:isTransitiveProfileOf` explicitly. Don't rely on reasoners. |
 | PROF role registry (8 entries) | Marked at-risk (Issue 1073) but extensible | Mint custom roles when none of the 8 fit (GeoSPARQL did this with `role:repository`). |
 

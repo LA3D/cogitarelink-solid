@@ -35,8 +35,8 @@ final commit.
 
 - W3C PROF is a WG Note, not a Rec (§7/§8/§11 normative).
 - W3C Conneg-by-Profile is a WD.
-- RFC 6906 (`Link: rel="profile"`) is the only IETF-ratified piece.
-- `draft-svensson-accept-profile-00` expired Sept 2019 — **never emit `Content-Profile`**.
+- RFC 6906 (`Link: rel="profile"`) is the only IETF-published piece (Informational, March 2013); the link relation is IANA-registered.
+- `draft-svensson-profiled-representations-01` expired 10 Sept 2021; never adopted as a WG document — **never emit `Content-Profile`**.
 - PROF `dct:conformsTo` property chain is "at risk" (Issue 1078) — emit
   `prof:isTransitiveProfileOf` explicitly.
 - PROF role registry "at risk" (Issue 1073) but extensible (`wikirole:affordance` for D52).

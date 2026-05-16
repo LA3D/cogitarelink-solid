@@ -142,7 +142,7 @@ Content-Type: text/markdown
 Link: <https://example.org/profiles/concept>; rel="profile"
 ```
 
-**Critical: do NOT emit `Content-Profile`.** That header lives only in the expired IETF draft (Svensson/Verborgh 2017, expired Sept 2019). The W3C WD explicitly chose `Link: rel="profile"` instead.
+**Critical: do NOT emit `Content-Profile`.** That header lives only in the expired IETF draft [`draft-svensson-profiled-representations-01`](https://datatracker.ietf.org/doc/draft-svensson-profiled-representations/01/) (Svensson/Verborgh/Van de Sompel, expired 10 Sept 2021; no successor adopted). The W3C WD explicitly chose `Link: rel="profile"` instead.
 
 ### List profiles (§7.2.1, SHOULD)
 
@@ -173,7 +173,7 @@ Link: <https://example.org/resource/a>;
 
 ## 3. RFC 6906 — the `profile` Link Relation
 
-**Status**: [IETF Proposed Standard](https://datatracker.ietf.org/doc/html/rfc6906), March 2013. The only ratified piece of the stack.
+**Status**: [IETF Informational](https://www.rfc-editor.org/info/rfc6906), March 2013. The only IETF-published piece of the stack (Informational, not a Standards-Track Proposed Standard — but the `profile` link relation is registered with IANA and is the canonical mechanism in use).
 
 §3 (verbatim):
 
@@ -234,7 +234,7 @@ Brief recap of the things that need defensive coding:
 
 - **`dct:conformsTo` property chain axiom** (§8.4.2): at-risk per Issue 1078. Emit `prof:isTransitiveProfileOf` explicitly.
 - **Role registry**: 8 standard roles at-risk per Issue 1073, but the spec permits extension. Mint custom roles when needed; document with `skos:definition`.
-- **`Content-Profile` header**: defined only in [expired IETF draft](https://datatracker.ietf.org/doc/html/draft-svensson-accept-profile-00) (2017, expired 2019). The W3C WD explicitly rejected it. Don't emit it.
+- **`Content-Profile` header**: defined only in [expired IETF draft `draft-svensson-profiled-representations-01`](https://datatracker.ietf.org/doc/draft-svensson-profiled-representations/01/) (expired 10 Sept 2021; never adopted as a WG document). The W3C WD explicitly chose `Link: rel="profile"` instead. Don't emit it.
 - **`alt` vs `alternates`**: spec-reserved QSA token is `alt`. Some implementers write `alternates` from intuition; that's not in the spec.
 - **PROF Working Group Note status**: PROF is not a Recommendation. Cite as "best-aligned standards work," not "the W3C mandates."
 - **Conneg-by-Profile WD status**: same — WD, not REC.
@@ -248,8 +248,8 @@ Brief recap of the things that need defensive coding:
 | W3C PROF (Profiles Vocabulary) | WG Note | https://www.w3.org/TR/dx-prof/ |
 | PROF role registry | Reference | http://www.w3.org/ns/dx/prof/role/ |
 | W3C Conneg-by-Profile | Working Draft | https://www.w3.org/TR/dx-prof-conneg/ |
-| RFC 6906 (`profile` Link relation) | IETF Proposed Standard | https://datatracker.ietf.org/doc/html/rfc6906 |
-| draft-svensson-accept-profile-00 (expired) | IETF expired draft | https://datatracker.ietf.org/doc/html/draft-svensson-accept-profile-00 |
+| RFC 6906 (`profile` Link relation) | IETF Informational | https://www.rfc-editor.org/info/rfc6906 |
+| draft-svensson-profiled-representations-01 (expired) | IETF expired draft (10 Sept 2021) | https://datatracker.ietf.org/doc/draft-svensson-profiled-representations/01/ |
 | PROF Issue 1078 (chain at-risk) | GitHub | https://github.com/w3c/dxwg/issues/1078 |
 | PROF Issue 1073 (roles at-risk) | GitHub | https://github.com/w3c/dxwg/issues/1073 |
 | GeoSPARQL 1.1 profile.ttl | Worked example | https://raw.githubusercontent.com/opengeospatial/ogc-geosparql/master/profile.ttl |

@@ -312,9 +312,8 @@ prof:ResourceDescriptor → prof:hasRole role:validation → prof:hasArtifact <s
 
 - W3C PROF is a Working Group Note, not a Recommendation (§7/§8/§11 normative, rest informative)
 - W3C Conneg-by-Profile is a Working Draft, not REC
-- RFC 6906 (`Link: rel="profile"`) is the only IETF-ratified piece
-- IETF `draft-svensson-accept-profile-00` **expired Sept 2019**; `Content-Profile` header lives
-  nowhere live — DO NOT emit it
+- RFC 6906 (`Link: rel="profile"`) is the only IETF-published piece — **Informational** (March 2013), not Standards-Track; the link relation is IANA-registered
+- IETF `draft-svensson-profiled-representations-01` **expired 10 Sept 2021**; never adopted as a WG document. `Content-Profile` header lives nowhere live — DO NOT emit it
 - PROF `dct:conformsTo` property chain axiom (§8.4.2) is "at risk" (Issue 1078) — emit
   `prof:isTransitiveProfileOf` explicitly instead of relying on reasoners
 - PROF role registry "at risk" (Issue 1073) but extension is permitted by §8.5
