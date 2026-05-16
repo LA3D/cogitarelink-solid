@@ -4,6 +4,8 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
 wiki:PageShape a sh:NodeShape ;
     sh:targetClass wiki:Page ;
     sh:closed false ;

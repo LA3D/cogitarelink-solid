@@ -3,6 +3,8 @@
 @prefix dct:  <http://purl.org/dc/terms/> .
 @prefix cito: <http://purl.org/spar/cito/> .
 
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
 wiki:SourceShape a sh:NodeShape ;
     sh:targetClass wiki:Source ;
     sh:closed false ;

@@ -1,6 +1,7 @@
 """Phase 5j close-out integration tests — wikirole scheme + PROF Link writer."""
 from pathlib import Path
 
+import pytest
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
 
@@ -100,3 +101,19 @@ def test_manifest_declares_role_scheme_and_six_profiles():
     expected = {URIRef(f"file:///vault/meta/profiles/{name}") for name in
                 ["page", "concept", "source", "person", "procedure", "working"]}
     assert profiles == expected, f"diff: missing={expected - profiles}, extra={profiles - expected}"
+
+
+SHAPES_DIR = Path(__file__).parent.parent / "overlays" / "wiki-memory" / "shapes"
+SHACL_SPEC = URIRef("https://www.w3.org/TR/shacl/")
+
+
+@pytest.mark.parametrize("filename", [
+    "page.shacl.ttl", "source.shacl.ttl", "person.shacl.ttl",
+    "procedure.shacl.ttl", "working.shacl.ttl",
+])
+def test_shape_declares_conformsTo_shacl(filename):
+    g = Graph()
+    shape_path = SHAPES_DIR / filename
+    g.parse(shape_path, format="turtle", publicID=f"file://{shape_path}")
+    found = any(SHACL_SPEC in g.objects(s, DCT.conformsTo) for s in g.subjects())
+    assert found, f"{filename} does not declare dct:conformsTo <SHACL spec>"
