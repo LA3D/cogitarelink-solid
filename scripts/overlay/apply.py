@@ -137,6 +137,8 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
         if ctx_fragment.exists():
             merge_jsonld_context(client, pod_url, ctx_fragment, manifest.overlay_iri)
             print(f"  ctx merged into /vault/meta/context.jsonld")
+            patch_context_meta(client, pod_url)
+            print(f"  ctx.meta dct:conformsTo patched")
 
         # 8. PATCH Type Index with registrations
         if manifest.type_registrations:
@@ -226,6 +228,22 @@ def merge_jsonld_context(client: httpx.Client, pod_url: str, fragment_path: Path
     r2 = client.put(ctx_url, content=body, headers={"Content-Type": "application/ld+json"}, timeout=15)
     if r2.status_code not in (200, 201, 204, 205):
         raise RuntimeError(f"context merge PUT failed: HTTP {r2.status_code}: {r2.text[:300]}")
+
+
+def patch_context_meta(client: httpx.Client, pod_url: str) -> None:
+    """Patch .meta for context.jsonld to declare dct:conformsTo JSON-LD 1.1.
+
+    The body is JSON-LD (non-RDF), so CSS never derives this triple from the
+    body itself. Idempotent: N3 Patch solid:inserts is a no-op when the
+    triple already exists.
+    """
+    ctx_url = pod_url.rstrip("/") + "/meta/context.jsonld"
+    meta_url = ctx_url + ".meta"
+    DCT = "http://purl.org/dc/terms/"
+    ntriples = (
+        f"<{ctx_url}> <{DCT}conformsTo> <https://www.w3.org/TR/json-ld11/> ."
+    )
+    n3_patch_inserts(client, meta_url, ntriples)
 
 
 def build_type_index_inserts(manifest: Manifest) -> str:

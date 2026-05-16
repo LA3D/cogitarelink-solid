@@ -1,4 +1,5 @@
 """Phase 5j close-out integration tests — wikirole scheme + PROF Link writer."""
+import os
 from pathlib import Path
 
 import pytest
@@ -138,6 +139,22 @@ def test_profile_descriptor_declares_conformsTo_prof(name):
     g.parse(PROFILES_DIR / f"{name}.ttl", format="turtle")
     profile = URIRef(f"https://pod.vardeman.me/vault/meta/profiles/{name}")
     assert (profile, DCT.conformsTo, PROF_SPEC) in g
+
+
+POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
+
+
+@pytest.mark.integration
+def test_context_jsonld_meta_declares_conformsTo_jsonld11():
+    """Requires a running Pod with the overlay applied."""
+    import httpx
+    r = httpx.get(f"{POD}/vault/meta/context.jsonld.meta", timeout=5, verify=False)
+    assert r.status_code == 200, f"unexpected status: {r.status_code}, body: {r.text[:200]}"
+    g = Graph()
+    g.parse(data=r.text, format="turtle",
+            publicID=f"{POD}/vault/meta/context.jsonld.meta")
+    ctx = URIRef(f"{POD}/vault/meta/context.jsonld")
+    assert (ctx, DCT.conformsTo, URIRef("https://www.w3.org/TR/json-ld11/")) in g
 
 
 AFFORDANCES_DIR = Path(__file__).parent.parent / "overlays" / "wiki-memory" / "affordances"
