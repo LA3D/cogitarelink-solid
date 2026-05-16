@@ -23,4 +23,5 @@ Storage Description Resource at the standard slot (`solid:storageDescription` Li
 - `solid-spec` — D44 divergence from upstream defaults
 - `solid-affordance-descriptors` — affordance catalog reachable via storage description
 - `solid-data-modelling` — vocabularies declared via `void:vocabulary`
-- `solid-uri-conformance` — URI structure for the predicates the storage description carries (D84); PROF profile catalog also reachable via this surface (D86)
+- `solid-uri-conformance` — URI structure for the predicates the storage description carries (D84)
+- `solid-profiles-and-conneg` — profile catalog also reachable from this surface (D86)

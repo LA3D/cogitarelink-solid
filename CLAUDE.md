@@ -115,7 +115,9 @@ docs/plans/      — Architecture design documents
 | `solid-affordance-descriptors` | Body-affordance descriptor architecture (D52, D55, D58) |
 | `solid-wiki-memory-l3` | Wiki-memory L3 reference profile (D70-D81, K2-K3) |
 | `solid-storage-description` | Storage description as router (D44, D48, D49) |
-| `solid-uri-conformance` | URI conformance + TLS + PROF-based resource-kind hints (D84, D85, D86; closes RQ-Substrate-3) |
+| `solid-uri-conformance` | URI conformance: hash-namespace, port-less HTTPS, extension-less vocab files (D84; closes RQ-Substrate-3) |
+| `solid-tls-deployment` | TLS deployment for CSS Pods: mkcert dev, Caddy+LE prod, Node trust gotchas (D85) |
+| `solid-profiles-and-conneg` | W3C PROF + RFC 6906 + conneg-by-profile — resource-kind hints (D86) |
 
 | Builder skills (Claude-invokable; `.claude/skills/<name>/SKILL.md`) | Topic |
 |---|---|

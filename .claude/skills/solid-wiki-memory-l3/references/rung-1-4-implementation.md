@@ -24,7 +24,7 @@ Full design at `docs/superpowers/specs/2026-05-15-rung-1-4-wiki-memory-l3-implem
 ## Open items deferred to Rung 1.5
 
 - RQ-Listener-1 — agent enrichment vs CSS `.meta` overwrite (4 mitigation paths documented)
-- WIKI_NS central constant — `urn:example:wiki#` placeholder appears in 18 files; sed-replaceable when namespace mints
+- WIKI_NS central constant — `https://pod.vardeman.me/vault/ontology/wiki#` placeholder appears in 18 files; sed-replaceable when namespace mints
 - `foaf:affiliation` frontmatter mapping — PersonShape allows it, governedPredicates includes it, but frontmatter projection has no key for it
 - Task 42 (context-driven listener dispatch) — listener uses hardcoded class-hint table; reading `/meta/context.jsonld` at runtime is the planned refactor
 - K2 (triple-hyphen slugs) — collapse refinement

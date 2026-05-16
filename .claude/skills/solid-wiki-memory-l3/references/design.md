@@ -46,7 +46,7 @@ Class-based shape targeting — shapes target `rdf:type` (wiki:Concept, wiki:Sou
 
 ### D79 — Hybrid vocabulary stance + JSON-LD context discovery
 
-Hybrid vocabulary stance + JSON-LD context discovery — DCT/SKOS/CiTO/FOAF/PROV by default; mint `wiki:*` (Resource/Concept/Source/Person/Procedure/WorkingNote/Hub/maturity) only for genuine gaps. JSON-LD context document at `/meta/context.jsonld` is the canonical prefix→IRI registry and the agent's vocabulary discovery surface. REVISES D71. Closes RQ-Vocab-1 by deferring namespace minting via `urn:example:wiki#` placeholder. **Implementation note**: Listener uses hardcoded class-hint table in `wikilinkProjection.ts` rather than reading the JSON-LD context at runtime. Context-driven dispatch is functionally equivalent and deferred to Rung 1.5 (no behavior change, just refactor).
+Hybrid vocabulary stance + JSON-LD context discovery — DCT/SKOS/CiTO/FOAF/PROV by default; mint `wiki:*` (Resource/Concept/Source/Person/Procedure/WorkingNote/Hub/maturity) only for genuine gaps. JSON-LD context document at `/meta/context.jsonld` is the canonical prefix→IRI registry and the agent's vocabulary discovery surface. REVISES D71. Closes RQ-Vocab-1 by deferring namespace minting via `https://pod.vardeman.me/vault/ontology/wiki#` placeholder. **Implementation note**: Listener uses hardcoded class-hint table in `wikilinkProjection.ts` rather than reading the JSON-LD context at runtime. Context-driven dispatch is functionally equivalent and deferred to Rung 1.5 (no behavior change, just refactor).
 
 ### D80 — Substrate-derived navigation classes
 

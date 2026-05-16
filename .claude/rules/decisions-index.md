@@ -17,7 +17,9 @@ Topic-coherent D-clusters surface as Claude Code skills at `.claude/skills/<name
 | `solid-affordance-descriptors` | D52, D55, D58 (body-affordance harness) |
 | `solid-memento` | D61-D68, K1, RQ-Memento-1/2 (RFC 7089 + tombstones) |
 | `solid-wiki-memory-l3` | D70-D81 (v1 choices, tested in Rung 1.5), H-D82 (hypothesis pending eval), K2-K3, RQ-Listener-1, RQ-Affordance-2/3/4 (L3 reference profile + affordance-spectrum hypothesis) |
-| `solid-uri-conformance` | D84, D85, D86 (URI conformance + TLS + PROF-based resource-kind hints; closes RQ-Substrate-3) |
+| `solid-uri-conformance` | D84 (URI structure: hash-namespace, port-less HTTPS, extension-less vocab files; closes RQ-Substrate-3) |
+| `solid-tls-deployment` | D85 (TLS deployment: mkcert dev, Caddy+LE prod) |
+| `solid-profiles-and-conneg` | D86 (PROF + RFC 6906 + conneg-by-profile resource-kind hints) |
 
 CSS-builder skills (no D-cluster but referenced by many decisions): `css-extension`, `components-override`, `metadata-writer`, `monitoring-store`, `comunica-sources`, `shacl-shapes`.
 
@@ -321,13 +323,13 @@ Sharpens **D44** (storage description as router) and **D52** (affordance descrip
 per-resource level. D44 declares the Pod has profiles; D86 declares each individual resource's
 profile membership.
 
-### Authoritative skill
+### Authoritative skills (one per D-decision)
 
-`.claude/skills/solid-uri-conformance/` — full URI conformance reference. Invoke before
-minting any IRI, authoring a SHACL shape, designing an affordance descriptor, or answering
-"what kind of resource is this?". Cross-references `solid-spec`, `solid-data-modelling`,
-`solid-storage-description`, `solid-affordance-descriptors`, `solid-wiki-memory-l3`,
-`metadata-writer`.
+- `.claude/skills/solid-uri-conformance/` — D84 URI structure. Invoke before minting any IRI.
+- `.claude/skills/solid-tls-deployment/` — D85 TLS deployment. Invoke when setting up HTTPS or debugging cert trust.
+- `.claude/skills/solid-profiles-and-conneg/` — D86 PROF + conneg-by-profile. Invoke when designing profile descriptors or answering "what kind of resource is this?".
+
+Each skill is self-contained (no vault references), cites primary sources only (W3C / IETF / Solid Project), and is portable outside this repo.
 
 ## Open research questions
 

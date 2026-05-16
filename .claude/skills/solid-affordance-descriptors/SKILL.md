@@ -26,4 +26,5 @@ Per-content-type body-affordance descriptors at `/meta/affordances/<name>`. Clos
 - `solid-wiki-memory-l3` — primary consumer of body affordances (markdown wikilinks)
 - `monitoring-store` — projection listener pattern
 - `solid-spec` — Solid Protocol baseline; LDP RDFSource/NRSource split (D38)
-- `solid-uri-conformance` — affordance descriptors are PROF ResourceDescriptors under a `wikirole:affordance` custom role (D86); URI structure for affordance IRIs (D84)
+- `solid-uri-conformance` — URI structure for affordance IRIs (D84)
+- `solid-profiles-and-conneg` — affordance descriptors are PROF ResourceDescriptors under the custom `wikirole:affordance` role (D86)

@@ -1,95 +1,68 @@
 ---
 name: solid-uri-conformance
-description: URI structure and conformance for Solid Pod-hosted vocabularies. Hash-namespace, no-extension, HTTPS, port-less IRIs (D84). TLS deployment (D85). W3C PROF + RFC 6906 + conneg-by-profile for resource-kind hints (D86). Closes RQ-Substrate-3.
-when_to_use: Use BEFORE minting any new IRI, predicate, class, profile, or shape. Also when authoring a SHACL shape, designing an affordance descriptor, writing storage description triples, debugging vocabulary dereferenceability, deciding hash vs slash, or answering "what kind of resource is this URL?". Read this skill before deciding `Pod-local namespace` vs `w3id.org` vs `external standard`.
+description: URI conformance for Solid Pod-hosted vocabularies. Hash-namespace, extension-less file paths, HTTPS, port-less, mnemonic class names, Pod-as-namespace-authority. Use BEFORE minting any IRI, predicate, class, profile, or shape. Also when authoring a SHACL shape, deciding hash vs slash, debugging vocabulary dereferenceability, or choosing between Pod-hosted vs w3id.org for a new vocabulary. Even when the user doesn't say "URI" or "namespace," invoke this skill any time a new RDF identifier is being created.
 ---
 
 # Solid URI Conformance
 
-Authoritative reference for how this Pod mints and serves URIs. Built from Solid Project guidance, W3C TR Linked Data design issues, W3C PROF / conneg-by-profile, RFC 6906, and OGC SELFIE deployment patterns. Closes the URI confusion identified in RQ-Substrate-3.
+How to mint and serve URIs on a Solid Pod so that vocabulary IRIs are dereferenceable, stable across deployment changes, and consistent with the de facto conventions of the Solid ecosystem. Companion skills: [`solid-tls-deployment`](../solid-tls-deployment/SKILL.md) for the HTTPS layer, [`solid-profiles-and-conneg`](../solid-profiles-and-conneg/SKILL.md) for resource-kind hints.
 
-## When to invoke
+## Five rules that catch most mistakes
 
-Invoke before any of these:
+1. **Vocabulary IRIs are HTTPS, no port, hash-namespace, no file extension.** `https://pod.example.org/ontology/wiki#Page`, not `http://pod.example.org:3000/ontology/wiki.ttl#Page`. Every part of the bad form encodes deployment state into a class identifier.
 
-- Minting a new class, predicate, or namespace prefix
-- Authoring a new SHACL shape (the `sh:targetClass` IRI must conform)
-- Designing an affordance descriptor (D52)
-- Writing storage description triples (D44, D49)
-- Asking "what kind of resource is at this URL?" — that's a PROF profile question
-- Deciding whether a vocabulary should live on this Pod or at w3id.org
-- Debugging a 404 on a vocabulary fetch
-- Reviewing IRI references in fixtures, tests, or migration scripts
+2. **The vocabulary file's URL path *is* the namespace prefix.** No virtual mapping. If the namespace is `…/ontology/wiki#`, the file MUST live at `/ontology/wiki` (no extension), served with `Content-Type: text/turtle`. CSS handles RDF content-negotiation automatically.
 
-## Reference material
+3. **For app-local vocabularies, host on the Pod itself.** The Pod is the namespace authority for its own application. Use `https://w3id.org/<org>/<vocab>` only for vocabularies meant to be shared across many Pods — minting a w3id redirect for every per-app vocabulary defeats the point of Solid's decentralized architecture.
 
-Three reference docs, organized by audience:
+4. **Mnemonic class names** (`wiki:Concept`, not `wiki:C7f4a3`), **opaque or mnemonic entity slugs** depending on rename risk. The Solid vocab publishing guide recommends "short, memorable IRI are less error-prone." Opaque IDs only matter when entity rename is likely (e.g., Wikidata Q-numbers).
 
-| File | Purpose |
-|---|---|
-| [`references/spec.md`](references/spec.md) | Authoritative material verbatim — TBL principles, Cool URIs, hash vs slash, CSS conneg, PROF, conneg-by-profile, RFC 6906, with sources |
-| [`references/deltas.md`](references/deltas.md) | This Pod's specific commitments (D84/D85/D86), known-wrong current state, open questions |
-| [`references/templates.md`](references/templates.md) | 5 ready-to-paste PROF Turtle templates + the HTTP list-profiles response shape |
+5. **Trailing slash is load-bearing** (Solid Protocol §3.1, MUST). `/wiki` (document) and `/wiki/` (container) cannot coexist at the same stem. Pick one.
 
-## Quick reference
-
-### Five rules that catch most mistakes
-
-1. **Vocabulary IRIs are HTTPS, no port, hash-namespace, no file extension.** `https://pod.vardeman.me/vault/ontology/wiki#Page`, not `http://pod.vardeman.me:3000/vault/ontology/wiki.ttl#Page` (every part of that bad form is wrong).
-2. **The vocabulary file's URL path *is* the namespace prefix.** No virtual mapping. If namespace is `…/ontology/wiki#`, the file MUST live at `/vault/ontology/wiki` (no extension, `Content-Type: text/turtle`).
-3. **Class IRIs and profile IRIs are different things.** `wiki:Concept` is the OWL class. `wiki:ConceptProfile` is the `prof:Profile`. Instance data declares both: `rdf:type wiki:Concept ; dct:conformsTo wiki:ConceptProfile`.
-4. **SHACL shapes are artifacts inside a profile, not the profile itself.** `prof:hasResource → prof:ResourceDescriptor → prof:hasRole role:validation → prof:hasArtifact <shape-file>`.
-5. **For *this Pod's* app vocabularies, host on the Pod itself.** For vocabularies meant to outlive this Pod and be shared across many Pods (e.g. `fabric:CoreProfile`), use `https://w3id.org/cogitarelink/…`. The Pod IS the namespace authority for its application; w3id.org is for cross-Pod permanence.
-
-### Decision tree
+## Decision tree
 
 ```
 Minting a new IRI?
-├── For a class/predicate that lives in this app?
-│   → Pod-local hash namespace: https://pod.vardeman.me/vault/ontology/<vocab>#<Term>
-│   → Vocabulary file at: /vault/ontology/<vocab> (no extension)
-│
-├── For a profile (resource-kind declaration)?
-│   → Separate IRI from the class: <ClassName>Profile pattern
-│   → Profile descriptor at: /vault/meta/profiles/<class-name>.ttl
+
+├── For a class/predicate that lives in THIS app?
+│   ├── Will it be referenced by other Pods? (cross-Pod shared profile)
+│   │   YES → w3id.org/<org>/<vocab>#<Term>
+│   │   NO  → https://<pod-host>/<path>/ontology/<vocab>#<Term>
+│   │
+│   └── Vocabulary FILE at: /<path>/ontology/<vocab>  (no extension; PUT with Content-Type: text/turtle)
 │
 ├── For an entity instance (a page, a person, an event)?
-│   → Pod-local slash path with mnemonic slug: /vault/wiki/pages/context-graphs
-│   → Mnemonic for readability; opaque suffix only if collision-prone
+│   → https://<pod-host>/<path>/<container>/<slug>
+│   → Mnemonic slug for natural-name entities; opaque only if rename risk
 │
-├── For a SHACL shape?
-│   → Class IRI used in sh:targetClass = Pod-local hash namespace
-│   → Shape file lives in /vault/meta/shapes/<name>.shacl.ttl
-│   → Referenced FROM a prof:Profile via prof:hasResource (artifact pattern)
+├── For a profile (resource-kind hint)?
+│   → SEPARATE IRI from the class (see `solid-profiles-and-conneg`)
 │
-└── For a cross-Pod shared profile (e.g. fabric:WikiMemoryProfile)?
-    → w3id.org: https://w3id.org/cogitarelink/<profile>
-    → Submit redirect via perma-id/w3id.org PR
+└── Always:
+    ✓ HTTPS
+    ✓ No port in vocabulary IRI
+    ✓ No file extension in vocabulary IRI
+    ✓ Mnemonic class names
+    ✓ Hash namespace for vocabularies
+    ✓ Trailing slash discipline (container vs resource)
 ```
 
-### Caution: the W3C profile stack is unsettled
+## Reference material
 
-- **PROF** (Profiles Vocabulary): W3C **Working Group Note**, not Recommendation. Sections 7/8/11 are normative; the rest is informative.
-- **Conneg-by-profile**: W3C **Working Draft**. Never advanced to Rec.
-- **RFC 6906** (`Link: rel="profile"`): IETF **Proposed Standard** — the only ratified piece.
-- **`draft-svensson-accept-profile-00`**: **expired Sept 2019**, never adopted. **Do not emit `Content-Profile` headers** — that name only lives in the expired draft. The W3C WD uses `Link: rel="profile"` instead.
-- **`dct:conformsTo` property chain axiom**: PROF Issue 1078 marks it "at risk." **Emit `prof:isTransitiveProfileOf` explicitly** rather than relying on a reasoner to apply the chain.
-- **PROF role registry**: 8 standard roles, all "at risk" (Issue 1073), but extension is permitted. Mint custom roles only when none of the 8 fit.
+| File | Read when |
+|---|---|
+| [`references/spec.md`](references/spec.md) | You want the standards rationale — TBL Linked Data principles, Cool URIs, hash vs slash, CSS content-negotiation mechanics, URI normalization |
+| [`references/deltas.md`](references/deltas.md) | You're working on the cogitarelink-solid project and need to know this Pod's specific commitments (the vocabularies it hosts, the file paths, w3id.org migration policy) |
+| [`references/templates.md`](references/templates.md) | You need a paste-ready Turtle template for a vocabulary file or storage description |
 
-We're building on a stack the W3C hasn't ratified. That's deliberate — it's the best-aligned standards work. The skill flags this honestly so future Claude doesn't cite WG Notes as if they were Recs.
+## Empirical conformance test result
 
-## D-decisions in scope
-
-- **D84** — URI conformance commitments (this skill is the authoritative reference)
-- **D85** — TLS deployment (mkcert dev, Caddy+LE prod) — required for D84's HTTPS commitment
-- **D86** — Profile-based resource kind declaration (PROF + RFC 6906)
-- **Closes RQ-Substrate-3** — namespace mismatch between void-description.json and overlay-managed `.meta`
+CSS v8 alpha was directly tested for extension-less Turtle serving (2026-05-16). `PUT /vault/_test` with `Content-Type: text/turtle` succeeded; `GET` with `Accept: text/turtle`, `application/ld+json`, `application/n-triples` all returned 200 OK with the correct serialization auto-converted from the stored Turtle. This validates rule 2 ("URL path *is* the namespace prefix") on the actual deployment target.
 
 ## Related skills
 
-- `solid-spec` — Solid Protocol §3.1 (trailing slash MUST), §3.2 (URI persistence), HTTPS mandate
-- `solid-data-modelling` — FAIR + vocabulary selection; this skill sharpens its URI advice
-- `solid-storage-description` — D44/D48/D49 — where profile catalog gets advertised
-- `solid-affordance-descriptors` — D52 — affordance descriptors are PROF ResourceDescriptors with `role:affordance` (custom role)
-- `solid-wiki-memory-l3` — concrete application; profile IRIs live alongside class IRIs in `wiki:` namespace
-- `metadata-writer` — `Link: rel="profile"` MetadataWriter follows the D67 MementoLinkMetadataWriter pattern
+- `solid-tls-deployment` — HTTPS layer required by rule 1 (Solid Protocol §3 mandates HTTPS)
+- `solid-profiles-and-conneg` — PROF + RFC 6906 resource-kind hints; profile IRIs follow the same conformance rules as class IRIs
+- `solid-spec` — Solid Protocol §3.1 trailing-slash MUST, §3.2 persistence (HTTP 410)
+- `solid-data-modelling` — vocabulary selection (when to mint new vs reuse standard)
+- `solid-storage-description` — how the storage description advertises the vocabularies it declares (D44/D49)
