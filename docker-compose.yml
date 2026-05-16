@@ -35,12 +35,14 @@ services:
       - ./scripts:/scripts:ro
       - ./shapes:/shapes:ro
       - ./ontology:/ontology:ro
+      - ./overlays:/overlays:ro
     working_dir: /scripts
     entrypoint: ["sh", "-c"]
     command:
       - |
         pip install --quiet httpx rdflib pyyaml &&
-        python pod_setup.py --target http://pod.vardeman.me:3000
+        (python pod_setup.py --target http://pod.vardeman.me:3000 || echo "pod_setup verify warned; continuing to overlay apply") &&
+        cd / && python -m scripts.overlay.apply /overlays/wiki-memory --target http://pod.vardeman.me:3000/vault/
     depends_on:
       css:
         condition: service_healthy

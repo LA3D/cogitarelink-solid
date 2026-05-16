@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from urllib.parse import urljoin
 
 import httpx
 
@@ -63,8 +64,8 @@ def check_capabilities(client: httpx.Client, pod_url: str, manifest: Manifest) -
 
 
 def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
-    manifest = parse_manifest(overlay_dir)
     pod_url = pod_url.rstrip("/") + "/"
+    manifest = parse_manifest(overlay_dir, pod_url=pod_url)
     print(f"Applying overlay: {manifest.name} v{manifest.version}")
     print(f"  Target: {pod_url}")
 
@@ -74,7 +75,7 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
 
         # 1. Upload vocabulary documents
         for vocab in manifest.vocabularies:
-            url = pod_url.rstrip("/") + vocab.hosted_at
+            url = absolutize(pod_url, vocab.hosted_at)
             put_file(client, url, vocab.document, "text/turtle")
             print(f"  vocab → {url}")
 
@@ -96,13 +97,26 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
         for container_path in manifest.container_paths:
             container_url = absolutize(pod_url, container_path)
             ensure_container(client, container_url)
-            # Look for a matching .meta file under overlay_dir/containers/<path>/.meta
-            rel = container_path.replace("/vault/", "", 1).rstrip("/") + "/.meta"
+            # Look for a matching .meta file under overlay_dir/containers/<path>/.meta.
+            # container_url is fully-absolute (e.g., http://pod/.../vault/wiki/pages/);
+            # strip the Pod URL to recover the path relative to the Pod root
+            # (e.g., wiki/pages/), then append .meta.
+            rel = container_url[len(pod_url):].rstrip("/") + "/.meta"
             meta_local = overlay_dir / "containers" / rel
             if meta_local.exists():
                 meta_url = container_url.rstrip("/") + "/.meta"
-                put_file(client, meta_url, meta_local, "text/turtle")
-                print(f"  meta  → {meta_url}")
+                # CSS rejects PUT on .meta ("Not allowed to create or edit
+                # metadata resources using PUT; use PATCH instead"). Parse the
+                # local Turtle, serialize as N-Triples with the container URL
+                # as publicID so `<>` resolves to the container, then PATCH
+                # via solid:inserts.
+                from rdflib import Graph
+                mg = Graph()
+                mg.parse(meta_local, format="turtle", publicID=container_url)
+                inserts = mg.serialize(format="nt").strip()
+                if inserts:
+                    n3_patch_inserts(client, meta_url, inserts)
+                    print(f"  meta  → {meta_url}")
 
         # 5. Merge JSON-LD context fragment
         ctx_fragment = overlay_dir / "context-fragment.jsonld"
@@ -121,23 +135,52 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
         storage_patch = overlay_dir / "storage-patch.ttl"
         if storage_patch.exists():
             sd_url = pod_url.rstrip("/") + "/.well-known/solid"
-            inserts = extract_inserts_block(storage_patch.read_text())
-            n3_patch_inserts(client, sd_url, inserts)
-            print(f"  storage description patched")
+            try:
+                inserts = extract_inserts_block(storage_patch.read_text())
+                n3_patch_inserts(client, sd_url, inserts)
+                print(f"  storage description patched")
+            except RuntimeError as e:
+                # DEFERRED SUBSTRATE BUG: CSS v8-alpha.3 returns 405/501 on
+                # PATCH/GET for .well-known/solid in this configuration. Same
+                # root-cause class as the Phase 2 .well-known/solid 501 bug
+                # documented in tests/integration/test_substrate_cleanup.py
+                # ::test_storage_description_announces_capabilities. Storage
+                # description data lives at /vault/.meta (verified discoverable
+                # via the describedby Link header on /vault/). Overlay-specific
+                # entries (dct:conformsTo, rdfs:seeAlso wiki containers,
+                # void:vocabulary for wiki:/cito:/foaf:) would normally land
+                # here. Workaround: agent navigation still works via
+                # /vault/.meta + the catalog containers. Restore the PATCH path
+                # when the upstream CSS routing issue is resolved.
+                print(f"  [warn] storage description PATCH failed ({e}); "
+                      f"deferred — overlay data still discoverable via /vault/.meta",
+                      file=sys.stderr)
 
     print(f"Applied overlay {manifest.name} successfully.")
 
 
 def absolutize(pod_url: str, maybe_relative: str) -> str:
-    """Convert a path like '/vault/wiki/pages/' to an absolute URL."""
-    if maybe_relative.startswith("http"):
+    """Resolve maybe_relative against pod_url.
+
+    Three cases handled:
+      1. Already absolute (http:// or https://) → return as-is.
+      2. file:///... (left over from rdflib parsing a manifest without publicID,
+         where a relative IRI got resolved against the local file path) → strip
+         the file:// scheme and resolve the remaining absolute path against
+         pod_url's origin via urljoin. This is the recovery path for callers
+         that didn't pass pod_url into parse_manifest.
+      3. Anything else (absolute path, fragment, or relative path) → urljoin
+         against pod_url. urljoin's RFC 3986 behaviour: an absolute path like
+         "/vault/ontology/wiki.ttl" REPLACES the path component of the base
+         URL, so urljoin("http://pod/vault/", "/vault/ontology/wiki.ttl")
+         correctly produces "http://pod/vault/ontology/wiki.ttl" — no doubling.
+    """
+    if maybe_relative.startswith(("http://", "https://")):
         return maybe_relative
-    if maybe_relative.startswith("/vault/"):
-        # pod_url already includes /vault/ — strip the duplicate.
-        # Use removesuffix (Python 3.9+) — rstrip("/vault") strips a character SET,
-        # not the literal suffix, which silently misbehaves for Pod URLs ending in t/l/u/a/v.
-        return pod_url.rstrip("/").removesuffix("/vault") + maybe_relative
-    return pod_url.rstrip("/") + maybe_relative
+    if maybe_relative.startswith("file:///"):
+        path = maybe_relative[len("file://"):]
+        return urljoin(pod_url, path)
+    return urljoin(pod_url, maybe_relative)
 
 
 def merge_jsonld_context(client: httpx.Client, pod_url: str, fragment_path: Path, overlay_iri) -> None:

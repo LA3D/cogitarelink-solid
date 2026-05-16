@@ -1,0 +1,99 @@
+@prefix wiki: <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+# Abstract root
+wiki:Resource a rdfs:Class ;
+    rdfs:label "Wiki resource" ;
+    rdfs:isDefinedBy <> .
+
+# Per-container base classes
+wiki:Page         rdfs:subClassOf wiki:Resource ;
+    rdfs:label "Wiki page" ;
+    rdfs:comment "General wiki content. Lives in /wiki/pages/." ;
+    rdfs:isDefinedBy <> .
+
+wiki:Source       rdfs:subClassOf wiki:Resource ;
+    rdfs:label "Source" ;
+    rdfs:comment "Citation record. Lives in /wiki/sources/." ;
+    rdfs:isDefinedBy <> .
+
+wiki:Person       rdfs:subClassOf wiki:Resource, foaf:Person ;
+    rdfs:label "Person" ;
+    rdfs:comment "Person record. Lives in /wiki/people/." ;
+    rdfs:isDefinedBy <> .
+
+wiki:Procedure    rdfs:subClassOf wiki:Resource ;
+    rdfs:label "Procedure" ;
+    rdfs:comment "Procedural memory. Lives in /wiki/procedures/." ;
+    rdfs:isDefinedBy <> .
+
+wiki:WorkingNote  rdfs:subClassOf wiki:Resource ;
+    rdfs:label "Working note" ;
+    rdfs:comment "Permissive scratchpad. Lives in /wiki/working/." ;
+    rdfs:isDefinedBy <> .
+
+# wiki:Page subclasses
+wiki:Concept      rdfs:subClassOf wiki:Page, skos:Concept ;
+    rdfs:label "Concept" ;
+    rdfs:comment "Conceptual knowledge unit. Most common page kind." ;
+    rdfs:isDefinedBy <> .
+
+wiki:MOC          rdfs:subClassOf wiki:Page ;
+    rdfs:label "Map of Content" ;
+    rdfs:comment "Navigational hub page that organizes other pages." ;
+    rdfs:isDefinedBy <> .
+
+# Derived class (substrate-computed via hub-view affordance)
+wiki:Hub          rdfs:subClassOf wiki:Resource ;
+    rdfs:label "Hub" ;
+    rdfs:comment "A wiki:Resource with ≥3 incoming skos:broader. Derived; never asserted directly." ;
+    rdfs:isDefinedBy <> .
+
+# Lifecycle predicate
+wiki:maturity a rdf:Property ;
+    rdfs:domain wiki:Resource ;
+    rdfs:range skos:Concept ;
+    rdfs:isDefinedBy <> .
+
+wiki:draft     a skos:Concept ; skos:prefLabel "draft" .
+wiki:validated a skos:Concept ; skos:prefLabel "validated" .
+wiki:core      a skos:Concept ; skos:prefLabel "core" .
+
+# Write affordance class
+wiki:WriteAffordance a rdfs:Class ;
+    rdfs:label "Write affordance" ;
+    rdfs:comment "Substrate-write configuration for a container. Consumed by cap:ContentProjection." ;
+    rdfs:isDefinedBy <> .
+
+wiki:governs               a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:projectsFromFrontmatter a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:classHintTable        a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:installedBy           a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:shape                 a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:requiresCapability    a rdf:Property ; rdfs:isDefinedBy <> .
+
+wiki:DerivedClassAffordance a rdfs:Class ; rdfs:subClassOf rdfs:Class ;
+    rdfs:isDefinedBy <> .
+
+wiki:DerivedNavigationAffordance a rdfs:Class ; rdfs:subClassOf rdfs:Class ;
+    rdfs:isDefinedBy <> .
+
+wiki:VersionAffordance a rdfs:Class ;
+    rdfs:isDefinedBy <> .
+
+wiki:deriveClass     a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:targetClass     a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:threshold       a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:constructQuery  a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:selectQuery     a rdf:Property ; rdfs:isDefinedBy <> .
+
+# Application profile
+wiki:WikiMemoryProfile a dct:Standard ;
+    rdfs:label "Wiki-memory application profile v1.0" ;
+    dct:hasVersion "1.0" ;
+    rdfs:isDefinedBy <> .

@@ -1,0 +1,11 @@
+@prefix wiki: <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix cap:  <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+<> a wiki:VersionAffordance ;
+   rdfs:label "RFC 7089 Memento time-travel" ;
+   wiki:requiresCapability <http://pod.vardeman.me:3000/vault/meta/capabilities/time-travel.ttl> ;
+   wiki:conformsTo <http://www.rfc-editor.org/rfc/rfc7089.txt> ;
+   wiki:installedBy <https://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> ;
+   sh:agentInstruction "Append ?ext=timemap to any resource URL for its TimeMap; append ?version=<14-digit-datetime> for a specific Memento. RFC 7089 Pattern 1.1 — OriginalResource doubles as TimeGate. See D61." .

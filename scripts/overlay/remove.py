@@ -23,6 +23,7 @@ from pathlib import Path
 
 import httpx
 
+from .apply import absolutize
 from .common import parse_manifest
 
 
@@ -47,8 +48,8 @@ _:patch a solid:InsertDeletePatch ;
 
 
 def remove_overlay(overlay_dir: Path, pod_url: str, uninstall: bool, confirm: bool) -> None:
-    manifest = parse_manifest(overlay_dir)
     pod_url = pod_url.rstrip("/") + "/"
+    manifest = parse_manifest(overlay_dir, pod_url=pod_url)
     print(f"Removing overlay: {manifest.name} v{manifest.version}")
     print(f"  Mode: {'UNINSTALL (deletes containers)' if uninstall else 'DEACTIVATE (keeps containers)'}")
     print(f"  Target: {pod_url}")
@@ -62,19 +63,19 @@ def remove_overlay(overlay_dir: Path, pod_url: str, uninstall: bool, confirm: bo
     with httpx.Client() as client:
         # 1. Delete affordance descriptors
         for aff_url in manifest.affordance_urls:
-            url = aff_url if aff_url.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + aff_url)
+            url = absolutize(pod_url, aff_url)
             delete_resource(client, url)
             print(f"  aff   ✗ {url}")
 
         # 2. Delete shape files
         for shape_url in manifest.shape_urls:
-            url = shape_url if shape_url.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + shape_url)
+            url = absolutize(pod_url, shape_url)
             delete_resource(client, url)
             print(f"  shape ✗ {url}")
 
         # 3. Delete vocabulary documents
         for vocab in manifest.vocabularies:
-            url = pod_url.rstrip("/") + vocab.hosted_at
+            url = absolutize(pod_url, vocab.hosted_at)
             delete_resource(client, url)
             print(f"  vocab ✗ {url}")
 
@@ -106,7 +107,7 @@ def remove_overlay(overlay_dir: Path, pod_url: str, uninstall: bool, confirm: bo
         if uninstall:
             # Delete in reverse depth order (children before parents)
             for container_path in sorted(manifest.container_paths, key=len, reverse=True):
-                url = container_path if container_path.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + container_path)
+                url = absolutize(pod_url, container_path)
                 delete_resource(client, url)
                 print(f"  container ✗ {url}")
 

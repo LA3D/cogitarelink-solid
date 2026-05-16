@@ -1,0 +1,12 @@
+@prefix wiki:  <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix ldp:   <http://www.w3.org/ns/ldp#> .
+
+<> a ldp:Container, ldp:BasicContainer ;
+   dct:title "Wiki Working Memory" ;
+   solid:forClass wiki:WorkingNote ;
+   wiki:shape </vault/meta/shapes/working.shacl.ttl> ;
+   wiki:installedBy <https://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> ;
+   sh:agentInstruction "Low-ceremony working memory for transient notes (D73). Permissive shape. Promotable to durable container via mem:Crystallize (deferred)." .

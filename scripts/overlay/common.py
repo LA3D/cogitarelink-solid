@@ -67,14 +67,23 @@ class Manifest:
     overlay_dir: Path                 # local directory holding manifest + artifacts
 
 
-def parse_manifest(overlay_dir: Path) -> Manifest:
-    """Parse manifest.ttl into a structured Manifest."""
+def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
+    """Parse manifest.ttl into a structured Manifest.
+
+    If `pod_url` is given, it is used as the publicID so that relative IRIs
+    in the manifest (e.g., </vault/wiki/pages/>) resolve against the target
+    Pod URL rather than the local file path (which would produce file:///...
+    IRIs that aren't usable as HTTP targets). The file:// fallback is kept
+    for tooling that calls parse_manifest without a Pod URL — those callers
+    must handle file:// IRIs themselves (apply.py's absolutize does).
+    """
     manifest_path = overlay_dir / "manifest.ttl"
     if not manifest_path.exists():
         raise FileNotFoundError(f"Overlay manifest not found: {manifest_path}")
 
     g = Graph()
-    g.parse(manifest_path, format="turtle")
+    g.parse(manifest_path, format="turtle",
+            publicID=pod_url or manifest_path.as_uri())
 
     overlay_subjects = list(g.subjects(RDF.type, OVERLAY.Overlay))
     if not overlay_subjects:

@@ -1,0 +1,15 @@
+@prefix wiki: <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix cap:  <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+<> a wiki:DerivedNavigationAffordance ;
+   rdfs:label "Breadcrumb chain (skos:broader+ walk)" ;
+   wiki:requiresCapability <http://pod.vardeman.me:3000/vault/meta/capabilities/derived-view.ttl> ;
+   wiki:installedBy <https://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> ;
+   sh:agentInstruction "From a given start IRI, walks the skos:broader chain to the root. Bind ?start to your starting resource and run the SELECT below in your own SPARQL engine pointed at this Pod's wiki containers." ;
+   wiki:selectQuery """
+       PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+       SELECT ?ancestor
+       WHERE { <START> skos:broader+ ?ancestor . }
+   """ .

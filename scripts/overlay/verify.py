@@ -13,20 +13,21 @@ from pathlib import Path
 
 import httpx
 
+from .apply import absolutize
 from .common import parse_manifest
 
 
 def verify_overlay(overlay_dir: Path, pod_url: str) -> int:
     """Return number of drift errors found (0 = clean)."""
-    manifest = parse_manifest(overlay_dir)
     pod_url = pod_url.rstrip("/") + "/"
+    manifest = parse_manifest(overlay_dir, pod_url=pod_url)
     print(f"Verifying overlay: {manifest.name} v{manifest.version} against {pod_url}")
     errors = 0
 
     with httpx.Client() as client:
         # Containers
         for c in manifest.container_paths:
-            url = c if c.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + c)
+            url = absolutize(pod_url, c)
             r = client.head(url, timeout=5)
             if r.status_code != 200:
                 print(f"  [drift] container missing: {url} (HTTP {r.status_code})", file=sys.stderr)
@@ -34,7 +35,7 @@ def verify_overlay(overlay_dir: Path, pod_url: str) -> int:
 
         # Shape files
         for s in manifest.shape_urls:
-            url = s if s.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + s)
+            url = absolutize(pod_url, s)
             r = client.head(url, timeout=5)
             if r.status_code != 200:
                 print(f"  [drift] shape missing: {url} (HTTP {r.status_code})", file=sys.stderr)
@@ -42,7 +43,7 @@ def verify_overlay(overlay_dir: Path, pod_url: str) -> int:
 
         # Affordances
         for a in manifest.affordance_urls:
-            url = a if a.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + a)
+            url = absolutize(pod_url, a)
             r = client.head(url, timeout=5)
             if r.status_code != 200:
                 print(f"  [drift] affordance missing: {url} (HTTP {r.status_code})", file=sys.stderr)
@@ -50,7 +51,7 @@ def verify_overlay(overlay_dir: Path, pod_url: str) -> int:
 
         # Vocabularies
         for v in manifest.vocabularies:
-            url = pod_url.rstrip("/") + v.hosted_at
+            url = absolutize(pod_url, v.hosted_at)
             r = client.head(url, timeout=5)
             if r.status_code != 200:
                 print(f"  [drift] vocab missing: {url} (HTTP {r.status_code})", file=sys.stderr)

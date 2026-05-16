@@ -1,0 +1,57 @@
+@prefix overlay: <https://pod.vardeman.me:3000/vault/ontology/overlay#> .
+@prefix cap:     <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix wiki:    <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+@prefix solid:   <http://www.w3.org/ns/solid/terms#> .
+
+<https://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory>
+    a overlay:Overlay ;
+    overlay:name "wiki-memory" ;
+    overlay:version "1.0" ;
+    dct:conformsTo wiki:WikiMemoryProfile ;
+
+    overlay:declaresVocabulary [
+        overlay:namespace wiki: ;
+        overlay:document "vocabulary/wiki.ttl" ;
+        overlay:hostedAt "/vault/ontology/wiki.ttl"
+    ] ;
+
+    overlay:requiresCapability
+        [ cap:requires <http://pod.vardeman.me:3000/vault/meta/capabilities/markdown-content-projection.ttl> ;
+          cap:minVersion "1.0" ;
+          cap:contentType "text/markdown" ] ,
+        [ cap:requires <http://pod.vardeman.me:3000/vault/meta/capabilities/time-travel.ttl> ;
+          cap:minVersion "1.0" ] ;
+
+    overlay:optionalCapability
+        [ cap:requires <http://pod.vardeman.me:3000/vault/meta/capabilities/derived-view.ttl> ;
+          cap:minVersion "1.0" ;
+          overlay:degradesTo "hub-view + breadcrumb-view advisory; agent must bring SPARQL engine" ] ;
+
+    overlay:installsContainer
+        </vault/wiki/> ,
+        </vault/wiki/pages/> ,
+        </vault/wiki/sources/> ,
+        </vault/wiki/people/> ,
+        </vault/wiki/procedures/> ,
+        </vault/wiki/working/> ;
+
+    overlay:installsShape
+        </vault/meta/shapes/page.shacl.ttl> ,
+        </vault/meta/shapes/source.shacl.ttl> ,
+        </vault/meta/shapes/person.shacl.ttl> ,
+        </vault/meta/shapes/procedure.shacl.ttl> ,
+        </vault/meta/shapes/working.shacl.ttl> ;
+
+    overlay:installsAffordance
+        </vault/meta/affordances/markdown-projection.ttl> ,
+        </vault/meta/affordances/hub-view.ttl> ,
+        </vault/meta/affordances/breadcrumb-view.ttl> ,
+        </vault/meta/affordances/memento.ttl> ;
+
+    overlay:installsTypeRegistration
+        [ solid:forClass wiki:Page       ; solid:instanceContainer </vault/wiki/pages/> ] ,
+        [ solid:forClass wiki:Source     ; solid:instanceContainer </vault/wiki/sources/> ] ,
+        [ solid:forClass wiki:Person     ; solid:instanceContainer </vault/wiki/people/> ] ,
+        [ solid:forClass wiki:Procedure  ; solid:instanceContainer </vault/wiki/procedures/> ] ,
+        [ solid:forClass wiki:WorkingNote; solid:instanceContainer </vault/wiki/working/> ] .

@@ -1,0 +1,39 @@
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix cito:  <http://purl.org/spar/cito/> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix wiki:  <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix cap:   <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<> a wiki:WriteAffordance ;
+    rdfs:label "Markdown projection listener" ;
+    wiki:requiresCapability <http://pod.vardeman.me:3000/vault/meta/capabilities/markdown-content-projection.ttl> ;
+    wiki:installedBy <https://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> ;
+    wiki:governs rdf:type ,
+        dct:title ,
+        dct:identifier ,
+        dct:created ,
+        dct:modified ,
+        dct:references ,
+        dct:subject ,
+        dct:contributor ,
+        dct:creator ,
+        skos:broader ,
+        skos:related ,
+        cito:extends ,
+        cito:agreesWith ,
+        cito:disagreesWith ,
+        wiki:maturity ,
+        prov:wasGeneratedBy ;
+    wiki:projectsFromFrontmatter "type" ,
+        "created" ,
+        "modified" ,
+        "maturity" ,
+        "aliases" ,
+        "identifier" ,
+        "citekey" ;
+    wiki:classHintTable <../context.jsonld> ;
+    sh:agentInstruction "Substrate writes the predicates listed in wiki:governs. To express any of those, edit the body+frontmatter; do not PATCH .meta directly. Other predicates are agent-extensible." .

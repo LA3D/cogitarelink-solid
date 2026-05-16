@@ -1,0 +1,17 @@
+@prefix wiki: <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix cito: <http://purl.org/spar/cito/> .
+
+wiki:SourceShape a sh:NodeShape ;
+    sh:targetClass wiki:Source ;
+    sh:closed false ;
+    sh:agentInstruction "Citation record. dct:identifier required (DOI, arXiv ID, citekey). Use cito:extends, cito:agreesWith, cito:disagreesWith for typed citation relationships. dct:contributor for authors (per K3 — substrate emits dct:contributor not dct:creator from .author class hints)." ;
+    sh:property [
+        sh:path dct:title ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path dct:identifier ;
+        sh:minCount 1 ;
+    ] .

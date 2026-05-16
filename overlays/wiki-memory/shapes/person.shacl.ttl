@@ -1,0 +1,13 @@
+@prefix wiki: <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+wiki:PersonShape a sh:NodeShape ;
+    sh:targetClass wiki:Person ;
+    sh:closed false ;
+    sh:agentInstruction "Person record. FOAF-based. foaf:name preferred over dct:title. foaf:nick lists aliases for cross-system linking (citekey patterns, Twitter handles, Readwise display names). Use foaf:Organization for institutional affiliations via affiliation predicate." ;
+    sh:property [
+        sh:path foaf:name ;
+        sh:minCount 1 ;
+    ] .
