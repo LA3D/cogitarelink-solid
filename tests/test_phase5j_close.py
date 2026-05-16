@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from rdflib import Graph, Namespace, URIRef
-from rdflib.namespace import RDF, SKOS, OWL
+from rdflib.namespace import RDF, RDFS, SKOS, OWL
 
 PROF = Namespace("http://www.w3.org/ns/dx/prof/")
 DCT = Namespace("http://purl.org/dc/terms/")
@@ -35,3 +35,20 @@ def test_wikirole_scheme_has_five_role_concepts():
         assert (role, RDF.type, SKOS.Concept) in g
         assert (role, RDF.type, OWL.NamedIndividual) in g
         assert (role, SKOS.topConceptOf, scheme) in g
+
+    # Scheme metadata
+    assert (scheme, DCT.publisher, URIRef("https://orcid.org/0000-0003-4091-6059")) in g
+    assert any(g.triples((scheme, RDFS.comment, None))), "scheme missing rdfs:comment"
+
+    # Per-role labels and definitions
+    for role in expected:
+        assert any(g.triples((role, SKOS.prefLabel, None))), f"{role} missing skos:prefLabel"
+        assert any(g.triples((role, SKOS.definition, None))), f"{role} missing skos:definition"
+
+    # Hierarchy: children must have skos:broader :affordance; parent must NOT
+    parent = WIKIROLE["affordance"]
+    children = expected - {parent}
+    for child in children:
+        assert (child, SKOS.broader, parent) in g, f"{child} missing skos:broader :affordance"
+    assert not list(g.triples((parent, SKOS.broader, None))), \
+        "parent :affordance should not have skos:broader"
