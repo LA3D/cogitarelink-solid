@@ -128,6 +128,16 @@
             ]
           },
           {
+            "comment": "D83: capability catalog pointer (substrate self-description)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://pod.vardeman.me:3000/vault/ontology/capability#catalog",
+                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/meta/capabilities/"
+              }
+            ]
+          },
+          {
             "comment": "L3: JSON-LD context document for wiki-memory wikilink vocabulary (D76)",
             "@type": "StaticStorageDescriber",
             "terms": [

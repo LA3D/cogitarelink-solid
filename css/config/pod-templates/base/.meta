@@ -6,7 +6,7 @@
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 @prefix fabric: <https://w3id.org/cogitarelink/fabric#> .
 
-<../> a pim:Storage, void:Dataset, dcat:DataService ;
+<> a pim:Storage, void:Dataset, dcat:DataService ;
     dct:conformsTo fabric:CoreProfile, fabric:SolidPodProfile ;
     void:vocabulary skos:, dct:, prov: ;
     void:vocabulary <http://pod.vardeman.me:3000/vault/ontology/capability#> ,

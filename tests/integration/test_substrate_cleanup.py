@@ -74,23 +74,16 @@ def test_meta_affordances_only_holds_overlay_descriptors():
 
 
 def test_storage_description_announces_capabilities():
-    """Storage description should point at capability catalog.
+    """GET /vault/.well-known/solid returns the storage description with cap:catalog pointer.
 
-    NOTE: This test reads /vault/.meta directly rather than /vault/.well-known/solid
-    because the latter currently returns HTTP 501 ("Only supports descriptions of
-    storage containers") under CSS v8.0.0-alpha.3 even though /vault/.meta correctly
-    declares <../> a pim:Storage. The Phase 0 substrate served the same data at
-    /vault/.well-known/solid (see /tmp/substrate-cleanup-snapshot/storage-desc-before.ttl);
-    something between Phase 0 and Phase 2 broke the upstream StorageDescriptionHandler
-    routing — possibly an interaction between the void-description.json Override of
-    urn:solid-server:default:StorageDescriber and Phase 1's rebase of base/.meta from
-    <> to <../>. Deferred substrate bug: restore /vault/.well-known/solid → 200 with
-    the storage description Turtle (tracked outside this test). The capability-catalog
-    data IS published correctly at /vault/.meta, so the substrate contract this test
-    enforces still holds.
+    Resolves RQ-Substrate-2 (deferred from Phase 2). Phase 1's pod template wrote
+    `<../> a pim:Storage` in /vault/.meta — against base /vault/.meta, `<../>`
+    resolves to the server root, not /vault/, so CSS's StorageDescriptionHandler.
+    canHandle() couldn't find pim:Storage on /vault/ and threw NotImplementedHttpError.
+    Fix: change `<../>` to `<>` in the template (substrate-cleanup-step-6).
     """
-    meta_url = POD_URL + ".meta"
-    g = Graph().parse(meta_url, format="turtle", publicID=meta_url)
+    sd_url = POD_URL + ".well-known/solid"
+    g = Graph().parse(sd_url, format="turtle", publicID=sd_url)
     CAP = Namespace("http://pod.vardeman.me:3000/vault/ontology/capability#")
     catalog_triple = (None, CAP.catalog,
                       URIRef("http://pod.vardeman.me:3000/vault/meta/capabilities/"))
