@@ -145,17 +145,17 @@ The TBox cache at `/vault/ontology/` stays at **substrate level**, holding SKOS,
 
 ### Shape files: rename, move, align
 
-Repo `shapes/wiki-memory-l3/*.shacl.ttl` → `overlays/wiki-memory/shapes/*.shacl.ttl`. Container `.meta` files in the wiki-memory overlay reference the correct filenames:
+Repo `shapes/wiki-memory-l3/*.shacl.ttl` → `overlays/wiki-memory/shapes/*.shacl.ttl`. The existing `concept.shacl.ttl` in the repo gets **renamed to `page.shacl.ttl`** because the subclass model (Section 4) makes `wiki:Page` the base class and the base shape applies to all subclasses via `rdfs:subClassOf` inference. Container `.meta` files in the wiki-memory overlay reference the correct filename:
 
 ```turtle
-# Before (broken pointer in current pod template):
+# Before (broken pointer in current pod template, file doesn't exist):
 <../../meta/shapes/page.shacl.ttl>
 
-# After (in overlay):
-<../../meta/shapes/concept.shacl.ttl>   # NOTE: see Section 4 — subclass model uses wiki:Page base, concept.shacl.ttl extends it
+# After (in overlay, file exists and targets sh:targetClass wiki:Page):
+<../../meta/shapes/page.shacl.ttl>
 ```
 
-Container path stays `/wiki/pages/` (D76). Class `wiki:Page` is the base; `wiki:Concept`, `wiki:MOC` etc. are subclasses (see Section 4 — subclass model). The base shape file is `page.shacl.ttl`; concept-specific extensions in `concept.shacl.ttl`. Shapes get uploaded to `/vault/meta/shapes/` by the overlay's apply script.
+Container path stays `/wiki/pages/` (D76). Class `wiki:Page` is the base; `wiki:Concept`, `wiki:MOC` etc. are subclasses (see Section 4). The base shape file is `page.shacl.ttl`; subclass-specific extension shapes (a future `concept.shacl.ttl` adding `wiki:Concept`-only constraints) are out of scope for this cleanup. Shapes get uploaded to `/vault/meta/shapes/` by the overlay's apply script.
 
 ### Comunica docker service removed
 
