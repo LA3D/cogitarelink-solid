@@ -31,7 +31,7 @@ def check_overlay_dependencies(client: httpx.Client, pod_url: str, manifest: Man
         return
     storage_url = pod_url.rstrip("/") + "/.well-known/solid"
     from rdflib import Graph, Namespace
-    OVERLAY = Namespace("https://pod.vardeman.me:3000/vault/ontology/overlay#")
+    OVERLAY = Namespace("http://pod.vardeman.me:3000/vault/ontology/overlay#")
     r = client.get(storage_url, headers={"Accept": "text/turtle"}, timeout=10)
     if r.status_code != 200:
         raise RuntimeError(f"Storage description not reachable: HTTP {r.status_code}")

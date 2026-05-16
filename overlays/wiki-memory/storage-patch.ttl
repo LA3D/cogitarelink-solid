@@ -1,17 +1,17 @@
 @prefix solid:   <http://www.w3.org/ns/solid/terms#> .
-@prefix wiki:    <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix wiki:    <http://pod.vardeman.me:3000/vault/ontology/wiki#> .
 @prefix void:    <http://rdfs.org/ns/void#> .
 @prefix dct:     <http://purl.org/dc/terms/> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix cito:    <http://purl.org/spar/cito/> .
 @prefix foaf:    <http://xmlns.com/foaf/0.1/> .
-@prefix overlay: <https://pod.vardeman.me:3000/vault/ontology/overlay#> .
+@prefix overlay: <http://pod.vardeman.me:3000/vault/ontology/overlay#> .
 
 <> a solid:InsertDeletePatch ;
    solid:inserts {
        <../>
            dct:conformsTo wiki:WikiMemoryProfile ;
-           void:vocabulary <https://pod.vardeman.me:3000/vault/ontology/wiki#> ,
+           void:vocabulary <http://pod.vardeman.me:3000/vault/ontology/wiki#> ,
                           <http://purl.org/spar/cito/> ,
                           <http://xmlns.com/foaf/0.1/> ;
            rdfs:seeAlso <../wiki/pages/> ,
@@ -19,5 +19,5 @@
                        <../wiki/people/> ,
                        <../wiki/procedures/> ,
                        <../wiki/working/> ;
-           overlay:installedOverlay <https://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> .
+           overlay:installedOverlay <http://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> .
    } .

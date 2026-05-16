@@ -9,7 +9,7 @@
 <../> a pim:Storage, void:Dataset, dcat:DataService ;
     dct:conformsTo fabric:CoreProfile, fabric:SolidPodProfile ;
     void:vocabulary skos:, dct:, prov: ;
-    void:vocabulary <https://pod.vardeman.me:3000/vault/ontology/capability#> ,
-                    <https://pod.vardeman.me:3000/vault/ontology/overlay#> ;
+    void:vocabulary <http://pod.vardeman.me:3000/vault/ontology/capability#> ,
+                    <http://pod.vardeman.me:3000/vault/ontology/overlay#> ;
     void:feature fabric:LDPBrowse ;
-    <https://pod.vardeman.me:3000/vault/ontology/capability#catalog> </vault/meta/capabilities/> .
+    <http://pod.vardeman.me:3000/vault/ontology/capability#catalog> </vault/meta/capabilities/> .

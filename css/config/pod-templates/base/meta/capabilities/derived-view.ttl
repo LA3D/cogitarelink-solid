@@ -1,4 +1,4 @@
-@prefix cap:   <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix cap:   <http://pod.vardeman.me:3000/vault/ontology/capability#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix sh:    <http://www.w3.org/ns/shacl#> .

@@ -1,7 +1,7 @@
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix ldp: <http://www.w3.org/ns/ldp#> .
-@prefix wiki: <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix wiki: <http://pod.vardeman.me:3000/vault/ontology/wiki#> .
 
 <> a ldp:Container, ldp:BasicContainer ;
    dct:title "Wiki-memory L2 application root" ;
-   wiki:installedBy <https://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> .
+   wiki:installedBy <http://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> .

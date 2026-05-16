@@ -1,4 +1,4 @@
-@prefix wiki: <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix wiki: <http://pod.vardeman.me:3000/vault/ontology/wiki#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix dct:  <http://purl.org/dc/terms/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .

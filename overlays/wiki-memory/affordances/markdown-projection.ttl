@@ -4,14 +4,14 @@
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 @prefix cito:  <http://purl.org/spar/cito/> .
 @prefix prov:  <http://www.w3.org/ns/prov#> .
-@prefix wiki:  <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
-@prefix cap:   <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix wiki:  <http://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix cap:   <http://pod.vardeman.me:3000/vault/ontology/capability#> .
 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 <> a wiki:WriteAffordance ;
     rdfs:label "Markdown projection listener" ;
     wiki:requiresCapability <http://pod.vardeman.me:3000/vault/meta/capabilities/markdown-content-projection.ttl> ;
-    wiki:installedBy <https://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> ;
+    wiki:installedBy <http://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> ;
     wiki:governs rdf:type ,
         dct:title ,
         dct:identifier ,

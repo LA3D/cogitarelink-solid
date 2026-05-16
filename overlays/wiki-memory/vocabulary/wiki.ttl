@@ -1,4 +1,4 @@
-@prefix wiki: <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix wiki: <http://pod.vardeman.me:3000/vault/ontology/wiki#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .

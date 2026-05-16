@@ -6,7 +6,7 @@ substrate resource (storage description, Type Index, context.jsonld).
 
 NOTE on capability resolution: an overlay's `overlay:requiresCapability` clauses
 use the full descriptor URL as the IRI in `cap:requires`, e.g.,
-`<https://pod.vardeman.me:3000/vault/meta/capabilities/markdown-content-projection>`.
+`<http://pod.vardeman.me:3000/vault/meta/capabilities/markdown-content-projection>`.
 fetch_capability_catalog returns a dict keyed by these descriptor URLs.
 Manifest authors should NOT use the capability class IRI like cap:ContentProjection
 in cap:requires — those are types, not implementations.
@@ -20,12 +20,12 @@ import httpx
 from rdflib import Graph, Namespace, URIRef, Literal
 from rdflib.namespace import RDF, RDFS, DCTERMS
 
-OVERLAY = Namespace("https://pod.vardeman.me:3000/vault/ontology/overlay#")
-CAP     = Namespace("https://pod.vardeman.me:3000/vault/ontology/capability#")
+OVERLAY = Namespace("http://pod.vardeman.me:3000/vault/ontology/overlay#")
+CAP     = Namespace("http://pod.vardeman.me:3000/vault/ontology/capability#")
 SOLID   = Namespace("http://www.w3.org/ns/solid/terms#")
 VOID    = Namespace("http://rdfs.org/ns/void#")
 SH      = Namespace("http://www.w3.org/ns/shacl#")
-WIKI    = Namespace("https://pod.vardeman.me:3000/vault/ontology/wiki#")  # only when overlay uses it
+WIKI    = Namespace("http://pod.vardeman.me:3000/vault/ontology/wiki#")  # only when overlay uses it
 
 
 @dataclass(frozen=True)
