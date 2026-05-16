@@ -1,9 +1,0 @@
-@prefix ldp:  <http://www.w3.org/ns/ldp#> .
-@prefix dct:  <http://purl.org/dc/terms/> .
-@prefix wiki: <urn:example:wiki#> .
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
-
-<> a ldp:Container, ldp:BasicContainer ;
-   dct:title "Wiki People" ;
-   wiki:shape <../../meta/shapes/person.shacl.ttl> ;
-   sh:agentInstruction "Person records (authors, collaborators, researchers). Shape: wiki:PersonShape. FOAF-based with foaf:nick for aliases. Use foaf:nick to link citekey patterns and display name variants." .

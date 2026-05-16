@@ -75,9 +75,8 @@ def verify_pod(client: httpx.Client) -> bool:
     checks = [
         ("/vault/", "Pod root"),
         ("/vault/profile/card", "WebID card"),
-        ("/vault/settings/publicTypeIndex", "Type Index"),
-        ("/vault/resources/concepts/", "Concepts container"),
-        ("/vault/procedures/shapes/", "Shapes container"),
+        ("/vault/settings/publicTypeIndex", "Type Index (empty post-Phase 1)"),
+        ("/vault/.well-known/solid", "Storage description"),
     ]
     ok = True
     for path, label in checks:
@@ -109,9 +108,12 @@ def main():
 
     with httpx.Client(base_url=args.target, timeout=30) as c:
         n_shapes = 0
-        if shapes_dir.exists():
-            print(f"\nUploading shapes from {shapes_dir}")
-            n_shapes = upload_shapes(c, shapes_dir)
+        # NOTE: Phase 1 substrate cleanup — shape upload moved to wiki-memory overlay.
+        # Do not call upload_shapes here. Apply the overlay instead:
+        #   python -m scripts.overlay.apply overlays/wiki-memory --target <pod-url>
+        # if shapes_dir.exists():
+        #     print(f"\nUploading shapes from {shapes_dir}")
+        #     n_shapes = upload_shapes(c, shapes_dir)
 
         n_onto = 0
         if onto_dir.exists():

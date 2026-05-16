@@ -1,8 +1,0 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
-@prefix wiki: <urn:example:wiki#> .
-
-<> a wiki:VersionAffordance ;
-   rdfs:label "RFC 7089 Memento time-travel" ;
-   wiki:conformsTo <http://www.rfc-editor.org/rfc/rfc7089.txt> ;
-   sh:agentInstruction "Append ?ext=timemap to any resource URL for its TimeMap; append ?version=<14-digit-datetime> for a specific Memento. RFC 7089 Pattern 1.1 (OriginalResource doubles as TimeGate). See D61." .

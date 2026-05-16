@@ -1,8 +1,0 @@
-@prefix ldp:  <http://www.w3.org/ns/ldp#> .
-@prefix dct:  <http://purl.org/dc/terms/> .
-@prefix wiki: <urn:example:wiki#> .
-
-<> a ldp:Container, ldp:BasicContainer ;
-   dct:title "Wiki-Memory L3" ;
-   dct:description "Five-container wiki-memory L3 reference profile (D76)." ;
-   wiki:conformsTo wiki:L3Profile .

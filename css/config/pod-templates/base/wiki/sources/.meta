@@ -1,9 +1,0 @@
-@prefix ldp:  <http://www.w3.org/ns/ldp#> .
-@prefix dct:  <http://purl.org/dc/terms/> .
-@prefix wiki: <urn:example:wiki#> .
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
-
-<> a ldp:Container, ldp:BasicContainer ;
-   dct:title "Wiki Sources" ;
-   wiki:shape <../../meta/shapes/source.shacl.ttl> ;
-   sh:agentInstruction "Citation records (literature notes, papers, reports). Shape: wiki:SourceShape. dct:identifier required (DOI, arXiv ID, or citekey). Use cito:extends, cito:agreesWith, cito:disagreesWith for typed citation relationships." .

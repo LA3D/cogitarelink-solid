@@ -1,9 +1,0 @@
-@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
-@prefix dct:   <http://purl.org/dc/terms/>.
-@prefix sh:    <http://www.w3.org/ns/shacl#>.
-@prefix vault: <https://pod.vardeman.me/vault/ontology#>.
-
-<> rdfs:label "Projects" ;
-    dct:description "Time-bound efforts serving Areas. Each project has tasks, a timeline, and connects to an Area via vault:area." ;
-    dct:type vault:Projects, vault:TaskState ;
-    sh:agentInstruction "Projects are active work. Check vault:area to understand which Area a project serves." .

@@ -1,9 +1,0 @@
-@prefix ldp:  <http://www.w3.org/ns/ldp#> .
-@prefix dct:  <http://purl.org/dc/terms/> .
-@prefix wiki: <urn:example:wiki#> .
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
-
-<> a ldp:Container, ldp:BasicContainer ;
-   dct:title "Wiki Procedures" ;
-   wiki:shape <../../meta/shapes/procedure.shacl.ttl> ;
-   sh:agentInstruction "Procedural memory: agent instructions, workflows, skills, how-to guides. Shape: wiki:ProcedureShape. sh:agentInstruction on .meta carries the procedure body. Body markdown is human-readable documentation." .

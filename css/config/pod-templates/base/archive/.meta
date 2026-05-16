@@ -1,7 +1,0 @@
-@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>.
-@prefix dct:   <http://purl.org/dc/terms/>.
-@prefix vault: <https://pod.vardeman.me/vault/ontology#>.
-
-<> rdfs:label "Archive" ;
-    dct:description "Inactive and completed items. Preserved but not actively navigated." ;
-    dct:type vault:Archive .
