@@ -8,6 +8,13 @@ Two modes:
 
 Usage:
     python scripts/overlay/remove.py <overlay-dir> --target <pod-url> [--keep-data | --uninstall --confirm]
+
+KNOWN LIMITATION: This module does NOT undo apply.py's merge_jsonld_context.
+The JSON-LD context entries that apply.py merged into /vault/meta/context.jsonld
+are left in place. Rationale: context entries are shared vocabulary (multiple
+overlays may register the same prefix), and removing them without ref-counting
+would break other installed overlays. Future improvement: track overlay→key
+bindings in the storage description so safe cleanup is possible.
 """
 from __future__ import annotations
 import argparse
@@ -15,10 +22,8 @@ import sys
 from pathlib import Path
 
 import httpx
-from rdflib import Graph, Namespace, URIRef
-from rdflib.namespace import RDF
 
-from .common import Manifest, parse_manifest, n3_patch_inserts, OVERLAY, CAP, SOLID, WIKI
+from .common import parse_manifest
 
 
 def delete_resource(client: httpx.Client, url: str) -> None:

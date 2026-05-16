@@ -172,29 +172,96 @@ def merge_jsonld_context(client: httpx.Client, pod_url: str, fragment_path: Path
 
 
 def build_type_index_inserts(manifest: Manifest) -> str:
-    """Build the Turtle body for solid:inserts to add Type Index entries."""
-    lines = ["@prefix solid: <http://www.w3.org/ns/solid/terms#>."]
+    """Emit N-Triples (absolute IRIs) suitable as the body of solid:inserts { ... }.
+
+    Per Solid N3 Patch grammar, prefix declarations belong at the patch envelope's
+    outer scope, not inside the inserts formula. This function returns one
+    N-Triple per line using absolute IRIs only.
+    """
+    SOLID_NS = "http://www.w3.org/ns/solid/terms#"
+    RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    lines = []
     for i, tr in enumerate(manifest.type_registrations):
-        lines.append(
-            f"<#reg{i}-{manifest.name}> a solid:TypeRegistration ; "
-            f"solid:forClass <{tr.for_class}> ; "
-            f"solid:instanceContainer <{tr.instance_container}> ."
-        )
+        reg = f"<#reg{i}-{manifest.name}>"
+        lines.append(f"{reg} <{RDF_TYPE}> <{SOLID_NS}TypeRegistration> .")
+        lines.append(f"{reg} <{SOLID_NS}forClass> <{tr.for_class}> .")
+        lines.append(f"{reg} <{SOLID_NS}instanceContainer> <{tr.instance_container}> .")
     return "\n".join(lines)
 
 
 def extract_inserts_block(patch_text: str) -> str:
-    """Pull the contents of solid:inserts { ... } out of a storage-patch.ttl file.
+    """Parse storage-patch.ttl and return its solid:inserts triples as N-Triples.
 
-    The overlay author writes a full N3 Patch; we want just the inserts block
-    so we can re-wrap it in our own _:patch envelope. Simple brace-matching parse.
+    The patch file uses prefix names (cito:, dct:, etc.) inside the
+    solid:inserts formula. Per Solid N3 Patch grammar, prefixes belong outside
+    the formula. We use rdflib's N3 parser to expand prefixes and serialize
+    the inserts block as fully-qualified N-Triples. As a bonus, this handles
+    braces in string literals correctly (the brace-matching fallback below
+    would mis-parse them).
     """
+    from rdflib import Graph, URIRef, BNode, Literal as RdfLiteral
+    from rdflib.namespace import Namespace
+
+    SOLID = Namespace("http://www.w3.org/ns/solid/terms#")
+    g = Graph()
+    try:
+        g.parse(data=patch_text, format="n3")
+    except Exception as e:
+        raise ValueError(f"storage-patch.ttl: n3 parse failed: {e}") from e
+
+    inserts_obj = None
+    for s, p, o in g:
+        if p == SOLID.inserts:
+            inserts_obj = o
+            break
+    if inserts_obj is None:
+        raise ValueError("storage-patch.ttl missing solid:inserts block")
+
+    triples = []
+    try:
+        formula = g.graph(inserts_obj)
+        triples = list(formula)
+    except Exception:
+        triples = []
+
+    if not triples:
+        triples = _fallback_parse_inserts(patch_text)
+
+    def term_to_nt(t) -> str:
+        if isinstance(t, URIRef):
+            return f"<{t}>"
+        if isinstance(t, BNode):
+            return f"_:{t}"
+        if isinstance(t, RdfLiteral):
+            lex = str(t).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+            if t.datatype:
+                return f'"{lex}"^^<{t.datatype}>'
+            if t.language:
+                return f'"{lex}"@{t.language}'
+            return f'"{lex}"'
+        return f"<{t}>"
+
+    lines = []
+    for s, p, o in triples:
+        lines.append(f"{term_to_nt(s)} {term_to_nt(p)} {term_to_nt(o)} .")
+    return "\n".join(lines)
+
+
+def _fallback_parse_inserts(patch_text: str) -> list:
+    """Fallback: brace-extract inserts block, prepend file's @prefix decls, parse as Turtle.
+
+    Used only when rdflib's formula graph access returns empty (some rdflib
+    versions don't expose the quoted graph cleanly). Limitation: brace-matching
+    does not respect string literals containing '{' or '}'. The primary
+    rdflib-N3 path handles those correctly; this is a best-effort fallback.
+    """
+    from rdflib import Graph
     start = patch_text.find("solid:inserts")
     if start == -1:
-        raise ValueError("storage-patch.ttl missing solid:inserts block")
+        return []
     brace_open = patch_text.find("{", start)
     if brace_open == -1:
-        raise ValueError("storage-patch.ttl: no '{' after solid:inserts")
+        return []
     depth = 1
     pos = brace_open + 1
     while depth and pos < len(patch_text):
@@ -204,12 +271,15 @@ def extract_inserts_block(patch_text: str) -> str:
         elif c == "}":
             depth -= 1
         pos += 1
-    if depth:
-        raise ValueError("storage-patch.ttl: unbalanced braces")
-    inner = patch_text[brace_open + 1: pos - 1]
-    # Prepend the @prefix lines from the file so the inserts block uses them
+    inner = patch_text[brace_open + 1:pos - 1]
     prefix_lines = [line for line in patch_text.splitlines() if line.strip().startswith("@prefix")]
-    return "\n".join(prefix_lines) + "\n" + inner
+    turtle = "\n".join(prefix_lines) + "\n" + inner
+    g = Graph()
+    try:
+        g.parse(data=turtle, format="turtle")
+    except Exception:
+        return []
+    return list(g)
 
 
 def main():

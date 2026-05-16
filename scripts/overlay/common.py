@@ -3,12 +3,18 @@
 All HTTP operations go through a single httpx.Client; N3 Patch construction
 is shared because it's the same shape for every modification of a shared
 substrate resource (storage description, Type Index, context.jsonld).
+
+NOTE on capability resolution: an overlay's `overlay:requiresCapability` clauses
+use the full descriptor URL as the IRI in `cap:requires`, e.g.,
+`<https://pod.vardeman.me:3000/vault/meta/capabilities/markdown-content-projection>`.
+fetch_capability_catalog returns a dict keyed by these descriptor URLs.
+Manifest authors should NOT use the capability class IRI like cap:ContentProjection
+in cap:requires — those are types, not implementations.
 """
 from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 import httpx
 from rdflib import Graph, Namespace, URIRef, Literal
@@ -179,16 +185,17 @@ def ensure_container(client: httpx.Client, container_url: str) -> None:
         raise RuntimeError(f"Container create {container_url} failed: HTTP {r2.status_code}: {r2.text[:300]}")
 
 
-def n3_patch_inserts(client: httpx.Client, target_url: str, turtle_inserts: str) -> None:
-    """Apply an N3 Patch to target_url that inserts the given Turtle triples.
+def n3_patch_inserts(client: httpx.Client, target_url: str, ntriples: str) -> None:
+    """Apply an N3 Patch to target_url that inserts the given N-Triples.
 
-    The turtle_inserts string is the body of solid:inserts { ... } — must use absolute IRIs
-    or have its prefixes inlined in the calling context.
+    The `ntriples` string must contain only fully-qualified IRI triples
+    (no @prefix directives, no prefixed names). Prefix declarations belong
+    at the patch envelope's outer scope, not inside solid:inserts { ... }.
     """
     patch_body = f"""@prefix solid: <http://www.w3.org/ns/solid/terms#>.
 
 _:patch a solid:InsertDeletePatch ;
-   solid:inserts {{ {turtle_inserts} }} .
+   solid:inserts {{ {ntriples} }} .
 """
     r = client.patch(target_url, content=patch_body.encode("utf-8"),
                      headers={"Content-Type": "text/n3"}, timeout=15)
@@ -197,7 +204,7 @@ _:patch a solid:InsertDeletePatch ;
 
 
 def version_at_least(actual: str, required: str) -> bool:
-    """Lexicographic version comparison sufficient for "1.0" / "1.1" / "2.0" style strings."""
+    """Numeric dotted-version comparison sufficient for "1.0" / "1.1" / "2.0" style strings."""
     def tup(v: str) -> tuple[int, ...]:
         return tuple(int(x) for x in v.split(".") if x.isdigit())
     return tup(actual) >= tup(required)

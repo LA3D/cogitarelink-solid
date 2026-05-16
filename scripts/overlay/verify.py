@@ -12,9 +12,8 @@ import sys
 from pathlib import Path
 
 import httpx
-from rdflib import Graph
 
-from .common import parse_manifest, Manifest
+from .common import parse_manifest
 
 
 def verify_overlay(overlay_dir: Path, pod_url: str) -> int:
