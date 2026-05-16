@@ -185,6 +185,66 @@ See `docs/plans/2026-05-15-rung-1-5-eval-matrix.md` for the experiment-by-experi
 
 **See also**: [[Affordance Spectrum for Agentic Memory]] (foundational design vocabulary, also reframed as hypothesis-bearing); `docs/plans/2026-05-15-d82-listener-extension-plan.md` (implementation design, eval-gated); `docs/plans/2026-05-15-akbp-to-w3c-mapping.md` (vocabulary translation table, structurally correct; behavioral claims pending eval); `docs/plans/2026-05-15-rung-1-5-eval-matrix.md` (the eval matrix that tests this hypothesis along with D77/D78/D81 et al).
 
+## Phase 5i — Substrate cleanup + Pod-as-toolkit framing (2026-05-15 / 2026-05-16)
+
+Forced by Sprint 1 pod-discover eval surfacing three substrate inconsistencies
+(PARA legacy in base template, shape files at wrong path, Comunica running as
+docker service) that all expressed one architectural problem: pre-D70 infrastructure
+not stripped when wiki-memory L3 landed.
+
+Full design at `docs/superpowers/specs/2026-05-15-substrate-cleanup-design.md`.
+Implementation tracked in `docs/superpowers/plans/2026-05-15-substrate-cleanup-plan.md`.
+
+### D83 — Pod as self-describing toolkit (capability catalog)
+
+The Pod is a **self-describing toolkit**, not a database. Three discoverable layers:
+
+1. **L1** = standard Solid Protocol (LDP, WAC, Memento, storage description, etc.).
+2. **Substrate capabilities** = generic primitives the Pod offers (Content Projection,
+   Derived View, Time Travel, Two-Stage Commit, Trigger Emission, Validation Hook,
+   Reference Catalog). Each implemented by a CSS extension + advertised via a
+   `cap:Capability` descriptor at `/vault/meta/capabilities/<name>.ttl`.
+3. **Installed applications** = composable peer overlays declaring `cap:requires`
+   against the catalog. Wiki-memory is the canonical first overlay (pre-installed).
+
+Mechanically:
+- Overlay machinery (`scripts/overlay/{apply,remove,verify}.py`) installs, removes,
+  and verifies applications. Idempotent via PUT (overwrite-safe) + N3 Patch (insert-safe).
+- Composability via manifest-tracked PATCH-merge — multiple overlays accumulate triples
+  on shared substrate resources (storage description, Type Index, JSON-LD context);
+  each removable separately via its manifest's bill of triples (wiki:installedBy tag).
+- Vocabulary dereferenceability per D79: Pod-local Category 3 hosting (`/vault/ontology/<vocab>.ttl`)
+  for app-specific vocabularies; standard W3C vocabularies (SKOS, DCT, PROV, CITO, FOAF)
+  remain external with TBox cache.
+
+### Reframes / sharpens of prior decisions
+
+- **D70 reframed**: "L2 = memory substrate" becomes "L2 is occupied by applications,
+  of which memory (wiki-memory) is one type." Non-memory applications (calendar, todo)
+  live at the same layer with different invariants.
+- **D71 unchanged**: wiki-memory still the canonical first application; dual-layer
+  body+meta architecture stays.
+- **D77 superseded by subclass model**: shapes are class-targeted with `rdfs:subClassOf`
+  reasoning. Base shape (`page.shacl.ttl`) covers wiki:Page and its subclasses
+  (wiki:Concept, wiki:MOC, future vault:TheoryNote). Five-container layout (D76) stays.
+- **D78 sharpened**: class-based shape targeting applies up the subclass chain.
+- **D79 strengthened**: hybrid vocab stance + dereferenceable class IRIs via Pod-local
+  hosting (Path X), with w3id.org migration as deferred future (Path Y).
+
+### Architectural commitments (seven invariants)
+
+1. L1 = standard Solid Protocol; invent only where standards don't exist.
+2. Capabilities are RDF resources discoverable via the capability catalog.
+3. Applications are overlays — installable, composable, removable, declaring
+   required capabilities.
+4. Structure is data (overlays); behavior is code (CSS extensions). Capability
+   catalog is the contract between them.
+5. Pod-defined vocabularies dereference on the Pod itself.
+6. Agents bring their own SPARQL (Pod publishes derived-view descriptors, doesn't
+   host the engine).
+7. Skills bridge substrate self-description to agent action patterns. Generic
+   agents using only L1 still succeed; skills are accelerants, not gatekeepers.
+
 ## Open research questions
 
 RQ-Affordance-1: descriptor format (declarative SHACL vs custom RDF vs hybrid)
