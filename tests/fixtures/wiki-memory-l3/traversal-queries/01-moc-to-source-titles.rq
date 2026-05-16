@@ -5,11 +5,11 @@
 #       in the Comunica HTTP endpoint context (RQ-Pod-4 explicit-source workaround)
 PREFIX dct:  <http://purl.org/dc/terms/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX wiki: <urn:example:wiki#>
-PREFIX pod:  <http://pod.vardeman.me:3000/wiki/pages/>
+PREFIX wiki: <https://pod.vardeman.me/vault/ontology/wiki#>
+PREFIX pod:  <https://pod.vardeman.me/wiki/pages/>
 
 SELECT DISTINCT ?source ?title WHERE {
-    ?concept skos:broader <http://pod.vardeman.me:3000/wiki/pages/agentic-memory-systems-moc.md> .
+    ?concept skos:broader <https://pod.vardeman.me/wiki/pages/agentic-memory-systems-moc.md> .
     ?concept dct:references ?source .
     ?source dct:title ?title .
 }

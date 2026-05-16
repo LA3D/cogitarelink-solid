@@ -58,7 +58,7 @@ export function slug(title: string): string {
 // generated URI under /vault/resources/concepts/.
 export class HardcodedResolver implements WikilinkResolver {
   constructor(
-    private readonly base: string = "http://pod.vardeman.me:3000",
+    private readonly base: string = "https://pod.vardeman.me",
     private readonly defaultContainer: string = "/vault/resources/concepts/",
   ) {}
 

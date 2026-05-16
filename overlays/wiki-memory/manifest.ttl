@@ -1,10 +1,10 @@
-@prefix overlay: <http://pod.vardeman.me:3000/vault/ontology/overlay#> .
-@prefix cap:     <http://pod.vardeman.me:3000/vault/ontology/capability#> .
-@prefix wiki:    <http://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
+@prefix cap:     <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix wiki:    <https://pod.vardeman.me/vault/ontology/wiki#> .
 @prefix dct:     <http://purl.org/dc/terms/> .
 @prefix solid:   <http://www.w3.org/ns/solid/terms#> .
 
-<http://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory>
+<https://pod.vardeman.me/vault/ontology/overlay#wiki-memory>
     a overlay:Overlay ;
     overlay:name "wiki-memory" ;
     overlay:version "1.0" ;
@@ -13,18 +13,18 @@
     overlay:declaresVocabulary [
         overlay:namespace wiki: ;
         overlay:document "vocabulary/wiki.ttl" ;
-        overlay:hostedAt "/vault/ontology/wiki.ttl"
+        overlay:hostedAt "/vault/ontology/wiki"
     ] ;
 
     overlay:requiresCapability
-        [ cap:requires <http://pod.vardeman.me:3000/vault/meta/capabilities/markdown-content-projection.ttl> ;
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/markdown-content-projection.ttl> ;
           cap:minVersion "1.0" ;
           cap:contentType "text/markdown" ] ,
-        [ cap:requires <http://pod.vardeman.me:3000/vault/meta/capabilities/time-travel.ttl> ;
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/time-travel.ttl> ;
           cap:minVersion "1.0" ] ;
 
     overlay:optionalCapability
-        [ cap:requires <http://pod.vardeman.me:3000/vault/meta/capabilities/derived-view.ttl> ;
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/derived-view.ttl> ;
           cap:minVersion "1.0" ;
           overlay:degradesTo "hub-view + breadcrumb-view advisory; agent must bring SPARQL engine" ] ;
 

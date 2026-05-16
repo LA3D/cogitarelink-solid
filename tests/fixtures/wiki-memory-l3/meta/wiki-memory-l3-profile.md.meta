@@ -2,7 +2,7 @@
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 @prefix cito:  <http://purl.org/spar/cito/> .
 @prefix prov:  <http://www.w3.org/ns/prov#> .
-@prefix wiki:  <urn:example:wiki#> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 
 <>

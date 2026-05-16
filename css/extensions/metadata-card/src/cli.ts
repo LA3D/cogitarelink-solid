@@ -4,8 +4,8 @@
 // Usage:
 //   metadata-card sample.ttl
 //   metadata-card sample.ttl --out card.html
-//   metadata-card sample.ttl --resource http://pod.vardeman.me:3000/vault/.../note.md
-//   metadata-card --url http://pod.vardeman.me:3000/vault/.../note.md.meta
+//   metadata-card sample.ttl --resource https://pod.vardeman.me/vault/.../note.md
+//   metadata-card --url https://pod.vardeman.me/vault/.../note.md.meta
 
 import { readFile, writeFile } from "node:fs/promises";
 import { parseMeta } from "./parse.js";

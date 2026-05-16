@@ -7,19 +7,19 @@ const SAMPLE_TTL = `
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix vault: <https://pod.vardeman.me/vault/ontology#> .
 
-<http://pod.vardeman.me:3000/vault/resources/concepts/context-graphs.md>
+<https://pod.vardeman.me/vault/resources/concepts/context-graphs.md>
   a vault:ConceptNote ;
   dct:title "Context Graphs" ;
   dct:description "Semantic context layers for AI agents" ;
   dct:format "text/markdown" ;
-  skos:related <http://pod.vardeman.me:3000/vault/resources/concepts/progressive-disclosure.md> ;
-  vault:extends <http://pod.vardeman.me:3000/vault/resources/concepts/structure-first-memory-architecture.md> .
+  skos:related <https://pod.vardeman.me/vault/resources/concepts/progressive-disclosure.md> ;
+  vault:extends <https://pod.vardeman.me/vault/resources/concepts/structure-first-memory-architecture.md> .
 `;
 
 const PDF_TTL = `
 @prefix dct: <http://purl.org/dc/terms/> .
 
-<http://pod.vardeman.me:3000/vault/uploads/thesis.pdf>
+<https://pod.vardeman.me/vault/uploads/thesis.pdf>
   dct:title "PhD Thesis Draft" ;
   dct:format "application/pdf" ;
   dct:created "2026-04-01"^^<http://www.w3.org/2001/XMLSchema#date> .
@@ -53,7 +53,7 @@ describe("renderCard", () => {
   it("includes a link to the underlying resource", () => {
     const html = renderCard(parseMeta(SAMPLE_TTL));
     expect(html).toContain("Open underlying resource");
-    expect(html).toContain('href="http://pod.vardeman.me:3000/vault/resources/concepts/context-graphs.md"');
+    expect(html).toContain('href="https://pod.vardeman.me/vault/resources/concepts/context-graphs.md"');
   });
 
   it("works for non-markdown content (PDF) — proves the fallback role", () => {

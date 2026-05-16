@@ -7,18 +7,18 @@ const SAMPLE_TTL = `
 @prefix vault: <https://pod.vardeman.me/vault/ontology#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 
-<http://pod.vardeman.me:3000/vault/resources/concepts/context-graphs.md>
+<https://pod.vardeman.me/vault/resources/concepts/context-graphs.md>
   a vault:ConceptNote ;
   dct:title "Context Graphs" ;
   dct:description "Semantic context layers for AI agents" ;
   dct:format "text/markdown" ;
   dct:created "2026-03-01"^^<http://www.w3.org/2001/XMLSchema#date> ;
   skos:related
-    <http://pod.vardeman.me:3000/vault/resources/concepts/progressive-disclosure.md> ,
-    <http://pod.vardeman.me:3000/vault/resources/concepts/knowledge-fabrics.md> ;
+    <https://pod.vardeman.me/vault/resources/concepts/progressive-disclosure.md> ,
+    <https://pod.vardeman.me/vault/resources/concepts/knowledge-fabrics.md> ;
   vault:extends
-    <http://pod.vardeman.me:3000/vault/resources/concepts/structure-first-memory-architecture.md> ;
-  dct:source <http://pod.vardeman.me:3000/vault/resources/literature/zhang-2025-rlm.md> ;
+    <https://pod.vardeman.me/vault/resources/concepts/structure-first-memory-architecture.md> ;
+  dct:source <https://pod.vardeman.me/vault/resources/literature/zhang-2025-rlm.md> ;
   prov:wasDerivedFrom <file:///Users/cvardema/Obsidian/obsidian/.../Context%20Graphs.md> .
 `;
 
@@ -62,7 +62,7 @@ describe("parseMeta", () => {
 
   it("subject IRI is the resource URL", () => {
     const m = parseMeta(SAMPLE_TTL);
-    expect(m.subject).toBe("http://pod.vardeman.me:3000/vault/resources/concepts/context-graphs.md");
+    expect(m.subject).toBe("https://pod.vardeman.me/vault/resources/concepts/context-graphs.md");
   });
 
   it("throws on empty Turtle", () => {

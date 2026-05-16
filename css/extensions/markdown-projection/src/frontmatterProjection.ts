@@ -10,28 +10,28 @@ const { namedNode, literal, quad } = DataFactory;
 
 // Vault L4 → wiki-memory L3 shape-class mapping (D77 + MEMORY.md audit table)
 const TYPE_MAP: Record<string, string> = {
-    "concept":           "urn:example:wiki#Concept",
-    "concept-note":      "urn:example:wiki#Concept",
-    "moc":               "urn:example:wiki#Concept",
-    "theory-note":       "urn:example:wiki#Concept",
-    "method-note":       "urn:example:wiki#Concept",
-    "finding":           "urn:example:wiki#Concept",
-    "implementation-note": "urn:example:wiki#Concept",
-    "source":            "urn:example:wiki#Source",
-    "literature-note":   "urn:example:wiki#Source",
-    "book-note":         "urn:example:wiki#Source",
-    "external-resource": "urn:example:wiki#Source",
-    "person":            "urn:example:wiki#Person",
-    "author-note":       "urn:example:wiki#Person",
-    "procedure":         "urn:example:wiki#Procedure",
-    "working-note":      "urn:example:wiki#WorkingNote",
-    "fleeting-note":     "urn:example:wiki#WorkingNote",
+    "concept":           "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+    "concept-note":      "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+    "moc":               "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+    "theory-note":       "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+    "method-note":       "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+    "finding":           "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+    "implementation-note": "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+    "source":            "https://pod.vardeman.me/vault/ontology/wiki#Source",
+    "literature-note":   "https://pod.vardeman.me/vault/ontology/wiki#Source",
+    "book-note":         "https://pod.vardeman.me/vault/ontology/wiki#Source",
+    "external-resource": "https://pod.vardeman.me/vault/ontology/wiki#Source",
+    "person":            "https://pod.vardeman.me/vault/ontology/wiki#Person",
+    "author-note":       "https://pod.vardeman.me/vault/ontology/wiki#Person",
+    "procedure":         "https://pod.vardeman.me/vault/ontology/wiki#Procedure",
+    "working-note":      "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote",
+    "fleeting-note":     "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote",
 };
 
 const XSD_DT  = "http://www.w3.org/2001/XMLSchema#dateTime";
 const DCT     = "http://purl.org/dc/terms/";
 const FOAF    = "http://xmlns.com/foaf/0.1/";
-const WIKI    = "urn:example:wiki#";
+const WIKI    = "https://pod.vardeman.me/vault/ontology/wiki#";
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
 // Placeholder subject URI — callers must replace with actual resource URI

@@ -21,7 +21,7 @@ import httpx
 import pytest
 from rdflib import Graph
 
-CSS = "http://pod.vardeman.me:3000"
+CSS = "https://pod.vardeman.me"
 MEMENTO = "http://mementoweb.org/ns#"
 LDES = "https://w3id.org/ldes#"
 TEST_PATH = "/test-memento.txt"
@@ -38,7 +38,7 @@ def _put(path: str, body: str) -> httpx.Response:
     r = httpx.put(
         f"{CSS}{path}",
         content=body,
-        headers={"Host": "pod.vardeman.me:3000", "Content-Type": "text/plain"},
+        headers={"Host": "pod.vardeman.me", "Content-Type": "text/plain"},
         timeout=10,
     )
     return r
@@ -96,7 +96,7 @@ def test_writes_produce_commits():
 @pytest.mark.memento
 def test_live_state_unchanged_by_memento():
     """Plain GET (no Accept-Datetime) returns current state."""
-    r = httpx.get(f"{CSS}{TEST_PATH}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+    r = httpx.get(f"{CSS}{TEST_PATH}", headers={"Host": "pod.vardeman.me"}, timeout=10)
     assert r.status_code == 200, r.text
     assert r.text.strip() == "second version"
 
@@ -107,7 +107,7 @@ def test_timemap_returns_parseable_turtle():
     """GET ?ext=timemap returns Turtle with N memento:Memento subjects."""
     r = httpx.get(
         f"{CSS}{TEST_PATH}?ext=timemap",
-        headers={"Host": "pod.vardeman.me:3000", "Accept": "text/turtle"},
+        headers={"Host": "pod.vardeman.me", "Accept": "text/turtle"},
         timeout=10,
     )
     assert r.status_code == 200, r.text
@@ -127,7 +127,7 @@ def test_timegate_redirects_with_accept_datetime():
     far_future = "Wed, 31 Dec 2099 23:59:59 GMT"
     r = httpx.get(
         f"{CSS}{TEST_PATH}",
-        headers={"Host": "pod.vardeman.me:3000", "Accept-Datetime": far_future},
+        headers={"Host": "pod.vardeman.me", "Accept-Datetime": far_future},
         follow_redirects=False,
         timeout=10,
     )
@@ -146,7 +146,7 @@ def test_memento_fetch_returns_historical_content():
     far_future = "Wed, 31 Dec 2099 23:59:59 GMT"
     r1 = httpx.get(
         f"{CSS}{TEST_PATH}",
-        headers={"Host": "pod.vardeman.me:3000", "Accept-Datetime": far_future},
+        headers={"Host": "pod.vardeman.me", "Accept-Datetime": far_future},
         follow_redirects=True,
         timeout=10,
     )
@@ -161,7 +161,7 @@ def test_plain_get_advertises_timemap_and_vary():
     """RFC 7089 §4.1.1: plain GET on an OriginalResource must include
     `Vary: accept-datetime` and `Link: rel="timemap"` so Memento-aware clients
     can discover the temporal access surface without prior knowledge."""
-    r = httpx.get(f"{CSS}{TEST_PATH}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+    r = httpx.get(f"{CSS}{TEST_PATH}", headers={"Host": "pod.vardeman.me"}, timeout=10)
     assert r.status_code == 200, r.text
     vary = r.headers.get("vary", "").lower()
     assert "accept-datetime" in vary, f"missing Vary: accept-datetime, got: {r.headers.get('vary')}"
@@ -226,17 +226,17 @@ class TestTombstones:
         _wait_for_commits(self.PATH, 1)
 
         # 2. GET it (200, alive)
-        r2 = httpx.get(f"{CSS}{self.PATH}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+        r2 = httpx.get(f"{CSS}{self.PATH}", headers={"Host": "pod.vardeman.me"}, timeout=10)
         assert r2.status_code == 200
         assert r2.text.strip() == "alive"
 
         # 3. DELETE it
-        r3 = httpx.delete(f"{CSS}{self.PATH}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+        r3 = httpx.delete(f"{CSS}{self.PATH}", headers={"Host": "pod.vardeman.me"}, timeout=10)
         assert r3.status_code in (200, 204, 205), r3.text
         _wait_for_commits(self.PATH, 2)
 
         # 4. GET it → 410 Gone (tombstone)
-        r4 = httpx.get(f"{CSS}{self.PATH}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+        r4 = httpx.get(f"{CSS}{self.PATH}", headers={"Host": "pod.vardeman.me"}, timeout=10)
         assert r4.status_code == 410, f"expected 410 Gone, got {r4.status_code}: {r4.text}"
         link = r4.headers.get("link", "")
         assert 'rel="timemap"' in link, f"410 response missing Link rel=timemap, got: {link}"
@@ -244,7 +244,7 @@ class TestTombstones:
         # 5. TimeMap surfaces the tombstone
         r5 = httpx.get(
             f"{CSS}{self.PATH}?ext=timemap",
-            headers={"Host": "pod.vardeman.me:3000", "Accept": "text/turtle"},
+            headers={"Host": "pod.vardeman.me", "Accept": "text/turtle"},
             timeout=10,
         )
         assert r5.status_code == 200, r5.text
@@ -263,10 +263,10 @@ class TestTombstones:
         time.sleep(1.0)  # ensure Accept-Datetime upper bound is after this commit
         before_delete = httpx.get(
             f"{CSS}{path}",
-            headers={"Host": "pod.vardeman.me:3000"},
+            headers={"Host": "pod.vardeman.me"},
             timeout=10,
         ).headers.get("date", "")
-        httpx.delete(f"{CSS}{path}", headers={"Host": "pod.vardeman.me:3000"}, timeout=10)
+        httpx.delete(f"{CSS}{path}", headers={"Host": "pod.vardeman.me"}, timeout=10)
         _wait_for_commits(path, 2)
 
         # GET with Accept-Datetime well before the deletion (use a far-past datetime)
@@ -276,7 +276,7 @@ class TestTombstones:
         # For simplicity: use TimeMap to find pre-delete commit, then request that version.
         r_tm = httpx.get(
             f"{CSS}{path}?ext=timemap",
-            headers={"Host": "pod.vardeman.me:3000", "Accept": "text/turtle"},
+            headers={"Host": "pod.vardeman.me", "Accept": "text/turtle"},
             timeout=10,
         )
         g = Graph()
@@ -300,7 +300,7 @@ class TestTombstones:
         alive_uri = next(iter(alive_mementos))
 
         # Fetch it directly
-        r_m = httpx.get(str(alive_uri), headers={"Host": "pod.vardeman.me:3000"}, timeout=10,
+        r_m = httpx.get(str(alive_uri), headers={"Host": "pod.vardeman.me"}, timeout=10,
                         follow_redirects=True)
         assert r_m.status_code == 200, r_m.text
         assert r_m.text.strip() == "prior content"
@@ -312,7 +312,7 @@ def test_vault_data_survives():
     """Regression: vault/resources/concepts/ container still listable and full."""
     r = httpx.get(
         f"{CSS}/vault/resources/concepts/",
-        headers={"Host": "pod.vardeman.me:3000", "Accept": "text/turtle"},
+        headers={"Host": "pod.vardeman.me", "Accept": "text/turtle"},
         timeout=10,
     )
     assert r.status_code == 200, r.text

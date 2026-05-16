@@ -7,7 +7,7 @@ PREFIX dct:  <http://purl.org/dc/terms/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 
 SELECT ?person ?name ?affiliation WHERE {
-    <http://pod.vardeman.me:3000/wiki/pages/wiki-memory-l3-profile.md> dct:contributor ?person .
+    <https://pod.vardeman.me/wiki/pages/wiki-memory-l3-profile.md> dct:contributor ?person .
     ?person dct:title ?name .
     OPTIONAL { ?person foaf:affiliation ?affiliation . }
 }

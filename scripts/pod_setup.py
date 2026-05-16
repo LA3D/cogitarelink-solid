@@ -8,7 +8,7 @@ Usage (inside container):
     python pod_setup.py --target http://css:3000
 
 Usage (from host, for development):
-    ~/uvws/.venv/bin/python scripts/pod_setup.py --target http://pod.vardeman.me:3000
+    ~/uvws/.venv/bin/python scripts/pod_setup.py --target https://pod.vardeman.me
 """
 import argparse, pathlib, sys, time
 import httpx
@@ -95,8 +95,8 @@ def verify_pod(client: httpx.Client) -> bool:
 
 def main():
     p = argparse.ArgumentParser(description="Pod setup: upload shapes + ontology")
-    p.add_argument("--target", default="http://pod.vardeman.me:3000",
-                   help="CSS base URL (default: http://pod.vardeman.me:3000)")
+    p.add_argument("--target", default="https://pod.vardeman.me",
+                   help="CSS base URL (default: https://pod.vardeman.me)")
     p.add_argument("--shapes-dir", default="/shapes",
                    help="Path to SHACL shapes directory")
     p.add_argument("--ontology-dir", default="/ontology",

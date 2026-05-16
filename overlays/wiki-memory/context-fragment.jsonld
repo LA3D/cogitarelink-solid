@@ -1,6 +1,6 @@
 {
   "@context": {
-    "wiki":       "http://pod.vardeman.me:3000/vault/ontology/wiki#",
+    "wiki":       "https://pod.vardeman.me/vault/ontology/wiki#",
     "cito":       "http://purl.org/spar/cito/",
     "foaf":       "http://xmlns.com/foaf/0.1/",
     "title":      "dct:title",

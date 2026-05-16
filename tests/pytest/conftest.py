@@ -5,7 +5,7 @@ import pytest
 @pytest.fixture
 def css_url():
     """Base URL for Community Solid Server."""
-    return "http://pod.vardeman.me:3000"
+    return "https://pod.vardeman.me"
 
 
 @pytest.fixture

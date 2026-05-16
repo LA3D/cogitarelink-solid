@@ -105,7 +105,7 @@ def main():
                         "times. Defaults to ['03 - Resources', '02 - Areas "
                         "of Focus']. Walks recursively for *.md files with a "
                         "type: in IMPORTABLE_TYPES.")
-    p.add_argument("--target", default="http://pod.vardeman.me:3000")
+    p.add_argument("--target", default="https://pod.vardeman.me")
     p.add_argument("--container", default="/vault/resources/concepts/")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()

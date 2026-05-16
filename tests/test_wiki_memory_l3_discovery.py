@@ -14,8 +14,8 @@ import httpx
 import pytest
 from rdflib import Graph, Namespace
 
-POD = os.environ.get("POD_URL", "http://pod.vardeman.me:3000")
-WIKI = Namespace("urn:example:wiki#")
+POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
+WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
 
 
 def test_seven_step_first_arrival_ritual() -> None:
@@ -167,5 +167,5 @@ def test_storage_description_wiki_vocabs() -> None:
     VOID = Namespace("http://rdfs.org/ns/void#")
     from rdflib import URIRef
     vocabs = {str(o) for _, _, o in g.triples((None, VOID.vocabulary, None))}
-    assert "urn:example:wiki#" in vocabs, f"wiki# not in void:vocabulary: {vocabs}"
+    assert "https://pod.vardeman.me/vault/ontology/wiki#" in vocabs, f"wiki# not in void:vocabulary: {vocabs}"
     assert "http://purl.org/spar/cito/" in vocabs, f"cito/ not in void:vocabulary: {vocabs}"

@@ -10,7 +10,7 @@ tests for the overlay-side coverage.
 import httpx
 import pytest
 
-BASE = "http://pod.vardeman.me:3000"
+BASE = "https://pod.vardeman.me"
 
 EXPECTED_CONTAINERS = [
     "/vault/",

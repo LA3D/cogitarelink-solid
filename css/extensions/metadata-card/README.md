@@ -30,8 +30,8 @@ npm run build
 node dist/cli.js sample.ttl --out card.html
 
 # Pull straight from the running pod (.meta sidecar URL)
-node dist/cli.js --url http://pod.vardeman.me:3000/vault/resources/concepts/context-graphs.md.meta \
-  --resource http://pod.vardeman.me:3000/vault/resources/concepts/context-graphs.md \
+node dist/cli.js --url https://pod.vardeman.me/vault/resources/concepts/context-graphs.md.meta \
+  --resource https://pod.vardeman.me/vault/resources/concepts/context-graphs.md \
   --out card.html
 
 # Run via tsx (no build step)

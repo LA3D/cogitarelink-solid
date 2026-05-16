@@ -26,7 +26,7 @@
       "overrideInstance": { "@id": "urn:solid-server:default:MarkdownToHtmlConverter" },
       "overrideParameters": {
         "@type": "MarkdownRdfaConverter",
-        "podBase": "http://pod.vardeman.me:3000"
+        "podBase": "https://pod.vardeman.me"
       }
     },
     {

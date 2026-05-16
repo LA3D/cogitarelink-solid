@@ -3,7 +3,7 @@ import httpx
 import pytest
 from rdflib import Graph
 
-BASE = "http://pod.vardeman.me:3000"
+BASE = "https://pod.vardeman.me"
 
 
 @pytest.mark.integration

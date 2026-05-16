@@ -5,7 +5,7 @@
 // Usage:
 //   md-rdfa input.md
 //   md-rdfa input.md --out output.html
-//   md-rdfa input.md --title "Context Graphs" --pod-base http://pod.vardeman.me:3000
+//   md-rdfa input.md --title "Context Graphs" --pod-base https://pod.vardeman.me
 
 import { readFile, writeFile } from "node:fs/promises";
 import { basename } from "node:path";

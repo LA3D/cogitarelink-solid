@@ -46,23 +46,23 @@ describe("slug", () => {
 
 describe("HardcodedResolver", () => {
   it("resolves bare titles to the concepts container", () => {
-    const resolver = new HardcodedResolver("http://pod.vardeman.me:3000");
+    const resolver = new HardcodedResolver("https://pod.vardeman.me");
     expect(resolver.resolve("Context Graphs")).toBe(
-      "http://pod.vardeman.me:3000/vault/resources/concepts/context-graphs.md",
+      "https://pod.vardeman.me/vault/resources/concepts/context-graphs.md",
     );
   });
 
   it("resolves path-style wikilinks by stripping the folder prefix", () => {
-    const resolver = new HardcodedResolver("http://pod.vardeman.me:3000");
+    const resolver = new HardcodedResolver("https://pod.vardeman.me");
     expect(resolver.resolve("External Resources/Husain - Evals-Skills for Coding Agents")).toBe(
-      "http://pod.vardeman.me:3000/vault/resources/concepts/husain---evals-skills-for-coding-agents.md",
+      "https://pod.vardeman.me/vault/resources/concepts/husain---evals-skills-for-coding-agents.md",
     );
   });
 
   it("resolves heading-anchor wikilinks by dropping the anchor", () => {
-    const resolver = new HardcodedResolver("http://pod.vardeman.me:3000");
+    const resolver = new HardcodedResolver("https://pod.vardeman.me");
     expect(resolver.resolve("Judge Memory#Application Multi-Hop Faithfulness")).toBe(
-      "http://pod.vardeman.me:3000/vault/resources/concepts/judge-memory.md",
+      "https://pod.vardeman.me/vault/resources/concepts/judge-memory.md",
     );
   });
 });

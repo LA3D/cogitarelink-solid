@@ -1,5 +1,5 @@
-@prefix wiki: <http://pod.vardeman.me:3000/vault/ontology/wiki#> .
-@prefix cap:  <http://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix cap:  <https://pod.vardeman.me/vault/ontology/capability#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 
@@ -7,12 +7,12 @@
    rdfs:label "Hub derivation" ;
    wiki:deriveClass wiki:Hub ;
    wiki:targetClass wiki:Resource ;
-   wiki:requiresCapability <http://pod.vardeman.me:3000/vault/meta/capabilities/derived-view.ttl> ;
+   wiki:requiresCapability <https://pod.vardeman.me/vault/meta/capabilities/derived-view.ttl> ;
    wiki:threshold 3 ;
-   wiki:installedBy <http://pod.vardeman.me:3000/vault/ontology/overlay#wiki-memory> ;
+   wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
    sh:agentInstruction "A wiki:Resource becomes a wiki:Hub when ≥3 distinct wiki:Resource instances point at it via skos:broader. Run the CONSTRUCT below in your own SPARQL engine (Comunica recommended), with this Pod's wiki containers as data sources. The Pod does not host a SPARQL endpoint." ;
    wiki:constructQuery """
-       PREFIX wiki: <http://pod.vardeman.me:3000/vault/ontology/wiki#>
+       PREFIX wiki: <https://pod.vardeman.me/vault/ontology/wiki#>
        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
        CONSTRUCT { ?hub a wiki:Hub . }
        WHERE {

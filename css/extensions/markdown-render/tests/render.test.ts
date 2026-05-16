@@ -26,7 +26,7 @@ describe("renderMarkdown", () => {
     expect(html).toContain("class=\"wikilink\"");
     // D75: no RDFa properties in rendered HTML
     expect(html).not.toContain("property=");
-    expect(html).toContain("href=\"http://pod.vardeman.me:3000/vault/resources/concepts/context-graphs.md\"");
+    expect(html).toContain("href=\"https://pod.vardeman.me/vault/resources/concepts/context-graphs.md\"");
     expect(html).toContain(">Context Graphs</a>");
   });
 

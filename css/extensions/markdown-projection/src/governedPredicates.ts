@@ -5,7 +5,7 @@
 // the set are silently dropped — this prevents agent hallucinations from
 // polluting the durable graph layer (D50/D72).
 //
-// URN class keys intentionally use urn:example:wiki# for now; they will be
+// URN class keys intentionally use https://pod.vardeman.me/vault/ontology/wiki# for now; they will be
 // replaced with the minted namespace once RQ-Harness-1 resolves.
 
 const RESOURCE_BASELINE = [
@@ -14,7 +14,7 @@ const RESOURCE_BASELINE = [
     "http://purl.org/dc/terms/identifier",
     "http://purl.org/dc/terms/created",
     "http://purl.org/dc/terms/modified",
-    "urn:example:wiki#maturity",
+    "https://pod.vardeman.me/vault/ontology/wiki#maturity",
     "http://www.w3.org/ns/prov#wasGeneratedBy",
 ];
 
@@ -48,12 +48,12 @@ const WORKING_NOTE_ONLY = [
 ];
 
 export const GOVERNED_FOR: Record<string, string[]> = {
-    "urn:example:wiki#Resource":    RESOURCE_BASELINE,
-    "urn:example:wiki#Concept":     [...RESOURCE_BASELINE, ...CONCEPT_ADDITIONS],
-    "urn:example:wiki#Source":      [...RESOURCE_BASELINE, ...SOURCE_ADDITIONS],
-    "urn:example:wiki#Person":      [...RESOURCE_BASELINE, ...PERSON_ADDITIONS],
-    "urn:example:wiki#Procedure":   [...RESOURCE_BASELINE, ...PROCEDURE_ADDITIONS],
-    "urn:example:wiki#WorkingNote": WORKING_NOTE_ONLY,
+    "https://pod.vardeman.me/vault/ontology/wiki#Resource":    RESOURCE_BASELINE,
+    "https://pod.vardeman.me/vault/ontology/wiki#Concept":     [...RESOURCE_BASELINE, ...CONCEPT_ADDITIONS],
+    "https://pod.vardeman.me/vault/ontology/wiki#Source":      [...RESOURCE_BASELINE, ...SOURCE_ADDITIONS],
+    "https://pod.vardeman.me/vault/ontology/wiki#Person":      [...RESOURCE_BASELINE, ...PERSON_ADDITIONS],
+    "https://pod.vardeman.me/vault/ontology/wiki#Procedure":   [...RESOURCE_BASELINE, ...PROCEDURE_ADDITIONS],
+    "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote": WORKING_NOTE_ONLY,
 };
 
 export function governedPredicates(classUri: string): string[] {

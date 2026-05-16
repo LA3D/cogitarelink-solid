@@ -1,5 +1,5 @@
-@prefix overlay: <http://pod.vardeman.me:3000/vault/ontology/overlay#> .
-@prefix cap:     <http://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
+@prefix cap:     <https://pod.vardeman.me/vault/ontology/capability#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix dct:     <http://purl.org/dc/terms/> .

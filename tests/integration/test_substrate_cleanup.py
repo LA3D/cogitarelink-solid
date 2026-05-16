@@ -9,7 +9,7 @@ import httpx
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
 
-POD = os.environ.get("POD_URL", "http://pod.vardeman.me:3000")
+POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
 POD_URL = f"{POD}/vault/"
 
 
@@ -39,7 +39,7 @@ def test_type_index_has_no_para_registrations():
     old skos:Concept theory-note / concept-note routing, etc.).
     """
     SOLID = Namespace("http://www.w3.org/ns/solid/terms#")
-    VAULT = Namespace("http://pod.vardeman.me:3000/vault/ontology/vault#")
+    VAULT = Namespace("https://pod.vardeman.me/vault/ontology/vault#")
     r = httpx.get(POD_URL + "settings/publicTypeIndex",
                   headers={"Accept": "text/turtle"}, timeout=5)
     assert r.status_code == 200, f"Type Index should exist; got {r.status_code}"
@@ -84,9 +84,9 @@ def test_storage_description_announces_capabilities():
     """
     sd_url = POD_URL + ".well-known/solid"
     g = Graph().parse(sd_url, format="turtle", publicID=sd_url)
-    CAP = Namespace("http://pod.vardeman.me:3000/vault/ontology/capability#")
+    CAP = Namespace("https://pod.vardeman.me/vault/ontology/capability#")
     catalog_triple = (None, CAP.catalog,
-                      URIRef("http://pod.vardeman.me:3000/vault/meta/capabilities/"))
+                      URIRef("https://pod.vardeman.me/vault/meta/capabilities/"))
     assert catalog_triple in g, "Storage description missing cap:catalog pointer"
 
 
@@ -103,7 +103,7 @@ def test_capability_catalog_lists_three_primitives():
 
 def test_capability_descriptors_are_well_formed():
     """Each capability descriptor parses as Turtle and declares cap:version."""
-    CAP = Namespace("http://pod.vardeman.me:3000/vault/ontology/capability#")
+    CAP = Namespace("https://pod.vardeman.me/vault/ontology/capability#")
     base = POD_URL + "meta/capabilities/"
     for descriptor in ["markdown-content-projection.ttl",
                        "time-travel.ttl", "derived-view.ttl"]:
@@ -117,7 +117,7 @@ def test_capability_descriptors_are_well_formed():
 
 def test_capability_vocabulary_dereferenceable():
     """The cap: namespace resolves to its vocab document hosted on the Pod."""
-    CAP = Namespace("http://pod.vardeman.me:3000/vault/ontology/capability#")
+    CAP = Namespace("https://pod.vardeman.me/vault/ontology/capability#")
     r = httpx.get(POD_URL + "ontology/capability.ttl",
                   headers={"Accept": "text/turtle"}, timeout=5)
     assert r.status_code == 200
@@ -130,7 +130,7 @@ def test_capability_vocabulary_dereferenceable():
 
 def test_overlay_vocabulary_dereferenceable():
     """The overlay: namespace resolves to its vocab document hosted on the Pod."""
-    OVERLAY = Namespace("http://pod.vardeman.me:3000/vault/ontology/overlay#")
+    OVERLAY = Namespace("https://pod.vardeman.me/vault/ontology/overlay#")
     r = httpx.get(POD_URL + "ontology/overlay.ttl",
                   headers={"Accept": "text/turtle"}, timeout=5)
     assert r.status_code == 200
@@ -140,7 +140,7 @@ def test_overlay_vocabulary_dereferenceable():
     assert (OVERLAY.Overlay, RDF.type, RDFS.Class) in g
 
 
-WIKI = Namespace("http://pod.vardeman.me:3000/vault/ontology/wiki#")
+WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
 
 
 def test_wiki_vocabulary_dereferenceable():

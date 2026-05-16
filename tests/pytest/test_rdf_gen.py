@@ -6,7 +6,7 @@ from rdflib.namespace import RDF, DCTERMS, XSD, SKOS
 from scripts.lib.rdf_gen import frontmatter_to_graph, slug
 
 VAULT = Namespace("https://pod.vardeman.me/vault/ontology#")
-BASE = "http://pod.vardeman.me:3000/vault/resources/concepts/"
+BASE = "https://pod.vardeman.me/vault/resources/concepts/"
 
 
 def test_slug():

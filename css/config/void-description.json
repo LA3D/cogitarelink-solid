@@ -113,7 +113,7 @@
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
-                "StaticStorageDescriber:_terms_value": "urn:example:wiki#"
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/ontology/wiki#"
               }
             ]
           },
@@ -132,8 +132,8 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "http://pod.vardeman.me:3000/vault/ontology/capability#catalog",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/meta/capabilities/"
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/capability#catalog",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/capabilities/"
               }
             ]
           },
@@ -142,8 +142,8 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "urn:example:wiki#contextDocument",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/meta/context.jsonld"
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#contextDocument",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/context.jsonld"
               }
             ]
           },
@@ -152,8 +152,8 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "urn:example:wiki#shapeCatalog",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/meta/shapes/"
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#shapeCatalog",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/shapes/"
               }
             ]
           },
@@ -162,8 +162,8 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "urn:example:wiki#affordanceCatalog",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/meta/affordances/"
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#affordanceCatalog",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/affordances/"
               }
             ]
           },
@@ -172,8 +172,8 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "urn:example:wiki#typeIndex",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/settings/publicTypeIndex"
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#typeIndex",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/settings/publicTypeIndex"
               }
             ]
           },
@@ -182,8 +182,8 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "urn:example:wiki#conformsTo",
-                "StaticStorageDescriber:_terms_value": "urn:example:wiki#L3Profile"
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#conformsTo",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/ontology/wiki#L3Profile"
               }
             ]
           },
@@ -193,7 +193,7 @@
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/pages/"
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/pages/"
               }
             ]
           },
@@ -203,7 +203,7 @@
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/sources/"
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/sources/"
               }
             ]
           },
@@ -213,7 +213,7 @@
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/people/"
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/people/"
               }
             ]
           },
@@ -223,7 +223,7 @@
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/procedures/"
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/procedures/"
               }
             ]
           },
@@ -233,7 +233,7 @@
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "http://pod.vardeman.me:3000/vault/wiki/working/"
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/working/"
               }
             ]
           }

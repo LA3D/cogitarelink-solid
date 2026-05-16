@@ -1,12 +1,12 @@
 """Integration tests: MarkdownProjectionListener round-trip + Model A + concurrency + composability.
 
 Prerequisites:
-- Pod running at POD_URL (default: http://pod.vardeman.me:3000)
+- Pod running at POD_URL (default: https://pod.vardeman.me)
 - /wiki/{pages,sources,people,procedures,working}/ containers exist
 - MarkdownProjectionListener wired and healthy (check docker logs)
 
 Run:
-    POD_URL=http://pod.vardeman.me:3000 pytest tests/test_wiki_memory_l3_listener_integration.py -v
+    POD_URL=https://pod.vardeman.me pytest tests/test_wiki_memory_l3_listener_integration.py -v
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from rdflib import Graph, URIRef
 # Config
 # ---------------------------------------------------------------------------
 
-POD = os.environ.get("POD_URL", "http://pod.vardeman.me:3000")
+POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
 FIX = Path(__file__).parent / "fixtures" / "wiki-memory-l3"
 
 DCT_MODIFIED = URIRef("http://purl.org/dc/terms/modified")
@@ -168,7 +168,7 @@ def test_agent_enrichment_survives_body_rewrite() -> None:
     # PATCH: add a non-governed triple using N3 Patch
     patch_n3 = """\
 @prefix solid: <http://www.w3.org/ns/solid/terms#>.
-@prefix wiki:  <urn:example:wiki#>.
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#>.
 _:patch a solid:InsertDeletePatch;
     solid:inserts {
         <> wiki:relevantToProject </project/rung-1-4> .
@@ -183,7 +183,7 @@ _:patch a solid:InsertDeletePatch;
         # Try SPARQL Update if N3 Patch not accepted
         sparql_update = (
             f"INSERT DATA {{ "
-            f"<{target}> <urn:example:wiki#relevantToProject> </project/rung-1-4> . "
+            f"<{target}> <https://pod.vardeman.me/vault/ontology/wiki#relevantToProject> </project/rung-1-4> . "
             f"}}"
         )
         rp = httpx.patch(
@@ -205,7 +205,7 @@ _:patch a solid:InsertDeletePatch;
     g = Graph()
     g.parse(data=r3.text, format="turtle", publicID=target)
 
-    rel_pred = URIRef("urn:example:wiki#relevantToProject")
+    rel_pred = URIRef("https://pod.vardeman.me/vault/ontology/wiki#relevantToProject")
     agents_triples = list(g.triples((None, rel_pred, None)))
     assert len(agents_triples) == 1, (
         f"Agent-owned triple was clobbered or missing "
@@ -248,7 +248,7 @@ def test_concurrent_writes_serialize_via_file_lock() -> None:
     rdf_type = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
     wiki_types = [
         o for _, p, o in g.triples((None, rdf_type, None))
-        if str(o).startswith("urn:example:wiki#")
+        if str(o).startswith("https://pod.vardeman.me/vault/ontology/wiki#")
     ]
     assert len(wiki_types) == 1, (
         f"Expected exactly 1 wiki rdf:type (no torn state), got {wiki_types}:\n{r.text}"

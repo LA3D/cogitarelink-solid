@@ -19,7 +19,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-POD = "http://pod.vardeman.me:3000"
+POD = "https://pod.vardeman.me"
 COMUNICA = "http://localhost:8080/sparql"
 QUERIES = Path(__file__).parent / "fixtures" / "wiki-memory-l3" / "traversal-queries"
 

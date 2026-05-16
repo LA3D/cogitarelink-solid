@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 import httpx
 
-POD = os.environ.get("POD_URL", "http://pod.vardeman.me:3000")
+POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
 FIX = Path(__file__).parent.parent / "tests" / "fixtures" / "wiki-memory-l3" / "bodies"
 
 UPLOADS = [

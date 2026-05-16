@@ -9,7 +9,7 @@ describe("projectFrontmatter", () => {
             modified: "2026-05-15T00:00:00Z",
         });
         const typeT = triples.find(t => t.predicate.value === "http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-        expect(typeT?.object.value).toBe("urn:example:wiki#Concept");
+        expect(typeT?.object.value).toBe("https://pod.vardeman.me/vault/ontology/wiki#Concept");
     });
 
     it("projects created and modified as xsd:dateTime literals", () => {

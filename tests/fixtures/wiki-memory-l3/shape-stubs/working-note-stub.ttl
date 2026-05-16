@@ -1,5 +1,5 @@
 @prefix dct:   <http://purl.org/dc/terms/> .
-@prefix wiki:  <urn:example:wiki#> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 
 </wiki/working/example-working-note>
