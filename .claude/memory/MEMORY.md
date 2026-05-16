@@ -1,268 +1,109 @@
 # cogitarelink-solid — Session Memory
 
-## Project State (as of 2026-05-16)
+Compact state for cross-session continuity. Historical narrative + completed-work
+recaps live in git history and the vault decisions log
+(`~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`).
+For decision IDs, invoke the `decision-lookup` skill.
 
-**Repo**: `~/dev/git/LA3D/agents/cogitarelink-solid`
-**Branch**: main (substrate-cleanup-complete tag at `74e5722`; Phase 5j URI conformance work in progress)
-**Status**: Phase 1 + 2 + 2b + Rung 1.4 + substrate cleanup complete. Read-only Memento + tombstone semantics + wiki-memory L3 reference profile (D78–D81) + Pod-as-toolkit capability catalog (D83) shipped. 134 vitest unit + 19 pytest integration tests green.
+## Project state (as of 2026-05-16)
 
-**Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to **wiki-memory L3 as canonical reference profile, vault as one application**. Forced by cross-system pattern research. D70–D74 record the stratification.
+- **Branch**: main, tag `substrate-cleanup-complete` (`74e5722`)
+- **Shipped**: Phase 1 + 2 + 2b + Rung 1.4 + substrate cleanup. Read-only Memento,
+  tombstone semantics, wiki-memory L3 reference profile (D78–D81), Pod-as-toolkit
+  capability catalog (D83). 134 vitest + 19 pytest tests green.
+- **Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to
+  **wiki-memory L3 as canonical reference profile, vault as one application**
+  (D70–D74).
 
-**Active focus (2026-05-16)**: **Phase 5j — URI conformance + TLS + PROF-based resource-kind hints.** Forced by RQ-Substrate-3 (namespace mismatch between `void-description.json` and overlay-managed `.meta`) which surfaced a deeper problem: vocabulary IRIs baked deployment details (port 3000, http scheme) into class identifiers. Three new decisions:
+## Active focus — Phase 5j (URI conformance + TLS + PROF)
 
-- **D84** — URI conformance commitments: HTTPS, port-less, hash-namespace, extension-less, mnemonic, Pod-hosts-its-own-vocab. Closes RQ-Substrate-3.
+Forced by RQ-Substrate-3 (namespace mismatch baked deployment details into class
+identifiers). Three new decisions ratified:
+
+- **D84** — URI conformance: HTTPS, port-less, hash-namespace, extension-less,
+  mnemonic; Pod hosts its own vocab. Closes RQ-Substrate-3.
 - **D85** — TLS deployment: mkcert dev, Caddy+LE prod.
-- **D86** — PROF + RFC 6906 profile-based resource kind declaration. Class IRI ≠ Profile IRI. SHACL shapes as artifacts inside profiles.
+- **D86** — PROF + RFC 6906 profile-based resource-kind declaration. Class IRI
+  ≠ Profile IRI. SHACL shapes as artifacts inside profiles.
 
-**Implementation in progress** (9-task plan):
-1. ✅ Write `solid-uri-conformance` skill (SKILL.md + spec.md + deltas.md + templates.md)
-2. ✅ Add D84/D85/D86 to decisions-index.md; close RQ-Substrate-3
-3. 🚧 Update MEMORY.md (this update)
-4. ⏳ Empirical CSS v8 alpha conformance test (extension-less PUT/GET)
-5. ⏳ Pre-flight namespace migration audit
-6. ⏳ TLS turn-up via mkcert + CSS native HTTPS
-7. ⏳ Namespace migration (wipe css-data, rewrite IRIs, regenerate)
-8. ⏳ PROF descriptors + `Link: rel="profile"` MetadataWriter
-9. ⏳ Cross-reference + final commit
+**9-task plan progress**: 1–3 done (skills, decisions index, MEMORY update);
+4–9 pending: empirical CSS v8 conformance test → namespace audit → TLS turn-up →
+namespace migration → PROF descriptors + `Link: rel="profile"` MetadataWriter →
+final commit.
 
-**Standards-stack caveats to remember** (cited honestly in skill):
-- W3C PROF is a WG Note, not a Rec (§7/§8/§11 normative)
-- W3C Conneg-by-Profile is a WD
-- RFC 6906 (`Link: rel="profile"`) is the only ratified IETF piece
-- `draft-svensson-accept-profile-00` expired Sept 2019 — **never emit `Content-Profile`**
-- PROF `dct:conformsTo` property chain is "at risk" (Issue 1078) — emit `prof:isTransitiveProfileOf` explicitly
-- PROF role registry "at risk" (Issue 1073) but extensible — `wikirole:affordance` for D52
+## Standards-stack caveats (Phase 5j)
 
-**Critical TLS client gotcha**: Node.js (Comunica, Bashlib, inrupt-client-authn-node) doesn't read macOS Keychain. Set `NODE_EXTRA_CA_CERTS=$(mkcert -CAROOT)/rootCA.pem` in shell AND in any sibling container. Python httpx needs `SSL_CERT_FILE` likewise.
+- W3C PROF is a WG Note, not a Rec (§7/§8/§11 normative).
+- W3C Conneg-by-Profile is a WD.
+- RFC 6906 (`Link: rel="profile"`) is the only IETF-ratified piece.
+- `draft-svensson-accept-profile-00` expired Sept 2019 — **never emit `Content-Profile`**.
+- PROF `dct:conformsTo` property chain is "at risk" (Issue 1078) — emit
+  `prof:isTransitiveProfileOf` explicitly.
+- PROF role registry "at risk" (Issue 1073) but extensible (`wikirole:affordance` for D52).
 
-## Substrate Cleanup (shipped 2026-05-16)
+## TLS client gotcha (D85)
 
-- **Tag**: `substrate-cleanup-complete` — six commits (`0f4c318` strip PARA → `74e5722` D83 + Phase 5i decisions log)
-- **What landed**: PARA-era infrastructure stripped from base pod template; overlay machinery (`scripts/overlay/{apply,remove,verify}.py`) installs/removes wiki-memory as a peer overlay; capability catalog at `/vault/meta/capabilities/` with three shipped primitives (`ContentProjection`, `DerivedView`, `TimeTravel`); Comunica removed as Pod sidecar (now client-side in `solid-agent-skills`); namespace fixes for http-only dev Pod
-- **Decisions**: D83 (Pod as self-describing toolkit / capability catalog) + Phase 5i added to `decisions-index.md`
-- **Sprint 1 iter-2 eval result**: with-skill vs without-skill delta collapsed from −50.9s (iter-1, before cleanup) to **−0.1s**
+Node.js (Comunica, Bashlib, inrupt-client-authn-node) doesn't read macOS Keychain.
+Set `NODE_EXTRA_CA_CERTS=$(mkcert -CAROOT)/rootCA.pem` in shell AND in any sibling
+container. Python httpx needs `SSL_CERT_FILE` likewise.
 
-## Sibling Projects (all under `~/dev/git/LA3D/agents/`)
-
-| Repo | Role |
-|---|---|
-| `cogitarelink-solid` | Reference Pod: CSS + Comunica + vault importer (this repo) |
-| `solid-agent-skills` | General-purpose Solid Pod CLI + Claude Code skills (D29). Phase 2 complete: 11 CLI commands, 5 skills, 53 tests, OpenProse navigator+judge 5/5 PASS |
-| `cogitarelink-fabric` | Graph-native fabric nodes (Oxigraph + FastAPI + Credo); eval harness pattern reused by Pod evaluations |
-| `rlm` | RLM agent substrate (dspy.RLM) |
-| `ace-dspy`, `gepa-rlm-reasoning`, `ontology-agent-kr`, `earth616_extraction_workflow` | Other LA3D experiments |
-
-## Active Plan — Unified Externalization Prototype Plan
-
-Architectural commitment: **The Pod as Externalization Substrate** ([[@zhou-2026-externalization]] framing). Built from first principles on W3C web standards (LDP/RDF/SHACL/Memento/LDN/Notifications Protocol), which happen to align with the patterns Karpathy/Ghumare/AKBP/Supermemory/ByteRover have arrived at empirically. Evidence-first publication path. Four rounds compose with Phase 4–6 of `SOLID-Pod-PLAN.md`.
+## Active plan — Unified Externalization Prototype
 
 | Round | Claim | Status |
 |---|---|---|
-| **R1 Wiki-Memory L3 + Memento + Affordance Descriptor** | Pod-published affordance descriptors over wiki-memory L3 reduce harness cost vs spec-only navigation; RFC 7089 time-travel as substrate-level capability | Rung 1.0 ✅ (vocab alignment), Rung 1.1 ✅ (read-only Memento), Rung 1.2 ✅ (tombstones), Rung 1.4 ✅ closed 2026-05-15 (wiki-memory L3 + affordance descriptor); Rung 1.5 next |
+| **R1 Wiki-Memory L3 + Memento + Affordance Descriptor** | Pod-published affordance descriptors over wiki-memory L3 reduce harness cost vs spec-only navigation; RFC 7089 time-travel as substrate capability | Rungs 1.0–1.4 ✅; Rung 1.5 (first measurable eval) next |
 | R2 Bridge edges with structural pointers | `cito:hasPageRange`/`cito:hasSection` enable demand-driven document granularity | Blocked on R1 |
-| R3 Typed edges as ground truth | SPARQL over frontmatter edges beats flat semantic retrieval for typed graph queries | Minimal new build |
+| R3 Typed edges as ground truth | SPARQL over frontmatter edges beats flat semantic retrieval | Minimal new build |
 | R4 Multi-pod federation | Cross-pod federated queries correct + tractable latency | Blocked on R1–3 |
 
-### Round 1 rungs
+## Sibling projects (under `~/dev/git/LA3D/agents/`)
 
-- Rung 1.0 ✅ Vocabulary Alignment — see `Memento Vocabulary Alignment.md` in vault
-- Rung 1.1 ✅ Read-only Memento — `css/extensions/memento/` (MementoHttpHandler + MementoCommitListener + MementoLinkMetadataWriter); D65–D68 decisions logged; full code review + Wave 1-5 fixes applied (commit `f94228c`)
-- Rung 1.2 ✅ Tombstone semantics for DELETE — `ldes:DeletedLDPResource` + `as:Delete` typing; 410 Gone on plain GET; worktree-first race-safety check (commit `741e9b8`)
-- Rung 1.3 — VC-aware operation gating (routine vs elevated `acp:purgeAllowed`) — also folds in `ResponseDescription` refactor (deferred review finding #10) since both require OperationHttpHandler migration
-- Rung 1.4 ✅ Wiki-memory L3 reference profile — `css/extensions/markdown-projection/` (MarkdownProjectionListener), `css/extensions/markdown-render/` (renamed from markdown-rdfa; RDFa dropped), `css/extensions/shared/markdown-parsing/`, `shapes/wiki-memory-l3/` (6 shapes), JSON-LD context + affordance catalog at `/meta/`; D78–D81 + K2/K3 decisions logged; 41 vitest + 19 pytest tests green (1 xfailed RQ-Listener-1)
-- Rung 1.5 — First measurable evaluation (B1 filesystem / B2 brute-force pod / T harness pod across navigation + temporal task suite, run against wiki-memory L3 reference)
-
-## Completed Work (Phase 1 + 2 + 2b)
-
-- [x] Claude Code scaffold (CLAUDE.md, settings, rules, skills, memory)
-- [x] Architecture restructure: removed Python adapter, added Comunica sidecar (D1, D28 superseded by D28 = CSS v8 Alpha)
-- [x] Pod as Agentic Memory System design (D30–D35)
-- [x] Reproducible setup: CSS seed config + pod templates + Docker init service (`make reset`)
-- [x] Content pipeline: rdf_gen.py + ldp_client.py + vault_import.py (107 notes)
-- [x] SPARQL integration tests via Comunica (6 tests, explicit sources)
-- [x] Ontology refactor: SKOS ConceptSchemes for PARA + memory partitions (D34)
-- [x] `.well-known/solid` with VoID + DCAT + `fabric:LDPBrowse` feature flag (D44 superseded — moved to storage description)
-- [x] SolidPodProfile aligned with fabric PROF/DCAT pattern (`prof:hasResource` + W3C roles)
-- [x] Zero-shot agent navigation tests validate D33
-- [x] `solid-agent-skills` shipped: 11 CLI commands + 5 skills + 53 tests + OpenProse navigator+judge agentic test 5/5 PASS (D29)
-- [x] Architectural pivot D42–D60 (unified Pod, externalization substrate, three-tier access)
-- [x] Memento integration design D61–D64 + `Memento Vocabulary Alignment.md` (Rung 1.0)
-- [x] Rung 1.1 — `css/extensions/memento/` with MonitoringStore CDC, per-path git commits, `.git/memento.lock` for multi-worker safety, RFC 7089 §4.1.1 Vary/Link advertisement via MementoLinkMetadataWriter (D65–D68)
-- [x] Code review + Wave 1-5 hardening: timemap async, fsPath HttpError, gitLogBefore opt, per-path staging, attach-before-bootstrap, file lock, TimeMap from/until/timegate, link advertisement, gitDir variable, poll-not-sleep tests
-- [x] Rung 1.2 — Tombstone semantics for DELETE: gitLatestOpForPath probe, ldes:DeletedLDPResource + as:Delete typing in TimeMap, 410 Gone on plain GET of tombstoned resource, worktree-first check for race-safety, 410 with Memento-Datetime for ?version= resolving to a deletion commit
-- [x] Builder-skill layer — `.claude/skills/<name>/SKILL.md` subdirectory pattern (2026-05-15 restructure). 6 builder skills (`css-extension`, `components-override`, `metadata-writer`, `monitoring-store`, `comunica-sources`, `shacl-shapes`) + 5 upstream-derived Solid skills (`solid-spec`, `solid-servers`, `solid-data-modelling`, `solid-integration-guide`, `solid-spec-documents`) synced from `solid/solid-llm-skills` via `scripts/sync_solid_skills.py` + 4 local-only Solid skills (`solid-memento`, `solid-affordance-descriptors`, `solid-wiki-memory-l3`, `solid-storage-description`).
-- [x] Cross-system memory-pattern research (2026-05-15) — Hermes/Supermemory provider interfaces, ByteRover/MemGPT/xMemory/Hindsight benchmark systems, Karpathy/Ghumare/AKBP/agentmemory wiki-memory. Three traditions converge. New design notes: `[[Memory Substrate vs Memory Profile]]`, `[[Wiki-Memory L3 Profile]]` in vault Core Concepts. Three new external-resource notes: Ghumare LLM Wiki v2, AKBP, agentmemory
-- [x] D70–D74 substrate stratification (L1/L2/L3 + wiki-memory L3 + compile-once + two-stage commit + memory-substrate trigger vocab)
-- [x] D75 (rendered HTML serves humans; RDFa dropped — revises D37); D76 (wiki-memory L3 URI layout, slug algorithm with explicit `@`-strip rule S3a, class-hint resolver, attachment co-location); D77 (five-shape SHACL catalog: page/source/person/procedure/working). L3 spec input for Rung 1.4 implementation now complete
-- [x] Audit of vault-import Python pipeline + markdown-rdfa extension (2026-05-15) — confirmed `MarkdownProjectionListener` doesn't exist yet; the markdown-rdfa extension renders HTML+RDFa (D37 scope) but doesn't project body wikilinks to `.meta` (D58/D71 scope). Reusable modules: `wikilinks.ts`, `predicates.ts`, `resolver.ts`. Importer is frontmatter-only — body wikilinks invisible to SPARQL across 1243 vault notes
-- [x] D78–D81 + K2/K3: class-based shape targeting, hybrid vocab + JSON-LD context, substrate-derived navigation, Model A predicate governance with RQ-Listener-1 caveat
-- [x] markdown-projection extension: MarkdownProjectionListener, MetaWriter with file lock, governed-predicate replacement; 20 unit tests
-- [x] markdown-render extension (renamed from markdown-rdfa): rehype-rdfa dropped, rehype-wikilink-classes added, wikilinks.css shipped; 21 unit tests
-- [x] shared/markdown-parsing module: wikilinks, predicates, resolver, extractWikilinks reused across renderer and projection listener
-- [x] shapes/wiki-memory-l3/: 6 SHACL shape files (ResourceShape + 5 entity shapes)
-- [x] tests/fixtures/wiki-memory-l3/: 4 bundle fixtures, enriched fixture, 2 shape stubs, 3 traversal queries
-- [x] JSON-LD context at /meta/context.jsonld; storage description extended; affordance catalog at /meta/affordances/ with 4 descriptors (markdown-projection, hub-view, breadcrumb-view, memento)
-- [x] Integration tests: round-trip (4), discovery (4), traversal (3), shape validation (6); 6 listener integration tests with 1 xfailed (RQ-Listener-1)
-- [ ] Phase 2c — markdown-flavor shapes + sidecar validation discipline (in flight)
-- [ ] Wiki-memory L3 reference Pod (template + scripts) — built from first principles before vault import work resumes
-- [ ] Vault import path migration — write through wiki-memory L3 surface rather than direct LDP POST; importer becomes a translation table mapping 12+ vault L4 types into 5 L3 shapes
-- [ ] Phase 6a — eval harness (Round 1 Rung 1.5)
-
-## Key Architecture Patterns
-
-- **L1/L2/L3 stratification (D70)**: L1 = Pod substrate (LDP/WAC/SPARQL/Memento/`.well-known/`); L2 = memory substrate (seven invariants); L3 = memory profile (wiki-memory is canonical reference). Multiple L3 profiles can coexist on one Pod
-- **Wiki-memory as canonical L3 (D71)**: page-as-unit, dual-layer linking (markdown wikilinks at token layer + RDF predicates in `.meta` at data layer, unified by D58 projection), backlinks as first-class, low-ceremony writes. Vault PARA+SKOS is an L4 specialization sitting on top
-- **Dual-layer linking — the architectural commitment**: markdown body carries LLM-readable typed wikilinks; `.meta` sidecar carries SPARQL-queryable typed predicates; `MarkdownProjectionListener` (D58 sharpened) projects body→`.meta` on write
-- **Two-stage commit (D73)**: `working-memory/` permissive shape + `mem:Crystallize` operation to durable container — wiki-edit ergonomics with SHACL guardrails at the durable boundary
-- **Memory-substrate triggers (D74)**: `mem:*` AS2 vocab on LDN inbox (durable) + Solid Notifications Protocol (real-time); agent dispatches by `rdf:type`; agent identity has its own WebID + separate inbox
-- **Three-tier access (D55)**: brute-force (spec) → harness (descriptors) → skills (`solid-agent-skills`). Maps cleanly onto L1 / L1+L2 / L1+L2+L3. Lower tiers always functional
-- **TypeScript-first server** (D1): CSS + extensions + Comunica. Python is client-only (importer + SHACL dev)
-- **Three-layer Pod RDF** (D10): blob content + LDP container structure + `.meta` sidecars + navigation indexes (now Type Index + Storage Description per D44)
-- **Hybrid contextualized KG** (D57): blobs first-class (markdown, PDF, iCal); `.meta` contextualizes; both views legitimate per Verborgh 2022
-- **Compile-once principle (D72)**: substrate maintains compiled, cross-referenced state; agents don't re-derive at query time
-- **Agent-first, self-describing** (D33, D48): every concern is a linked-data resource; follow-your-nose; standard slots over invented endpoints
-- **SHACL as guardrails** (D50): primary defense against agent hallucination at write boundary
-- **`.meta` validation, never body** (D38): RDF Source vs Non-RDF Source split; body affordances first-class when descriptor-declared (D58)
-- **Memento via Trellis convention** (D61): `?ext=timemap`, `?version=<14-digit>`; OriginalResource doubles as TimeGate
-- **PARA + SKOS as L3-specific (D30, D34)**: PARA hierarchy + SKOS ConceptScheme partitions are the vault's L3 specialization — NOT substrate-level
-
-## Key Files
-
-| File | Purpose |
+| Repo | Role |
 |---|---|
-| `css/config/solid-config.json` | CSS Components.js main config |
-| `css/config/seed.json` | CSS seed config (account + pod creation) |
-| `css/config/pod-templates/` | Pod template directory (PARA containers) |
-| `css/config/void-description.json` | VoID + DCAT StorageDescriber override |
-| `css/config/dev-allow-all.json` | Dev auth (allow-all replaces file.json) |
-| `comunica/package.json` | Comunica link-traversal with traqula version fix |
-| `comunica/config.json` | Custom Comunica config (LDP + describedby actors) |
-| `ontology/vault-ontology.ttl` | Vault vocabulary (note types, SKOS schemes, edge properties) |
-| `ontology/solid-pod-profile.ttl` | PROF SolidPodProfile with ResourceDescriptors |
-| `shapes/concept-note.ttl` | SHACL shape with `sh:agentInstruction` |
-| `scripts/lib/rdf_gen.py` | Frontmatter → RDF (rdflib) |
-| `scripts/lib/ldp_client.py` | Minimal PUT/PATCH/GET (3 functions) |
-| `scripts/vault_import.py` | Vault-to-Pod importer |
-| `scripts/pod_setup.py` | Docker init service (shapes + ontology upload) |
+| `cogitarelink-solid` | Reference Pod: CSS + extensions + vault importer (this repo) |
+| `solid-agent-skills` | General-purpose Solid Pod CLI + Claude Code skills (D29). Phase 2 complete |
+| `cogitarelink-fabric` | Graph-native fabric nodes (Oxigraph + FastAPI + Credo) — eval harness pattern |
+| `rlm` | RLM agent substrate (dspy.RLM) |
 
-## Open Research Questions
+## Key architecture patterns (refer back when designing)
 
-- **RQ-Affordance-1**: descriptor format — declarative SHACL vs custom RDF vs hybrid (resolved for v1 by D79 hybrid stance; revisit for Rung 1.5)
-- **RQ-Harness-1**: fabric namespace minting at `https://cogitarelink.org/ns/fabric#` — blocks all `fabric:*` predicates past prototype
-- **RQ-Memento-1**: ACP fragmentation across time (D62 known limitation)
-- **RQ-Memento-2**: Comunica `-d` propagation to federated sources (Round 4)
-- **RQ-Federation-1**: cross-pod SPARQL federation works at all (gate for RQ-Memento-2)
-- **RQ-Eval-1/2/3**: task suite, sub-agent config, GEPA convergence (Round 1 Rung 1.5)
-- **RQ-Pod-4**: `.meta` traversal vs pre-built index (confirmed in Rung 1.4 — Comunica skips `text/markdown` `describedby`; workaround: explicit `default-graph-uri` params; deferred to Rung 1.5+)
-- **RQ-Pod-6**: `.meta` richness vs query overhead (needs 100+ resource benchmarks)
-- **RQ-Listener-1** (new, 2026-05-15): CSS `FileDataAccessor.writeMetadataFile()` overwrites `.meta` on every resource PUT before MonitoringStore event fires — Model A's preserve-agent-triples behavior requires reading pre-write state from alternate source. Mitigation paths: (a) pre-write Memento/git read; (b) `.meta.agent` sidecar CSS never touches; (c) PassthroughStore interception. Integration test xfailed. Rung 1.5 design question.
-- **RQ-Hub-1** (new): Is N=3 the right hub threshold? Eval question for Rung 1.5.
-- **RQ-Discovery-1** (new): Does the 7-step first-arrival ritual scale to agents arriving on cold Pods? Eval question for Rung 1.5.
+- **L1/L2/L3 stratification (D70)**: L1 = Pod substrate; L2 = memory substrate
+  (seven invariants); L3 = memory profile (wiki-memory canonical).
+- **Dual-layer linking (D58/D71)**: body wikilinks at token layer + RDF in `.meta`
+  at data layer. `MarkdownProjectionListener` projects body → `.meta` on write.
+- **Two-stage commit (D73)**: `working-memory/` permissive shape → `mem:Crystallize`
+  promotes to durable container.
+- **Memory-substrate triggers (D74)**: `mem:*` AS2 vocab on LDN inbox + Solid
+  Notifications. Agent dispatches by `rdf:type`.
+- **Three-tier access (D55)**: brute-force (spec) → harness (descriptors) →
+  skills (`solid-agent-skills`). Lower tiers always functional.
+- **Compile-once (D72)**: substrate maintains compiled state; agents don't
+  re-derive at query time.
+- **Predicate-level governance (D81 Model A)**: SHACL shape declares which
+  predicates the substrate governs; agent owns the rest.
+- **Pod-as-toolkit (D83)**: capability catalog at `/vault/meta/capabilities/`;
+  applications are overlays declaring `cap:requires` against the catalog.
 
-## Resolved Research Questions
+## Open research questions (active)
 
-- RQ-Pod-1 (container vs metadata for partitions): **Metadata** — partitions are SKOS concepts in `.meta` (D30)
-- RQ-Pod-2 (PARA-as-containers): **Viable** — validated with 15 containers, agent navigates successfully
-- RQ-Pod-3 (minimum discovery path): **5 steps** — `.well-known/solid` → profile → Type Index → container `.meta` → SHACL shape (now via D44 storage description)
-- RQ-Pod-5 (procedural memory location): **`/procedures/` container** with `sh:agentInstruction` in shapes
+- **RQ-Listener-1**: CSS `FileDataAccessor.writeMetadataFile()` overwrites `.meta`
+  before MonitoringStore event fires — Model A's preserve-agent-triples behavior
+  needs pre-write read. Mitigation paths: pre-write Memento/git read; `.meta.agent`
+  sidecar CSS never touches; PassthroughStore interception. Integration test xfailed.
+- **RQ-Pod-4**: Comunica skips `text/markdown` `describedby` traversal. Workaround:
+  explicit `default-graph-uri` parameters. Materialized SPARQL index deferred.
+- **RQ-Pod-6**: `.meta` richness vs query overhead — needs 100+ resource benchmarks.
+- **RQ-Hub-1**: Is N=3 the right hub threshold? Eval question for Rung 1.5.
+- **RQ-Discovery-1**: Does the 7-step first-arrival ritual scale to agents arriving
+  on cold Pods? Eval question for Rung 1.5.
+- **RQ-Memento-1/2, RQ-Federation-1, RQ-Eval-1/2/3**: Round 4 and Rung 1.5 territory.
+- **RQ-Harness-1**: fabric namespace minting at `https://cogitarelink.org/ns/fabric#` — blocks `fabric:*` past prototype.
 
-## Key Research Findings
+H-D82 (inline JSON-LD blocks as level-4 affordance) is hypothesis, not decision —
+test in Rung 1.5 eval before any listener-extension code lands.
 
-### 2026-05-15 (evening) — Primary-source audit of wiki-memory claims + AKBP source code read
+## Vault sources of truth
 
-Triggered by user concern that Rung 1.4 documentation may have malformed claims about wiki-memory research. Direct read of primary sources via WebFetch + `gh api`:
-
-- **Penfield Labs misattribution** in v1 L3 spec: `Wiki-Memory L3 Profile.md` claimed our `[[Note]]{.class}` syntax was "Penfield Labs syntax." Actually Penfield uses `[[@type|display]] [[Target]]` (predicate-as-wikilink). The `{.class}` form is D36 Pandoc attribute syntax, our choice. Corrected in vault + repo + decisions log (D71 entry).
-- **ByteRover validation overreach**: v1 spec cited 96.1% LoCoMo as evidence for typed-edge approach. ByteRover uses flat untyped `@path` pointers — the benchmark validates markdown-as-substrate, NOT typed-edge wikilinks. Corrected.
-- **Ghumare gist read directly**: confirmed it specifies edge LABELS in prose (uses/depends-on/contradicts/etc.) but NO syntax, schema, or algorithm. Commenters explicitly flag the spec gap. Our spec borrowed his pattern but not vocabulary.
-- **AKBP repo audit (most important finding)**: pulled real schemas (claim/entity/relation JSON Schema), spec, and `examples/obsidian-vault/`. AKBP's body markdown is **plain prose with no wikilinks**. Typed edges live in `graph/relations.jsonl` with closed 12-predicate enum, 15-entity-type enum, 7-state lifecycle. **Parallel surfaces, no body→graph projection.** Agent writes to graph via structured API (`akbp.remember` → claim JSONL; `akbp.crystallize` → promote claim to durable page). The v1 spec claim that "AKBP has one layer; we have both" is factually wrong — AKBP has two unprojected layers; we have two projected layers (our novel choice).
-- **AKBP is JSONL-flavored semantic web**: their 12-predicate enum aliases existing W3C predicates (DC/SKOS/CITO/PROV/schema.org). Their audit log is PROV-O without the standardization. Their `akbp.json` knowledge-base card is a storage description (D44). They reinvented the W3C stack because they didn't perceive its standardization as accessible.
-
-**Architectural consequences**:
-- The L3 spec's "research convergence" framing is **concept-level real, operational-level fictitious**. Concept-level: page-as-unit, typed edges, lifecycle, two-stage commit, hybrid storage. Operational: syntax, vocabulary, projection mechanism, governance algorithm are ALL ours.
-- The agentic-engineering reframe: typed-edge authoring sits on an **affordance spectrum** (0=plain prose, 6=direct N3 Patch). AKBP picked only level 5 (structured API). Our spec picked only level 2 (`{.class}` hints). The *hypothesis* is that multiple affordances at different cognitive costs are better, but this is untested. Inline JSON-LD code blocks *might* fill the level-4 gap; whether they actually help agent authoring is an empirical question.
-
-**Second audit pass (same evening — epistemic correction)**: D82 was initially written as a "ratified decision." This was wrong — AKBP, Penfield, DOT-LD, Karpathy, Ghumare are ALL unmeasured design proposals. Only ByteRover (96.1% LoCoMo) and xMemory (BLEU+23%) carry actual benchmark evidence among cited systems. Concept-level convergence across measured + unmeasured systems treats them as if they had equal evidentiary weight; they don't. **D82 was downgraded to H-D82** (hypothesis), with three testable sub-hypotheses (H-D82.a/b/c). The design is fully specified so it can be *tested* in Rung 1.5, not *implemented* unconditionally. Same epistemic status applies to D77/D78/D81 — they're v1 design choices, not validated decisions.
-
-**Files corrected (corrections sweep)**: `Wiki-Memory L3 Profile.md` (Penfield misattribution + Evidence section); `Memory Substrate vs Memory Profile.md` (Seven Invariants reframing); repo `.claude/skills/solid-wiki-memory-l3/references/design.md` (D71); vault `SOLID-Pod-Decisions.md` (D71 entry).
-
-**Files written (new artifacts)**: vault `Affordance Spectrum for Agentic Memory.md` (foundational concept, now framed as hypotheses); repo `decisions-index.md` Phase 5h H-D82 entry; repo `docs/plans/2026-05-15-akbp-to-w3c-mapping.md` (structural translation, behavioral claims downgraded); repo `docs/plans/2026-05-15-d82-listener-extension-plan.md` (eval-gated plan).
-
-**Active focus shifted**: from "implement D82" to "**run Rung 1.5 eval Pilot + E3 gate + E1/E2/E4 high-value experiments**" via Claude Code skill-creator harness pattern. Eval matrix doc revised same evening after cost-framing audit caught two errors in v1: (1) priced naively against raw API per-token rates when execution is actually via Claude Code sub-agents under existing subscription; (2) original 6-arm B0/B1/B2/T-* matrix re-tested settled questions (markdown-as-substrate works per ByteRover; KGs work per GraphRAG literature; LLMs know W3C vocab per proto-knowledge paper). v2 matrix prioritizes the actual unknowns: affordance navigation (E1), schema interpretation (E2), round-trip consistency (E3 gate), in-band typing value (E4 = H-D82.a). ~210 sub-agent runs total, ~2-3 working days end-to-end.
-
-### 2026-05-15 (afternoon) — L3 spec drafted (D75-D77) + audit findings
-- **D75 revises D37** — drop rehype-rdfa step. The reasoning: under D58 dual-layer linking, RDFa-in-HTML would be a redundant third surface. LLM agents read raw markdown; SPARQL agents query `.meta`; humans use Obsidian-style rendered HTML. Nobody consumes RDFa-annotated HTML in practice. Rename `css/extensions/markdown-rdfa/` → `markdown-render/`.
-- **D76 pins the L3 URI layout** — five typed containers (`/wiki/{pages,sources,people,procedures,working}/`), each with one SHACL shape per D77. Within `/wiki/pages/`, vault note types collapse via `vault:kind` predicate rather than container proliferation.
-- **Slug algorithm rule S3a (drop leading `@`)** — explicit, not derived. Handles BibTeX citekey conventions without leaking `@` into URIs, RDF terms, or JSON-LD contexts. Three concrete LOD hazards prevented: JSON-LD keyword reservation conflict (sharpest — `@`-prefix terms get rejected/dropped by JSON-LD processors); Pandoc citation parser ambiguity; RFC 3986 URI encoding inconsistency (`@` vs `%40` mismatches across tools).
-- **Non-markdown blobs use LDP RDFS/NR split (D38) directly** — co-locate with describing wiki page in same container, share slug stem. PDF/Word/image and markdown are architecturally identical to the substrate; only the L3 convention pins where they sit relative to their describing record. Rich extraction (PDF outline, OCR) is opt-in via D53 per-flavor descriptors.
-- **Embed prefix `!`** is the only new wikilink syntax — `![[image.png]]` projects `vault:embeds` and triggers inline `<img>` rendering. The bare wikilink and class-hint forms cover everything else.
-- **Vault import becomes a translation table** — 12+ vault L4 note types map to 5 L3 shapes. ~200 lines of Python; transient code; runs once during migration. The vault is a *legacy system the Pod replaces*, not an ongoing pipeline.
-- **Audit confirms `MarkdownProjectionListener` doesn't exist yet**. The markdown-rdfa extension implements D37 (HTML+RDFa rendering) but not D58/D71 (`.meta` projection). The wikilinks/predicates/resolver modules are reusable for both renderer (D75) and listener (Rung 1.4).
-
-### 2026-05-15 (morning) — Memory-substrate stratification from cross-system research
-- **Three research traditions provide concept-level support for the same substrate, but at the *pattern* layer only** (~v1 framing said "converge on the same substrate," which overstated — corrected by 2026-05-15 evening AKBP audit, see below): memory-provider plugins (Hermes ABC, Supermemory API), benchmark-tuned memory systems (ByteRover, MemGPT, xMemory, Hindsight, Mnemis, MemoryAgentBench, MemoryArena), and wiki-memory implementations (Karpathy, Ghumare, AKBP, agentmemory). Each emphasizes a subset of the seven L2 invariants from a different operational angle. **No single source names all seven; the synthesis is ours.** AKBP's phrase "the contract that survives when tools change" is the cleanest articulation of what a substrate is for.
-- **W3C web standards are the natural carrier**: built from first principles, the Pod substrate (LDP + RDF + SHACL + Memento + LDN + Notifications + ACP) gives us all seven invariants because the standards were designed for the same distributed-knowledge problem. The W3C-vs-custom-JSONL tradeoff matters: AKBP's `claims.jsonl`/`entities.jsonl`/`relations.jsonl` is *poorly-typed semantic web*. Their 12-predicate enum (uses, depends_on, contradicts, supersedes, supports, caused_by, owned_by, derived_from, similar_to, blocks, implements, references) is a re-invention of DC/SKOS/CITO/PROV/schema.org vocabulary.
-- **Dual-layer linking via body→`.meta` projection (D58 + D71) is OUR novel architectural commitment** — NOT inheritance from AKBP. Earlier MEMORY.md framing claimed "AKBP and agentmemory each have one layer; our wiki-memory L3 has both" — **this is factually wrong, corrected by 2026-05-15 evening audit**. AKBP has TWO layers (wiki/ markdown + graph/*.jsonl) but they are **parallel, unprojected**: body markdown is plain prose with no typed wikilinks; typed edges live entirely in graph JSONL files; agent writes to the graph via structured API (`akbp.remember`). Our commitment to body-as-writable-surface with substrate-managed projection is our distinct choice, not the lineage's.
-- **Vault import role changes**: the vault is one L3 (or L4) consumer of wiki-memory, not the project's MVP. D5 superseded; D32 reframed. The importer becomes "vault → wiki-memory L3 → Pod" rather than "vault → Pod direct."
-- **`.well-known/solid` already does most of what AKBP's `capabilities` endpoint does**. The Solid stack has been hiding the answer in plain sight; we just had to stratify it correctly.
-
-### 2026-05-14 — Rung 1.1 implementation
-- **MonitoringStore is the right CDC integration point** (D65). CSS already emits AS.Create/Update/Delete events on every resource write — no need for a fswatch/inotify sidecar. The in-repo ShapeValidationStore precedent (`PassthroughStore` subclass) proves the wrap-store pattern works for write-time hooks; the listener variant works for read-only event subscription.
-- **CSS `addHeader` (HeaderUtil) accumulates, `setHeader` overwrites** — this is the key discovery that made RFC 7089 §4.1.1 advertisement clean (D67). A parallel MetadataWriter alongside `LinkRelMetadataWriter` can always append `rel="timemap"`/`rel="timegate"` and `Vary: accept-datetime` without conflicting with whatever CSS itself sets. Design header-bearing extensions around `addHeader` to compose, not collide.
-- **`git add -- <path>` + `commit --only -- <path>` is required for per-path commit semantics** (D66). The naive `git add -A` lumps concurrent writes to sibling resources into the wrong commit, which breaks `git log -- <path>` and therefore per-resource TimeMap. Direct integration-test (`test_concurrent_writes_to_different_paths_produce_separate_commits`).
-- **In-`.git/` lock files survive `git add -A`** — lock files in the worktree get staged into commits (we hit this); lock files inside `.git/` are excluded by git itself. D68 puts the memento mutex at `.git/memento.lock`.
-- **Components.js `OverrideListInsertAt` against an empty list is broken in v8.0.0-alpha.3** (K1 known limitation). Reproducible `collectEntries` error. Worked around with `overrideParameters` (full replacement) of `WorkerParallelInitializer`; risk: silent drop of upstream additions. Revisit when the target list gets an entry to anchor against.
-- **The `:next` Docker tag actually tracks v8.0.0-alpha.3**, not v7.1.9 stable as one research agent initially reported. Verified by reading `/community-server/package.json` in the running container. `markdown-rdfa`'s `@solid/community-server: ^8.0.0-alpha.3` devDep matches exactly.
-
-### 2026-05-06 — Memento integration design
-- Trellis-style query-string URI minting picked (D61) over path-prefix and child-container conventions — keeps container hierarchy clean for D54 agentic-memory navigation
-- v1 commits to standards-only vocabulary (D63): Memento + LDES + AS2 + PROV-O + VCDM + ACP. Mints nothing
-- Soft delete + hard purge as two distinct operations with distinct ACP requirements (D64) — gives defensible compliance posture
-- `Memento Vocabulary Alignment.md` is the canonical standards-mapping reference; Round 1 implementation cites back here
-
-### 2026-04-25 — Externalization substrate pivot
-- D51: Pod is general-purpose substrate for agentic applications; agentic memory is one specialization. Validated by Verborgh 2017-2022 program and ByteRover/xMemory empirics
-- D55: HATEOAS-correct three-tier access — brute-force always works; harness optimizes; skills specialize
-- D58 revises D41: body affordances first-class when descriptor-declared. Importer can stop forcing every wikilink into `.meta` triple — descriptor IS materialization rule applied at read time
-- D60: evaluation methodology = clean Claude Code sub-agents + metric harness + GEPA. Tier comparison IS the evaluation
-
-### 2026-04-24 — Unified Pod architecture
-- D42: every node is a Pod; storage backend (file/Oxigraph/hybrid) is implementation detail. Dissolves pod-vs-triplestore dualism
-- D43: Oxigraph as first-class Pod backend via CSS `--sparqlEndpoint` (revises D4). Meccano 2016 precedent
-- D44: storage description resource replaces `.well-known/void` — spec-mandated slot. Router, not manifest; points to browseable catalog containers via `rdfs:seeAlso`
-- D48: agent affordance architecture as guiding principle. Anti-patterns: flat `.well-known/*` endpoints, embedded SPARQL literals, magic paths, dual parallel mechanisms
-- D49: vocabulary hallucination is real (Claude minted `void:shape`, `void:constructTemplate` etc. — none exist). `void:vocabulary` declarations + D23 TBox cache + D50 SHACL backstop
-- D50: SHACL shapes as primary enforcement against agent hallucination at write boundary
-
-### 2026-04-03 — Agent navigation + ontology refactor
-- Zero-shot agent navigation validated D33: agent follows `.well-known/solid` → PROF profile → Type Index → container `.meta` → `sh:agentInstruction` → constructs queries
-- `sh:agentInstruction` on container `.meta` is the crucial piece — tells agent which predicates to use
-- PROF ResourceDescriptor + W3C roles aligns pod with fabric four-layer pattern
-- `vault:agentGuidance` unnecessary — `sh:agentInstruction` (SHACL 1.2 §8.3) covers it
-- PARA categories and memory partitions properly modeled as SKOS ConceptSchemes (not custom types)
-
-### 2026-04-02 — Comunica link-traversal investigation
-- `@comunica/query-sparql-link-traversal@0.8.0` has traqula parser bug — fixed via npm overrides
-- Link-traversal follows `ldp:contains` but NOT `describedby` headers on non-RDF resources
-- Markdown resources don't trigger `describedby` following — Comunica skips unparseable content types
-- Architectural gap — agents must discover `.meta` explicitly or via SPARQL with explicit sources. `solid-agent-skills` (D29) handles this programmatically
-
-### 2026-04-01 — Reproducible setup + pod structure
-- CSS Components.js Override pattern required (not `@id` re-declaration) for single-value params
-- Allow-all auth must REPLACE file.json entirely (auth modules are mutually exclusive)
-- CSS rejects Host header mismatches — Docker network alias required
-- CSS seed config runs `SeededAccountInitializer` on startup — idempotent
-- Pod templates: directories → containers, `.meta` files → container metadata, `$.hbs` → Handlebars processing
-- `.meta` description resources are Solid's native metadata layer
-- SKOS has never been used for end-user pod content (present in infra only) — D34 is novel
-- `pim:Workspace` maps naturally to vault as named workspace
-
-## Vault Sources of Truth
-
-Active plan: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Unified Externalization Prototype Plan.md`
-Decisions log: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
-Phase plan: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md`
-Memento vocab: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Memento Vocabulary Alignment.md`
-Infrastructure design: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Self-Hosted Pod Infrastructure Design.md`
-Phase 1 findings: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Solid Pod Phase 1 - Vertical Slice Findings.md`
-Fabric-Pod synergy: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Fabric-Pod Synergy - Unified Design Thesis.md`
+- Active plan: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Unified Externalization Prototype Plan.md`
+- Decisions log: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
+- Phase plan: `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md`

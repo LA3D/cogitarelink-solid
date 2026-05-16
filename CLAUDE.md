@@ -39,7 +39,7 @@ Sibling repos under `~/dev/git/LA3D/agents/`:
 - `cogitarelink-fabric` — Graph-native fabric nodes (Oxigraph + FastAPI + Credo)
 - `rlm` — RLM agent substrate (dspy.RLM)
 
-See @.claude/rules/decisions-index.md for architectural decisions (D1-D81).
+For architectural decisions (D1-D86, K1-K3, RQ-*), invoke the `decision-lookup` skill — index at `.claude/skills/decision-lookup/decisions.md`.
 See @.claude/memory/MEMORY.md for experiment state, active plan, and key patterns.
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Unified Externalization Prototype Plan.md (active plan)
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md (phase plan)
@@ -84,28 +84,16 @@ docs/plans/      — Architecture design documents
 
 ## Rules & Skills
 
-| Rules (always loaded) | Scope |
+| Rules (path-scoped, load when editing matching files) | Scope |
 |---|---|
-| `decisions-index.md` | D1-D86 + K1-K3 architectural decisions; D5/D32 superseded by D70-D74; D37 revised by D75; D71/D77 revised by D78-D80; D81 Model A predicate governance; D83 Pod-as-toolkit + capability catalog; D84/D85/D86 URI conformance + TLS + PROF-based resource-kind hints; K2/K3 implementation notes |
 | `python-patterns.md` | fastai style, rdflib, httpx, pyshacl (client-only) |
 | `typescript-patterns.md` | CSS extensions, Components.js, N3.js, Comunica |
 | `rdf-patterns.md` | Turtle, JSON-LD, three-layer Pod RDF |
 | `docker-patterns.md` | CSS + Comunica containers |
-| `solid-patterns.md` | LDP, WAC, Solid-OIDC, Type Index |
-
-| Operational skills (on demand) | Trigger |
-|---|---|
-| Pod discovery | `/pod-discover` |
-| Pod init | `/pod-init` |
-| Vault import | `/vault-import` |
-| Pod validate | `/pod-validate` |
-| Pod SPARQL | `/pod-sparql` |
-| Pod status | `/pod-status` |
-| Decision lookup | `/decision-lookup` |
-| SBOM update | `/sbom-update` |
 
 | Solid spec & integration skills (Claude-invokable; `.claude/skills/<name>/SKILL.md`) | Topic |
 |---|---|
+| `decision-lookup` | Full architectural decisions index (D1-D86, K1-K3, RQ-*) |
 | `solid-spec` | Solid Protocol, WebID Profile, Solid-OIDC, ACP, WAC (upstream-derived) |
 | `solid-servers` | CSS, Pivot, public servers, Docker, CLI (upstream-derived) |
 | `solid-data-modelling` | Vocabularies, SHACL conventions, Type Index (upstream-derived) |
