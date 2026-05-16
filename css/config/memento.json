@@ -2,7 +2,8 @@
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/asynchronous-handlers/^1.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/memento/^0.1.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/memento/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/profile-link/^0.1.0/components/context.jsonld"
   ],
   "@graph": [
     {
@@ -37,7 +38,13 @@
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
     },
     {
-      "comment": "Insert MementoLinkMetadataWriter after the default LinkRelMetadataWriter so existing Link rels (ldp:constrainedBy etc) get serialized first; we append on top.",
+      "comment": "Per D86: emits Link: rel=\"profile\" headers, one per dct:conformsTo value on the resource's RepresentationMetadata. Substrate-level kinds (shapes, ontologies, profiles, affordances) AND content-level (wiki:*Profile) handled by one writer. Consolidated here to avoid multiple Override conflicts on MetadataWriter.",
+      "@id": "urn:cogitarelink:ProfileLinkMetadataWriter",
+      "@type": "ProfileLinkMetadataWriter",
+      "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
+    },
+    {
+      "comment": "Insert MementoLinkMetadataWriter after the default LinkRelMetadataWriter so existing Link rels (ldp:constrainedBy etc) get serialized first; we append on top. Then insert ProfileLinkMetadataWriter after that (two steps in one Override).",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:MetadataWriter" },
       "overrideSteps": [{
@@ -45,6 +52,12 @@
         "overrideParameter": { "@id": "ah:dist/ParallelHandler.jsonld#ParallelHandler_handlers" },
         "overrideTarget": { "@id": "urn:solid-server:default:MetadataWriter_LinkRel" },
         "overrideValue": { "@id": "urn:cogitarelink:MementoLinkMetadataWriter" }
+      },
+      {
+        "@type": "OverrideListInsertAfter",
+        "overrideParameter": { "@id": "ah:dist/ParallelHandler.jsonld#ParallelHandler_handlers" },
+        "overrideTarget": { "@id": "urn:cogitarelink:MementoLinkMetadataWriter" },
+        "overrideValue": { "@id": "urn:cogitarelink:ProfileLinkMetadataWriter" }
       }]
     }
   ]

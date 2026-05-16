@@ -107,3 +107,24 @@ RUN rm -rf /community-server/extensions/markdown-projection/node_modules/@solid/
 RUN mkdir -p /community-server/node_modules/@cogitarelink && \
     ln -sf /community-server/extensions/markdown-projection \
        /community-server/node_modules/@cogitarelink/markdown-projection
+
+# ============================================================================
+# profile-link — ProfileLinkMetadataWriter for PROF + RFC 6906 (D86).
+# Emits Link: rel="profile" headers for resources with dct:conformsTo
+# (shapes, profiles, and memory resources with shape constraints).
+# ============================================================================
+
+COPY extensions/profile-link /community-server/extensions/profile-link
+
+RUN cd extensions/profile-link && npm install --ignore-scripts
+
+RUN cd extensions/profile-link && npm run build
+
+# Same @solid/community-server symlink trick — class identity must match CSS host
+RUN rm -rf /community-server/extensions/profile-link/node_modules/@solid/community-server && \
+    ln -sf /community-server /community-server/extensions/profile-link/node_modules/@solid/community-server
+
+# Symlink into node_modules so Components.js require('@cogitarelink/profile-link') resolves
+RUN mkdir -p /community-server/node_modules/@cogitarelink && \
+    ln -sf /community-server/extensions/profile-link \
+       /community-server/node_modules/@cogitarelink/profile-link
