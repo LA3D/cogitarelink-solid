@@ -10,6 +10,7 @@
   rdfs:label "Wiki-Memory L3 — Working memory profile" ;
   rdfs:comment "Profile for wiki:WorkingNote — D73 two-stage commit staging shape. Permissive constraints; promotion to durable container via mem:Crystallize converts to a stricter profile (concept, source, person, procedure)." ;
   dct:publisher <https://orcid.org/0000-0003-4091-6059> ;
+  dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
   prof:hasToken "wiki-working"^^xsd:token ;
   prof:isProfileOf <https://pod.vardeman.me/vault/meta/profiles/page> ;
   prof:isTransitiveProfileOf

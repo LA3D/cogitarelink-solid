@@ -117,3 +117,24 @@ def test_shape_declares_conformsTo_shacl(filename):
     g.parse(shape_path, format="turtle", publicID=f"file://{shape_path}")
     found = any(SHACL_SPEC in g.objects(s, DCT.conformsTo) for s in g.subjects())
     assert found, f"{filename} does not declare dct:conformsTo <SHACL spec>"
+
+
+VOCAB_TTL = Path(__file__).parent.parent / "overlays" / "wiki-memory" / "vocabulary" / "wiki.ttl"
+PROFILES_DIR = Path(__file__).parent.parent / "overlays" / "wiki-memory" / "profiles"
+PROF_SPEC = URIRef("http://www.w3.org/TR/dx-prof/")
+RDFS_SPEC = URIRef("http://www.w3.org/2000/01/rdf-schema")
+
+
+def test_wiki_vocab_declares_conformsTo_rdfs():
+    g = Graph()
+    g.parse(VOCAB_TTL, format="turtle")
+    vocab = URIRef("https://pod.vardeman.me/vault/ontology/wiki")
+    assert (vocab, DCT.conformsTo, RDFS_SPEC) in g
+
+
+@pytest.mark.parametrize("name", ["page", "concept", "source", "person", "procedure", "working"])
+def test_profile_descriptor_declares_conformsTo_prof(name):
+    g = Graph()
+    g.parse(PROFILES_DIR / f"{name}.ttl", format="turtle")
+    profile = URIRef(f"https://pod.vardeman.me/vault/meta/profiles/{name}")
+    assert (profile, DCT.conformsTo, PROF_SPEC) in g

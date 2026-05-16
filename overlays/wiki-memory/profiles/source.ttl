@@ -10,6 +10,7 @@
   rdfs:label "Wiki-Memory L3 — Source page profile" ;
   rdfs:comment "Profile for wiki:Source pages (citation records). Carries dct:identifier requirement via SHACL shape." ;
   dct:publisher <https://orcid.org/0000-0003-4091-6059> ;
+  dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
   prof:hasToken "wiki-source"^^xsd:token ;
   prof:isProfileOf <https://pod.vardeman.me/vault/meta/profiles/page> ;
   prof:isTransitiveProfileOf

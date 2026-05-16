@@ -5,6 +5,11 @@
 @prefix dct:  <http://purl.org/dc/terms/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+
+<https://pod.vardeman.me/vault/ontology/wiki>
+    a owl:Ontology ;
+    dct:conformsTo <http://www.w3.org/2000/01/rdf-schema> .
 
 # Abstract root
 wiki:Resource a rdfs:Class ;
