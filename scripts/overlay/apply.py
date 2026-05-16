@@ -86,26 +86,43 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             put_file(client, url, local, "text/turtle")
             print(f"  role  → {url}")
 
-        # 3. Upload shape files
+        # 3. Upload shape files + patch .meta with dct:conformsTo SHACL spec
+        #    so ProfileLinkMetadataWriter emits Link: rel="profile" per D86.
+        DCT = "http://purl.org/dc/terms/"
+        SHACL_SPEC = "https://www.w3.org/TR/shacl/"
+        PROF_SPEC = "http://www.w3.org/TR/dx-prof/"
         for shape_url in manifest.shape_urls:
             local = overlay_dir / "shapes" / Path(shape_url).name
             url = absolutize(pod_url, shape_url)
             put_file(client, url, local, "text/turtle")
             print(f"  shape → {url}")
+            meta_url = f"{url}.meta"
+            n3_patch_inserts(client, meta_url,
+                             f"<{url}> <{DCT}conformsTo> <{SHACL_SPEC}> .")
+            print(f"  shape.meta → dct:conformsTo SHACL")
 
-        # 4. Upload affordance descriptors
+        # 4. Upload affordance descriptors + patch .meta with dct:conformsTo PROF spec
         for aff_url in manifest.affordance_urls:
             local = overlay_dir / "affordances" / Path(aff_url).name
             url = absolutize(pod_url, aff_url)
             put_file(client, url, local, "text/turtle")
             print(f"  aff   → {url}")
+            meta_url = f"{url}.meta"
+            n3_patch_inserts(client, meta_url,
+                             f"<{url}> <{DCT}conformsTo> <{PROF_SPEC}> .")
+            print(f"  aff.meta  → dct:conformsTo PROF")
 
         # 5. Upload PROF profile descriptors (after affordances; refs are IRIs not dereferences)
+        #    Patch .meta with dct:conformsTo PROF so ProfileLinkMetadataWriter fires.
         for prof_url in manifest.profile_urls:
             local = overlay_dir / "profiles" / (Path(prof_url).name + ".ttl")
             url = absolutize(pod_url, prof_url)
             put_file(client, url, local, "text/turtle")
             print(f"  prof  → {url}")
+            meta_url = f"{url}.meta"
+            n3_patch_inserts(client, meta_url,
+                             f"<{url}> <{DCT}conformsTo> <{PROF_SPEC}> .")
+            print(f"  prof.meta → dct:conformsTo PROF")
 
         # 6. Create containers + their .meta files
         for container_path in manifest.container_paths:

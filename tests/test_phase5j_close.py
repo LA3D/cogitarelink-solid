@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 
+import httpx
 import pytest
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
@@ -251,3 +252,54 @@ def test_storage_description_advertises_wikirole_and_profiles():
     }
     missing = expected_profiles - profiles
     assert not missing, f"profiles missing from prof:hasResource: {missing}"
+
+
+# --- Task 17: end-to-end Link: rel="profile" emission from live Pod ---
+
+@pytest.mark.integration
+def test_shape_response_carries_shacl_profile_link():
+    r = httpx.get(f"{POD}/vault/meta/shapes/page.shacl.ttl", timeout=5, verify=False)
+    assert r.status_code == 200
+    link = r.headers.get("link", "")
+    assert '<https://www.w3.org/TR/shacl/>; rel="profile"' in link, \
+        f"Link header missing SHACL profile: {link!r}"
+
+
+@pytest.mark.integration
+def test_affordance_response_carries_prof_profile_link():
+    r = httpx.get(f"{POD}/vault/meta/affordances/markdown-projection.ttl", timeout=5, verify=False)
+    assert r.status_code == 200
+    link = r.headers.get("link", "")
+    assert '<http://www.w3.org/TR/dx-prof/>; rel="profile"' in link, \
+        f"Link header missing PROF profile: {link!r}"
+
+
+@pytest.mark.integration
+def test_profile_descriptor_response_carries_prof_profile_link():
+    r = httpx.get(f"{POD}/vault/meta/profiles/page", timeout=5, verify=False)
+    assert r.status_code == 200
+    link = r.headers.get("link", "")
+    assert '<http://www.w3.org/TR/dx-prof/>; rel="profile"' in link, \
+        f"Link header missing PROF profile: {link!r}"
+
+
+@pytest.mark.integration
+def test_wikirole_scheme_is_dereferenceable_and_has_five_roles():
+    r = httpx.get(f"{POD}/vault/ontology/wikirole", timeout=5, verify=False)
+    assert r.status_code == 200
+    g = Graph()
+    g.parse(data=r.text, format="turtle", publicID=f"{POD}/vault/ontology/wikirole")
+    found = set(g.subjects(RDF.type, PROF.ResourceRole))
+    assert len(found) == 5, f"expected 5 prof:ResourceRole instances, got {len(found)}: {found}"
+
+
+@pytest.mark.integration
+def test_profile_link_composes_with_memento_link():
+    """A regular vault resource should carry rel=timegate (Memento)
+    even if no profile is declared. This verifies profile-link writer
+    does not clobber memento's Link header."""
+    r = httpx.get(f"{POD}/vault/wiki/pages/", timeout=5, verify=False)
+    if r.status_code != 200:
+        pytest.skip(f"container not present (status {r.status_code})")
+    link = r.headers.get("link", "")
+    assert 'rel="timegate"' in link, f"missing Memento timegate link: {link!r}"
