@@ -1,0 +1,12 @@
+@prefix cap:   <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+
+<> a cap:TimeTravel ;
+   rdfs:label "RFC 7089 Memento per-resource versioning" ;
+   cap:version "1.0" ;
+   cap:implementedBy <css/extensions/memento> ;
+   dct:conformsTo <http://www.rfc-editor.org/rfc/rfc7089.txt> ;
+   dct:description "Every resource is versioned. Trellis-style query strings: ?ext=timemap returns a TimeMap; ?version=<14-digit-datetime> returns a specific Memento. Pattern 1.1 — OriginalResource doubles as TimeGate. Advertised via Link rel=timemap, rel=timegate, and Vary: accept-datetime headers on every resource." ;
+   sh:agentInstruction "To enumerate versions of a resource <R>, GET <R>?ext=timemap with Accept: application/link-format or text/turtle. To fetch a specific version, GET <R>?version=20260515171025 (replace with desired 14-digit datetime). Tombstoned resources return 410 Gone on plain GET but their TimeMap still resolves." .

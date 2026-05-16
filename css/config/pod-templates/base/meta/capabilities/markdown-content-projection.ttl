@@ -1,0 +1,14 @@
+@prefix cap:   <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix wiki:  <https://pod.vardeman.me:3000/vault/ontology/wiki#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+
+<> a cap:ContentProjection ;
+   rdfs:label "Markdown content projection" ;
+   cap:version "1.0" ;
+   cap:contentType "text/markdown" ;
+   cap:implementedBy <css/extensions/markdown-projection> ;
+   cap:configurationShape wiki:WriteAffordance ;
+   dct:description "On write of text/markdown body, parse frontmatter + body wikilinks, project triples into resource's .meta per the wiki:WriteAffordance descriptor governing that container. Implements D58/D71/D81." ;
+   sh:agentInstruction "An overlay configures this primitive by installing a wiki:WriteAffordance descriptor in /vault/meta/affordances/ with wiki:governs predicates and wiki:projectsFromFrontmatter keys. The substrate fires this primitive on every write to a container whose .meta points at such a descriptor." .

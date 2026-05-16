@@ -1,0 +1,68 @@
+@prefix cap:  <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+cap:Capability a rdfs:Class ;
+    rdfs:label "Substrate capability" ;
+    rdfs:comment "Generic substrate primitive offered by this Pod. Implemented by a CSS extension; configured by overlay-supplied descriptors." ;
+    rdfs:isDefinedBy <> .
+
+cap:ContentProjection a rdfs:Class ; rdfs:subClassOf cap:Capability ;
+    rdfs:label "Content projection" ;
+    rdfs:comment "On write, parse body of registered content-type, project triples into resource's .meta (D81)." ;
+    rdfs:isDefinedBy <> .
+
+cap:DerivedView a rdfs:Class ; rdfs:subClassOf cap:Capability ;
+    rdfs:label "Derived view computation" ;
+    rdfs:comment "Run CONSTRUCT/SELECT declared in affordance descriptor; return materialized triples on demand. NOTE: this Pod does NOT host a SPARQL endpoint — it publishes descriptors; agents bring their own engine (Comunica recommended)." ;
+    rdfs:isDefinedBy <> .
+
+cap:TimeTravel a rdfs:Class ; rdfs:subClassOf cap:Capability ;
+    rdfs:label "Time travel (RFC 7089 Memento)" ;
+    rdfs:comment "Per-resource versioning via ?ext=timemap + ?version=<14-digit-datetime>." ;
+    rdfs:isDefinedBy <> .
+
+cap:TwoStageCommit a rdfs:Class ; rdfs:subClassOf cap:Capability ;
+    rdfs:label "Two-stage commit (D73)" ;
+    rdfs:comment "Permissive working container + strict durable container; shape-gated promotion. NOT YET IMPLEMENTED." ;
+    rdfs:isDefinedBy <> .
+
+cap:TriggerEmission a rdfs:Class ; rdfs:subClassOf cap:Capability ;
+    rdfs:label "Trigger emission (D74)" ;
+    rdfs:comment "Emit AS2 notifications when SHACL rules flip on writes. NOT YET IMPLEMENTED." ;
+    rdfs:isDefinedBy <> .
+
+cap:ValidationHook a rdfs:Class ; rdfs:subClassOf cap:Capability ;
+    rdfs:label "Validation hook" ;
+    rdfs:comment "SHACL validate at write time; gate writes by class or container. NOT YET IMPLEMENTED." ;
+    rdfs:isDefinedBy <> .
+
+cap:ReferenceCatalog a rdfs:Class ; rdfs:subClassOf cap:Capability ;
+    rdfs:label "Reference catalog" ;
+    rdfs:comment "Substrate-maintained cache of cross-resource references (backlinks, citations). NOT YET IMPLEMENTED." ;
+    rdfs:isDefinedBy <> .
+
+# Predicates capability descriptors use
+cap:version              a rdf:Property ; rdfs:isDefinedBy <> .
+cap:implementedBy        a rdf:Property ; rdfs:isDefinedBy <> .
+cap:configurationShape   a rdf:Property ; rdfs:isDefinedBy <> .
+cap:contentType          a rdf:Property ; rdfs:isDefinedBy <> .
+
+# Predicates overlays use to declare requirements
+cap:requires             a rdf:Property ;
+    rdfs:label "Required capability IRI" ;
+    rdfs:comment "Overlay declares it cannot install without this capability at minVersion." ;
+    rdfs:isDefinedBy <> .
+
+cap:optional             a rdf:Property ;
+    rdfs:label "Optional capability IRI" ;
+    rdfs:comment "Overlay degrades gracefully without this capability." ;
+    rdfs:isDefinedBy <> .
+
+cap:minVersion           a rdf:Property ; rdfs:isDefinedBy <> .
+
+# Predicate the storage description uses to advertise the catalog
+cap:catalog              a rdf:Property ;
+    rdfs:label "Pointer to capability catalog container" ;
+    rdfs:isDefinedBy <> .

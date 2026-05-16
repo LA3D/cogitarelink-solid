@@ -1,0 +1,9 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+@prefix cap: <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+
+<> a ldp:Container, ldp:BasicContainer ;
+   dct:title "Substrate capability catalog" ;
+   dct:description "Each cap:Capability instance this Pod offers, with version + descriptor format." ;
+   sh:agentInstruction "GET ldp:contains to enumerate capabilities offered. Each entry is a cap:Capability instance: GET it to learn version, implementation, and configuration expectations. Overlays reference these IRIs from their manifest's cap:requires clauses." .

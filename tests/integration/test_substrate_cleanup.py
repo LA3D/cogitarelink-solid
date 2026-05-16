@@ -6,7 +6,7 @@ Run individually with: pytest tests/integration/test_substrate_cleanup.py::<test
 import os
 import pytest
 import httpx
-from rdflib import Graph, Namespace
+from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
 
 POD = os.environ.get("POD_URL", "http://pod.vardeman.me:3000")
@@ -50,3 +50,63 @@ def test_meta_affordances_empty_or_absent():
     g = Graph().parse(data=r.text, format="turtle")
     contents = list(g.objects(predicate=LDP.contains))
     assert len(contents) == 0, f"Affordances container should be empty pre-overlay; found {contents}"
+
+
+def test_storage_description_announces_capabilities():
+    """Storage description should point at capability catalog."""
+    g = Graph().parse(POD_URL + ".well-known/solid",
+                      format="turtle", publicID=POD_URL + ".well-known/solid")
+    CAP = Namespace("https://pod.vardeman.me:3000/vault/ontology/capability#")
+    catalog_triple = (None, CAP.catalog,
+                      URIRef("http://pod.vardeman.me:3000/vault/meta/capabilities/"))
+    assert catalog_triple in g, "Storage description missing cap:catalog pointer"
+
+
+def test_capability_catalog_lists_three_primitives():
+    """Three primitives shipped: markdown-content-projection, time-travel, derived-view."""
+    catalog_url = POD_URL + "meta/capabilities/"
+    r = httpx.get(catalog_url, headers={"Accept": "text/turtle"}, timeout=5)
+    assert r.status_code == 200
+    text = r.text
+    for descriptor in ["markdown-content-projection",
+                       "time-travel", "derived-view"]:
+        assert descriptor in text, f"Capability catalog missing {descriptor}"
+
+
+def test_capability_descriptors_are_well_formed():
+    """Each capability descriptor parses as Turtle and declares cap:version."""
+    CAP = Namespace("https://pod.vardeman.me:3000/vault/ontology/capability#")
+    base = POD_URL + "meta/capabilities/"
+    for descriptor in ["markdown-content-projection.ttl",
+                       "time-travel.ttl", "derived-view.ttl"]:
+        url = base + descriptor
+        r = httpx.get(url, headers={"Accept": "text/turtle"}, timeout=5)
+        assert r.status_code == 200, f"{descriptor} not reachable: {r.status_code}"
+        g = Graph().parse(data=r.text, format="turtle", publicID=url)
+        versions = list(g.objects(predicate=CAP.version))
+        assert len(versions) >= 1, f"{descriptor} missing cap:version"
+
+
+def test_capability_vocabulary_dereferenceable():
+    """The cap: namespace resolves to its vocab document hosted on the Pod."""
+    CAP = Namespace("https://pod.vardeman.me:3000/vault/ontology/capability#")
+    r = httpx.get(POD_URL + "ontology/capability.ttl",
+                  headers={"Accept": "text/turtle"}, timeout=5)
+    assert r.status_code == 200
+    g = Graph().parse(data=r.text, format="turtle",
+                      publicID=POD_URL + "ontology/capability.ttl")
+    from rdflib.namespace import RDFS
+    assert (CAP.ContentProjection, RDFS.subClassOf, CAP.Capability) in g
+    assert (CAP.TimeTravel, RDFS.subClassOf, CAP.Capability) in g
+
+
+def test_overlay_vocabulary_dereferenceable():
+    """The overlay: namespace resolves to its vocab document hosted on the Pod."""
+    OVERLAY = Namespace("https://pod.vardeman.me:3000/vault/ontology/overlay#")
+    r = httpx.get(POD_URL + "ontology/overlay.ttl",
+                  headers={"Accept": "text/turtle"}, timeout=5)
+    assert r.status_code == 200
+    g = Graph().parse(data=r.text, format="turtle",
+                      publicID=POD_URL + "ontology/overlay.ttl")
+    from rdflib.namespace import RDFS
+    assert (OVERLAY.Overlay, RDF.type, RDFS.Class) in g

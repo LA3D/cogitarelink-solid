@@ -1,0 +1,49 @@
+@prefix overlay: <https://pod.vardeman.me:3000/vault/ontology/overlay#> .
+@prefix cap:     <https://pod.vardeman.me:3000/vault/ontology/capability#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+
+overlay:Overlay a rdfs:Class ;
+    rdfs:label "Application overlay" ;
+    rdfs:comment "An installable bundle of containers, shapes, descriptors, vocabulary, and Type Index entries that adds an application to a Pod." ;
+    rdfs:isDefinedBy <> .
+
+overlay:name           a rdf:Property ; rdfs:label "Overlay short name" ; rdfs:isDefinedBy <> .
+overlay:version        a rdf:Property ; rdfs:label "Overlay version" ; rdfs:isDefinedBy <> .
+
+overlay:declaresVocabulary a rdf:Property ;
+    rdfs:label "Vocabulary declared by this overlay" ;
+    rdfs:comment "Object is a blank node with overlay:namespace, overlay:document, overlay:hostedAt." ;
+    rdfs:isDefinedBy <> .
+
+overlay:namespace      a rdf:Property ; rdfs:label "Vocabulary namespace IRI" ; rdfs:isDefinedBy <> .
+overlay:document       a rdf:Property ; rdfs:label "Vocabulary source document (overlay-local path)" ; rdfs:isDefinedBy <> .
+overlay:hostedAt       a rdf:Property ; rdfs:label "Pod-side path where vocabulary will be hosted" ; rdfs:isDefinedBy <> .
+
+overlay:requiresCapability a rdf:Property ;
+    rdfs:label "Capability required by this overlay" ;
+    rdfs:comment "Object is a blank node with cap:requires (IRI of capability descriptor) and cap:minVersion." ;
+    rdfs:isDefinedBy <> .
+
+overlay:optionalCapability a rdf:Property ;
+    rdfs:label "Capability optionally consumed by this overlay" ;
+    rdfs:comment "If absent, overlay degrades per overlay:degradesTo." ;
+    rdfs:isDefinedBy <> .
+
+overlay:degradesTo a rdf:Property ;
+    rdfs:label "Human-readable description of degraded behavior" ;
+    rdfs:isDefinedBy <> .
+
+overlay:dependsOnOverlay a rdf:Property ;
+    rdfs:label "Overlay this depends on being already installed" ;
+    rdfs:comment "apply.py refuses to install if dependency is absent." ;
+    rdfs:isDefinedBy <> .
+
+overlay:installsContainer    a rdf:Property ; rdfs:label "Pod path of a container this overlay creates" ; rdfs:isDefinedBy <> .
+overlay:installsShape        a rdf:Property ; rdfs:label "Pod URL of a SHACL shape file this overlay uploads" ; rdfs:isDefinedBy <> .
+overlay:installsAffordance   a rdf:Property ; rdfs:label "Pod URL of an affordance descriptor this overlay uploads" ; rdfs:isDefinedBy <> .
+overlay:installsTypeRegistration a rdf:Property ;
+    rdfs:label "Type Index registration this overlay adds" ;
+    rdfs:comment "Object is a blank node with solid:forClass + solid:instanceContainer." ;
+    rdfs:isDefinedBy <> .
