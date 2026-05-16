@@ -63,6 +63,8 @@ class Manifest:
     container_paths: list[str]        # e.g., "/vault/wiki/pages/"
     shape_urls: list[str]             # full Pod URLs
     affordance_urls: list[str]
+    role_scheme_urls: list[str]
+    profile_urls: list[str]
     type_registrations: list[TypeRegistration]
     overlay_dir: Path                 # local directory holding manifest + artifacts
 
@@ -130,6 +132,8 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
     containers = [str(o) for o in many(OVERLAY.installsContainer)]
     shapes = [str(o) for o in many(OVERLAY.installsShape)]
     affordances = [str(o) for o in many(OVERLAY.installsAffordance)]
+    role_schemes = sorted(str(o) for o in many(OVERLAY.installsRoleScheme))
+    profiles = sorted(str(o) for o in many(OVERLAY.installsProfile))
 
     type_regs = []
     for tr_node in many(OVERLAY.installsTypeRegistration):
@@ -144,6 +148,7 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         required_capabilities=req_caps, optional_capabilities=opt_caps,
         vocabularies=vocabs,
         container_paths=containers, shape_urls=shapes, affordance_urls=affordances,
+        role_scheme_urls=role_schemes, profile_urls=profiles,
         type_registrations=type_regs,
         overlay_dir=overlay_dir,
     )

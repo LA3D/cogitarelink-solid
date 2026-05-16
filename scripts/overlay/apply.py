@@ -79,21 +79,35 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             put_file(client, url, vocab.document, "text/turtle")
             print(f"  vocab → {url}")
 
-        # 2. Upload shape files
+        # 2. Upload role scheme (before affordances that reference its IRIs)
+        for rs_url in manifest.role_scheme_urls:
+            local = overlay_dir / "vocabulary" / (Path(rs_url).name + ".ttl")
+            url = absolutize(pod_url, rs_url)
+            put_file(client, url, local, "text/turtle")
+            print(f"  role  → {url}")
+
+        # 3. Upload shape files
         for shape_url in manifest.shape_urls:
             local = overlay_dir / "shapes" / Path(shape_url).name
             url = absolutize(pod_url, shape_url)
             put_file(client, url, local, "text/turtle")
             print(f"  shape → {url}")
 
-        # 3. Upload affordance descriptors
+        # 4. Upload affordance descriptors
         for aff_url in manifest.affordance_urls:
             local = overlay_dir / "affordances" / Path(aff_url).name
             url = absolutize(pod_url, aff_url)
             put_file(client, url, local, "text/turtle")
             print(f"  aff   → {url}")
 
-        # 4. Create containers + their .meta files
+        # 5. Upload PROF profile descriptors (after affordances; refs are IRIs not dereferences)
+        for prof_url in manifest.profile_urls:
+            local = overlay_dir / "profiles" / (Path(prof_url).name + ".ttl")
+            url = absolutize(pod_url, prof_url)
+            put_file(client, url, local, "text/turtle")
+            print(f"  prof  → {url}")
+
+        # 6. Create containers + their .meta files
         for container_path in manifest.container_paths:
             container_url = absolutize(pod_url, container_path)
             ensure_container(client, container_url)
@@ -118,20 +132,20 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
                     n3_patch_inserts(client, meta_url, inserts)
                     print(f"  meta  → {meta_url}")
 
-        # 5. Merge JSON-LD context fragment
+        # 7. Merge JSON-LD context fragment
         ctx_fragment = overlay_dir / "context-fragment.jsonld"
         if ctx_fragment.exists():
             merge_jsonld_context(client, pod_url, ctx_fragment, manifest.overlay_iri)
             print(f"  ctx merged into /vault/meta/context.jsonld")
 
-        # 6. PATCH Type Index with registrations
+        # 8. PATCH Type Index with registrations
         if manifest.type_registrations:
             ti_url = pod_url.rstrip("/") + "/settings/publicTypeIndex"
             inserts = build_type_index_inserts(manifest)
             n3_patch_inserts(client, ti_url, inserts)
             print(f"  type index → {len(manifest.type_registrations)} registrations patched in")
 
-        # 7. PATCH storage description with this overlay's conformsTo + rdfs:seeAlso + vocab
+        # 9. PATCH storage description with this overlay's conformsTo + rdfs:seeAlso + vocab
         storage_patch = overlay_dir / "storage-patch.ttl"
         if storage_patch.exists():
             sd_url = pod_url.rstrip("/") + "/.well-known/solid"

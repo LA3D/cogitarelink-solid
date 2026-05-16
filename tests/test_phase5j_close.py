@@ -72,6 +72,19 @@ def test_overlay_schema_has_installs_profile_and_role_scheme():
 
 
 MANIFEST_TTL = Path(__file__).parent.parent / "overlays" / "wiki-memory" / "manifest.ttl"
+OVERLAY_DIR = Path(__file__).parent.parent / "overlays" / "wiki-memory"
+
+
+def test_overlay_helpers_extract_role_scheme_and_profiles():
+    from scripts.overlay.common import parse_manifest
+    manifest = parse_manifest(OVERLAY_DIR, pod_url="http://localhost:3000/")
+
+    assert manifest.role_scheme_urls == ["http://localhost:3000/vault/ontology/wikirole"]
+
+    assert sorted(manifest.profile_urls) == sorted(
+        f"http://localhost:3000/vault/meta/profiles/{name}"
+        for name in ["page", "concept", "source", "person", "procedure", "working"]
+    )
 
 
 def test_manifest_declares_role_scheme_and_six_profiles():
