@@ -21,8 +21,8 @@ status:  ## Health check all services
 	@echo "TypeIndex: $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/settings/publicTypeIndex)"
 	@echo "Concepts:  $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/resources/concepts/)"
 	@echo "Shapes:    $$(curl -s -o /dev/null -w '%{http_code}' http://pod.vardeman.me:3000/vault/procedures/shapes/)"
-	@echo "Comunica:  $$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/sparql)"
 	@echo "Setup:     $$(docker compose ps pod-setup --format '{{.State}}' 2>/dev/null || echo 'not run')"
+	@echo "(Comunica is client-side via solid-agent-skills; no Pod sidecar — D3/D29.)"
 
 logs:  ## Tail all logs
 	docker compose logs -f

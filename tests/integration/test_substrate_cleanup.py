@@ -205,6 +205,17 @@ def test_wiki_containers_resolve():
         assert r.status_code == 200, f"/wiki/{c}/ missing: {r.status_code}"
 
 
+def test_no_comunica_service():
+    """The Comunica HTTP service should NOT respond at port 8080.
+
+    Comunica is a client-side SPARQL engine (per D3, D29) — it should not run
+    as a Pod sidecar. After Phase 4 cleanup, Comunica wiring lives in
+    solid-agent-skills as a TypeScript library; the Pod hosts no SPARQL endpoint.
+    """
+    with pytest.raises((httpx.ConnectError, httpx.ConnectTimeout)):
+        httpx.get("http://localhost:8080/sparql", timeout=2)
+
+
 def test_apply_overlay_is_idempotent():
     """Running apply twice produces no errors."""
     import subprocess, os

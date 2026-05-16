@@ -23,7 +23,12 @@ body-affordance projection: agent writes typed wikilinks; substrate generates Tu
 
 ## Architecture
 
-Two-container stack: CSS (Solid Pod server) + Comunica (SPARQL-over-LDP sidecar).
+Single-container stack: CSS (Solid Pod server). The Pod hosts no SPARQL endpoint —
+SPARQL is a client concern. Comunica wiring lives in the sibling `solid-agent-skills`
+repo as an embedded TypeScript library (per D3, D29); affordance descriptors declare
+which capability an agent needs and quote the query, but execution happens in the
+agent's own engine.
+
 Python is client-only: vault importer CLI, SHACL development, RLM agent substrate.
 
 Build order (current direction): build the wiki-memory L3 reference Pod first;
@@ -43,10 +48,11 @@ See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions
 ## Key Commands
 
 ```bash
-docker compose up -d                                    # start stack (CSS + Comunica)
+docker compose up -d                                    # start stack (CSS only)
 docker compose logs -f                                  # tail all logs
 curl http://localhost:3000/                              # CSS root (Solid Pod)
-curl http://localhost:8080/sparql -d "query=SELECT * WHERE { ?s ?p ?o } LIMIT 10"  # Comunica SPARQL
+# SPARQL runs client-side in solid-agent-skills:
+#   (cd ../solid-agent-skills && node dist/cli.js sparql <url> "SELECT ...")
 ~/uvws/.venv/bin/python -m pytest tests/ -v             # run test suite
 ~/uvws/.venv/bin/python scripts/vault_import.py         # import vault subset to Pod
 uv pip install -e ".[test]"                             # install project in dev mode

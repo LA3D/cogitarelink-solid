@@ -48,23 +48,5 @@ services:
         condition: service_healthy
     restart: "no"
 
-  comunica:
-    image: node:20-slim
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./comunica:/app:ro
-    entrypoint: ["sh", "-c"]
-    command:
-      - |
-        mkdir -p /tmp/comunica &&
-        cp /app/package.json /tmp/comunica/ &&
-        cd /tmp/comunica &&
-        npm install --silent 2>/dev/null &&
-        npx comunica-sparql-link-traversal-http -p 8080 --lenient --contextOverride -c /app/config.json
-    depends_on:
-      css:
-        condition: service_healthy
-
 volumes:
   css-data:
