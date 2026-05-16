@@ -133,8 +133,10 @@ def absolutize(pod_url: str, maybe_relative: str) -> str:
     if maybe_relative.startswith("http"):
         return maybe_relative
     if maybe_relative.startswith("/vault/"):
-        # pod_url already includes /vault/ — strip the duplicate
-        return pod_url.rstrip("/").rstrip("/vault") + maybe_relative
+        # pod_url already includes /vault/ — strip the duplicate.
+        # Use removesuffix (Python 3.9+) — rstrip("/vault") strips a character SET,
+        # not the literal suffix, which silently misbehaves for Pod URLs ending in t/l/u/a/v.
+        return pod_url.rstrip("/").removesuffix("/vault") + maybe_relative
     return pod_url.rstrip("/") + maybe_relative
 
 

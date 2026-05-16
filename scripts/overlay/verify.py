@@ -27,7 +27,7 @@ def verify_overlay(overlay_dir: Path, pod_url: str) -> int:
     with httpx.Client() as client:
         # Containers
         for c in manifest.container_paths:
-            url = c if c.startswith("http") else (pod_url.rstrip("/").rstrip("/vault") + c)
+            url = c if c.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + c)
             r = client.head(url, timeout=5)
             if r.status_code != 200:
                 print(f"  [drift] container missing: {url} (HTTP {r.status_code})", file=sys.stderr)
@@ -35,7 +35,7 @@ def verify_overlay(overlay_dir: Path, pod_url: str) -> int:
 
         # Shape files
         for s in manifest.shape_urls:
-            url = s if s.startswith("http") else (pod_url.rstrip("/").rstrip("/vault") + s)
+            url = s if s.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + s)
             r = client.head(url, timeout=5)
             if r.status_code != 200:
                 print(f"  [drift] shape missing: {url} (HTTP {r.status_code})", file=sys.stderr)
@@ -43,7 +43,7 @@ def verify_overlay(overlay_dir: Path, pod_url: str) -> int:
 
         # Affordances
         for a in manifest.affordance_urls:
-            url = a if a.startswith("http") else (pod_url.rstrip("/").rstrip("/vault") + a)
+            url = a if a.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + a)
             r = client.head(url, timeout=5)
             if r.status_code != 200:
                 print(f"  [drift] affordance missing: {url} (HTTP {r.status_code})", file=sys.stderr)

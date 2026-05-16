@@ -6,6 +6,6 @@
 <> a cap:DerivedView ;
    rdfs:label "Derived view descriptor publication" ;
    cap:version "1.0" ;
-   cap:implementedBy <substrate-side: descriptor publication only> ;
+   cap:implementedBy <urn:substrate:descriptor-publication-only> ;
    dct:description "This Pod publishes affordance descriptors (wiki:DerivedClassAffordance, wiki:DerivedNavigationAffordance) that declare CONSTRUCT or SELECT queries. The Pod does NOT execute these queries server-side. Agents wishing to materialize derived views must bring their own SPARQL 1.1 engine with link-traversal support (Comunica recommended) and run the queries client-side with this Pod's container roots as sources." ;
    sh:agentInstruction "To use a derived view: (1) GET the affordance descriptor from /vault/meta/affordances/<name>.ttl; (2) extract wiki:constructQuery or wiki:selectQuery; (3) run via your own SPARQL engine pointed at this Pod's rdfs:seeAlso container roots." .

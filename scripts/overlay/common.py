@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Iterable
 
 import httpx
-from rdflib import Graph, Namespace, URIRef, Literal, BNode
+from rdflib import Graph, Namespace, URIRef, Literal
 from rdflib.namespace import RDF, RDFS, DCTERMS
 
 OVERLAY = Namespace("https://pod.vardeman.me:3000/vault/ontology/overlay#")
@@ -145,7 +145,7 @@ def fetch_capability_catalog(client: httpx.Client, pod_url: str) -> dict[str, st
     entries = list(g.objects(predicate=LDP.contains))
     versions = {}
     for entry in entries:
-        entry_url = str(entry) if not str(entry).startswith("http") else str(entry)
+        entry_url = str(entry)
         if not entry_url.startswith("http"):
             entry_url = catalog_url + entry_url
         r2 = client.get(entry_url, headers={"Accept": "text/turtle"}, timeout=10)

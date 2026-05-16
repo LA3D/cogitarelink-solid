@@ -57,13 +57,13 @@ def remove_overlay(overlay_dir: Path, pod_url: str, uninstall: bool, confirm: bo
     with httpx.Client() as client:
         # 1. Delete affordance descriptors
         for aff_url in manifest.affordance_urls:
-            url = aff_url if aff_url.startswith("http") else (pod_url.rstrip("/").rstrip("/vault") + aff_url)
+            url = aff_url if aff_url.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + aff_url)
             delete_resource(client, url)
             print(f"  aff   ✗ {url}")
 
         # 2. Delete shape files
         for shape_url in manifest.shape_urls:
-            url = shape_url if shape_url.startswith("http") else (pod_url.rstrip("/").rstrip("/vault") + shape_url)
+            url = shape_url if shape_url.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + shape_url)
             delete_resource(client, url)
             print(f"  shape ✗ {url}")
 
@@ -101,7 +101,7 @@ def remove_overlay(overlay_dir: Path, pod_url: str, uninstall: bool, confirm: bo
         if uninstall:
             # Delete in reverse depth order (children before parents)
             for container_path in sorted(manifest.container_paths, key=len, reverse=True):
-                url = container_path if container_path.startswith("http") else (pod_url.rstrip("/").rstrip("/vault") + container_path)
+                url = container_path if container_path.startswith("http") else (pod_url.rstrip("/").removesuffix("/vault") + container_path)
                 delete_resource(client, url)
                 print(f"  container ✗ {url}")
 
