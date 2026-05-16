@@ -138,3 +138,37 @@ def test_profile_descriptor_declares_conformsTo_prof(name):
     g.parse(PROFILES_DIR / f"{name}.ttl", format="turtle")
     profile = URIRef(f"https://pod.vardeman.me/vault/meta/profiles/{name}")
     assert (profile, DCT.conformsTo, PROF_SPEC) in g
+
+
+AFFORDANCES_DIR = Path(__file__).parent.parent / "overlays" / "wiki-memory" / "affordances"
+
+AFFORDANCE_ROLE_MAP = {
+    "markdown-projection.ttl": "write-affordance",
+    "memento.ttl":              "version-affordance",
+    "hub-view.ttl":             "derived-class-affordance",
+    "breadcrumb-view.ttl":      "derived-navigation-affordance",
+}
+
+
+@pytest.mark.parametrize("filename,role", list(AFFORDANCE_ROLE_MAP.items()))
+def test_affordance_additive_prof_typing(filename, role):
+    g = Graph()
+    affordance_path = AFFORDANCES_DIR / filename
+    g.parse(affordance_path, format="turtle", publicID=f"file://{affordance_path}")
+    doc_uri = URIRef(f"file://{affordance_path}")
+
+    # 1) Existing wiki:*Affordance typing preserved (any wiki:*Affordance subclass passes).
+    has_wiki_type = any(
+        str(t).startswith("https://pod.vardeman.me/vault/ontology/wiki#")
+        and "Affordance" in str(t)
+        for t in g.objects(doc_uri, RDF.type)
+    )
+    assert has_wiki_type, f"{filename} lost wiki:*Affordance typing"
+
+    # 2) New PROF typing.
+    assert (doc_uri, RDF.type, PROF.ResourceDescriptor) in g, \
+        f"{filename} missing prof:ResourceDescriptor type"
+    assert (doc_uri, PROF.hasRole, WIKIROLE[role]) in g, \
+        f"{filename} missing prof:hasRole wikirole:{role}"
+    assert (doc_uri, DCT.conformsTo, PROF_SPEC) in g, \
+        f"{filename} missing dct:conformsTo <PROF>"

@@ -1,14 +1,19 @@
-@prefix dct:   <http://purl.org/dc/terms/> .
-@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix sh:    <http://www.w3.org/ns/shacl#> .
-@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
-@prefix cito:  <http://purl.org/spar/cito/> .
-@prefix prov:  <http://www.w3.org/ns/prov#> .
-@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
-@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix cito:     <http://purl.org/spar/cito/> .
+@prefix prov:     <http://www.w3.org/ns/prov#> .
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix cap:      <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 
-<> a wiki:WriteAffordance ;
+<> a wiki:WriteAffordance ,
+       prof:ResourceDescriptor ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    prof:hasRole wikirole:write-affordance ;
     rdfs:label "Markdown projection listener" ;
     wiki:requiresCapability <https://pod.vardeman.me/vault/meta/capabilities/markdown-content-projection.ttl> ;
     wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;

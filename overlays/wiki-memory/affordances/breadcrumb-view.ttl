@@ -1,9 +1,15 @@
-@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix cap:  <https://pod.vardeman.me/vault/ontology/capability#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix cap:      <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 
-<> a wiki:DerivedNavigationAffordance ;
+<> a wiki:DerivedNavigationAffordance ,
+       prof:ResourceDescriptor ;
+   dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+   prof:hasRole wikirole:derived-navigation-affordance ;
    rdfs:label "Breadcrumb chain (skos:broader+ walk)" ;
    wiki:requiresCapability <https://pod.vardeman.me/vault/meta/capabilities/derived-view.ttl> ;
    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
