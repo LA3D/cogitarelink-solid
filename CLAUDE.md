@@ -106,6 +106,7 @@ docs/plans/      — Architecture design documents
 | `solid-uri-conformance` | URI conformance: hash-namespace, port-less HTTPS, extension-less vocab files (D84; closes RQ-Substrate-3) |
 | `solid-tls-deployment` | TLS deployment for CSS Pods: mkcert dev, Caddy+LE prod, Node trust gotchas (D85) |
 | `solid-profiles-and-conneg` | W3C PROF + RFC 6906 + conneg-by-profile — resource-kind hints (D86) |
+| `solid-identity-stack` | Identity/auth/authz/provenance stack: WebID, Solid-OIDC, DPoP, WAC/ACP, VCs, DIDs, AI-agent identity, multi-WebID Pods, PROV-O audit trails |
 
 | Builder skills (Claude-invokable; `.claude/skills/<name>/SKILL.md`) | Topic |
 |---|---|
