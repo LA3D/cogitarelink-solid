@@ -1,0 +1,12 @@
+# Patch content for /vault/profile/card.meta — applied by apply.py via
+# overlay:installsResourceMetaPatch in the owner-identity manifest.
+#
+# Adds dct:conformsTo pointing to PodOwnerWebIDShape (for ProfileLinkMetadataWriter
+# per D86) and ldp:constrainedBy so SHACL validation engages on PATCH writes.
+
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix ldp:  <http://www.w3.org/ns/ldp#> .
+
+</vault/profile/card>
+    dct:conformsTo    </vault/meta/shapes/webid-profile.shacl.ttl#PodOwnerWebIDShape> ;
+    ldp:constrainedBy </vault/meta/shapes/webid-profile.shacl.ttl#PodOwnerWebIDShape> .
