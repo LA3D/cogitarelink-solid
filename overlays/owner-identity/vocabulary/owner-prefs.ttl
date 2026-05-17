@@ -18,49 +18,59 @@ prefs:PodOwnerPreferences a rdfs:Class ;
 prefs:fullName a rdf:Property ;
     rdfs:label "full name" ;
     rdfs:comment "Display name of the Pod owner (e.g., \"Charles F. Vardeman II\")." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:string .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:string .
 
 prefs:orcid a rdf:Property ;
     rdfs:label "ORCID" ;
     rdfs:comment "Bare ORCID id (no URI prefix), pattern XXXX-XXXX-XXXX-XXXX." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:string .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:string .
 
 prefs:wikiSlug a rdf:Property ;
     rdfs:label "wiki slug" ;
     rdfs:comment "Desired slug under /vault/wiki/people/<slug>/ for the agentic-memory page." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:string .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:string .
 
 prefs:primaryAffiliationROR a rdf:Property ;
     rdfs:label "primary affiliation ROR" ;
     rdfs:comment "Bare ROR id of current primary organizational affiliation." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:string .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:string .
 
 prefs:primaryAffiliationName a rdf:Property ;
     rdfs:label "primary affiliation name" ;
     rdfs:comment "Display name of primary affiliation (fallback when no ROR exists)." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:string .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:string .
 
 prefs:membershipRole a rdf:Property ;
     rdfs:label "membership role" ;
     rdfs:comment "Role at primary affiliation (e.g., \"Research Assistant Professor\")." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:string .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:string .
 
 prefs:membershipStart a rdf:Property ;
     rdfs:label "membership start date" ;
     rdfs:comment "Start date of primary membership (xsd:date)." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:date .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:date .
 
 prefs:email a rdf:Property ;
     rdfs:label "email" ;
     rdfs:comment "Owner's primary email (no mailto: prefix; the contact card adds it)." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:string .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:string .
 
 prefs:foafImg a rdf:Property ;
     rdfs:label "avatar URL" ;
     rdfs:comment "Avatar URL (becomes foaf:img on the WebID)." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:anyURI .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:anyURI .
 
 prefs:setupOwnerCompleted a rdf:Property ;
     rdfs:label "setup-owner completed" ;
     rdfs:comment "Boolean marker — true once the cross-cutting SetupPodOwner flow has completed end-to-end. Read by setup-owner to short-circuit re-runs." ;
-    rdfs:domain prefs:PodOwnerPreferences ; rdfs:range xsd:boolean .
+    rdfs:domain prefs:PodOwnerPreferences ;
+    rdfs:range  xsd:boolean .
