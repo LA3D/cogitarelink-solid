@@ -137,7 +137,6 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
                 # local Turtle, serialize as N-Triples with the container URL
                 # as publicID so `<>` resolves to the container, then PATCH
                 # via solid:inserts.
-                from rdflib import Graph
                 mg = Graph()
                 mg.parse(meta_local, format="turtle", publicID=container_url)
                 inserts = mg.serialize(format="nt").strip()
