@@ -21,7 +21,7 @@ import httpx
 
 from .common import (
     Manifest, parse_manifest, fetch_capability_catalog, put_file,
-    ensure_container, n3_patch_inserts, version_at_least,
+    ensure_container, n3_patch_inserts, version_at_least, ContainerMetaPatch,
 )
 
 
@@ -159,7 +159,22 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             n3_patch_inserts(client, ti_url, inserts)
             print(f"  type index → {len(manifest.type_registrations)} registrations patched in")
 
-        # 11. PATCH storage description with this overlay's conformsTo + rdfs:seeAlso + vocab
+        # 11. PATCH .meta on typed subcontainers (e.g., ldp:constrainedBy for shape validation)
+        for meta_patch in manifest.container_meta_patches:
+            meta_url = meta_patch.container_url.rstrip("/") + "/.meta"
+            r = client.patch(
+                meta_url,
+                content=meta_patch.patch_body.encode("utf-8"),
+                headers={"Content-Type": "text/n3"},
+                timeout=10,
+            )
+            if r.status_code not in (200, 201, 205):
+                raise RuntimeError(
+                    f"Failed to PATCH {meta_url}: {r.status_code} {r.text[:200]}"
+                )
+            print(f"  meta patch → {meta_url}")
+
+        # 12. PATCH storage description with this overlay's conformsTo + rdfs:seeAlso + vocab
         storage_patch = overlay_dir / "storage-patch.ttl"
         if storage_patch.exists():
             sd_url = pod_url.rstrip("/") + "/.well-known/solid"

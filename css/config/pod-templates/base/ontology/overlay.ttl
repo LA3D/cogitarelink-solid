@@ -59,6 +59,22 @@ overlay:installsTemplate a rdf:Property ;
     rdfs:range  rdfs:Resource ;
     rdfs:isDefinedBy <> .
 
+overlay:installsContainerMetaPatch a rdf:Property ;
+    rdfs:label "installs container meta patch" ;
+    rdfs:comment "An overlay installs an N3 Patch to a container's .meta. Used to declare ldp:constrainedBy or other container-level metadata. apply.py iterates this predicate and PATCHes each target container's .meta." ;
+    rdfs:domain overlay:Overlay ;
+    rdfs:isDefinedBy <> .
+
+overlay:targetContainer a rdf:Property ;
+    rdfs:label "target container URL" ;
+    rdfs:comment "The URL of the container whose .meta will be patched (used in overlay:installsContainerMetaPatch blank nodes)." ;
+    rdfs:isDefinedBy <> .
+
+overlay:metaPatchContent a rdf:Property ;
+    rdfs:label "meta patch content path" ;
+    rdfs:comment "Relative path (within the overlay directory) to the N3 Patch file for the target container's .meta." ;
+    rdfs:isDefinedBy <> .
+
 overlay:providesCapability a rdf:Property ;
     rdfs:label "provides capability" ;
     rdfs:comment "An overlay provides a capability when installed. apply.py iterates this predicate and PUTs each referenced capability descriptor to /vault/meta/capabilities/. Other overlays declare overlay:requiresCapability against the same descriptor IRI. Replaces the deprecated overlay:installedOverlay tracking (CSS 405 on PATCH to .well-known/solid made that mechanism unworkable; capability catalog is the runtime-mutable substitute per D83)." ;

@@ -13,7 +13,7 @@ in cap:requires — those are types, not implementations.
 """
 from __future__ import annotations
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import httpx
@@ -62,6 +62,12 @@ class TemplateEntry:
 
 
 @dataclass(frozen=True)
+class ContainerMetaPatch:
+    container_url: str  # the target container URL (where .meta lives)
+    patch_body: str     # the N3 Patch body to apply
+
+
+@dataclass(frozen=True)
 class Manifest:
     """Parsed view of an overlay's manifest.ttl."""
     name: str
@@ -80,6 +86,7 @@ class Manifest:
     type_registrations: list[TypeRegistration]
     provides: list[CapabilityProvision]
     templates: list[TemplateEntry]
+    container_meta_patches: list[ContainerMetaPatch]
     overlay_dir: Path                 # local directory holding manifest + artifacts
 
 
@@ -172,6 +179,17 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         local = overlay_dir / "templates" / Path(str(tmpl_url)).name
         templates.append(TemplateEntry(url=str(tmpl_url), document=local.read_text()))
 
+    meta_patches = []
+    for mp_node in many(OVERLAY.installsContainerMetaPatch):
+        ctr_url = next(g.objects(mp_node, OVERLAY.targetContainer), None)
+        patch_path = next(g.objects(mp_node, OVERLAY.metaPatchContent), None)
+        if ctr_url and patch_path:
+            patch_file = overlay_dir / "patches" / str(patch_path)
+            meta_patches.append(ContainerMetaPatch(
+                container_url=str(ctr_url),
+                patch_body=patch_file.read_text(),
+            ))
+
     return Manifest(
         name=name, version=version, overlay_iri=overlay_iri, profile_iri=profile_iri,
         depends_on_overlays=depends_on,
@@ -182,6 +200,7 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         type_registrations=type_regs,
         provides=cap_provisions,
         templates=templates,
+        container_meta_patches=meta_patches,
         overlay_dir=overlay_dir,
     )
 
