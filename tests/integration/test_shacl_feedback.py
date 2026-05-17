@@ -17,8 +17,9 @@ from rdflib import Graph, Namespace
 
 POD = "https://pod.vardeman.me/vault/"
 # page.shacl.ttl: requires dct:title (minCount 1) for wiki:Page instances.
-# resource.shacl.ttl is NOT deployed on the live pod — the five deployed shapes are
-# page, source, person, procedure, working (see /vault/meta/shapes/).
+# Live pod has 6 deployed shapes: resource, page, source, person, procedure, working
+# (see /vault/meta/shapes/). page.shacl.ttl is used here because it has a simple
+# minCount-1 required predicate (dct:title) that makes violations easy to trigger.
 SHAPE_URL = "https://pod.vardeman.me/vault/meta/shapes/page.shacl.ttl"
 SH = Namespace("http://www.w3.org/ns/shacl#")
 

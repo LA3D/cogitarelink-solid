@@ -13,12 +13,12 @@ in cap:requires — those are types, not implementations.
 """
 from __future__ import annotations
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import httpx
 from rdflib import Graph, Namespace, URIRef, Literal
-from rdflib.namespace import RDF, RDFS, DCTERMS
+from rdflib.namespace import RDF, DCTERMS
 
 OVERLAY = Namespace("https://pod.vardeman.me/vault/ontology/overlay#")
 CAP     = Namespace("https://pod.vardeman.me/vault/ontology/capability#")
