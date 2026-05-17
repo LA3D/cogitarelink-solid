@@ -10,6 +10,7 @@ def test_template_vocab_defines_required_terms():
     expected_terms = [
         TMPL.Template, TMPL.validatesAgainst, TMPL.operation,
         TMPL.targetContainer, TMPL.slugAlgorithm, TMPL.templateBody,
+        TMPL.targetResource,   # NEW v1.1 — for PATCH templates
     ]
     for term in expected_terms:
         # Each term should appear as subject of at least one triple

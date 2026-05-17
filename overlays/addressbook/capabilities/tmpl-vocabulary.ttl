@@ -4,8 +4,8 @@
 
 <>  a cap:Capability ;
     cap:name "tmpl-vocabulary" ;
-    cap:version "1.0" ;
+    cap:version "1.1" ;
     rdfs:label "Template Vocabulary" ;
-    rdfs:comment "The tmpl: namespace (https://pod.vardeman.me/vault/ontology/template#) and Template/validatesAgainst/operation/targetContainer/slugAlgorithm/templateBody predicates. Pattern: agent fetches template, fills <<PLACEHOLDER>> values, PUTs result; SHACL backstops; 422+ValidationReport flows back for self-correction. D87 candidate; first appearance is the AddressBook substrate." ;
+    rdfs:comment "The tmpl: namespace (https://pod.vardeman.me/vault/ontology/template#) and Template/validatesAgainst/operation/targetContainer/slugAlgorithm/templateBody predicates. Pattern: agent fetches template, fills <<PLACEHOLDER>> values, PUTs result; SHACL backstops; 422+ValidationReport flows back for self-correction. D87 candidate; first appearance is the AddressBook substrate. v1.1 (2026-05-17): adds tmpl:targetResource for PATCH templates operating on existing resources (consumed by owner-identity overlay)." ;
     cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
     cap:hostedAt <https://pod.vardeman.me/vault/ontology/template> .

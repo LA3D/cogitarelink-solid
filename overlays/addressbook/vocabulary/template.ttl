@@ -59,3 +59,10 @@ tmpl:templateBody
     rdfs:comment "The literal Turtle body to be filled in. Placeholders use <<UPPERCASE_NAME>> convention; agents replace before submission." ;
     rdfs:domain tmpl:Template ;
     rdfs:range  xsd:string .
+
+tmpl:targetResource
+    a rdf:Property ;
+    rdfs:label "target resource" ;
+    rdfs:comment "The specific resource (not container) a filled template is applied to. Used for PATCH templates that operate on an existing resource rather than creating a new one under a container. Exactly one of tmpl:targetContainer or tmpl:targetResource must be present on a Template; never both." ;
+    rdfs:domain tmpl:Template ;
+    rdfs:range  rdfs:Resource .
