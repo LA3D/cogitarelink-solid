@@ -1,0 +1,10 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "prefs-init-template" ;
+    cap:version "1.0" ;
+    rdfs:label "Preferences-File Initialization Template" ;
+    rdfs:comment "PUT-flavor template (tmpl:targetResource </vault/settings/prefs.ttl>) that mints an empty PodOwnerPreferences skeleton with commented placeholders for each prefs:* predicate. The empty skeleton is the canvas the agent fills via successive PATCH operations during the human elicitation walk-through." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#owner-identity> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/meta/templates/prefs-init.ttl> .

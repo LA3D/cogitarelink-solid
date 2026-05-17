@@ -1,0 +1,9 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "pod-owner-identity" ;
+    cap:version "1.0" ;
+    rdfs:label "Pod-Owner Identity" ;
+    rdfs:comment "Substrate concern: the Pod owner's WebID profile is enriched per PodOwnerWebIDShape; the enrichment workflow uses /vault/settings/prefs.ttl as agent<->human elicitation surface (D90 candidate). Sits ABOVE AddressBook and wiki-memory in the capability stack so it can reference Person card + wiki page URIs from the WebID. Forward-extensible: VCs, DID-WebID bridges, ACL ownership (Phase 6) land here." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#owner-identity> .

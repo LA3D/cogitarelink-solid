@@ -1,0 +1,10 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "webid-enrich-template" ;
+    cap:version "1.0" ;
+    rdfs:label "WebID Enrichment Template" ;
+    rdfs:comment "First PATCH-flavor template in the substrate (tmpl:operation \"PATCH\" + tmpl:targetResource </vault/profile/card>). Inserts foaf:Agent/foaf:Person, foaf:name, owl:sameAs ORCID + contact card, foaf:isPrimaryTopicOf wiki page (with inlined wiki:Person type for follow-the-nose), pim:preferencesFile. Avoids the §3.2 protected predicate solid:oidcIssuer." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#owner-identity> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/meta/templates/webid-enrich.ttl> .

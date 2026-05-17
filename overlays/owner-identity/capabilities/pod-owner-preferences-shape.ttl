@@ -1,0 +1,10 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "pod-owner-preferences-shape" ;
+    cap:version "1.0" ;
+    rdfs:label "Pod-Owner Preferences Shape" ;
+    rdfs:comment "PodOwnerPreferencesShape — the elicitation contract for /vault/settings/prefs.ttl. Required facts (fullName/orcid/wikiSlug with regex patterns) drive the agent<->human walk-through; optional facts (affiliation/role/dates/email/avatar) are elicited but not blocking; setupOwnerCompleted marker short-circuits re-runs." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#owner-identity> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/meta/shapes/pod-owner-preferences.shacl.ttl> .

@@ -1,0 +1,10 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "webid-profile-shape" ;
+    cap:version "1.0" ;
+    rdfs:label "WebID Profile Shape" ;
+    rdfs:comment "PodOwnerWebIDShape at /vault/meta/shapes/webid-profile.shacl.ttl. Spec-grounded SHACL contract for the Pod-owner WebID: MUST predicates (foaf:Agent, pim:preferencesFile, oidcIssuer, storage, publicTypeIndex), SHOULD enrichment (foaf:name, owl:sameAs ORCID+contact, foaf:isPrimaryTopicOf wiki page), MAY rich identity (org:hasMembership, foaf:img). Severities matched to spec normative weight." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#owner-identity> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/meta/shapes/webid-profile.shacl.ttl> .
