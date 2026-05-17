@@ -85,3 +85,51 @@ def test_contact_no_anchor_fails():
     conforms, report = _validate(CONTACT_NO_ANCHOR, "contact-card.shacl.ttl")
     assert not conforms
     assert "anchor" in report.lower() or "owl:sameAs" in report or "vcard:hasEmail" in report
+
+
+# ----- OrganizationCardShape -----
+
+ORG_VALID_WITH_ROR = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+
+<#this> a vcard:Organization, foaf:Organization ;
+    vcard:fn "University of Notre Dame" ;
+    vcard:inAddressBook </contacts/index.ttl#this> ;
+    owl:sameAs <https://ror.org/00mkhxb43> .
+"""
+
+ORG_MISSING_FN = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+
+<#this> a vcard:Organization, foaf:Organization ;
+    vcard:inAddressBook </contacts/index.ttl#this> ;
+    owl:sameAs <https://ror.org/00mkhxb43> .
+"""
+
+ORG_NO_ANCHOR = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+
+<#this> a vcard:Organization, foaf:Organization ;
+    vcard:fn "Mystery Lab" ;
+    vcard:inAddressBook </contacts/index.ttl#this> .
+"""
+
+
+def test_org_valid_with_ror_passes():
+    conforms, report = _validate(ORG_VALID_WITH_ROR, "organization-card.shacl.ttl")
+    assert conforms, f"Expected conformance:\n{report}"
+
+
+def test_org_missing_fn_fails():
+    conforms, _ = _validate(ORG_MISSING_FN, "organization-card.shacl.ttl")
+    assert not conforms
+
+
+def test_org_no_anchor_fails():
+    conforms, _ = _validate(ORG_NO_ANCHOR, "organization-card.shacl.ttl")
+    assert not conforms

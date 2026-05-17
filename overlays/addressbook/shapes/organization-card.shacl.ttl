@@ -1,0 +1,39 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<https://pod.vardeman.me/vault/meta/shapes/organization-card.shacl.ttl#OrganizationCardShape>
+    a sh:NodeShape ;
+    sh:targetClass vcard:Organization ;
+    sh:closed false ;
+    sh:agentInstruction """
+      A vcard:Organization card. Required: vcard:fn (one), vcard:inAddressBook
+      (one), and at least one external anchor — owl:sameAs (ROR strongly
+      preferred for institutional orgs) or vcard:hasURL (for non-ROR orgs).
+      ROR provides stable cross-system identity (https://ror.org/...). Without
+      an anchor, the organization can't be matched across pods or to external
+      knowledge bases.
+    """ ;
+
+    sh:property [
+        sh:path vcard:fn ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Organization must have exactly one vcard:fn (display name)." ;
+    ] ;
+
+    sh:property [
+        sh:path vcard:inAddressBook ;
+        sh:minCount 1 ;
+        sh:hasValue </contacts/index.ttl#this> ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Organization must declare vcard:inAddressBook </contacts/index.ttl#this>." ;
+    ] ;
+
+    sh:or (
+        [ sh:property [ sh:path owl:sameAs ;     sh:minCount 1 ; sh:nodeKind sh:IRI ] ]
+        [ sh:property [ sh:path vcard:hasURL ;   sh:minCount 1 ; sh:nodeKind sh:IRI ] ]
+    ) ;
+    sh:message "Organization must have at least one anchor: owl:sameAs (ROR preferred) or vcard:hasURL." .
