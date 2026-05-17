@@ -387,6 +387,51 @@ per D84):
 
 First consumer: AddressBook overlay (5 templates: contact-create, contact-update, org-create, group-create, membership-create). Pattern is general — any overlay with write operations should provide templates. Generalization to wiki-memory shapes (currently no templates) is post-Rung-1.5.
 
+## Phase 5k — owner-identity overlay + setup-owner skill suite (D89–D90, 2026-05-17)
+
+### D89 — Owner-identity overlay as substrate-level concern
+
+**Status:** Candidate (2026-05-17). Ratify after first end-to-end run + telemetry.
+
+**Decision:** The Pod-owner identity contract (enriched WebID profile per spec + extensibility to VCs, DIDs, ACL ownership) is a distinct substrate concern, not a sub-feature of AddressBook. It gets its own overlay (`overlays/owner-identity/`) **above** AddressBook in the D87 capability stack.
+
+**Rationale:** The identity stack will grow — VC issuance (`cred:credentialSubject`), DID bridging (`alsoKnownAs <did:web:...>` per D14), ACL ownership (`acl:owner`), multi-WebID Pods (`solid:account`) — none of these are AddressBook concerns. Keeping the WebID profile shape + enrichment template in a separate overlay leaves room for that growth without renaming AddressBook's responsibility. Pod-owner identity is the agent's *self-document*; AddressBook is the agent's *contact directory*. Different abstraction layers.
+
+**Implications:**
+
+- **Capability deps**: owner-identity *requires* AddressBook (for `vcard-individual-substrate` and `tmpl-vocabulary v1.1`) + wiki-memory (for `foaf-primarytopic-bridge`).
+- **Capabilities provided**: `pod-owner-identity` (top-level), `webid-profile-shape`, `pod-owner-preferences-shape`, `webid-enrich-template`, `prefs-init-template`.
+- **Spec grounding**: PodOwnerWebIDShape's MUSTs match Solid WebID Profile editor draft (`foaf:Agent`, `pim:preferencesFile`); operational MUSTs (`solid:oidcIssuer`, `pim:storage`, `solid:publicTypeIndex`) reflect what the Pod requires for the owner role specifically.
+- **Severity model**: spec MUSTs as `sh:Violation` (block writes); enrichment SHOULDs as `sh:Warning` (advisory, don't block); rich-identity MAYs as `sh:Info`.
+- **`tmpl:targetResource` predicate** (added to `tmpl:` vocab, bumping to v1.1) — first PATCH-flavor template support. `webid-enrich.ttl` is the first consumer.
+- **`overlay:installsResourceMetaPatch`** — new manifest predicate parallel to `installsContainerMetaPatch`. Patches `.meta` of specific resources (not just containers). Used by owner-identity to add `dct:conformsTo` + `ldp:constrainedBy` to `/vault/profile/card.meta`.
+- **Follow-the-nose discovery (A+C combined)**: the webid-enrich template body inlines `<wiki-page> a wiki:Person` alongside the `foaf:isPrimaryTopicOf` triple, so an LLM dereferencing the WebID recognizes the L3 agentic-memory record in a single round-trip.
+
+**See also:** D14 (DID-WebID bridge via `alsoKnownAs`), D44 (storage description router), D70 (L1/L2/L3 stratification), D77/D78 (5-shape catalog + class-based targeting), D81 (predicate-level governance Model A), D83 (Pod-as-toolkit), D86 (PROF-based resource-kind), D87 (capabilities-only deps), D88 (tmpl: vocab).
+
+**First consumer / implementation:** `overlays/owner-identity/` (manifest + 2 shapes + 2 templates + 5 capability descriptors + 1 resource `.meta` patch). Agent skills at `~/dev/git/LA3D/agents/solid-agent-skills/skills/{solid-addressbook,solid-wiki-memory-l3,solid-owner-identity}/`.
+
+**Companion docs:**
+- Design: `~/dev/git/LA3D/agents/solid-agent-skills/docs/superpowers/specs/2026-05-17-pod-owner-setup-skill-design.md`
+- Implementation plan: `~/dev/git/LA3D/agents/solid-agent-skills/docs/superpowers/plans/2026-05-17-pod-owner-setup-skill.md`
+
+### D90 — Agent↔human elicitation via `pim:preferencesFile`
+
+**Status:** Candidate (2026-05-17). Ratify after first end-to-end run.
+
+**Decision:** The per-Pod-owner preferences resource (`/vault/settings/prefs.ttl`, declared via `pim:preferencesFile` on the WebID per Solid WebID Profile §4 MUST) is the canonical agent↔human elicitation surface. The substrate ships `PodOwnerPreferencesShape` as the elicitation contract — required fact set + regex patterns drive the agent's one-question-at-a-time walk-through, with persistence after every answer.
+
+**Rationale:** Spec-mandated (every conforming WebID profile MUST declare exactly one `pim:preferencesFile`), private (post-ACL: `acl:owner`-only), and per-Pod-owner. The natural home for owner-authored facts (name, ORCID, affiliation, slug preferences) that drive substrate-level setup. Avoids inventing a new vocabulary for what the spec already provides. The agent reads the shape's `sh:agentInstruction` to learn the walk-through protocol, then asks the human one fact at a time, persisting via PATCH after each answer.
+
+**Implications:**
+
+- **`prefs:` vocabulary** at `/vault/ontology/owner-prefs` (Pod-hosted per D84). 11 terms: 1 class (`PodOwnerPreferences`) + 10 properties (3 required: `fullName`, `orcid`, `wikiSlug`; 7 optional: affiliation/role/dates/email/avatar + `setupOwnerCompleted` marker).
+- **Idempotence marker**: `prefs:setupOwnerCompleted true^^xsd:boolean` short-circuits re-runs of the SetupPodOwner procedure.
+- **Authoritative self-declaration**: the prefs file holds the human's answers, not facts inferred from CLAUDE.md / project memory / other sources. The skill explicitly instructs agents not to substitute.
+- **First-class extensibility**: `sh:closed false` — additional `prefs:*` predicates can be added without shape change (e.g., when future sprints add VC/DID elicitation steps).
+
+**See also:** D7 (sh:agentInstruction), D52 (affordance descriptors — prefs.ttl is the elicitation analog), D88 (tmpl: vocab — prefs-init template uses it), D89.
+
 ### Authoritative skills (one per D-decision)
 
 - `.claude/skills/solid-uri-conformance/` — D84 URI structure. Invoke before minting any IRI.
