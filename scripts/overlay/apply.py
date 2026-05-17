@@ -18,6 +18,7 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import httpx
+from rdflib import Graph
 
 from .common import (
     Manifest, parse_manifest, fetch_capability_catalog, put_file,
@@ -179,6 +180,21 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
                     f"Failed to PATCH {meta_url}: {r.status_code} {r.text[:200]}"
                 )
             print(f"  meta patch → {meta_url}")
+
+        # 11b. PATCH .meta on specific resources (e.g., dct:conformsTo + ldp:constrainedBy
+        #      on /vault/profile/card so SHACL validation engages on writes; D86 PROF
+        #      LinkMetadataWriter fires for the conformsTo predicate).
+        for rp in manifest.resource_meta_patches:
+            meta_url = rp.target_resource.rstrip("/") + ".meta"
+            # Re-parse with target_resource as publicID so `<>` resolves to the
+            # resource IRI (not the .meta URL), then serialize as N-Triples for the
+            # insert block.
+            mg = Graph()
+            mg.parse(data=rp.patch_body, format="turtle", publicID=rp.target_resource)
+            inserts = mg.serialize(format="nt").strip()
+            if inserts:
+                n3_patch_inserts(client, meta_url, inserts)
+                print(f"  resource meta → {meta_url}")
 
         # 12. PATCH storage description with this overlay's conformsTo + rdfs:seeAlso + vocab
         storage_patch = overlay_dir / "storage-patch.ttl"
