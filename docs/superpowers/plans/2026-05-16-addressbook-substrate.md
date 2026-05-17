@@ -193,6 +193,154 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 ---
 
+## Task 1b: Fix ShaclValidator to serialize ValidationReport as response body
+
+**Added 2026-05-17 after Task 1 confirmed the gap.** The existing `ShaclValidator.ts` throws `new BadRequestHttpError("Data does not conform to " + shapeURL)` — losing the `rdf-validate-shacl` report object entirely. CSS serializes the error as plain JSON. Templates (Tasks 9-13) assume the report flows back to the agent in parseable RDF.
+
+**Files:**
+- Modify: `css/extensions/shape-validator/src/storage/validators/ShaclValidator.ts`
+- Possibly create: `css/extensions/shape-validator/src/error/ShaclValidationError.ts` (a custom error class carrying the report body) — implementer decides based on investigation
+- Possibly modify: Components.js wiring under `css/extensions/shape-validator/dist/components/` (rebuilt by `npm run build`)
+- Possibly modify: CSS config that wires the extension (`css/config/...`) — only if a custom error handler needs registration
+- The Batch 1 integration test (`tests/integration/test_shacl_feedback.py`) is the acceptance test — it should PASS after this fix without further test changes
+
+- [ ] **Step 1: Investigate CSS error→response conventions**
+
+CSS converts thrown `HttpError`s to HTTP responses. The cleanest path is unclear without reading CSS source. Possible patterns:
+
+1. `HttpError` subclass with attached body + content-type — does CSS look at extra properties?
+2. Custom `ErrorHandler` registered via Components.js (CSS has `ErrorHandler` interface for error→response conversion)
+3. Throwing a Response-like object that bypasses error handling
+
+Investigate by reading:
+- `node_modules/@solid/community-server/dist/util/errors/` (HttpError class hierarchy)
+- `node_modules/@solid/community-server/dist/http/output/error/` (CSS's built-in error handler)
+- Other CSS extensions that customize error responses (check `css/extensions/` for examples)
+
+Choose the cleanest approach that fits the existing extension pattern.
+
+- [ ] **Step 2: Modify ShaclValidator to keep the report**
+
+In `ShaclValidator.ts`, after `const report = await validator.validate(dataStore);`, change the failure path:
+
+Current:
+```typescript
+if (!report.conforms) {
+  throw new BadRequestHttpError(`Data does not conform to ${shapeURL}`);
+}
+```
+
+Replacement (sketch — adapt to chosen approach from Step 1):
+```typescript
+if (!report.conforms) {
+  // Serialize report.dataset (from rdf-validate-shacl) as Turtle
+  const reportTurtle = await serializeReportAsTurtle(report.dataset);
+  throw new ShaclValidationError(shapeURL, reportTurtle);
+}
+```
+
+Where `serializeReportAsTurtle` uses N3.js Writer (already a peer dependency). The report has a `.dataset` property with the SHACL report quads.
+
+- [ ] **Step 3: Build a custom error class (if Step 1 chose that approach)**
+
+Create `css/extensions/shape-validator/src/error/ShaclValidationError.ts`:
+
+```typescript
+import { HttpError } from '@solid/community-server';
+
+export class ShaclValidationError extends HttpError {
+  public static readonly statusCode = 422;
+  public static readonly uri = /* IRI for this error type */;
+
+  public readonly shapeURL: string;
+  public readonly reportBody: string;
+
+  public constructor(shapeURL: string, reportBody: string) {
+    super(422, 'ShaclValidationError', `Data does not conform to ${shapeURL}`);
+    this.shapeURL = shapeURL;
+    this.reportBody = reportBody;
+  }
+}
+```
+
+(Exact signature depends on CSS's HttpError v8 API — adapt.)
+
+- [ ] **Step 4: Wire error→response (if Step 1 chose ErrorHandler approach)**
+
+If a custom `ErrorHandler` is needed, register via Components.js. Look at how other extensions register error handlers; mirror the pattern.
+
+- [ ] **Step 5: Rebuild the extension**
+
+```bash
+cd css/extensions/shape-validator && npm run build
+```
+
+Expected: TypeScript compiles, components.jsonld regenerates. No errors.
+
+- [ ] **Step 6: Restart CSS to pick up the rebuilt extension**
+
+```bash
+docker compose restart css
+```
+
+Wait ~10 seconds for CSS to come back. Verify with `make status`.
+
+- [ ] **Step 7: Re-run the Batch 1 integration test**
+
+```bash
+~/uvws/.venv/bin/python -m pytest tests/integration/test_shacl_feedback.py -v
+```
+
+Expected: PASS now. Response is 4xx with `text/turtle` body containing `sh:ValidationReport`.
+
+- [ ] **Step 8: Add a unit test for the validator change**
+
+Add to `css/extensions/shape-validator/test/` (mirror existing tests):
+
+```typescript
+import { ShaclValidator } from '../src/storage/validators/ShaclValidator';
+
+describe('ShaclValidator', () => {
+  it('throws ShaclValidationError with serialized report on non-conformance', async () => {
+    // ... mock parentRepresentation with ldp:constrainedBy, mock representation
+    // with violating data, expect ShaclValidationError to be thrown,
+    // assert .reportBody contains "sh:ValidationReport"
+  });
+});
+```
+
+Run extension's tests:
+```bash
+cd css/extensions/shape-validator && npm test
+```
+
+- [ ] **Step 9: Commit**
+
+```bash
+cd /Users/cvardema/dev/git/LA3D/agents/cogitarelink-solid
+git add css/extensions/shape-validator/
+git commit -m "$(cat <<'EOF'
+[Agent: Claude] shape-validator: serialize sh:ValidationReport in error response
+
+Templates (AddressBook Tasks 9-13) need SHACL violations to return a parseable
+ValidationReport so agents can self-correct without opaque-error retry loops.
+Previously the validator threw BadRequestHttpError with just a message string,
+discarding the rdf-validate-shacl report object entirely.
+
+Now: on non-conformance, serializes report.dataset as Turtle and throws a
+ShaclValidationError (custom HttpError) that CSS surfaces as 422 with
+Content-Type: text/turtle and the report as body.
+
+Integration test tests/integration/test_shacl_feedback.py now passes (was
+DONE_WITH_CONCERNS in Batch 1 because of this exact gap).
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+EOF
+)"
+```
+
+---
+
 ## Task 2: Add `overlay:installsTemplate` predicate
 
 Templates are a new artifact class. The overlay vocabulary needs to know about them so apply.py can deploy them.
@@ -430,6 +578,7 @@ Per the capabilities-only deps doc §6 step 3: wiki-memory advertises the capabi
 - Create: `overlays/wiki-memory/capabilities/wiki-type-index-registration.ttl`
 - Create: `overlays/wiki-memory/capabilities/wiki-page-as-unit.ttl`
 - Modify: `overlays/wiki-memory/storage-patch.ttl` — remove the `overlay:installedOverlay` line
+- **Also**: Add `resource.shacl.ttl` to wiki-memory deployment. Batch 1 discovered the file exists in `shapes/wiki-memory-l3/` but is not in the wiki-memory overlay's `installsShape` list. Either copy/symlink it to `overlays/wiki-memory/shapes/resource.shacl.ttl` (if not already there) and add to manifest's `installsShape`, OR if it's intentionally not deployed, leave a comment in the manifest noting why. Investigate before deciding.
 
 - [ ] **Step 1: Create capability descriptors**
 
@@ -1831,6 +1980,74 @@ git commit -m "[Agent: Claude] addressbook: bootstrap containers (index, people,
 
 vcard:AddressBook root with nameEmailIndex + groupIndex pointing at the
 initially-empty people.ttl + groups.ttl. acl:owner declared inline.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
+
+- [ ] **Step 7: Wire ldp:constrainedBy on each AddressBook subcontainer**
+
+**Added 2026-05-17 after Batch 1 confirmed shape-validator only gates writes when the parent container has `ldp:constrainedBy` in its `.meta`.**
+
+For SHACL validation to actually fire on AddressBook writes, each typed subcontainer's `.meta` must declare its shape via `ldp:constrainedBy`. Add to the bootstrap process — either via additional container .ttl files that include this triple, or via N3 Patch documents the overlay applies during install.
+
+Concrete approach: extend the manifest's `installsBootstrapContent` with per-container `.meta` patches:
+
+```turtle
+overlay:installsContainerMetaPatch
+    [ overlay:targetContainer </vault/contacts/Person/> ;
+      overlay:metaPatchContent "patches/person-container-meta.ttl" ] ,
+    [ overlay:targetContainer </vault/contacts/Organization/> ;
+      overlay:metaPatchContent "patches/organization-container-meta.ttl" ] ,
+    [ overlay:targetContainer </vault/contacts/Group/> ;
+      overlay:metaPatchContent "patches/group-container-meta.ttl" ] ,
+    [ overlay:targetContainer </vault/contacts/Membership/> ;
+      overlay:metaPatchContent "patches/membership-container-meta.ttl" ] .
+```
+
+Each patch file is an N3 InsertDeletePatch:
+
+```turtle
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix ldp:   <http://www.w3.org/ns/ldp#> .
+
+<> a solid:InsertDeletePatch ;
+   solid:inserts {
+       </vault/contacts/Person/> ldp:constrainedBy </vault/meta/shapes/contact-card.shacl.ttl> .
+   } .
+```
+
+Add `overlay:installsContainerMetaPatch` to the overlay vocabulary (mirror the `installsTemplate` / `installsTypeIndexPatch` pattern from Task 2/2a). Update `apply.py` to iterate this predicate and PATCH each target container's `.meta`. Add tests.
+
+Add a parse test verifying the .meta patches are present after deploy:
+
+```python
+def test_addressbook_containers_have_ldp_constrainedBy_after_apply():
+    """After apply, each typed subcontainer's .meta declares its shape."""
+    import httpx
+    expected = {
+        "Person":       "contact-card.shacl.ttl",
+        "Organization": "organization-card.shacl.ttl",
+        "Group":        "group.shacl.ttl",
+        "Membership":   "membership.shacl.ttl",
+    }
+    for ctr, shape in expected.items():
+        r = httpx.head(f"https://pod.vardeman.me/vault/contacts/{ctr}/", verify=False)
+        assert "constrainedBy" in r.headers.get("link", ""), \
+            f"/contacts/{ctr}/ missing ldp:constrainedBy after apply"
+```
+
+Commit this as a separate step (extends Batch 8's container work; verification runs after the overlay apply in Batch 11).
+
+```bash
+git add overlays/addressbook/patches/ overlays/addressbook/manifest.ttl scripts/overlay/ tests/
+git commit -m "[Agent: Claude] addressbook: wire ldp:constrainedBy per subcontainer
+
+Shape-validator only gates writes when parent has ldp:constrainedBy in .meta
+(Batch 1 finding). Adds overlay:installsContainerMetaPatch predicate + apply.py
+support + 4 patch files (one per typed subcontainer) so each Person, Organization,
+Group, Membership container declares its corresponding shape on install.
+
+Without this, AddressBook writes succeed silently regardless of SHACL conformance.
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
