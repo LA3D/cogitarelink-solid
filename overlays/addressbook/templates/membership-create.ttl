@@ -1,0 +1,50 @@
+@prefix tmpl:  <https://pod.vardeman.me/vault/ontology/template#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+</vault/meta/templates/membership-create.ttl>
+    a tmpl:Template ;
+    tmpl:validatesAgainst </vault/meta/shapes/membership.shacl.ttl#MembershipShape> ;
+    tmpl:operation       "PUT" ;
+    tmpl:targetContainer </vault/contacts/Membership/> ;
+    tmpl:slugAlgorithm   "uuid4" ;
+
+    sh:agentInstruction """
+      To record a Person's affiliation with an Organization over time, create a
+      reified org:Membership. This follows the W3C Organization Ontology pattern.
+        1. Generate UUIDv4 for slug
+        2. PUT /vault/contacts/Membership/<uuid>/index.ttl with the body below,
+           replacing <<...>> placeholders
+        3. On 201: PATCH the Person card to add the back-reference:
+             solid:inserts { <#this> org:hasMembership
+               </vault/contacts/Membership/<uuid>/index.ttl#this> . }
+        4. On 422: read the SHACL ValidationReport, fix cited fields, retry PUT.
+
+      Required: org:member (the Person card IRI), org:organization (the Org card
+      IRI), and org:memberDuring with at least time:hasBeginning (start date).
+      time:hasEnd is optional — omit for ongoing memberships.
+      Optional: org:role (e.g., bibo:Author, or a string role label).
+    """ ;
+
+    tmpl:templateBody """
+@prefix org:   <http://www.w3.org/ns/org#> .
+@prefix time:  <http://www.w3.org/2006/time#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+
+<>  dct:creator </vault/profile/card#me> ;
+    dct:created  \"<<ISO_DATETIME>>\"^^xsd:dateTime .
+
+<#this>
+    a org:Membership ;
+    org:member       </vault/contacts/Person/<<PERSON_UUID>>/index.ttl#this> ;
+    org:organization </vault/contacts/Organization/<<ORG_UUID>>/index.ttl#this> ;
+    org:memberDuring [
+        time:hasBeginning [ time:inXSDDate \"<<START_DATE>>\"^^xsd:date ] ;
+        # time:hasEnd      [ time:inXSDDate \"<<END_DATE>>\"^^xsd:date ] ;
+    ] .
+
+    # OPTIONAL:
+    # org:role bibo:Author .
+    # org:role \"<<ROLE_LABEL>>\" .
+""" .
