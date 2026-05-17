@@ -59,3 +59,40 @@ def test_prefs_init_body_parses_as_turtle():
     body = str(list(g.objects(predicate=TMPL.templateBody))[0])
     # The body is a SKELETON with commented-out fields — should parse as empty-ish Turtle.
     Graph().parse(data=body, format="turtle", publicID=_BASE + "settings/prefs.ttl")  # raises if invalid
+
+
+def test_webid_enrich_parses():
+    g = Graph().parse(TMPL_DIR / "webid-enrich.ttl", format="turtle", publicID=_BASE)
+    op = list(g.objects(predicate=TMPL.operation))
+    assert op and str(op[0]) == "PATCH", f"webid-enrich operation should be PATCH, got {op}"
+    target = list(g.objects(predicate=TMPL.targetResource))
+    assert target and str(target[0]).endswith("/profile/card"), f"webid-enrich targetResource should be profile/card, got {target}"
+
+
+def test_webid_enrich_filled_body_conforms_to_webid_shape():
+    g = Graph().parse(TMPL_DIR / "webid-enrich.ttl", format="turtle", publicID=_BASE)
+    body = str(list(g.objects(predicate=TMPL.templateBody))[0])
+    filled = _strip_comments(_substitute(body))
+
+    # Simulate the result of applying the patch to a CSS-default minimal profile.
+    # CSS already provides oidcIssuer / storage / publicTypeIndex / foaf:Person.
+    css_minimal = """
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix pim: <http://www.w3.org/ns/pim/space#> .
+</vault/profile/card#me>
+    a foaf:Person ;
+    solid:oidcIssuer <https://pod.vardeman.me/> ;
+    pim:storage <https://pod.vardeman.me/vault/> ;
+    solid:publicTypeIndex </vault/settings/publicTypeIndex> .
+"""
+    data_g = Graph()
+    data_g.parse(data=css_minimal, format="turtle", publicID=_BASE)
+    data_g.parse(data=filled,      format="turtle", publicID=_BASE)
+
+    shapes_g = Graph().parse(SHAPES_DIR / "webid-profile.shacl.ttl", format="turtle", publicID=_BASE + "meta/shapes/webid-profile.shacl.ttl")
+    conforms, _, report = validate(
+        data_graph=data_g, shacl_graph=shapes_g, inference="rdfs", debug=False,
+        allow_warnings=True,
+    )
+    assert conforms, f"Filled webid-enrich body did NOT conform to PodOwnerWebIDShape:\n{report}"

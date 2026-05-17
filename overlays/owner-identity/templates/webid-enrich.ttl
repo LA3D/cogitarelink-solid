@@ -1,0 +1,59 @@
+@prefix tmpl: <https://pod.vardeman.me/vault/ontology/template#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+</vault/meta/templates/webid-enrich.ttl>
+    a tmpl:Template ;
+    tmpl:validatesAgainst </vault/meta/shapes/webid-profile.shacl.ttl#PodOwnerWebIDShape> ;
+    tmpl:operation       "PATCH" ;
+    tmpl:targetResource  </vault/profile/card> ;
+    sh:agentInstruction """
+      Enrich the Pod-owner WebID profile at /vault/profile/card.
+
+      Placeholders:
+        <<FULL_NAME>>     — display name (e.g., "Charles F. Vardeman II")
+        <<ORCID>>         — bare ORCID id (e.g., "0000-0003-4091-6059")
+        <<CONTACT_CARD>>  — IRI to AddressBook Person card (#this fragment)
+        <<WIKI_PAGE>>     — IRI to /vault/wiki/people/<slug>/index.md
+        <<MEMBERSHIP>>    — optional, IRI to AddressBook Membership #this
+
+      Protocol:
+        1. solid-pod read /vault/profile/card — see what's already present.
+        2. For each triple in the body below, omit it if already present
+           (CSS returns 409 Conflict on duplicate-insert).
+        3. solid-pod patch /vault/profile/card --insert "<filled body>"
+        4. On 422: parse text/turtle ValidationReport, fix MUSTs, retry.
+           SHOULDs (sh:Warning) won't return 422 — they're advisory only.
+
+      Patch is INSERT-ONLY (solid:inserts; CLI gap). Updates require a
+      future delete-flavor template not present in v1.
+
+      PROTECTED: solid:oidcIssuer MUST NEVER appear in the patch (Solid
+      WebID Profile §3.2; CSS owns it; PATCH returns 409). The template
+      body below correctly omits it.
+
+      AUTH: pre-ACL this PATCH works unauthenticated. Post-ACL (Phase 6)
+      requires Solid-OIDC + DPoP; authenticated agent must equal
+      /vault/profile/card#me (acl:owner).
+    """ ;
+    tmpl:templateBody """
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix org:   <http://www.w3.org/ns/org#> .
+@prefix pim:   <http://www.w3.org/ns/pim/space#> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+</vault/profile/card#me>
+    a foaf:Agent, foaf:Person ;
+    foaf:name              "<<FULL_NAME>>" ;
+    pim:preferencesFile    </vault/settings/prefs.ttl> ;
+    owl:sameAs             <https://orcid.org/<<ORCID>>> ,
+                           <<<CONTACT_CARD>>> ;
+    foaf:isPrimaryTopicOf  <<<WIKI_PAGE>>> .
+
+# Follow-the-nose: assert the wiki page's type in this response so a single
+# dereference of the WebID lets an LLM recognize the L3 agentic-memory record.
+<<<WIKI_PAGE>>>  a wiki:Person .
+
+# Optional — include this triple only if a current Membership was elicited:
+# </vault/profile/card#me> org:hasMembership <<<MEMBERSHIP>>> .
+""" .
