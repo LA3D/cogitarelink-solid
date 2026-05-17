@@ -1,6 +1,6 @@
 # SOLID Pod Decisions Index
 
-Always loaded. Concise index of all architectural decisions (D1-D86, K1-K3). Vault is canonical source:
+Always loaded. Concise index of all architectural decisions (D1-D91, K1-K3). Vault is canonical source:
 `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
 ## Skill cross-reference
@@ -22,6 +22,10 @@ Topic-coherent D-clusters surface as Claude Code skills at `.claude/skills/<name
 | `solid-profiles-and-conneg` | D86 (PROF + RFC 6906 + conneg-by-profile resource-kind hints) |
 
 CSS-builder skills (no D-cluster but referenced by many decisions): `css-extension`, `components-override`, `metadata-writer`, `monitoring-store`, `comunica-sources`, `shacl-shapes`.
+
+**D87 (capabilities-only overlay deps), D88 (tmpl: vocab), D89 (owner-identity overlay), D90 (agent↔human elicitation)** — Phase 5k substrate decisions; no dedicated skill yet. See Phase 5k section below.
+
+**D91 (wiki-memory search layer)** — Phase 7 decision. No dedicated skill yet; buildable spec at `docs/plans/2026-05-17-wiki-search-design.md`.
 
 ## Phase 1 foundation (D1–D28)
 
@@ -442,6 +446,63 @@ First consumer: AddressBook overlay (5 templates: contact-create, contact-update
 
 Each skill is self-contained (no vault references), cites primary sources only (W3C / IETF / Solid Project), and is portable outside this repo.
 
+## Phase 7 — Wiki-memory L3 search layer (D91, 2026-05-18)
+
+### D91 — Wiki-Memory L3 Search Layer (OSLC Query 3.0 + grep-first, Solid-native)
+
+**Status**: Ratified 2026-05-18 (Phase 7a shipped, commits b064a79..4905731 in cogitarelink-solid + b17be6f in solid-agent-skills).
+
+**Note on numbering**: The vault assigns this decision as D87 (2026-05-17/18), but D87-D90 are already taken in the repo by the capabilities/templates/owner-identity/prefs sprint. This decision is numbered **D91** in the repo to avoid collision. The vault file will eventually be updated to reflect the canonical numbering; until then, vault references to vault-D87 = repo-D91.
+
+**Decision**: Implement the wiki-memory L3 search layer as a CSS extension exposing **OSLC Query 3.0** semantics (OASIS Standard, 2021) on `/wiki/` containers, with **pure Node `RegExp`** as the Phase 1 engine behind a `SearchEngine` interface (WASM ripgrep, BM25 backends deferred as Phase 7b swap targets behind the same interface). Search is **Solid-protocol-native end-to-end**: standard HTTP + Solid-OIDC/DPoP, LDP-conformant Turtle response, Claude Code skills issue HTTP calls directly. **No MCP translation layer.** Promotes the deferred D16/D17/D18/D19 cluster ("OSLC Query + TRS for Pod Search") to Phase 7, sequenced after Sprint 2 (`pod-read`).
+
+**Engine phases**:
+
+| Phase | Engine | Discovery token |
+|---|---|---|
+| **7a** (Phase 1) | Pure Node `RegExp` (no external deps; sufficient at ~100-1000 page wiki-memory scale) | `?ext=search-grep` |
+| **7b** | BM25 — MiniSearch (in-memory) OR SQLite FTS5 (persisted) | `?ext=search-bm25` |
+| **7c** | Hybrid RRF fusion over 7a ∪ 7b | `?ext=search-hybrid&alpha=…` |
+| **7d** (deferred) | ESPRESSO-pattern WebID-partitioned in-pod index resources | backend swap behind `?ext=search-bm25` |
+
+**API contract** (stable across all phases):
+
+```http
+GET /vault/wiki/
+Link: </vault/wiki/?ext=search-grep>; rel="http://open-services.net/ns/core#queryBase"; title="ripgrep"
+Link: </vault/wiki/?ext=search-meta>; rel="http://open-services.net/ns/core#queryBase"; title="SPARQL over .meta"
+
+GET /vault/wiki/?ext=search-grep&oslc.searchTerms=progressive+disclosure&oslc.where=vault:kind="concept"
+→ LDP container with ldp:contains members + oslc:score per match (OSLC Query §6.4)
+```
+
+**Why grep-first**: three evidence sources — (1) Sen 2026 (`@sen-2026-grep-harnesses`): inline grep beats inline vector retrieval on LongMemEval for verbatim-span questions; (2) Letta MemFS production system uses grep over a git-backed markdown directory with no index; (3) Karpathy's 100-page personal wiki uses `qmd` (custom grep wrapper). At wiki-memory scale (~100-1000 pages), grep latency is sub-100ms.
+
+**Why no MCP**: the Pod's HTTP surface (LDP + WAC + OSLC Query + Solid Notifications) is already the agent's interface contract. MCP would add a second protocol with zero capability gain for this deployment. Comunica becomes an in-process library import inside each skill.
+
+**Capability discovery**: registered via D83 capability catalog at `/vault/meta/capabilities/` (overlay descriptor `wiki-search-substrate.ttl` + affordance descriptor `wiki-search-grep.ttl`). Pod speaks OSLC vocabulary in response (`oslc:score`, `oslc:totalCount`, `oslc:ResponseInfo`) for forward-compat but does NOT claim to be a fully-conformant OSLC ServiceProvider.
+
+**Skill surface** (in `solid-agent-skills`, post-Sprint-3):
+- `wiki-search` — picks dialect by question shape; issues HTTP GET to `?ext=search-*` endpoint
+- `wiki-meta-query` — SPARQL over `.meta` via Comunica library
+- `wiki-backlinks` — follows existing `Link: rel="backlinks"` header (D45)
+- `wiki-read-page` — fetches body + `.meta` as paired structured response
+
+**CSS extension shape**: HttpHandler component (pattern as in `MementoHttpHandler.ts`) intercepting container GETs with `?ext=search-grep` query param. `interface SearchEngine { search(body: string, pattern: SearchPattern): Match[] }` with `RegexpSearchEngine` as Phase 1. ~600-1200 LOC across 8-15 files.
+
+**Refines**: D16 (OSLC Query — now ratified, not deferred), D18 (SQLite FTS5+sqlite-vec — engine choice for Phase 7b; deployment-location revised to WebID-partitioned in-pod resources per ESPRESSO pattern). D17 TRS superseded by D56 Solid Notifications for change feeds.
+
+**Buildable spec**: `cogitarelink-solid/docs/plans/2026-05-17-wiki-search-design.md`
+
+**Open questions filed as RQs**:
+- RQ-Search-1: Score normalization formula for grep (`score = min(100, 10*match_count + 10*unique_terms/total_terms)` — validate empirically)
+- RQ-Search-2: Should `?ext=search-grep` support `oslc.where` for combined text + structured filter? v1: post-filter via Comunica
+- RQ-Search-3: Phase 7d WebID-partitioned index interaction with `MarkdownProjectionListener` on ACL change (deferred)
+- RQ-Search-4: Should search response include `MarkdownProjectionListener`-emitted typed-edge triples as match context?
+- RQ-Search-5: Cross-container search — per-container only in v1; pod-root search is Phase 5/multi-application concern
+
+**See also**: D16 (OSLC Query), D17 (TRS — superseded by D56), D18 (SQLite FTS5+sqlite-vec, location revised), D19 (CSS extension pattern), D44 (storage description as router), D45 (CONSTRUCT view / `?ext=…` affordance pattern — search reuses), D55 (three-tier access), D58 (body affordances first-class), D71 (wiki-memory L3 dual-layer linking), D83 (Pod-as-toolkit capability catalog), D87-D90 (capabilities/templates/owner-identity sprint).
+
 ## Open research questions
 
 RQ-Affordance-1: descriptor format (declarative SHACL vs custom RDF vs hybrid)
@@ -465,6 +526,11 @@ RQ-Affordance-4 (new, 2026-05-15 evening): Does inline JSON-LD block extraction 
 RQ-Substrate-2 (filed + RESOLVED 2026-05-16): GET on `/vault/.well-known/solid` returned 501 Not Implemented despite the Pod advertising this URL via Link rel="solid:storageDescription". Surfaced universally in Sprint 1 iteration-2 eval (all 6 agents hit it). **Root cause**: Phase 1's `css/config/pod-templates/base/.meta` wrote `<../> a pim:Storage` instead of `<>`. Against base `/vault/.meta`, `<../>` resolves to the server root, not `/vault/`, so CSS's StorageDescriptionHandler.canHandle() couldn't find `pim:Storage` on `/vault/` and threw `NotImplementedHttpError("Only supports descriptions of storage containers")`. Fix (substrate-cleanup-step-6): one-character template edit (`<../>` → `<>`) + add `cap:catalog` StaticStorageDescriber to `void-description.json` so D83's catalog pointer surfaces at `.well-known/solid` per D44. Note: README's `RQ-Substrate-1` is a different question (descriptor format L2/L3), no relation.
 
 RQ-Substrate-3 (filed 2026-05-16, RESOLVED-BY D84): namespace mismatch between `css/config/void-description.json` (using `urn:example:wiki#`) and overlay-managed `.meta` (using `http://pod.vardeman.me:3000/vault/ontology/wiki#`). Root analysis: vocabulary IRIs baked deployment details (port, scheme) into class identifiers; per-app vocab was treated as a resource URL rather than a stable namespace identifier. Resolution: **D84** commits to HTTPS, port-less, hash-namespace, extension-less vocabulary IRIs hosted on the Pod itself (`https://pod.vardeman.me/vault/ontology/{wiki,capability,overlay}#`); per-app vocab lives on the Pod (Pod is namespace authority), cross-Pod shared profiles use w3id.org. Implementation in Phase 5j (skill + decisions land first; data-layer migration via volume wipe + regenerate happens during D85 TLS turn-up).
+RQ-Search-1 (D91): Score normalization for grep. v1 formula: `score = min(100, 10 * match_count + 10 * unique_terms_matched / total_terms_in_query)`. Validate empirically in Phase 7a eval.
+RQ-Search-2 (D91): Should `?ext=search-grep` support `oslc.where` for combined text + structured filter? v1: post-filter via Comunica over `.meta`.
+RQ-Search-3 (D91): Phase 7d WebID-partitioned index interaction with `MarkdownProjectionListener` on ACL change. Deferred until Phase 7d is on the table.
+RQ-Search-4 (D91): Should search response include `MarkdownProjectionListener`-emitted typed-edge triples as match context, or just text snippets? Richer context costs tokens but lets agents skip a follow-up `.meta` fetch.
+RQ-Search-5 (D91): Cross-container search — per-container only in v1; pod-root search is a Phase 5/multi-application concern.
 
 ## References
 
