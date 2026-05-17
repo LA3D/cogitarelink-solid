@@ -21,28 +21,8 @@ import httpx
 
 from .common import (
     Manifest, parse_manifest, fetch_capability_catalog, put_file,
-    ensure_container, n3_patch_inserts, version_at_least,
+    ensure_container, n3_patch_inserts, version_at_least, CapabilityProvision,
 )
-
-
-def check_overlay_dependencies(client: httpx.Client, pod_url: str, manifest: Manifest) -> None:
-    """Refuse to apply if any depends_on_overlay isn't already installed."""
-    if not manifest.depends_on_overlays:
-        return
-    storage_url = pod_url.rstrip("/") + "/.well-known/solid"
-    from rdflib import Graph, Namespace
-    OVERLAY = Namespace("https://pod.vardeman.me/vault/ontology/overlay#")
-    r = client.get(storage_url, headers={"Accept": "text/turtle"}, timeout=10)
-    if r.status_code != 200:
-        raise RuntimeError(f"Storage description not reachable: HTTP {r.status_code}")
-    g = Graph().parse(data=r.text, format="turtle", publicID=storage_url)
-    installed = set(g.objects(predicate=OVERLAY.installedOverlay))
-    missing = [d for d in manifest.depends_on_overlays if d not in installed]
-    if missing:
-        raise RuntimeError(
-            f"Overlay {manifest.name} requires these overlays to be installed first: "
-            f"{[str(m) for m in missing]}"
-        )
 
 
 def check_capabilities(client: httpx.Client, pod_url: str, manifest: Manifest) -> None:
@@ -70,7 +50,6 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
     print(f"  Target: {pod_url}")
 
     with httpx.Client() as client:
-        check_overlay_dependencies(client, pod_url, manifest)
         check_capabilities(client, pod_url, manifest)
 
         # 1. Upload vocabulary documents
@@ -124,7 +103,23 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
                              f"<{url}> <{DCT}conformsTo> <{PROF_SPEC}> .")
             print(f"  prof.meta → dct:conformsTo PROF")
 
-        # 6. Create containers + their .meta files
+        # 6. Upload provided capabilities to the catalog
+        for cap in manifest.provides:
+            r = client.put(cap.url, content=cap.document.encode("utf-8"),
+                           headers={"Content-Type": "text/turtle"}, timeout=15)
+            if r.status_code not in (200, 201, 204, 205):
+                raise RuntimeError(f"PUT capability {cap.url} failed: HTTP {r.status_code}: {r.text[:300]}")
+            print(f"  capability → {cap.url}")
+
+        # 7. Upload template documents
+        for tmpl in manifest.templates:
+            r = client.put(tmpl.url, content=tmpl.document.encode("utf-8"),
+                           headers={"Content-Type": "text/turtle"}, timeout=15)
+            if r.status_code not in (200, 201, 204, 205):
+                raise RuntimeError(f"PUT template {tmpl.url} failed: HTTP {r.status_code}: {r.text[:300]}")
+            print(f"  template → {tmpl.url}")
+
+        # 8. Create containers + their .meta files
         for container_path in manifest.container_paths:
             container_url = absolutize(pod_url, container_path)
             ensure_container(client, container_url)
@@ -149,7 +144,7 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
                     n3_patch_inserts(client, meta_url, inserts)
                     print(f"  meta  → {meta_url}")
 
-        # 7. Merge JSON-LD context fragment
+        # 9. Merge JSON-LD context fragment
         ctx_fragment = overlay_dir / "context-fragment.jsonld"
         if ctx_fragment.exists():
             merge_jsonld_context(client, pod_url, ctx_fragment, manifest.overlay_iri)
@@ -157,14 +152,14 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             patch_context_meta(client, pod_url)
             print(f"  ctx.meta dct:conformsTo patched")
 
-        # 8. PATCH Type Index with registrations
+        # 10. PATCH Type Index with registrations
         if manifest.type_registrations:
             ti_url = pod_url.rstrip("/") + "/settings/publicTypeIndex"
             inserts = build_type_index_inserts(manifest)
             n3_patch_inserts(client, ti_url, inserts)
             print(f"  type index → {len(manifest.type_registrations)} registrations patched in")
 
-        # 9. PATCH storage description with this overlay's conformsTo + rdfs:seeAlso + vocab
+        # 11. PATCH storage description with this overlay's conformsTo + rdfs:seeAlso + vocab
         storage_patch = overlay_dir / "storage-patch.ttl"
         if storage_patch.exists():
             sd_url = pod_url.rstrip("/") + "/.well-known/solid"

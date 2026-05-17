@@ -50,6 +50,18 @@ class TypeRegistration:
 
 
 @dataclass(frozen=True)
+class CapabilityProvision:
+    url: str        # full URL where the descriptor will live (e.g., /vault/meta/capabilities/foo.ttl)
+    document: str   # raw Turtle body of the descriptor
+
+
+@dataclass(frozen=True)
+class TemplateEntry:
+    url: str
+    document: str
+
+
+@dataclass(frozen=True)
 class Manifest:
     """Parsed view of an overlay's manifest.ttl."""
     name: str
@@ -66,6 +78,8 @@ class Manifest:
     role_scheme_urls: list[str]
     profile_urls: list[str]
     type_registrations: list[TypeRegistration]
+    provides: list[CapabilityProvision]
+    templates: list[TemplateEntry]
     overlay_dir: Path                 # local directory holding manifest + artifacts
 
 
@@ -142,6 +156,22 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         if fc and ic:
             type_regs.append(TypeRegistration(URIRef(fc), URIRef(ic)))
 
+    cap_provisions = []
+    for prov_node in many(OVERLAY.providesCapability):
+        cap_iri = next(g.objects(prov_node, CAP.capability), None)
+        descriptor_path = next(g.objects(prov_node, CAP.descriptor), None)
+        if cap_iri and descriptor_path:
+            doc_file = overlay_dir / str(descriptor_path)
+            cap_provisions.append(CapabilityProvision(
+                url=str(cap_iri),
+                document=doc_file.read_text(),
+            ))
+
+    templates = []
+    for tmpl_url in many(OVERLAY.installsTemplate):
+        local = overlay_dir / "templates" / Path(str(tmpl_url)).name
+        templates.append(TemplateEntry(url=str(tmpl_url), document=local.read_text()))
+
     return Manifest(
         name=name, version=version, overlay_iri=overlay_iri, profile_iri=profile_iri,
         depends_on_overlays=depends_on,
@@ -150,6 +180,8 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         container_paths=containers, shape_urls=shapes, affordance_urls=affordances,
         role_scheme_urls=role_schemes, profile_urls=profiles,
         type_registrations=type_regs,
+        provides=cap_provisions,
+        templates=templates,
         overlay_dir=overlay_dir,
     )
 

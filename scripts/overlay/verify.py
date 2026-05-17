@@ -57,6 +57,26 @@ def verify_overlay(overlay_dir: Path, pod_url: str) -> int:
                 print(f"  [drift] vocab missing: {url} (HTTP {r.status_code})", file=sys.stderr)
                 errors += 1
 
+        # Provided capabilities
+        for cap in manifest.provides:
+            r = client.get(cap.url, headers={"Accept": "text/turtle"}, timeout=5)
+            if r.status_code != 200:
+                print(f"  [drift] capability missing: {cap.url} (HTTP {r.status_code})", file=sys.stderr)
+                errors += 1
+            elif "text/turtle" not in r.headers.get("Content-Type", ""):
+                print(f"  [drift] capability wrong content-type: {cap.url}", file=sys.stderr)
+                errors += 1
+
+        # Templates
+        for tmpl in manifest.templates:
+            r = client.get(tmpl.url, headers={"Accept": "text/turtle"}, timeout=5)
+            if r.status_code != 200:
+                print(f"  [drift] template missing: {tmpl.url} (HTTP {r.status_code})", file=sys.stderr)
+                errors += 1
+            elif "text/turtle" not in r.headers.get("Content-Type", ""):
+                print(f"  [drift] template wrong content-type: {tmpl.url}", file=sys.stderr)
+                errors += 1
+
     if errors == 0:
         print(f"Overlay {manifest.name}: clean (no drift).")
     else:

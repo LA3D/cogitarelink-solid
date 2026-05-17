@@ -2,6 +2,7 @@
 @prefix cap:     <https://pod.vardeman.me/vault/ontology/capability#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix dct:     <http://purl.org/dc/terms/> .
 
 overlay:Overlay a rdfs:Class ;
@@ -37,7 +38,8 @@ overlay:degradesTo a rdf:Property ;
 
 overlay:dependsOnOverlay a rdf:Property ;
     rdfs:label "Overlay this depends on being already installed" ;
-    rdfs:comment "apply.py refuses to install if dependency is absent." ;
+    rdfs:comment "DEPRECATED: overlay-to-overlay dependencies are replaced by capability-based dependencies (overlay:requiresCapability). CSS returns 405 on PATCH to .well-known/solid, making overlay-install tracking unworkable. Use overlay:requiresCapability against a catalog entry instead." ;
+    owl:deprecated true ;
     rdfs:isDefinedBy <> .
 
 overlay:installsContainer    a rdf:Property ; rdfs:label "Pod path of a container this overlay creates" ; rdfs:isDefinedBy <> .
@@ -48,4 +50,23 @@ overlay:installsRoleScheme     a rdf:Property ; rdfs:label "Pod URL of a SKOS ro
 overlay:installsTypeRegistration a rdf:Property ;
     rdfs:label "Type Index registration this overlay adds" ;
     rdfs:comment "Object is a blank node with solid:forClass + solid:instanceContainer." ;
+    rdfs:isDefinedBy <> .
+
+overlay:installsTemplate a rdf:Property ;
+    rdfs:label "installs template" ;
+    rdfs:comment "An overlay installs a template document at the given URI. Templates are RDF skeletons paired with a SHACL shape via tmpl:validatesAgainst; agents fetch them before write operations to front-load structured context and reduce SHACL violation cycles." ;
+    rdfs:domain overlay:Overlay ;
+    rdfs:range  rdfs:Resource ;
+    rdfs:isDefinedBy <> .
+
+overlay:providesCapability a rdf:Property ;
+    rdfs:label "provides capability" ;
+    rdfs:comment "An overlay provides a capability when installed. apply.py iterates this predicate and PUTs each referenced capability descriptor to /vault/meta/capabilities/. Other overlays declare overlay:requiresCapability against the same descriptor IRI. Replaces the deprecated overlay:installedOverlay tracking (CSS 405 on PATCH to .well-known/solid made that mechanism unworkable; capability catalog is the runtime-mutable substitute per D83)." ;
+    rdfs:domain overlay:Overlay ;
+    rdfs:isDefinedBy <> .
+
+overlay:installedOverlay a rdf:Property ;
+    rdfs:label "installed overlay" ;
+    rdfs:comment "DEPRECATED: runtime overlay-install tracking via the storage description is unworkable (CSS returns 405 on PATCH to .well-known/solid). Replaced by overlay:providesCapability: overlays publish their capabilities to /vault/meta/capabilities/ at install time, which is a normal LDP container supporting PUT." ;
+    owl:deprecated true ;
     rdfs:isDefinedBy <> .
