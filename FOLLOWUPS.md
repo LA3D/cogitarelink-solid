@@ -83,6 +83,119 @@ Things to come back to. Open items only; closed items move to commit history and
 - [x] **`Link: rel="profile"` MetadataWriter CSS extension** — done via
   `css/extensions/profile-link/` + Components.js wiring in memento.json.
 
+## AddressBook substrate sprint (2026-05-17)
+
+D87 + D88 ratified. Substrate shipped + agent-discoverable. Cross-batch
+adversarial review surfaced these items. None are blockers; trim or address
+as need arises.
+
+### Future trims (do when justified, not now)
+
+- [ ] **9 capability descriptors with no consumers** (`/vault/meta/capabilities/`):
+  5 AddressBook-provided (vcard-individual-substrate, vcard-organization-substrate,
+  external-anchor-tracking, contact-discovery, tmpl-vocabulary) + 1 wiki-memory
+  (wiki-page-as-unit). All are speculative — built for hypothetical future
+  overlays that don't exist yet. Cost-to-carry is ~50 lines of Turtle. Trim
+  when a third overlay materializes and we can see which caps actually get
+  consumed vs which were YAGNI violations. Cross-batch review identified;
+  see `0f1295f..be26866` for sprint commits.
+
+### Coverage gaps (next plan or backlog)
+
+- [ ] **`verify.py` doesn't check bootstrap content, TypeIndex registrations,
+  or container `.meta` patches landed correctly.** After `apply_overlay()` runs,
+  verify only checks artifacts (containers, shapes, affordances, vocabularies,
+  capabilities, templates). Missing: people.ttl/groups.ttl/index.ttl exist,
+  TypeIndex contains the registration, container .meta has `ldp:constrainedBy`.
+  Add when the next overlay's verify needs them.
+
+- [ ] **`find-by-orcid` affordance not exercised end-to-end** via
+  `solid-pod invoke`. E2E test falls back to direct GET+parse because the
+  CLI isn't on PATH in the test runner. Add a proper affordance-invocation
+  integration test when the AddressBook skill plan lands (the skill needs to
+  exercise affordances anyway, so this work folds into that plan).
+
+- [ ] **`org-find-by-ror` SPARQL test is too weak** — checks `owl:sameAs`
+  in query text but doesn't verify `vcard:Organization` type-filtering.
+  Could quietly accept a Person ORCID match. Two-line test strengthening.
+
+### Cross-batch design lessons (captured for future plans)
+
+- [ ] **Template-to-SHACL agreement tests are non-optional**: the
+  AddressBook sprint's `vcard:inAddressBook` IRI bug — templates said
+  `</vault/contacts/index.ttl#this>` but SHACL `sh:hasValue` resolved to
+  `<https://pod.vardeman.me/contacts/index.ttl#this>` (server-root, not
+  vault-root, due to CSS relative-IRI resolution quirk) — would have
+  silently broken every agent following the template. Caught by the
+  cross-batch review and the new parametric test in
+  `tests/test_addressbook_templates.py::test_template_substituted_body_conforms_to_shape`.
+  Any overlay that adds templates MUST add the equivalent agreement test.
+  Consider hoisting this test pattern to a reusable test helper if a second
+  overlay ships templates.
+
+### AddressBook-specific deferred design choices
+
+- [ ] **Person flat-file layout** (`/vault/contacts/Person/<uuid>.ttl` instead
+  of design's `/vault/contacts/Person/<uuid>/index.ttl#this`): CSS
+  shape-validator rejects sub-container creation within a constrained
+  container, blocking the per-Person container approach intended for
+  attachment co-location. Two options when attachment use-cases surface:
+  (a) add a separate `Photo/` (or per-attachment-type) container with its
+  own SHACL constraint; (b) drop `ldp:constrainedBy` on `Person/` and
+  validate via a write-handler hook on individual cards instead.
+
+- [ ] **SHACL relative-IRI resolution quirk on Pod**: shape uses
+  `sh:hasValue </contacts/index.ttl#this>` which CSS resolves relative to
+  server root, not vault root. Sprint resolved this by switching both
+  shape and template to absolute IRIs (`<https://pod.vardeman.me/vault/...>`).
+  Worth grepping all SHACL shapes in `overlays/*/shapes/` for relative IRI
+  patterns and converting to absolute where the resolution would surprise
+  agents. Defer until a second overlay shape uses `sh:hasValue` with a
+  relative IRI.
+
+- [ ] **Pod owner contact card** — no `/vault/profile/card#me`-linked
+  AddressBook entry exists. Addressed by the next plan's `solid-pod
+  setup-owner` CLI flow (would mint UUID, PUT card, add `owl:sameAs
+  </vault/profile/card#me>`, PATCH people.ttl). Defer to that plan.
+
+### Wiki URI scheme rethink (informed by Swartz)
+
+- [ ] **Revisit wiki entity URIs in light of Aaron Swartz, *A Programmable
+  Web: An Unfinished Work* (Synthesis Lectures on the Semantic Web, 2013,
+  ed. Hendler).** The AddressBook substrate adopted opaque `UUIDv4` slugs
+  for Person/Organization (class-by-class exception to "mnemonic over
+  opaque for everything" per `solid-uri-conformance/references/deltas.md`).
+  Swartz's positions on URI design (hash-vs-slash pragmatism, Wikipedia
+  URLs as a good model, avoiding technical-leakage in URLs, JSON-LD over
+  RDF/XML) deserve a careful read before extending the per-class-opacity
+  pattern to other wiki entity classes. Specifically: which wiki:Resource
+  subclasses have collision/rename risk substantively higher than the
+  current name-slug assumption (where wikilink affordance is the design
+  centerpiece)? Most likely candidates: none today; the wiki was designed
+  for name-slug stability and the Pod-owner controls naming. But the
+  question of when to mint opaque slugs for instances (vs vocabularies,
+  covered by D84) is open.
+
+  Action when picked up:
+  1. Re-fetch Swartz's book (likely CC-licensed; check Hendler's site or
+     archive.org) and read Chapter 4-5 specifically on URI design
+  2. Synthesize the project's deltas (URI conformance skill), Swartz's
+     positions, and the Cool URIs guidance into a single design-doc-level
+     URI design principles reference
+  3. Per-entity-class opacity audit (where is `UUIDv4` justified beyond
+     Person/Org? Where does mnemonic-by-default still hold?)
+
+  Surfaced during the AddressBook design conversation (2026-05-16); flagged
+  again at sprint close-out (2026-05-17).
+
+### Confirmation of close-out
+
+- [x] AddressBook substrate shipped — see MEMORY.md ship entry
+- [x] D87 + D88 ratified — see `decisions.md`
+- [x] 38 commits pushed to origin/main (33dd1d9..be26866)
+- [x] Template-to-SHACL agreement test pattern added (commit `04e26ef`)
+- [x] Pre-push cleanups (consolidated TypeIndex mechanism, dead code, stale comments)
+
 ## Rung 1.4 close (2026-05-15)
 
 ### Critical — deferred to Rung 1.5 eval
