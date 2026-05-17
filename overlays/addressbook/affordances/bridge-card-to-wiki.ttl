@@ -1,0 +1,28 @@
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+
+</vault/meta/affordances/bridge-card-to-wiki.ttl>
+    a wiki:Affordance ;
+    sh:agentInstruction """
+      Given a Person or Organization card IRI, find the wiki page that has
+      this card as its foaf:primaryTopic. The wiki side declares the bridge;
+      this query inverts it.
+
+      Returns 0..1 wiki page URLs. Most cards have either zero (no narrative
+      page yet) or one (the typical case). Multiple wiki pages targeting one
+      card would be unusual but valid.
+
+      Parameter: $card — the card IRI with hash fragment (e.g.,
+      </vault/contacts/Person/c4e5.../index.ttl#this>).
+
+      Sources required: the /vault/wiki/people/ container's .meta resources.
+      Use solid-pod sparql with --default-graph-uri pointing at each relevant
+      .meta (RQ-Pod-4 workaround).
+    """ ;
+    wiki:selectQuery """
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?wikiPage WHERE {
+  ?wikiPage foaf:primaryTopic $card .
+}
+    """ .
