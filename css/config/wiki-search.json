@@ -1,0 +1,26 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/wiki-search/^0.1.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "comment": "Phase 1 RegExp engine; Phase 7b will Override @type to a BM25/ripgrep engine without touching the handler.",
+      "@id": "urn:cogitarelink:WikiSearchEngine",
+      "@type": "RegexpSearchEngine"
+    },
+    {
+      "comment": "Wiki-search HTTP handler. Intercepts container GETs with ?ext=search-grep. Recursive over /vault/wiki/. WAC-enforced. Paginated per OSLC Query 3.0.",
+      "@id": "urn:cogitarelink:WikiSearchHttpHandler",
+      "@type": "WikiSearchHttpHandler",
+      "engine": { "@id": "urn:cogitarelink:WikiSearchEngine" },
+      "store": { "@id": "urn:solid-server:default:ResourceStore" },
+      "permissionReader": { "@id": "urn:solid-server:default:PermissionReader" },
+      "credentialsExtractor": { "@id": "urn:solid-server:default:CredentialsExtractor" },
+      "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
+    },
+    {
+      "comment": "Handler insertion is consolidated in memento.json's BaseHttpHandler Override (K1: one Override per instance). This file only declares the engine and handler instances."
+    }
+  ]
+}

@@ -128,3 +128,23 @@ RUN rm -rf /community-server/extensions/profile-link/node_modules/@solid/communi
 RUN mkdir -p /community-server/node_modules/@cogitarelink && \
     ln -sf /community-server/extensions/profile-link \
        /community-server/node_modules/@cogitarelink/profile-link
+
+# ============================================================================
+# wiki-search — full-text grep affordance over /vault/wiki/ markdown bodies
+# (Phase 7a, D87). HttpHandler intercepts ?ext=search-grep; MetadataWriter
+# adds Link: rel="queryBase" headers. Pure-Node RegExp engine for Phase 1;
+# pluggable behind SearchEngine interface (Phase 7b BM25/ripgrep swap).
+# ============================================================================
+
+COPY extensions/wiki-search /community-server/extensions/wiki-search
+
+RUN cd extensions/wiki-search && npm install --ignore-scripts
+
+RUN cd extensions/wiki-search && npm run build
+
+RUN rm -rf /community-server/extensions/wiki-search/node_modules/@solid/community-server && \
+    ln -sf /community-server /community-server/extensions/wiki-search/node_modules/@solid/community-server
+
+RUN mkdir -p /community-server/node_modules/@cogitarelink && \
+    ln -sf /community-server/extensions/wiki-search \
+       /community-server/node_modules/@cogitarelink/wiki-search

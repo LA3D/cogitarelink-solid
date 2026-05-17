@@ -14,7 +14,7 @@
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
     },
     {
-      "comment": "Insert MementoHttpHandler immediately before LdpHandler so Memento-shaped requests get claimed before standard LDP processing.",
+      "comment": "Insert MementoHttpHandler and WikiSearchHttpHandler immediately before LdpHandler so Memento-shaped and search-grep requests get claimed before standard LDP processing. Both insertions are in a single Override to satisfy the K1 one-Override-per-instance constraint.",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:BaseHttpHandler" },
       "overrideSteps": [{
@@ -22,6 +22,12 @@
         "overrideParameter": { "@id": "css:dist/util/handlers/StatusWaterfallHandler.jsonld#StatusWaterfallHandler_handlers" },
         "overrideTarget": { "@id": "urn:solid-server:default:LdpHandler" },
         "overrideValue": { "@id": "urn:cogitarelink:MementoHttpHandler" }
+      },
+      {
+        "@type": "OverrideListInsertBefore",
+        "overrideParameter": { "@id": "css:dist/util/handlers/StatusWaterfallHandler.jsonld#StatusWaterfallHandler_handlers" },
+        "overrideTarget": { "@id": "urn:solid-server:default:LdpHandler" },
+        "overrideValue": { "@id": "urn:cogitarelink:WikiSearchHttpHandler" }
       }]
     },
     {
