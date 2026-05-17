@@ -27,6 +27,23 @@ Not hosted on this Pod. These are minted at `w3id.org/cogitarelink/` because the
 
 - **Slug algorithm** (D76 S3a): drop leading `@` from BibTeX citekeys (`@author2024` → `author2024`) to avoid JSON-LD keyword collision.
 - **Mnemonic over opaque** for everything: vault notes have stable human-readable titles; rename risk is low.
+- **Person and Organization entities in /vault/contacts/** use opaque UUIDv4
+  slugs, not mnemonic. Documented exception to "mnemonic over opaque for
+  everything" — name collision risk (CJK, common Western names,
+  marriage/transition renames) substantively exceeds vault notes. Display
+  name and external anchors (ORCID, ROR, email, WebID) live in card data via
+  vcard:fn and owl:sameAs, not in URI slugs. Wiki pages about people
+  (/vault/wiki/people/) retain mnemonic slugs for wikilink affordance,
+  bridged to opaque cards via foaf:primaryTopic. See
+  `docs/plans/2026-05-16-agentic-addressbook-design.md` §3.1.
+- **Group entities in /vault/contacts/Group/** use mnemonic kebab-case slugs.
+  Author-controlled, low volume, low collision risk.
+- **Person card filename is flat**, not container-as-resource: `/vault/contacts/Person/<uuid>.ttl#this`
+  rather than `/vault/contacts/Person/<uuid>/index.ttl#this`. Implementation
+  deviation from the design discovered in Batch 11/12 of the substrate plan:
+  shape-validator rejects sub-container creation within constrained
+  containers, so the per-Person container approach (intended for attachment
+  co-location) is blocked. Attachment use-cases need a separate design pass.
 
 ## Empirical CSS conformance test result
 
