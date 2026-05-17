@@ -2,14 +2,79 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## Phase 7a wiki-search — design plan ready (2026-05-17)
+## Phase 7a wiki-search — shipped (2026-05-18)
 
-**Next implementation step.** Buildable design plan at [`docs/plans/2026-05-17-wiki-search-design.md`](docs/plans/2026-05-17-wiki-search-design.md). Picks up before Rung 1.5 eval.
+D87 ratified. Wiki-search CSS extension + Link MetadataWriter + capability
++ affordance descriptors + consumer CLI + Claude skill all shipped. Pod
+returns OSLC Query 3.0 responses with WAC-filtered, AND-filtered,
+score-sorted, paginated matches over recursive `/vault/wiki/` walks.
+p95 latency: 26.7ms (D87 ceiling 500ms — 18.7× headroom).
 
-- [ ] **Implement the wiki-search CSS extension** per the design plan. Scope: `css/extensions/wiki-search/` (HttpHandler + SearchEngine interface + RegexpSearchEngine + ResponseBuilder + tests), overlay capability descriptor + affordance descriptor, consumer skill in sibling `solid-agent-skills` repo, integration tests against docker-compose pod. Estimate 2–3 engineer-days. Suggested order is §13 of the design plan.
-- [ ] **Run in a clean superpowers session** — the design plan is written to be self-contained for a fresh agent: read it, the existing memento + profile-link extension code, and the AddressBook overlay's contact-discovery affordance for the descriptor pattern. Use writing-plans + test-driven-development + verification-before-completion skills.
-- [ ] **Project context**: vault [[Phase 7 - Wiki-Memory Search Layer]] is the project-level catalog (forward work for 7b/c/d, cross-repo coordination, Rung 1.5 task design). The vault notes were refined the same day to match this plan; engine choice settled as `RegexpSearchEngine` for Phase 1.
-- [ ] **Decision anchor**: D87 in vault `SOLID-Pod-Decisions.md` (refined 2026-05-17 with engine and discovery-mechanism narrowing).
+Key commits (cogitarelink-solid):
+- Implementation plan: `b064a79`
+- Scaffold + interfaces: `d41f40c`, `5332c1a`
+- Pure-Node engine + parsers + helpers: `1eafdab`, `7c1c054`, `821cf5b`,
+  `0bd4bc3`, `fbb4e44`, `57abce4`
+- Walker (recursive BFS + WAC subtree-omission): `c694407`, `5e9c6c1`
+- Handler + Components.js + Dockerfile: `6cbccb1`
+- Link MetadataWriter (Tier-1 discovery): `a014967`
+- Capability + affordance descriptors: `7c68fca`
+- E2E integration tests: `eb37bb7`
+- Perf smoke (p95 26.7ms): `4905731`
+
+Sibling repo (solid-agent-skills):
+- Consumer CLI + Claude skill: `b17be6f`
+
+### Architectural deviations from plan (D91 candidate)
+
+- [ ] **D91 — Walker uses HTTP self-requests, not in-process ResourceStore.**
+  Original Task 8 plan called for `ResourceStore.getRepresentation`. Integration
+  testing surfaced a re-entrant lock crash (CSS's per-resource write lock held
+  during the handler's own request context produced 6s lock-expiry +
+  N3StreamWriter crash). Walker rewritten in `eb37bb7` to use undici-based
+  HTTP self-requests against the pod's own HTTPS endpoint, going through the
+  full request pipeline (auth + WAC + projection). WalkFetch interface
+  injected for unit testability (Approach B from review, commit `5e9c6c1`).
+  Perf impact: p95 26.7ms on current vault — fine. Ratify D91 after the
+  approach survives larger vault scale.
+
+- [ ] **Anonymous content-fetch leak under auth**. The HTTP self-requests
+  for content fetching are currently anonymous. WAC enforcement runs via
+  `PermissionReader` with real credentials BEFORE the self-request, but the
+  self-request itself omits Authorization/DPoP headers. Under dev-allow-all
+  this is invisible; with real auth, a WAC-protected resource that passes
+  the permission gate will fail the content fetch silently (anon-deny =
+  resource excluded from results, even when the authenticated user is
+  entitled). MUST FIX before un-stubbing TestWacScenarios. Pragmatic fix:
+  forward the original request's Authorization + DPoP headers into the
+  undici self-request.
+
+### Deferred to Phase 7b/c/d (out of scope for 7a)
+
+- [ ] **Engine swap to BM25 or ripgrep** (Phase 7b). Decision criterion: if
+  Rung 1.5 eval shows literal-witness recall < 90% on representative tasks,
+  or p95 latency regresses past 500ms.
+- [ ] **`oslc.where` structured filter** (RQ-Search-2). Either post-filter via
+  Comunica over `.meta`, or push the structured filter into a pre-scan step.
+  Defer until eval shows a real workload.
+- [ ] **Hybrid RRF orchestrator** (Phase 7c). ~200 LOC; combines literal + BM25.
+- [ ] **WebID-partitioned in-pod index** (Phase 7d, ESPRESSO pattern).
+- [ ] **`_profile=alt` introspection** for the search response (low-priority).
+
+### Deferred from Phase 7a implementation
+
+- [ ] **WAC scenario integration tests** (test_a–test_e in
+  `tests/integration/test_wiki_search_e2e.py`). Stubbed pending the
+  authenticated-client harness shared with `test_addressbook_e2e.py`. Blocked
+  by the anonymous-content-fetch issue above — fix that first, then implement.
+- [ ] **Score formula tuning** (RQ-Search-1). v1 baseline is density + log
+  dampening; tune against Rung 1.5 eval evidence.
+- [ ] **Whether to embed `.meta` triples in search responses** (RQ-Search-4).
+  Phase 1 omits; revisit if Rung 1.5 shows agents repeatedly fetching `.meta`
+  after a search hit.
+- [ ] **Snapshot tokens for transactional pagination consistency**. Phase 1
+  documents "stable-within-instant only"; revisit only if Rung 1.5 shows
+  pagination drift hurts.
 
 ## Phase 5j (2026-05-16) — URI conformance close-out
 
