@@ -21,6 +21,12 @@
     },
     {
       "comment": "Handler insertion is consolidated in memento.json's BaseHttpHandler Override (K1: one Override per instance). This file only declares the engine and handler instances."
+    },
+    {
+      "comment": "Adds Link: rel=\"queryBase\" header to /vault/wiki/* container GETs so Tier-1 (header-only) agents discover the search affordance without reading the capability catalog. The Override step that inserts this writer into MetadataWriter's ParallelHandler lives in memento.json (K1: one Override per MetadataWriter instance).",
+      "@id": "urn:cogitarelink:WikiSearchLinkMetadataWriter",
+      "@type": "WikiSearchLinkMetadataWriter",
+      "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
     }
   ]
 }

@@ -64,6 +64,12 @@
         "overrideParameter": { "@id": "ah:dist/ParallelHandler.jsonld#ParallelHandler_handlers" },
         "overrideTarget": { "@id": "urn:cogitarelink:MementoLinkMetadataWriter" },
         "overrideValue": { "@id": "urn:cogitarelink:ProfileLinkMetadataWriter" }
+      },
+      {
+        "@type": "OverrideListInsertAfter",
+        "overrideParameter": { "@id": "ah:dist/ParallelHandler.jsonld#ParallelHandler_handlers" },
+        "overrideTarget": { "@id": "urn:cogitarelink:ProfileLinkMetadataWriter" },
+        "overrideValue": { "@id": "urn:cogitarelink:WikiSearchLinkMetadataWriter" }
       }]
     }
   ]
