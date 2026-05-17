@@ -7,8 +7,8 @@ Four scenarios validate the full AddressBook substrate (Batch 12 / Task 27):
 4. Created contact is findable by owl:sameAs ORCID
 
 URL pattern: /vault/contacts/Person/<uuid>.ttl (flat; sub-containers blocked by constrainedBy).
-SHACL inAddressBook value: https://pod.vardeman.me/contacts/index.ttl#this
-(shape uses </contacts/index.ttl#this> which resolves from server root, not /vault/).
+SHACL inAddressBook value: https://pod.vardeman.me/vault/contacts/index.ttl#this
+(shape and templates both use the absolute vault-root IRI; see contact-card.shacl.ttl).
 """
 import shutil
 import subprocess
@@ -24,8 +24,8 @@ FOAF  = Namespace("http://xmlns.com/foaf/0.1/")
 SOLID = Namespace("http://www.w3.org/ns/solid/terms#")
 SH    = Namespace("http://www.w3.org/ns/shacl#")
 
-# inAddressBook value the shape requires (</contacts/...> resolves from server root)
-ADDRESSBOOK_IRI = "https://pod.vardeman.me/contacts/index.ttl#this"
+# inAddressBook value the shape requires — absolute vault-root IRI (D1 fix)
+ADDRESSBOOK_IRI = "https://pod.vardeman.me/vault/contacts/index.ttl#this"
 
 CLIENT = httpx.Client(verify=False, timeout=10)
 

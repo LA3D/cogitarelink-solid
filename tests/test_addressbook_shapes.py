@@ -24,7 +24,7 @@ CONTACT_VALID_WITH_ORCID = """
 
 <#this> a vcard:Individual, foaf:Person ;
     vcard:fn "Jarek Nabrzyski" ;
-    vcard:inAddressBook </contacts/index.ttl#this> ;
+    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
     owl:sameAs <https://orcid.org/0000-0001-7882-1326> .
 """
 
@@ -34,7 +34,7 @@ CONTACT_VALID_WITH_EMAIL = """
 
 <#this> a vcard:Individual, foaf:Person ;
     vcard:fn "Wang Wei" ;
-    vcard:inAddressBook </contacts/index.ttl#this> ;
+    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
     vcard:hasEmail <mailto:wangwei@example.org> .
 """
 
@@ -44,7 +44,7 @@ CONTACT_MISSING_FN = """
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 
 <#this> a vcard:Individual, foaf:Person ;
-    vcard:inAddressBook </contacts/index.ttl#this> ;
+    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
     owl:sameAs <https://orcid.org/0000-0000-0000-0000> .
 """
 
@@ -96,7 +96,7 @@ ORG_VALID_WITH_ROR = """
 
 <#this> a vcard:Organization, foaf:Organization ;
     vcard:fn "University of Notre Dame" ;
-    vcard:inAddressBook </contacts/index.ttl#this> ;
+    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
     owl:sameAs <https://ror.org/00mkhxb43> .
 """
 
@@ -106,7 +106,7 @@ ORG_MISSING_FN = """
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 
 <#this> a vcard:Organization, foaf:Organization ;
-    vcard:inAddressBook </contacts/index.ttl#this> ;
+    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
     owl:sameAs <https://ror.org/00mkhxb43> .
 """
 
