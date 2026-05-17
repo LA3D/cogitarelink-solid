@@ -322,11 +322,78 @@ Sharpens **D44** (storage description as router) and **D52** (affordance descrip
 per-resource level. D44 declares the Pod has profiles; D86 declares each individual resource's
 profile membership.
 
+### D87 — Capabilities-only overlay dependencies
+
+The capability catalog at `/vault/meta/capabilities/` is the **only** mechanism
+for overlay-to-overlay and overlay-to-extension coupling. Overlays declare what
+they need via `overlay:requiresCapability` (already existing) and what they
+provide via `overlay:providesCapability` (newly added). At install time,
+`scripts/overlay/apply.py` iterates `providesCapability` and PUTs each capability
+descriptor into the catalog; existing `requiresCapability` checks the catalog for
+the descriptor at the required `cap:minVersion`.
+
+**Deprecated and removed from machinery**:
+
+- `overlay:dependsOnOverlay` — was overlay-level coupling; superseded by capability-level coupling
+- `overlay:installedOverlay` — was installation tracking in `.well-known/solid`; was unworkable because CSS returns 405 on PATCH to the storage description (which is now intentionally static per `css/config/void-description.json`)
+- `check_overlay_dependencies()` in `apply.py` — fully removed
+
+**Why capabilities over overlays for coupling**:
+
+1. **Atomic** — overlays can split/merge/rename without breaking consumers, as long as the same capabilities still exist somewhere
+2. **Substitutable** — multiple overlays can provide the same capability; consumers don't care which
+3. **Version-aware** — `cap:minVersion` already in the model
+4. **Runtime-mutable** — `/vault/meta/capabilities/` is a normal LDP container; no CSS-extension workarounds
+5. **Honest** — the dependency is on the artifact actually consumed, not the wrapper
+
+Completes **D83** (Pod-as-toolkit) for overlay-to-overlay coupling. Resolves the deferred-decision flag in `solid-uri-conformance/references/deltas.md`. Full rationale in `docs/plans/2026-05-16-capabilities-only-overlay-deps.md`. First consumer is the AddressBook overlay (declares 3 requires + 5 provides); wiki-memory was retrofitted to declare 4 provides.
+
+### D88 — `tmpl:` substrate template vocabulary
+
+Templates are a first-class substrate artifact class — RDF skeletons paired with
+a SHACL shape via `tmpl:validatesAgainst`. Agents fetch a template before write
+operations to front-load structured context, fill `<<PLACEHOLDER>>` values, and
+PUT the result. SHACL backstops; on violation, the response body carries a
+parseable `sh:ValidationReport` (D88's implementation requires the shape-validator
+extension to serialize the report — done in `css/extensions/shape-validator/`,
+commits `0f1295f` + `056f18d`).
+
+**Vocabulary** at `https://pod.vardeman.me/vault/ontology/template#` (Pod-hosted
+per D84):
+
+- `tmpl:Template` — the document class
+- `tmpl:validatesAgainst` → SHACL shape IRI
+- `tmpl:operation` → "PUT" | "PATCH" | "POST"
+- `tmpl:targetContainer` → where filled templates land
+- `tmpl:slugAlgorithm` → "uuid4" | "kebab-case-mnemonic" | etc.
+- `tmpl:templateBody` → the literal Turtle skeleton
+
+**Overlay machinery support**:
+
+- `overlay:installsTemplate` predicate (new) — overlays declare which templates they install
+- `scripts/overlay/apply.py` iterates `manifest.templates` and PUTs each to `/vault/meta/templates/`
+- `scripts/overlay/verify.py` checks deployed templates round-trip
+
+**Discovery**:
+
+- `wiki:templateCatalog → /vault/meta/templates/` advertised in storage description (`.well-known/solid`)
+- Cold agents can find templates without prior knowledge of any specific overlay
+
+**Trajectory token cost argument** (the substrate-pattern rationale):
+
+- Template fetch (~200 tokens) + happy-path PUT (~50 tokens) on success
+- vs error-loop trajectory (1000s of tokens across multiple retries) when only SHACL is present without templates
+- Templates eliminate ~90% of SHACL hits by giving the agent the right shape upfront; SHACL catches the residual
+
+First consumer: AddressBook overlay (5 templates: contact-create, contact-update, org-create, group-create, membership-create). Pattern is general — any overlay with write operations should provide templates. Generalization to wiki-memory shapes (currently no templates) is post-Rung-1.5.
+
 ### Authoritative skills (one per D-decision)
 
 - `.claude/skills/solid-uri-conformance/` — D84 URI structure. Invoke before minting any IRI.
 - `.claude/skills/solid-tls-deployment/` — D85 TLS deployment. Invoke when setting up HTTPS or debugging cert trust.
 - `.claude/skills/solid-profiles-and-conneg/` — D86 PROF + conneg-by-profile. Invoke when designing profile descriptors or answering "what kind of resource is this?".
+- D87 design doc: `docs/plans/2026-05-16-capabilities-only-overlay-deps.md`. Invoke when designing overlay deps or extending overlay machinery.
+- D88 design doc + first consumer: `docs/plans/2026-05-16-agentic-addressbook-design.md` (AddressBook design, template+SHACL+feedback pattern), `docs/plans/2026-05-16-capabilities-only-overlay-deps.md`, `docs/superpowers/plans/2026-05-16-addressbook-substrate.md`. Invoke when adding write operations to an overlay or designing template-driven substrate pipelines.
 
 Each skill is self-contained (no vault references), cites primary sources only (W3C / IETF / Solid Project), and is portable outside this repo.
 
