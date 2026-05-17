@@ -1,0 +1,62 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix prefs: <https://pod.vardeman.me/vault/ontology/owner-prefs#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<https://pod.vardeman.me/vault/meta/shapes/pod-owner-preferences.shacl.ttl#PodOwnerPreferencesShape>
+    a sh:NodeShape ;
+    sh:targetClass prefs:PodOwnerPreferences ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    sh:closed false ;
+    sh:agentInstruction """
+      The Pod-owner preferences file at /vault/settings/prefs.ttl is the
+      scratchpad where the AGENT WALKS THE HUMAN through setup. Required
+      facts to elicit (ask one at a time, persist after each answer):
+
+        prefs:fullName  — full display name
+        prefs:orcid     — bare ORCID id (XXXX-XXXX-XXXX-XXXX)
+        prefs:wikiSlug  — desired slug for /vault/wiki/people/<slug>/
+
+      Optional facts (elicit but don't block on):
+        prefs:primaryAffiliationROR / prefs:primaryAffiliationName,
+        prefs:membershipRole, prefs:membershipStart,
+        prefs:email, prefs:foafImg.
+
+      Set prefs:setupOwnerCompleted true^^xsd:boolean when the full
+      SetupPodOwner flow completes so re-runs short-circuit.
+
+      The prefs file is private (ACL: owner-only). Treat its contents as
+      the owner's authoritative self-declaration. Don't substitute facts
+      gathered from CLAUDE.md or other sources without confirming with
+      the human.
+    """ ;
+
+    sh:property [
+        sh:path     prefs:fullName ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message  "Need full display name — ask the human." ;
+    ] ;
+
+    sh:property [
+        sh:path     prefs:orcid ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern  "^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$" ;
+        sh:message  "Need bare ORCID id (XXXX-XXXX-XXXX-XXXX) — ask the human." ;
+    ] ;
+
+    sh:property [
+        sh:path     prefs:wikiSlug ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern  "^[a-z0-9-]+$" ;
+        sh:message  "Need wiki slug (lowercase + hyphens) — suggest from fullName, confirm with human." ;
+    ] ;
+
+    sh:property [
+        sh:path     prefs:setupOwnerCompleted ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean ;
+        sh:severity sh:Info ;
+    ] .
