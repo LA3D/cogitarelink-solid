@@ -1,0 +1,12 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+
+<>  a cap:Capability ;
+    cap:name "wiki-vocabulary" ;
+    cap:version "1.0" ;
+    rdfs:label "Wiki Vocabulary" ;
+    rdfs:comment "The wiki: namespace (https://pod.vardeman.me/vault/ontology/wiki#) is dereferenceable with the wiki-memory L3 class hierarchy (wiki:Resource, wiki:Concept, wiki:Source, wiki:Person, wiki:Procedure, wiki:WorkingNote, wiki:Hub) and predicates (wiki:contextDocument, wiki:shapeCatalog, wiki:affordanceCatalog, wiki:typeIndex). Consumers can rely on dereference + parse." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    cap:hostedAt   <https://pod.vardeman.me/vault/ontology/wiki> .

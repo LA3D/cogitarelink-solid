@@ -1,0 +1,9 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "wiki-page-as-unit" ;
+    cap:version "1.0" ;
+    rdfs:label "Wiki Page as Unit" ;
+    rdfs:comment "D71 convention: a wiki page is the atomic information object. One markdown file per concept/source/person/procedure. Body wikilinks project to .meta via MarkdownProjectionListener (D58/D71/D81). Other substrates referencing a wiki page (e.g., AddressBook via foaf:primaryTopic) can rely on page-as-unit semantics." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .

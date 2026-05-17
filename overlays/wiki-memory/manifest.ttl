@@ -37,6 +37,7 @@
         </vault/wiki/working/> ;
 
     overlay:installsShape
+        </vault/meta/shapes/resource.shacl.ttl> ,
         </vault/meta/shapes/page.shacl.ttl> ,
         </vault/meta/shapes/source.shacl.ttl> ,
         </vault/meta/shapes/person.shacl.ttl> ,
@@ -65,4 +66,18 @@
         [ solid:forClass wiki:Source     ; solid:instanceContainer </vault/wiki/sources/> ] ,
         [ solid:forClass wiki:Person     ; solid:instanceContainer </vault/wiki/people/> ] ,
         [ solid:forClass wiki:Procedure  ; solid:instanceContainer </vault/wiki/procedures/> ] ,
-        [ solid:forClass wiki:WorkingNote; solid:instanceContainer </vault/wiki/working/> ] .
+        [ solid:forClass wiki:WorkingNote; solid:instanceContainer </vault/wiki/working/> ] ;
+
+    overlay:providesCapability
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/wiki-vocabulary.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/wiki-vocabulary.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/foaf-primarytopic-bridge.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/foaf-primarytopic-bridge.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/wiki-type-index-registration.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/wiki-type-index-registration.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/wiki-page-as-unit.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/wiki-page-as-unit.ttl" ] .

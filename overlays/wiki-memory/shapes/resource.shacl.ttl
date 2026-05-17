@@ -1,0 +1,42 @@
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+# Class hierarchy — required for rdfs:subClassOf inference so that
+# ResourceShape applies automatically to all entity sub-classes.
+wiki:Concept      a rdfs:Class ; rdfs:subClassOf wiki:Resource .
+wiki:Source       a rdfs:Class ; rdfs:subClassOf wiki:Resource .
+wiki:Person       a rdfs:Class ; rdfs:subClassOf wiki:Resource .
+wiki:Procedure    a rdfs:Class ; rdfs:subClassOf wiki:Resource .
+wiki:WorkingNote  a rdfs:Class ; rdfs:subClassOf wiki:Resource .
+
+wiki:ResourceShape
+    a sh:NodeShape ;
+    sh:targetClass wiki:Resource ;
+    sh:property [
+        sh:path dct:title ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path dct:created ;
+        sh:datatype xsd:dateTime ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path dct:modified ;
+        sh:datatype xsd:dateTime ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path dct:identifier ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path wiki:maturity ;
+        sh:in ( "draft" "validated" "core" ) ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:agentInstruction "Every wiki resource carries title, created, modified, identifier. Maturity is optional. Substrate-governed predicates (write via body+frontmatter, not direct PATCH): rdf:type, dct:title, dct:identifier, dct:created, dct:modified, wiki:maturity." .

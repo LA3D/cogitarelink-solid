@@ -18,6 +18,5 @@
                        <../wiki/sources/> ,
                        <../wiki/people/> ,
                        <../wiki/procedures/> ,
-                       <../wiki/working/> ;
-           overlay:installedOverlay <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+                       <../wiki/working/> .
    } .

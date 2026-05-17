@@ -1,0 +1,11 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "wiki-type-index-registration" ;
+    cap:version "1.0" ;
+    rdfs:label "Type Index Registration" ;
+    rdfs:comment "The Pod's publicTypeIndex at /vault/settings/publicTypeIndex accepts solid:TypeRegistration entries via N3 Patch. Wiki-memory installs the type index and the registration convention (one entry per typed container, declaring solid:forClass + solid:instance). Other overlays add their own registrations via the same mechanism." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    cap:hostedAt   <https://pod.vardeman.me/vault/settings/publicTypeIndex> .
