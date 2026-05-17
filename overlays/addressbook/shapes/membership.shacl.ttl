@@ -1,0 +1,35 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix org:  <http://www.w3.org/ns/org#> .
+@prefix time: <http://www.w3.org/2006/time#> .
+
+<https://pod.vardeman.me/vault/meta/shapes/membership.shacl.ttl#MembershipShape>
+    a sh:NodeShape ;
+    sh:targetClass org:Membership ;
+    sh:closed false ;
+    sh:agentInstruction """
+      A reified org:Membership records a Person's affiliation with an
+      Organization over a time interval. Required: org:member (the Person),
+      org:organization (the Org), and org:memberDuring (time:Interval with
+      time:hasBeginning; time:hasEnd optional for ongoing). Optional:
+      org:role (vcard:role or bibo:Author etc.). UUIDv4 slug.
+    """ ;
+
+    sh:property [
+        sh:path org:member ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Membership must have exactly one org:member (Person card IRI)." ;
+    ] ;
+
+    sh:property [
+        sh:path org:organization ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Membership must have exactly one org:organization (Organization card IRI)." ;
+    ] ;
+
+    sh:property [
+        sh:path org:memberDuring ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "Membership must declare org:memberDuring with at least time:hasBeginning." ;
+    ] .

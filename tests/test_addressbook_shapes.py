@@ -162,3 +162,34 @@ def test_group_valid_passes():
 def test_group_empty_fails():
     conforms, _ = _validate(GROUP_EMPTY, "group.shacl.ttl")
     assert not conforms
+
+
+# ----- MembershipShape -----
+
+MEMBERSHIP_VALID = """
+@prefix org:  <http://www.w3.org/ns/org#> .
+@prefix time: <http://www.w3.org/2006/time#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<#this> a org:Membership ;
+    org:member </contacts/Person/7f3a1b8c.../index.ttl#this> ;
+    org:organization </contacts/Organization/a8b9c1d2.../index.ttl#this> ;
+    org:memberDuring [ time:hasBeginning [ time:inXSDDate "2024-01-01"^^xsd:date ] ] .
+"""
+
+MEMBERSHIP_MISSING_ORG = """
+@prefix org:  <http://www.w3.org/ns/org#> .
+
+<#this> a org:Membership ;
+    org:member </contacts/Person/7f3a1b8c.../index.ttl#this> .
+"""
+
+
+def test_membership_valid_passes():
+    conforms, report = _validate(MEMBERSHIP_VALID, "membership.shacl.ttl")
+    assert conforms, f"Expected conformance:\n{report}"
+
+
+def test_membership_missing_org_fails():
+    conforms, _ = _validate(MEMBERSHIP_MISSING_ORG, "membership.shacl.ttl")
+    assert not conforms
