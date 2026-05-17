@@ -12,7 +12,6 @@ _BASE = "https://pod.vardeman.me/vault/"
 PLACEHOLDERS = {
     "<<FULL_NAME>>":     "Charles F. Vardeman II",
     "<<ORCID>>":         "0000-0003-4091-6059",
-    "<<WIKI_SLUG>>":     "charles",
     "<<CONTACT_CARD>>":  "/vault/contacts/Person/abc-uuid.ttl#this",
     "<<WIKI_PAGE>>":     "/vault/wiki/people/charles/index.md",
     "<<MEMBERSHIP>>":    "/vault/contacts/Membership/xyz-uuid.ttl#this",
@@ -67,6 +66,8 @@ def test_webid_enrich_parses():
     assert op and str(op[0]) == "PATCH", f"webid-enrich operation should be PATCH, got {op}"
     target = list(g.objects(predicate=TMPL.targetResource))
     assert target and str(target[0]).endswith("/profile/card"), f"webid-enrich targetResource should be profile/card, got {target}"
+    container = list(g.objects(predicate=TMPL.targetContainer))
+    assert not container, "webid-enrich must NOT have tmpl:targetContainer (uses targetResource)"
 
 
 def test_webid_enrich_filled_body_conforms_to_webid_shape():
