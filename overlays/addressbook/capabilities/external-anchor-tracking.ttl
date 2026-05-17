@@ -1,0 +1,10 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "external-anchor-tracking" ;
+    cap:version "1.0" ;
+    rdfs:label "External Anchor Tracking" ;
+    rdfs:comment "owl:sameAs network linking contact cards to external canonical identifiers (ORCID, ROR, WebID, wikidata, etc.). Cross-Pod identity reconciliation via shared anchor IRIs (ORCID is the canonical join key). Downstream consumers (email tools, ORCID lookups, WebID resolvers, citation generators) can SPARQL across owl:sameAs to find or verify identity." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> .

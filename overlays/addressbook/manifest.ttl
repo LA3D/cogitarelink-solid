@@ -1,0 +1,93 @@
+@prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
+@prefix cap:     <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix wiki:    <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix tmpl:    <https://pod.vardeman.me/vault/ontology/template#> .
+@prefix vcard:   <http://www.w3.org/2006/vcard/ns#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+
+<https://pod.vardeman.me/vault/ontology/overlay#addressbook>
+    a overlay:Overlay ;
+    overlay:name "addressbook" ;
+    overlay:version "0.1" ;
+    dct:conformsTo <https://pod.vardeman.me/vault/ontology/wiki#WikiMemoryProfile> ;
+
+    overlay:declaresVocabulary [
+        overlay:namespace tmpl: ;
+        overlay:document "vocabulary/template.ttl" ;
+        overlay:hostedAt "/vault/ontology/template"
+    ] ;
+
+    overlay:requiresCapability
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/wiki-vocabulary.ttl> ;
+          cap:minVersion "1.0" ] ,
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/foaf-primarytopic-bridge.ttl> ;
+          cap:minVersion "1.0" ] ,
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/wiki-type-index-registration.ttl> ;
+          cap:minVersion "1.0" ] ;
+
+    overlay:providesCapability
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/vcard-individual-substrate.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/vcard-individual-substrate.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/vcard-organization-substrate.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/vcard-organization-substrate.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/external-anchor-tracking.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/external-anchor-tracking.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/contact-discovery.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/contact-discovery.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/tmpl-vocabulary.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/tmpl-vocabulary.ttl" ] ;
+
+    overlay:installsContainer
+        </vault/contacts/> ,
+        </vault/contacts/Person/> ,
+        </vault/contacts/Organization/> ,
+        </vault/contacts/Group/> ,
+        </vault/contacts/Membership/> ;
+
+    overlay:installsShape
+        </vault/meta/shapes/contact-card.shacl.ttl> ,
+        </vault/meta/shapes/organization-card.shacl.ttl> ,
+        </vault/meta/shapes/group.shacl.ttl> ,
+        </vault/meta/shapes/membership.shacl.ttl> ;
+
+    overlay:installsTemplate
+        </vault/meta/templates/contact-create.ttl> ,
+        </vault/meta/templates/contact-update.ttl> ,
+        </vault/meta/templates/org-create.ttl> ,
+        </vault/meta/templates/group-create.ttl> ,
+        </vault/meta/templates/membership-create.ttl> ;
+
+    overlay:installsAffordance
+        </vault/meta/affordances/contact-find-by-name.ttl> ,
+        </vault/meta/affordances/contact-find-by-orcid.ttl> ,
+        </vault/meta/affordances/contact-find-by-email.ttl> ,
+        </vault/meta/affordances/contact-find-by-affiliation.ttl> ,
+        </vault/meta/affordances/contact-find-by-group.ttl> ,
+        </vault/meta/affordances/org-find-by-name.ttl> ,
+        </vault/meta/affordances/org-find-by-ror.ttl> ,
+        </vault/meta/affordances/bridge-card-to-wiki.ttl> ;
+
+    overlay:installsTypeIndexPatch "typeindex-patch.ttl" ;
+
+    overlay:installsBootstrapContent
+        [ overlay:contentPath "containers/index.ttl" ;
+          overlay:hostedAt "/vault/contacts/index.ttl" ] ,
+        [ overlay:contentPath "containers/people.ttl" ;
+          overlay:hostedAt "/vault/contacts/people.ttl" ] ,
+        [ overlay:contentPath "containers/groups.ttl" ;
+          overlay:hostedAt "/vault/contacts/groups.ttl" ] ;
+
+    overlay:installsContainerMetaPatch
+        [ overlay:targetContainer </vault/contacts/Person/> ;
+          overlay:metaPatchContent "person-container-meta.ttl" ] ,
+        [ overlay:targetContainer </vault/contacts/Organization/> ;
+          overlay:metaPatchContent "organization-container-meta.ttl" ] ,
+        [ overlay:targetContainer </vault/contacts/Group/> ;
+          overlay:metaPatchContent "group-container-meta.ttl" ] ,
+        [ overlay:targetContainer </vault/contacts/Membership/> ;
+          overlay:metaPatchContent "membership-container-meta.ttl" ] .

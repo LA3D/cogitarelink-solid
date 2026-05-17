@@ -1,0 +1,10 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "contact-discovery" ;
+    cap:version "1.0" ;
+    rdfs:label "Contact Discovery Affordances" ;
+    rdfs:comment "Read affordances at /vault/meta/affordances/contact-find-by-* for parameterized lookup by name, ORCID, email, affiliation, group. Each affordance carries embedded SPARQL via wiki:selectQuery (per D52). Consumers can invoke via solid-pod invoke or any LDP+SPARQL client." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/meta/affordances/> .

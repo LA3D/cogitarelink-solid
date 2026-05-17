@@ -1,0 +1,11 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "vcard-organization-substrate" ;
+    cap:version "1.0" ;
+    rdfs:label "vcard:Organization Substrate" ;
+    rdfs:comment "Operational identity records for organizations at /vault/contacts/Organization/<uuid>/index.ttl. UUIDv4 slugs, owl:sameAs <ror> preferred for institutional orgs. OrganizationCardShape enforces vcard:fn + vcard:inAddressBook + ≥1 anchor (sameAs or hasURL)." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/contacts/Organization/> .

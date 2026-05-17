@@ -52,3 +52,21 @@ def test_manifest_parses_installs_template(tmp_path):
     urls = {t.url for t in m.templates}
     assert "https://pod.vardeman.me/vault/meta/templates/foo.ttl" in urls
     assert "https://pod.vardeman.me/vault/meta/templates/bar.ttl" in urls
+
+
+def test_addressbook_manifest_parses_with_all_artifacts():
+    from pathlib import Path
+    from scripts.overlay.common import parse_manifest
+    m = parse_manifest(
+        Path(__file__).parent.parent / "overlays" / "addressbook",
+        pod_url="https://pod.vardeman.me/vault/"
+    )
+    assert m.name == "addressbook"
+    assert len(m.shape_urls) == 4
+    assert len(m.templates) == 5
+    assert len(m.affordance_urls) == 8
+    assert len(m.container_paths) == 5
+    assert len(m.provides) == 5
+    # required_capabilities should have 3 entries (wiki-vocabulary, foaf-primarytopic-bridge, wiki-type-index-registration)
+    assert len(m.required_capabilities) == 3
+    assert len(m.container_meta_patches) == 4
