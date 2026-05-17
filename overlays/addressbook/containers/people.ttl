@@ -1,0 +1,4 @@
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+
+<#book> a vcard:AddressBook .
+# Name → URI entries added via PATCH as contacts are created

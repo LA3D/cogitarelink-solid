@@ -1,0 +1,12 @@
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+
+<> a solid:InsertDeletePatch ;
+   solid:inserts {
+       </vault/settings/publicTypeIndex#addressbook>
+           a solid:TypeRegistration ;
+           solid:forClass vcard:AddressBook ;
+           solid:instance </vault/contacts/index.ttl#this> ;
+           dct:description "The vault's primary AddressBook." .
+   } .

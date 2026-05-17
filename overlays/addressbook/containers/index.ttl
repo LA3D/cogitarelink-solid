@@ -1,0 +1,11 @@
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix acl:   <http://www.w3.org/ns/auth/acl#> .
+
+<#this>
+    a vcard:AddressBook ;
+    dct:title "Vault AddressBook" ;
+    dct:description "Operational identity substrate for vault contacts. Paired with /vault/wiki/people/ via foaf:primaryTopic for narrative-memory context." ;
+    vcard:nameEmailIndex </vault/contacts/people.ttl> ;
+    vcard:groupIndex     </vault/contacts/groups.ttl> ;
+    acl:owner </vault/profile/card#me> .
