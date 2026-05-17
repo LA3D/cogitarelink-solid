@@ -1,0 +1,47 @@
+@prefix tmpl:  <https://pod.vardeman.me/vault/ontology/template#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+</vault/meta/templates/group-create.ttl>
+    a tmpl:Template ;
+    tmpl:validatesAgainst </vault/meta/shapes/group.shacl.ttl#GroupShape> ;
+    tmpl:operation       "PUT" ;
+    tmpl:targetContainer </vault/contacts/Group/> ;
+    tmpl:slugAlgorithm   "kebab-case-mnemonic" ;
+
+    sh:agentInstruction """
+      To create a Group: pick a mnemonic kebab-case slug (e.g., nd-collaborators,
+      ci-compass-team, la3d-lab). Slug collisions are manageable because you
+      control naming and groups are deliberately named.
+        1. Choose a mnemonic slug (kebab-case, lowercase, descriptive)
+        2. PUT /vault/contacts/Group/<slug>.ttl with the body below,
+           replacing <<...>> placeholders
+        3. On 201: PATCH /vault/contacts/groups.ttl to add the index entry:
+             solid:inserts { <#index> vcard:hasMember </vault/contacts/Group/<slug>.ttl#this> . }
+        4. On 422: read the SHACL ValidationReport, fix cited fields, retry PUT.
+
+      Required: vcard:fn + at least one vcard:hasMember (URI of a Person or
+      Organization card, i.e., the #this fragment IRI). Empty groups fail shape.
+    """ ;
+
+    tmpl:templateBody """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<>  a vcard:VCard ;
+    dct:creator </vault/profile/card#me> ;
+    dct:created  \"<<ISO_DATETIME>>\"^^xsd:dateTime .
+
+<#this>
+    a vcard:Group ;
+    vcard:fn               \"<<GROUP_NAME>>\" ;
+
+    # AT LEAST ONE member required (IRI of a Person or Organization card):
+    vcard:hasMember
+        </vault/contacts/Person/<<MEMBER_UUID_1>>/index.ttl#this> ,
+        </vault/contacts/Person/<<MEMBER_UUID_2>>/index.ttl#this> .
+
+    # Add Organization members:
+    # vcard:hasMember </vault/contacts/Organization/<<ORG_UUID>>/index.ttl#this> .
+""" .
