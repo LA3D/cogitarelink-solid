@@ -391,7 +391,7 @@ First consumer: AddressBook overlay (5 templates: contact-create, contact-update
 
 ### D89 — Owner-identity overlay as substrate-level concern
 
-**Status:** Candidate (2026-05-17). Ratify after first end-to-end run + telemetry.
+**Status:** Ratified (2026-05-17). Confirmed by the first end-to-end cold-session run: agent invoked `solid-owner-identity`, walked human through Phase A elicitation, minted Person + Org + Membership cards via `solid-addressbook` (Phases B/C), minted wiki person page with bridge `.meta` triples via `solid-wiki-memory-l3` (Phase D), PATCHed `/vault/profile/card` with all MUSTs + SHOULDs + the `org:hasMembership` MAY (Phase E), and marked `prefs:setupOwnerCompleted true` (Phase F). The "follow-the-nose" A+C design held: a single dereference of the WebID returns both `foaf:isPrimaryTopicOf <wiki-page>` AND the inlined `<wiki-page> a wiki:Person` typing.
 
 **Decision:** The Pod-owner identity contract (enriched WebID profile per spec + extensibility to VCs, DIDs, ACL ownership) is a distinct substrate concern, not a sub-feature of AddressBook. It gets its own overlay (`overlays/owner-identity/`) **above** AddressBook in the D87 capability stack.
 
@@ -417,7 +417,7 @@ First consumer: AddressBook overlay (5 templates: contact-create, contact-update
 
 ### D90 — Agent↔human elicitation via `pim:preferencesFile`
 
-**Status:** Candidate (2026-05-17). Ratify after first end-to-end run.
+**Status:** Ratified (2026-05-17). Confirmed by the first cold-session run: agent created `/vault/settings/prefs.ttl` from the prefs-init skeleton, walked the human through three required questions (fullName / orcid / wikiSlug) plus five optional (primaryAffiliationROR / membershipRole / membershipStart / email / foafImg), PATCHed each answer to prefs.ttl as elicited, and validated against `PodOwnerPreferencesShape` before proceeding. The `setupOwnerCompleted` boolean marker is in place; idempotent re-run testing pending in a follow-on cold session.
 
 **Decision:** The per-Pod-owner preferences resource (`/vault/settings/prefs.ttl`, declared via `pim:preferencesFile` on the WebID per Solid WebID Profile §4 MUST) is the canonical agent↔human elicitation surface. The substrate ships `PodOwnerPreferencesShape` as the elicitation contract — required fact set + regex patterns drive the agent's one-question-at-a-time walk-through, with persistence after every answer.
 

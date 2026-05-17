@@ -134,17 +134,26 @@ in-repo file is at v1.1 but the live Pod may still have v1.0 from the
 AddressBook sprint. A direct PUT of `overlays/addressbook/capabilities/tmpl-vocabulary.ttl`
 fixes this; future apply.py runs of addressbook will refresh it automatically.
 
-### Candidate decisions awaiting first-telemetry ratification
+### Decisions ratified this sprint
 
 - **D89** — Owner-identity overlay as substrate-level concern (above
-  AddressBook + wiki-memory). Justified by forward extensibility to VCs,
-  DIDs, ACL ownership.
+  AddressBook + wiki-memory). Ratified (2026-05-17) by successful cold-session
+  end-to-end run; follow-the-nose A+C design held in practice.
 - **D90** — Agent↔human elicitation via `pim:preferencesFile`
-  (`/vault/settings/prefs.ttl`). Spec MUST + private + per-Pod-owner =
-  natural elicitation surface.
+  (`/vault/settings/prefs.ttl`). Ratified (2026-05-17) by the same run;
+  one-question-at-a-time walk-through with per-answer PATCH worked as designed.
 
-Both ratify after the end-to-end run validates the design against agent
-behavior. See `.claude/skills/decision-lookup/decisions.md`.
+See `.claude/skills/decision-lookup/decisions.md`.
+
+### TLS gap surfaced + remediated
+
+T30 cold-session revealed that the new skills didn't document the D85
+`NODE_EXTRA_CA_CERTS=$(mkcert -CAROOT)/rootCA.pem` env var. The agent
+reached for `NODE_TLS_REJECT_UNAUTHORIZED=0` (disables verification
+globally) instead. Fixed by adding a "Pre-flight — TLS dev cert" section
+to each of the three new SKILL.md files (commit `d430c24`). Deeper CLI-side
+fix (auto-detect mkcert install + clearer error on `SELF_SIGNED_CERT_IN_CHAIN`)
+landed at commit TBD; tracked in FOLLOWUPS.md.
 
 Companion docs:
 - Design: `~/dev/git/LA3D/agents/solid-agent-skills/docs/superpowers/specs/2026-05-17-pod-owner-setup-skill-design.md`
