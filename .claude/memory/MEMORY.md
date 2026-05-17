@@ -150,10 +150,15 @@ See `.claude/skills/decision-lookup/decisions.md`.
 T30 cold-session revealed that the new skills didn't document the D85
 `NODE_EXTRA_CA_CERTS=$(mkcert -CAROOT)/rootCA.pem` env var. The agent
 reached for `NODE_TLS_REJECT_UNAUTHORIZED=0` (disables verification
-globally) instead. Fixed by adding a "Pre-flight — TLS dev cert" section
-to each of the three new SKILL.md files (commit `d430c24`). Deeper CLI-side
-fix (auto-detect mkcert install + clearer error on `SELF_SIGNED_CERT_IN_CHAIN`)
-landed at commit TBD; tracked in FOLLOWUPS.md.
+globally) instead. Fixed in two layers:
+- Skill-side: "Pre-flight — TLS dev cert" section added to all three new
+  SKILL.md files (commit `d430c24` in solid-agent-skills).
+- CLI-side: `src/lib/http.ts` now auto-detects the mkcert root CA at module
+  load and registers it via undici's global dispatcher (zero-config dev
+  TLS, silent no-op in prod). On TLS error the wrapped `safeFetch` emits a
+  clear remediation message naming the `NODE_EXTRA_CA_CERTS` env var and
+  warning against the unsafe `NODE_TLS_REJECT_UNAUTHORIZED=0` shortcut.
+  Commit `9797ec1` in solid-agent-skills.
 
 Companion docs:
 - Design: `~/dev/git/LA3D/agents/solid-agent-skills/docs/superpowers/specs/2026-05-17-pod-owner-setup-skill-design.md`
