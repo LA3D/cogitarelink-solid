@@ -3,10 +3,11 @@
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
 <https://pod.vardeman.me/vault/meta/shapes/pod-owner-preferences.shacl.ttl#PodOwnerPreferencesShape>
     a sh:NodeShape ;
     sh:targetClass prefs:PodOwnerPreferences ;
-    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
     sh:closed false ;
     sh:agentInstruction """
       The Pod-owner preferences file at /vault/settings/prefs.ttl is the
@@ -50,7 +51,7 @@
         sh:path     prefs:wikiSlug ;
         sh:minCount 1 ;
         sh:datatype xsd:string ;
-        sh:pattern  "^[a-z0-9-]+$" ;
+        sh:pattern  "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$" ;
         sh:message  "Need wiki slug (lowercase + hyphens) — suggest from fullName, confirm with human." ;
     ] ;
 

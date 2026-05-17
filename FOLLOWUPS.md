@@ -220,6 +220,10 @@ as need arises.
 - **K3 (`.author` → `dct:contributor`)** — class-hint dispatch can't differentiate concept-contributor from source-creator. Distinct `.creator` class hint is a Rung 1.5+ option.
 - **Task 42 (context-driven listener dispatch)** — `wikilinkProjection.ts` uses hardcoded class-hint table instead of reading `/meta/context.jsonld` at runtime. Functionally equivalent; deferred to Rung 1.5 cleanup per D79.
 
+## Owner-identity sprint (2026-05-17)
+
+- **T4 PodOwnerPreferencesShape — sh:targetClass deviation from plan.** The plan specified `sh:targetNode </vault/settings/prefs.ttl#owner>`, but the shape uses `sh:targetClass prefs:PodOwnerPreferences` instead. Class-based targeting matches every other shape in the repo (compare `contact-card.shacl.ttl`) and is resilient to a future change in the prefs resource path. The test data and the prefs-init template (T6) both declare `a prefs:PodOwnerPreferences` on the subject, so the targeting catches the production case. No action needed — captured for the sprint reflection.
+
 ## Pre-existing (earlier rungs)
 
 - **RQ-Harness-1** — fabric namespace minting at `https://cogitarelink.org/ns/fabric#` — blocks all `fabric:*` predicates past prototype.
