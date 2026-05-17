@@ -26,7 +26,7 @@
              (operational identity — vcard predicates, time-scoped affiliations,
               SolidOS-compatible).
         L3 — wiki person page at /vault/wiki/people/<slug>/index.md
-             (AGENTIC MEMORY — deep semantic context for LLMs, concept-edges,
+             (agentic memory — deep semantic context for LLMs, concept-edges,
               sources, narrative). foaf:isPrimaryTopicOf bridges L1->L3; the
               linked page is asserted `a wiki:Person` in the same response so
               a single dereference is sufficient for an LLM to follow-its-nose
@@ -96,12 +96,14 @@
         sh:path pim:storage ;
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
+        sh:message "Solid WebID Profile §3.1 — Pod storage root; required for container discovery." ;
     ] ;
     sh:property [
         sh:path solid:publicTypeIndex ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:nodeKind sh:IRI ;
+        sh:message "Type Indexes spec — class→container routing; required by wiki-memory L3 dispatch (D78)." ;
     ] ;
 
     # SHOULD — enrichment (sh:Warning)
@@ -116,6 +118,7 @@
         sh:minCount 1 ;
         sh:datatype xsd:string ;
         sh:severity sh:Warning ;
+        sh:message "WebID SHOULD carry foaf:name (display name)." ;
     ] ;
     sh:property [
         sh:path owl:sameAs ;
@@ -129,7 +132,7 @@
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
         sh:severity sh:Warning ;
-        sh:message "WebID SHOULD foaf:isPrimaryTopicOf the wiki person page — the L3 agentic-memory record providing deep semantic context (wiki:Person, asserted in same response for single-dereference discovery)." ;
+        sh:message "WebID SHOULD foaf:isPrimaryTopicOf the wiki person page — bridges L1 WebID to L3 agentic-memory record." ;
     ] ;
 
     # MAY — informational

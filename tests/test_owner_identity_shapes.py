@@ -47,6 +47,7 @@ def _validate(prefs_ttl: str):
     conforms, _, report_text = validate(
         data_graph=data_g, shacl_graph=shapes_g,
         inference="rdfs", debug=False,
+        allow_warnings=True,
     )
     return conforms, report_text
 
@@ -107,6 +108,7 @@ def _validate_webid(ttl: str):
     conforms, _, report_text = validate(
         data_graph=data_g, shacl_graph=shapes_g,
         inference="rdfs", debug=False,
+        allow_warnings=True,
     )
     return conforms, report_text
 
@@ -122,3 +124,28 @@ def test_webid_css_default_fails_on_missing_musts():
     assert not conforms
     # foaf:Agent missing AND/OR pim:preferencesFile missing
     assert "agent" in report.lower() or "preferencesfile" in report.lower()
+
+
+WEBID_PARTIAL_ENRICHED = """
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix pim:   <http://www.w3.org/ns/pim/space#> .
+
+</vault/profile/card#me>
+    a foaf:Agent, foaf:Person ;
+    solid:oidcIssuer       <https://pod.vardeman.me/> ;
+    pim:storage            <https://pod.vardeman.me/vault/> ;
+    pim:preferencesFile    </vault/settings/prefs.ttl> ;
+    solid:publicTypeIndex  </vault/settings/publicTypeIndex> .
+"""
+
+
+def test_webid_partial_enrichment_warns_not_violates():
+    """All MUSTs satisfied; SHOULDs absent. conforms=True (Warnings don't block),
+    but the report should reference the warned fields so an agent can advise."""
+    conforms, report = _validate_webid(WEBID_PARTIAL_ENRICHED)
+    assert conforms, f"Partial enrichment should conform (Warnings don't block): {report}"
+    # At least one of the SHOULD predicates should appear in the report
+    expected_warnings = ["foaf:name", "owl:sameAs", "isPrimaryTopicOf", "name", "sameAs"]
+    assert any(w.lower() in report.lower() for w in expected_warnings), \
+        f"Expected Warnings in report for missing SHOULDs, got: {report}"
