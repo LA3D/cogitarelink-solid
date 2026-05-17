@@ -1,0 +1,7 @@
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix ldp:   <http://www.w3.org/ns/ldp#> .
+
+<> a solid:InsertDeletePatch ;
+   solid:inserts {
+       </vault/contacts/Group/> ldp:constrainedBy </vault/meta/shapes/group.shacl.ttl> .
+   } .

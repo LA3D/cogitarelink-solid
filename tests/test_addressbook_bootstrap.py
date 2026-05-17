@@ -43,8 +43,10 @@ def test_container_meta_patches_parse_and_carry_constrainedBy():
         "membership-container-meta": ("/vault/contacts/Membership/", "membership.shacl.ttl"),
     }
     for stem, (container_path, shape_file) in expected.items():
-        g = Graph().parse(BOOTSTRAP_DIR / "patches" / f"{stem}.ttl", format="turtle")
-        body = g.serialize(format="turtle")
+        # Parse as N3 (formula-bearing patch files are not valid Turtle)
+        Graph().parse(BOOTSTRAP_DIR / "patches" / f"{stem}.ttl", format="n3")
+        # Check raw source text for required tokens
+        body = (BOOTSTRAP_DIR / "patches" / f"{stem}.ttl").read_text()
         assert "ldp:constrainedBy" in body, f"{stem} missing ldp:constrainedBy"
         assert container_path in body, f"{stem} container_path {container_path} not in body"
         assert shape_file in body, f"{stem} shape file {shape_file} not in body"
