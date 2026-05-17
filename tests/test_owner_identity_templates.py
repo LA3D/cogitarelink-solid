@@ -26,7 +26,13 @@ def _substitute(body: str) -> str:
 
 
 def _strip_comments(body: str) -> str:
-    """Drop comment-only lines (those starting with # after optional whitespace)."""
+    """Drop comment-only lines (those starting with # after optional whitespace).
+
+    Unlike test_addressbook_templates._clean_body, no trailing-semicolon fixup
+    is needed: owner-identity template bodies are designed so the active
+    section ends with `.`, and any optional commented-out triples are
+    independent subjects rather than continuations.
+    """
     keep = []
     for line in body.splitlines():
         stripped = line.lstrip()
@@ -45,7 +51,7 @@ def test_prefs_init_parses():
     target = list(g.objects(predicate=TMPL.targetResource))
     assert target, "prefs-init missing tmpl:targetResource"
     container = list(g.objects(predicate=TMPL.targetContainer))
-    assert not container, "prefs-init must NOT have tmpl:targetContainer (PATCH+resource flavor)"
+    assert not container, "prefs-init must NOT have tmpl:targetContainer (uses targetResource for fixed-IRI target)"
 
 
 def test_prefs_init_body_parses_as_turtle():
