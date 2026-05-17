@@ -158,25 +158,12 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             put_file(client, url, bc.local_path, bc.content_type)
             print(f"  bootstrap → {url}")
 
-        # 10. PATCH Type Index — structured registrations OR raw patch file
+        # 10. PATCH Type Index with structured registrations
         if manifest.type_registrations:
             ti_url = pod_url.rstrip("/") + "/settings/publicTypeIndex"
             inserts = build_type_index_inserts(manifest)
             n3_patch_inserts(client, ti_url, inserts)
             print(f"  type index → {len(manifest.type_registrations)} registrations patched in")
-        elif manifest.type_index_patch:
-            ti_url = pod_url.rstrip("/") + "/settings/publicTypeIndex"
-            r = client.patch(
-                ti_url,
-                content=manifest.type_index_patch.encode("utf-8"),
-                headers={"Content-Type": "text/n3"},
-                timeout=10,
-            )
-            if r.status_code not in (200, 201, 204, 205):
-                raise RuntimeError(
-                    f"TypeIndex PATCH failed: HTTP {r.status_code}: {r.text[:300]}"
-                )
-            print(f"  type index → raw patch applied")
 
         # 11. PATCH .meta on typed subcontainers (e.g., ldp:constrainedBy for shape validation)
         for meta_patch in manifest.container_meta_patches:
@@ -298,6 +285,9 @@ def build_type_index_inserts(manifest: Manifest) -> str:
     Per Solid N3 Patch grammar, prefix declarations belong at the patch envelope's
     outer scope, not inside the inserts formula. This function returns one
     N-Triple per line using absolute IRIs only.
+
+    Emits solid:instance when tr.instance is set; solid:instanceContainer otherwise.
+    Exactly one of the two must be non-None (enforced by parse_manifest).
     """
     SOLID_NS = "http://www.w3.org/ns/solid/terms#"
     RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
@@ -306,7 +296,10 @@ def build_type_index_inserts(manifest: Manifest) -> str:
         reg = f"<#reg{i}-{manifest.name}>"
         lines.append(f"{reg} <{RDF_TYPE}> <{SOLID_NS}TypeRegistration> .")
         lines.append(f"{reg} <{SOLID_NS}forClass> <{tr.for_class}> .")
-        lines.append(f"{reg} <{SOLID_NS}instanceContainer> <{tr.instance_container}> .")
+        if tr.instance is not None:
+            lines.append(f"{reg} <{SOLID_NS}instance> <{tr.instance}> .")
+        else:
+            lines.append(f"{reg} <{SOLID_NS}instanceContainer> <{tr.instance_container}> .")
     return "\n".join(lines)
 
 

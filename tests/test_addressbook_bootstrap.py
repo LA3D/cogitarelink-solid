@@ -8,6 +8,7 @@ DCT   = Namespace("http://purl.org/dc/terms/")
 LDP   = Namespace("http://www.w3.org/ns/ldp#")
 SOLID = Namespace("http://www.w3.org/ns/solid/terms#")
 RDF   = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+POD_URL = "https://pod.vardeman.me/vault/"
 
 
 def test_addressbook_index_declares_required_predicates():
@@ -28,10 +29,16 @@ def test_groups_ttl_parses():
     Graph().parse(BOOTSTRAP_DIR / "containers" / "groups.ttl", format="turtle")
 
 
-def test_typeindex_patch_parses():
-    g = Graph().parse(BOOTSTRAP_DIR / "typeindex-patch.ttl", format="n3")
-    inserts = list(g.subjects(RDF.type, SOLID.InsertDeletePatch))
-    assert len(inserts) == 1
+def test_manifest_type_registration_has_solid_instance():
+    """installsTypeRegistration in manifest uses solid:instance (singular AddressBook)."""
+    from scripts.overlay.common import parse_manifest
+    m = parse_manifest(BOOTSTRAP_DIR, pod_url=POD_URL)
+    assert len(m.type_registrations) == 1
+    tr = m.type_registrations[0]
+    assert str(tr.for_class) == str(VCARD.AddressBook)
+    assert tr.instance is not None, "TypeRegistration must use solid:instance for AddressBook"
+    assert tr.instance_container is None
+    assert "contacts/index.ttl#this" in str(tr.instance)
 
 
 def test_container_meta_patches_parse_and_carry_constrainedBy():

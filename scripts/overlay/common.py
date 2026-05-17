@@ -46,7 +46,8 @@ class VocabularyDeclaration:
 @dataclass(frozen=True)
 class TypeRegistration:
     for_class: URIRef
-    instance_container: URIRef
+    instance_container: URIRef | None = None
+    instance: URIRef | None = None
 
 
 @dataclass(frozen=True)
@@ -91,7 +92,6 @@ class Manifest:
     role_scheme_urls: list[str]
     profile_urls: list[str]
     type_registrations: list[TypeRegistration]
-    type_index_patch: str | None      # raw N3 patch body for TypeIndex (alt to type_registrations)
     provides: list[CapabilityProvision]
     templates: list[TemplateEntry]
     bootstrap_content: list[BootstrapContent]
@@ -169,8 +169,13 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
     for tr_node in many(OVERLAY.installsTypeRegistration):
         fc = next(g.objects(tr_node, SOLID.forClass), None)
         ic = next(g.objects(tr_node, SOLID.instanceContainer), None)
-        if fc and ic:
-            type_regs.append(TypeRegistration(URIRef(fc), URIRef(ic)))
+        inst = next(g.objects(tr_node, SOLID.instance), None)
+        if fc and (ic or inst):
+            type_regs.append(TypeRegistration(
+                for_class=URIRef(fc),
+                instance_container=URIRef(ic) if ic else None,
+                instance=URIRef(inst) if inst else None,
+            ))
 
     cap_provisions = []
     for prov_node in many(OVERLAY.providesCapability):
@@ -199,14 +204,6 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
                 patch_body=patch_file.read_text(),
             ))
 
-    # installsTypeIndexPatch: raw N3 patch file path (alternative to installsTypeRegistration)
-    ti_patch_obj = one(OVERLAY.installsTypeIndexPatch)
-    ti_patch_body = None
-    if ti_patch_obj is not None:
-        ti_patch_file = overlay_dir / str(ti_patch_obj)
-        if ti_patch_file.exists():
-            ti_patch_body = ti_patch_file.read_text()
-
     # installsBootstrapContent: list of {contentPath, hostedAt} nodes
     bootstrap = []
     for bc_node in many(OVERLAY.installsBootstrapContent):
@@ -229,7 +226,6 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         container_paths=containers, shape_urls=shapes, affordance_urls=affordances,
         role_scheme_urls=role_schemes, profile_urls=profiles,
         type_registrations=type_regs,
-        type_index_patch=ti_patch_body,
         provides=cap_provisions,
         templates=templates,
         bootstrap_content=bootstrap,
