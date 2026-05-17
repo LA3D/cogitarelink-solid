@@ -1,0 +1,50 @@
+@prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
+@prefix cap:     <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix wiki:    <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix prefs:   <https://pod.vardeman.me/vault/ontology/owner-prefs#> .
+@prefix tmpl:    <https://pod.vardeman.me/vault/ontology/template#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+
+<https://pod.vardeman.me/vault/ontology/overlay#owner-identity>
+    a overlay:Overlay ;
+    overlay:name "owner-identity" ;
+    overlay:version "0.1" ;
+    dct:conformsTo <https://pod.vardeman.me/vault/ontology/wiki#WikiMemoryProfile> ;
+
+    overlay:declaresVocabulary [
+        overlay:namespace prefs: ;
+        overlay:document "vocabulary/owner-prefs.ttl" ;
+        overlay:hostedAt "/vault/ontology/owner-prefs"
+    ] ;
+
+    overlay:requiresCapability
+        [ cap:requires </vault/meta/capabilities/tmpl-vocabulary.ttl> ;
+          cap:minVersion "1.1" ] ,
+        [ cap:requires </vault/meta/capabilities/vcard-individual-substrate.ttl> ;
+          cap:minVersion "1.0" ] ,
+        [ cap:requires </vault/meta/capabilities/foaf-primarytopic-bridge.ttl> ;
+          cap:minVersion "1.0" ] ;
+
+    overlay:providesCapability
+        [ cap:capability </vault/meta/capabilities/pod-owner-identity.ttl> ;
+          cap:version "1.0" ; cap:descriptor "capabilities/pod-owner-identity.ttl" ] ,
+        [ cap:capability </vault/meta/capabilities/webid-profile-shape.ttl> ;
+          cap:version "1.0" ; cap:descriptor "capabilities/webid-profile-shape.ttl" ] ,
+        [ cap:capability </vault/meta/capabilities/pod-owner-preferences-shape.ttl> ;
+          cap:version "1.0" ; cap:descriptor "capabilities/pod-owner-preferences-shape.ttl" ] ,
+        [ cap:capability </vault/meta/capabilities/webid-enrich-template.ttl> ;
+          cap:version "1.0" ; cap:descriptor "capabilities/webid-enrich-template.ttl" ] ,
+        [ cap:capability </vault/meta/capabilities/prefs-init-template.ttl> ;
+          cap:version "1.0" ; cap:descriptor "capabilities/prefs-init-template.ttl" ] ;
+
+    overlay:installsShape
+        </vault/meta/shapes/webid-profile.shacl.ttl> ,
+        </vault/meta/shapes/pod-owner-preferences.shacl.ttl> ;
+
+    overlay:installsTemplate
+        </vault/meta/templates/webid-enrich.ttl> ,
+        </vault/meta/templates/prefs-init.ttl> ;
+
+    overlay:installsResourceMetaPatch
+        [ overlay:targetResource </vault/profile/card> ;
+          overlay:metaPatchContent "profile-card-meta.ttl" ] .
