@@ -152,12 +152,31 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             patch_context_meta(client, pod_url)
             print(f"  ctx.meta dct:conformsTo patched")
 
-        # 10. PATCH Type Index with registrations
+        # 9b. PUT bootstrap content files (idempotent: PUT overwrites on re-run)
+        for bc in manifest.bootstrap_content:
+            url = absolutize(pod_url, bc.hosted_at)
+            put_file(client, url, bc.local_path, bc.content_type)
+            print(f"  bootstrap → {url}")
+
+        # 10. PATCH Type Index — structured registrations OR raw patch file
         if manifest.type_registrations:
             ti_url = pod_url.rstrip("/") + "/settings/publicTypeIndex"
             inserts = build_type_index_inserts(manifest)
             n3_patch_inserts(client, ti_url, inserts)
             print(f"  type index → {len(manifest.type_registrations)} registrations patched in")
+        elif manifest.type_index_patch:
+            ti_url = pod_url.rstrip("/") + "/settings/publicTypeIndex"
+            r = client.patch(
+                ti_url,
+                content=manifest.type_index_patch.encode("utf-8"),
+                headers={"Content-Type": "text/n3"},
+                timeout=10,
+            )
+            if r.status_code not in (200, 201, 204, 205):
+                raise RuntimeError(
+                    f"TypeIndex PATCH failed: HTTP {r.status_code}: {r.text[:300]}"
+                )
+            print(f"  type index → raw patch applied")
 
         # 11. PATCH .meta on typed subcontainers (e.g., ldp:constrainedBy for shape validation)
         for meta_patch in manifest.container_meta_patches:

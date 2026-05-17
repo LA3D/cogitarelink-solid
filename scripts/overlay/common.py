@@ -68,6 +68,13 @@ class ContainerMetaPatch:
 
 
 @dataclass(frozen=True)
+class BootstrapContent:
+    local_path: Path    # local file in overlay_dir
+    hosted_at: str      # Pod-side path (e.g., "/vault/contacts/index.ttl")
+    content_type: str   # MIME type (default: text/turtle)
+
+
+@dataclass(frozen=True)
 class Manifest:
     """Parsed view of an overlay's manifest.ttl."""
     name: str
@@ -84,8 +91,10 @@ class Manifest:
     role_scheme_urls: list[str]
     profile_urls: list[str]
     type_registrations: list[TypeRegistration]
+    type_index_patch: str | None      # raw N3 patch body for TypeIndex (alt to type_registrations)
     provides: list[CapabilityProvision]
     templates: list[TemplateEntry]
+    bootstrap_content: list[BootstrapContent]
     container_meta_patches: list[ContainerMetaPatch]
     overlay_dir: Path                 # local directory holding manifest + artifacts
 
@@ -190,6 +199,28 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
                 patch_body=patch_file.read_text(),
             ))
 
+    # installsTypeIndexPatch: raw N3 patch file path (alternative to installsTypeRegistration)
+    ti_patch_obj = one(OVERLAY.installsTypeIndexPatch)
+    ti_patch_body = None
+    if ti_patch_obj is not None:
+        ti_patch_file = overlay_dir / str(ti_patch_obj)
+        if ti_patch_file.exists():
+            ti_patch_body = ti_patch_file.read_text()
+
+    # installsBootstrapContent: list of {contentPath, hostedAt} nodes
+    bootstrap = []
+    for bc_node in many(OVERLAY.installsBootstrapContent):
+        cp = next(g.objects(bc_node, OVERLAY.contentPath), None)
+        ha = next(g.objects(bc_node, OVERLAY.hostedAt), None)
+        ct = next(g.objects(bc_node, OVERLAY.contentType), Literal("text/turtle"))
+        if cp and ha:
+            local_file = overlay_dir / str(cp)
+            bootstrap.append(BootstrapContent(
+                local_path=local_file,
+                hosted_at=str(ha),
+                content_type=str(ct),
+            ))
+
     return Manifest(
         name=name, version=version, overlay_iri=overlay_iri, profile_iri=profile_iri,
         depends_on_overlays=depends_on,
@@ -198,8 +229,10 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         container_paths=containers, shape_urls=shapes, affordance_urls=affordances,
         role_scheme_urls=role_schemes, profile_urls=profiles,
         type_registrations=type_regs,
+        type_index_patch=ti_patch_body,
         provides=cap_provisions,
         templates=templates,
+        bootstrap_content=bootstrap,
         container_meta_patches=meta_patches,
         overlay_dir=overlay_dir,
     )
