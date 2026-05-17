@@ -1,0 +1,61 @@
+@prefix tmpl:    <https://pod.vardeman.me/vault/ontology/template#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+<https://pod.vardeman.me/vault/ontology/template>
+    a owl:Ontology ;
+    rdfs:label "Substrate Template Vocabulary" ;
+    rdfs:comment """
+      Templates are RDF skeletons paired with a SHACL shape. Agents fetch a
+      template before write operations to front-load structured context: this
+      reduces SHACL violation cycles and the trajectory token cost they incur.
+
+      Pattern: agent fetches template, fills <<PLACEHOLDER>> values from
+      collected facts, PUTs result. SHACL backstops; 422+ValidationReport
+      flows back for self-correction.
+    """ ;
+    dct:created "2026-05-16"^^xsd:date .
+
+tmpl:Template
+    a rdfs:Class ;
+    rdfs:label "Template" ;
+    rdfs:comment "An RDF skeleton document associated with a SHACL shape, intended to be filled in by an agent before a write operation." .
+
+tmpl:validatesAgainst
+    a rdf:Property ;
+    rdfs:label "validates against" ;
+    rdfs:comment "The SHACL shape this template's filled-in output must conform to." ;
+    rdfs:domain tmpl:Template ;
+    rdfs:range  sh:NodeShape .
+
+tmpl:operation
+    a rdf:Property ;
+    rdfs:label "operation" ;
+    rdfs:comment "The HTTP method used to apply a filled template (PUT, PATCH, POST)." ;
+    rdfs:domain tmpl:Template ;
+    rdfs:range  xsd:string .
+
+tmpl:targetContainer
+    a rdf:Property ;
+    rdfs:label "target container" ;
+    rdfs:comment "The container under which a filled template is created." ;
+    rdfs:domain tmpl:Template ;
+    rdfs:range  rdfs:Resource .
+
+tmpl:slugAlgorithm
+    a rdf:Property ;
+    rdfs:label "slug algorithm" ;
+    rdfs:comment "Identifier for the slug-minting algorithm (uuid4, mnemonic, etc.) that produces the path segment under the target container." ;
+    rdfs:domain tmpl:Template ;
+    rdfs:range  xsd:string .
+
+tmpl:templateBody
+    a rdf:Property ;
+    rdfs:label "template body" ;
+    rdfs:comment "The literal Turtle body to be filled in. Placeholders use <<UPPERCASE_NAME>> convention; agents replace before submission." ;
+    rdfs:domain tmpl:Template ;
+    rdfs:range  xsd:string .
