@@ -69,6 +69,12 @@ class ContainerMetaPatch:
 
 
 @dataclass(frozen=True)
+class ResourceMetaPatch:
+    target_resource: str  # the target resource URL (where .meta lives)
+    patch_body: str       # the N3 Patch body to apply
+
+
+@dataclass(frozen=True)
 class BootstrapContent:
     local_path: Path    # local file in overlay_dir
     hosted_at: str      # Pod-side path (e.g., "/vault/contacts/index.ttl")
@@ -95,6 +101,7 @@ class Manifest:
     templates: list[TemplateEntry]
     bootstrap_content: list[BootstrapContent]
     container_meta_patches: list[ContainerMetaPatch]
+    resource_meta_patches: list[ResourceMetaPatch]
     overlay_dir: Path                 # local directory holding manifest + artifacts
 
 
@@ -201,6 +208,17 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
                 patch_body=patch_file.read_text(),
             ))
 
+    res_meta_patches = []
+    for rmp_node in many(OVERLAY.installsResourceMetaPatch):
+        res_url = next(g.objects(rmp_node, OVERLAY.targetResource), None)
+        patch_path = next(g.objects(rmp_node, OVERLAY.metaPatchContent), None)
+        if res_url and patch_path:
+            patch_file = overlay_dir / "patches" / str(patch_path)
+            res_meta_patches.append(ResourceMetaPatch(
+                target_resource=str(res_url),
+                patch_body=patch_file.read_text(),
+            ))
+
     # installsBootstrapContent: list of {contentPath, hostedAt} nodes
     bootstrap = []
     for bc_node in many(OVERLAY.installsBootstrapContent):
@@ -226,6 +244,7 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         templates=templates,
         bootstrap_content=bootstrap,
         container_meta_patches=meta_patches,
+        resource_meta_patches=res_meta_patches,
         overlay_dir=overlay_dir,
     )
 
