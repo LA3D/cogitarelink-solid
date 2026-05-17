@@ -13,9 +13,12 @@ For decision IDs, invoke the `decision-lookup` skill.
   wiki-memory L3 reference profile (D78–D81), Pod-as-toolkit capability catalog
   (D83), PROF profile descriptors + wikirole (D84–D86), AddressBook substrate
   (D87/D88), owner-identity overlay (D89/D90), wiki-search OSLC Query 3.0 surface
-  (D87 ratified — note: vault and FOLLOWUPS reuse the D87 number for the search
-  layer; cross-reference both in vault decisions log). 77 wiki-search unit tests +
-  14 integration tests green; p95 26.7ms (D87 ceiling 500ms).
+  (**D91 in repo decisions; the vault decisions log calls it D87** — vault
+  skipped D78–D86 numbering. The repo `decision-lookup` skill is canonical for
+  sequential D-numbering, so use D91 in code/commit references going forward;
+  prior Phase 7a commits already merged say "D87" — accept the dual-numbering
+  on past commits, use D91 from now on). 77 wiki-search unit tests + 14
+  integration tests green; p95 26.7ms (500ms ceiling).
 - **Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to
   **wiki-memory L3 as canonical reference profile, vault as one application**
   (D70–D74).
