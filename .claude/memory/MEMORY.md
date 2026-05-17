@@ -73,6 +73,25 @@ Companion docs:
 - Plan: `docs/superpowers/plans/2026-05-16-addressbook-substrate.md`
 - Capabilities-only deps: `docs/plans/2026-05-16-capabilities-only-overlay-deps.md`
 
+### Decisions ratified this sprint
+
+- **D87** — Capabilities-only overlay dependencies (replaces deprecated `dependsOnOverlay`/`installedOverlay`)
+- **D88** — `tmpl:` substrate template vocabulary (first consumer: AddressBook with 5 templates)
+
+See `.claude/skills/decision-lookup/decisions.md` for full text.
+
+## Next plans (post-AddressBook-substrate)
+
+In dependency order:
+
+1. **`solid-pod setup-owner` CLI** (sibling `solid-agent-skills` repo) — mints Pod-owner contact card, enriches WebID, wires `foaf:primaryTopic` bridge to existing wiki page if one exists. Closes the missing-Pod-owner gap flagged in MEMORY.md caveats.
+
+2. **`solid-addressbook` skill + `solid-wiki-memory-l3` skill refinement** (`.claude/skills/`). The agent-facing layer for the substrate. Wiki skill picks up the bridge predicate; addressbook skill teaches Pod operations as access patterns. Together they enable Rung 1.5 eval.
+
+3. **Rung 1.5 eval** (skill-creator harness, with-skill vs without-skill). First measurable claim from the active plan. Eval surfaces which caps + affordances actually get reused vs which are YAGNI, informing FOLLOWUPS trim list.
+
+If the wiki URI scheme rethink is picked up (per FOLLOWUPS), it likely fits between #2 and #3 — would inform any wiki-side slug changes before agents are tested at scale.
+
 ## Active focus — Rung 1.5 (next round)
 
 First measurable evaluation. Conditions: B1 filesystem baseline / B2 brute-force
