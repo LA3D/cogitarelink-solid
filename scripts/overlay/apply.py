@@ -21,7 +21,7 @@ import httpx
 
 from .common import (
     Manifest, parse_manifest, fetch_capability_catalog, put_file,
-    ensure_container, n3_patch_inserts, version_at_least, CapabilityProvision,
+    ensure_container, n3_patch_inserts, version_at_least,
 )
 
 
