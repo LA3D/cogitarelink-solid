@@ -82,7 +82,6 @@ class Manifest:
     version: str
     overlay_iri: URIRef
     profile_iri: URIRef | None
-    depends_on_overlays: list[URIRef]
     required_capabilities: list[CapabilityRequirement]
     optional_capabilities: list[CapabilityRequirement]
     vocabularies: list[VocabularyDeclaration]
@@ -132,8 +131,6 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
     name = str(one(OVERLAY.name) or "")
     version = str(one(OVERLAY.version) or "")
     profile_iri = one(DCTERMS.conformsTo)
-
-    depends_on = [URIRef(o) for o in many(OVERLAY.dependsOnOverlay)]
 
     req_caps = []
     for req_node in many(OVERLAY.requiresCapability):
@@ -220,7 +217,6 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
 
     return Manifest(
         name=name, version=version, overlay_iri=overlay_iri, profile_iri=profile_iri,
-        depends_on_overlays=depends_on,
         required_capabilities=req_caps, optional_capabilities=opt_caps,
         vocabularies=vocabs,
         container_paths=containers, shape_urls=shapes, affordance_urls=affordances,
