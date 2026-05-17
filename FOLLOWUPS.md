@@ -2,6 +2,15 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## Phase 7a wiki-search — design plan ready (2026-05-17)
+
+**Next implementation step.** Buildable design plan at [`docs/plans/2026-05-17-wiki-search-design.md`](docs/plans/2026-05-17-wiki-search-design.md). Picks up before Rung 1.5 eval.
+
+- [ ] **Implement the wiki-search CSS extension** per the design plan. Scope: `css/extensions/wiki-search/` (HttpHandler + SearchEngine interface + RegexpSearchEngine + ResponseBuilder + tests), overlay capability descriptor + affordance descriptor, consumer skill in sibling `solid-agent-skills` repo, integration tests against docker-compose pod. Estimate 2–3 engineer-days. Suggested order is §13 of the design plan.
+- [ ] **Run in a clean superpowers session** — the design plan is written to be self-contained for a fresh agent: read it, the existing memento + profile-link extension code, and the AddressBook overlay's contact-discovery affordance for the descriptor pattern. Use writing-plans + test-driven-development + verification-before-completion skills.
+- [ ] **Project context**: vault [[Phase 7 - Wiki-Memory Search Layer]] is the project-level catalog (forward work for 7b/c/d, cross-repo coordination, Rung 1.5 task design). The vault notes were refined the same day to match this plan; engine choice settled as `RegexpSearchEngine` for Phase 1.
+- [ ] **Decision anchor**: D87 in vault `SOLID-Pod-Decisions.md` (refined 2026-05-17 with engine and discovery-mechanism narrowing).
+
 ## Phase 5j (2026-05-16) — URI conformance close-out
 
 ### Deferred from D86 implementation
