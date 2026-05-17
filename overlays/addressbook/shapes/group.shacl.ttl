@@ -1,0 +1,29 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<https://pod.vardeman.me/vault/meta/shapes/group.shacl.ttl#GroupShape>
+    a sh:NodeShape ;
+    sh:targetClass vcard:Group ;
+    sh:closed false ;
+    sh:agentInstruction """
+      A vcard:Group is a named collection of contacts. Required: vcard:fn
+      (one) and vcard:hasMember (at least one — empty groups have no purpose).
+      Members must be IRIs of Person or Organization cards. Groups are
+      author-controlled with mnemonic slugs (kebab-case); collisions are
+      manageable because you control naming.
+    """ ;
+
+    sh:property [
+        sh:path vcard:fn ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Group must have exactly one vcard:fn (display name)." ;
+    ] ;
+
+    sh:property [
+        sh:path vcard:hasMember ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Group must have at least one vcard:hasMember (IRI of a Person or Organization card)." ;
+    ] .

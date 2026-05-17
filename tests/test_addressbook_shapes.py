@@ -133,3 +133,32 @@ def test_org_missing_fn_fails():
 def test_org_no_anchor_fails():
     conforms, _ = _validate(ORG_NO_ANCHOR, "organization-card.shacl.ttl")
     assert not conforms
+
+
+# ----- GroupShape -----
+
+GROUP_VALID = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+
+<#this> a vcard:Group ;
+    vcard:fn "Notre Dame Collaborators" ;
+    vcard:hasMember </contacts/Person/7f3a1b8c-9d2e-4c5a-8f1b-2e6d4a8c0f9e/index.ttl#this> ,
+                    </contacts/Person/c4e5d6f7-1234-5678-9abc-def012345678/index.ttl#this> .
+"""
+
+GROUP_EMPTY = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+
+<#this> a vcard:Group ;
+    vcard:fn "Empty Group" .
+"""
+
+
+def test_group_valid_passes():
+    conforms, report = _validate(GROUP_VALID, "group.shacl.ttl")
+    assert conforms, f"Expected conformance:\n{report}"
+
+
+def test_group_empty_fails():
+    conforms, _ = _validate(GROUP_EMPTY, "group.shacl.ttl")
+    assert not conforms
