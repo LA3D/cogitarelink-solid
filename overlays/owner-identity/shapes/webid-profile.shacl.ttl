@@ -1,0 +1,142 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix org:   <http://www.w3.org/ns/org#> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix pim:   <http://www.w3.org/ns/pim/space#> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<> dct:conformsTo <https://solid.github.io/webid-profile/> .
+
+<#PodOwnerWebIDShape>
+    a sh:NodeShape ;
+    sh:targetNode <https://pod.vardeman.me/vault/profile/card#me> ;
+    sh:agentInstruction """
+      Governs the Pod-owner WebID at /vault/profile/card#me.
+      Grounded in: W3C WebID 1.0 + Solid WebID Profile editor draft
+      (https://solid.github.io/webid-profile/).
+
+      Three-layer Pod-owner identity model:
+        L1 — this WebID profile (canonical identity, auth, spec-required).
+        L2 — AddressBook contact card at /vault/contacts/Person/<uuid>.ttl#this
+             (operational identity — vcard predicates, time-scoped affiliations,
+              SolidOS-compatible).
+        L3 — wiki person page at /vault/wiki/people/<slug>/index.md
+             (AGENTIC MEMORY — deep semantic context for LLMs, concept-edges,
+              sources, narrative). foaf:isPrimaryTopicOf bridges L1->L3; the
+              linked page is asserted `a wiki:Person` in the same response so
+              a single dereference is sufficient for an LLM to follow-its-nose
+              from WebID to agentic memory.
+
+      Setup-owner workflow (cross-overlay; see solid-owner-identity skill):
+        1. Check /vault/settings/prefs.ttl — if missing/incomplete, walk
+           human through elicitation, persist to prefs.ttl as you go.
+        2. Build AddressBook Person card (and optional Org + Membership)
+           from prefs.
+        3. (Optional) create /vault/wiki/people/<slug>/ wiki page; in its
+           .meta assert foaf:primaryTopic <this WebID>.
+        4. Fill the webid-enrich template from prefs + AddressBook URIs +
+           optional wiki page URI, PATCH /vault/profile/card.
+
+      MUST (spec-mandated — sh:Violation):
+        rdf:type foaf:Agent              (Solid WebID Profile §3.1, exactly 1)
+        pim:preferencesFile              (Solid WebID Profile §4, exactly 1)
+
+      MUST (operationally required — sh:Violation):
+        solid:oidcIssuer (>=1, PROTECTED — never PATCH; CSS owns it per §3.2)
+        pim:storage (>=1; spec is 0+ but Pod-owner case requires >=1)
+        solid:publicTypeIndex (1; needed for wiki-memory L3 class-based dispatch per D78)
+
+      SHOULD — enrichment (sh:Warning, doesn't block writes):
+        rdf:type foaf:Person (CSS-default omits foaf:Agent; we assert both)
+        foaf:name (>=1, xsd:string)
+        owl:sameAs <https://orcid.org/...> (>=1; spec-endorsed bridge §3.3)
+        owl:sameAs </vault/contacts/Person/<uuid>.ttl#this> (>=1; L1<->L2 equivalence)
+        foaf:isPrimaryTopicOf </vault/wiki/people/<slug>/index.md> (>=1; L1->L3 bridge)
+
+      MAY — rich identity (sh:Info):
+        org:hasMembership (0+; time-scoped affiliations from AddressBook)
+        foaf:img, foaf:nick, foaf:mbox
+        rdfs:seeAlso (spec-endorsed generic fallback)
+
+      FUTURE EXTENSION POINTS (commented MAY in v1; sharpened in later sprints):
+        cred:credentialSubject — VC claims about the WebID owner (W3C VC 2.0)
+        alsoKnownAs <did:...>  — DID-WebID bridge (D14)
+        acl:owner              — when Phase 6 enables WAC/ACP
+        solid:account          — multi-WebID Pods (lab/org Pod with members)
+    """ ;
+
+    # MUST — spec-mandated
+    sh:property [
+        sh:path rdf:type ;
+        sh:hasValue foaf:Agent ;
+        sh:minCount 1 ;
+        sh:message "Solid WebID Profile §3.1 requires rdf:type foaf:Agent (CSS-default omits this — enrichment adds it)." ;
+    ] ;
+    sh:property [
+        sh:path pim:preferencesFile ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Solid WebID Profile §4 requires exactly one pim:preferencesFile (CSS-default omits — setup-owner mints /vault/settings/prefs.ttl)." ;
+    ] ;
+
+    # MUST — operationally required for Pod-owner
+    sh:property [
+        sh:path solid:oidcIssuer ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Solid WebID Profile §3.2 PROTECTED triple — CSS mints, never PATCH." ;
+    ] ;
+    sh:property [
+        sh:path pim:storage ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+    ] ;
+    sh:property [
+        sh:path solid:publicTypeIndex ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+    ] ;
+
+    # SHOULD — enrichment (sh:Warning)
+    sh:property [
+        sh:path rdf:type ;
+        sh:hasValue foaf:Person ;
+        sh:severity sh:Warning ;
+        sh:message "SHOULD assert foaf:Person alongside foaf:Agent (most Pod owners are persons)." ;
+    ] ;
+    sh:property [
+        sh:path foaf:name ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:severity sh:Warning ;
+    ] ;
+    sh:property [
+        sh:path owl:sameAs ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Warning ;
+        sh:message "WebID SHOULD owl:sameAs at least one canonical anchor (ORCID + AddressBook contact-card #this)." ;
+    ] ;
+    sh:property [
+        sh:path foaf:isPrimaryTopicOf ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Warning ;
+        sh:message "WebID SHOULD foaf:isPrimaryTopicOf the wiki person page — the L3 agentic-memory record providing deep semantic context (wiki:Person, asserted in same response for single-dereference discovery)." ;
+    ] ;
+
+    # MAY — informational
+    sh:property [
+        sh:path org:hasMembership ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Info ;
+    ] ;
+
+    sh:closed false .

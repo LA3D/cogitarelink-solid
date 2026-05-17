@@ -66,3 +66,59 @@ def test_prefs_bad_orcid_pattern_fails():
     conforms, report = _validate(PREFS_BAD_ORCID)
     assert not conforms
     assert "orcid" in report.lower() or "pattern" in report.lower()
+
+
+# ----- PodOwnerWebIDShape -----
+
+WEBID_VALID_ENRICHED = """
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix pim:   <http://www.w3.org/ns/pim/space#> .
+
+</vault/profile/card#me>
+    a foaf:Agent, foaf:Person ;
+    foaf:name              "Charles F. Vardeman II" ;
+    solid:oidcIssuer       <https://pod.vardeman.me/> ;
+    pim:storage            <https://pod.vardeman.me/vault/> ;
+    pim:preferencesFile    </vault/settings/prefs.ttl> ;
+    solid:publicTypeIndex  </vault/settings/publicTypeIndex> ;
+    owl:sameAs             <https://orcid.org/0000-0003-4091-6059> ,
+                           </vault/contacts/Person/abc-uuid.ttl#this> ;
+    foaf:isPrimaryTopicOf  </vault/wiki/people/charles/index.md> .
+"""
+
+WEBID_CSS_DEFAULT_MISSING_MUSTS = """
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix pim:   <http://www.w3.org/ns/pim/space#> .
+
+</vault/profile/card#me>
+    a foaf:Person ;
+    solid:oidcIssuer       <https://pod.vardeman.me/> ;
+    pim:storage            <https://pod.vardeman.me/vault/> ;
+    solid:publicTypeIndex  </vault/settings/publicTypeIndex> .
+"""
+
+
+def _validate_webid(ttl: str):
+    shapes_g = load_shapes("webid-profile.shacl.ttl")
+    data_g = Graph().parse(data=ttl, format="turtle", publicID=_BASE)
+    conforms, _, report_text = validate(
+        data_graph=data_g, shacl_graph=shapes_g,
+        inference="rdfs", debug=False,
+    )
+    return conforms, report_text
+
+
+def test_webid_valid_enriched_conforms():
+    conforms, report = _validate_webid(WEBID_VALID_ENRICHED)
+    assert conforms, f"Enriched WebID failed: {report}"
+
+
+def test_webid_css_default_fails_on_missing_musts():
+    # Missing foaf:Agent type and pim:preferencesFile (both spec MUSTs)
+    conforms, report = _validate_webid(WEBID_CSS_DEFAULT_MISSING_MUSTS)
+    assert not conforms
+    # foaf:Agent missing AND/OR pim:preferencesFile missing
+    assert "agent" in report.lower() or "preferencesfile" in report.lower()
