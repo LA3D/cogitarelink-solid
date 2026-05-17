@@ -1,0 +1,44 @@
+@prefix tmpl: <https://pod.vardeman.me/vault/ontology/template#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+</vault/meta/templates/prefs-init.ttl>
+    a tmpl:Template ;
+    tmpl:validatesAgainst </vault/meta/shapes/pod-owner-preferences.shacl.ttl#PodOwnerPreferencesShape> ;
+    tmpl:operation       "PUT" ;
+    tmpl:targetResource  </vault/settings/prefs.ttl> ;
+    sh:agentInstruction """
+      Create the empty preferences-file skeleton at /vault/settings/prefs.ttl.
+
+      1. Substitute no placeholders for the skeleton itself — PUT as-is.
+      2. After PUT succeeds, walk the human through the REQUIRED facts one
+         at a time:  prefs:fullName, prefs:orcid, prefs:wikiSlug.
+         For each answer, solid-pod patch /vault/settings/prefs.ttl
+         --insert "<#owner> prefs:X \\"...\\" ." .
+      3. Optionally walk through OPTIONAL facts (affiliation, email, etc.).
+         Accept "skip" from the human.
+      4. Validate against PodOwnerPreferencesShape before proceeding to the
+         AddressBook + WebID enrichment phases.
+      5. When the full SetupPodOwner flow completes, patch
+         <#owner> prefs:setupOwnerCompleted true^^xsd:boolean .
+    """ ;
+    tmpl:templateBody """
+@prefix prefs: <https://pod.vardeman.me/vault/ontology/owner-prefs#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+</vault/settings/prefs.ttl#owner>
+    a prefs:PodOwnerPreferences .
+
+# REQUIRED — elicit from human one at a time, then PATCH this resource:
+#   <#owner> prefs:fullName  \"...\" .
+#   <#owner> prefs:orcid     \"XXXX-XXXX-XXXX-XXXX\" .
+#   <#owner> prefs:wikiSlug  \"...\" .
+# OPTIONAL:
+#   <#owner> prefs:primaryAffiliationROR  \"...\" .
+#   <#owner> prefs:primaryAffiliationName \"...\" .
+#   <#owner> prefs:membershipRole         \"...\" .
+#   <#owner> prefs:membershipStart        \"YYYY-MM-DD\"^^xsd:date .
+#   <#owner> prefs:email                  \"...\" .
+#   <#owner> prefs:foafImg                \"https://...\" .
+# COMPLETION MARKER:
+#   <#owner> prefs:setupOwnerCompleted true^^xsd:boolean .
+""" .
