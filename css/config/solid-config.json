@@ -74,6 +74,21 @@
         "converter": { "@id": "urn:solid-server:default:RepresentationConverter" },
         "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" }
       }
+    },
+    {
+      "comment": "ShaclErrorHandler intercepts ShaclValidationError (thrown by ShaclValidator on non-conformance) and returns 422 with Content-Type: text/turtle body containing the sh:ValidationReport. Inserted before ConvertingErrorHandler so agents can self-correct from parseable RDF instead of opaque JSON. Falls through (NotImplementedHttpError) for all other error types.",
+      "@id": "urn:shape-validation:default:ShaclErrorHandler",
+      "@type": "ShaclErrorHandler"
+    },
+    {
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:WaterfallErrorHandler" },
+      "overrideSteps": [{
+        "@type": "OverrideListInsertBefore",
+        "overrideParameter": { "@id": "css:dist/util/handlers/StatusWaterfallHandler.jsonld#StatusWaterfallHandler_handlers" },
+        "overrideTarget": { "@id": "urn:solid-server:default:ConvertingErrorHandler" },
+        "overrideValue": { "@id": "urn:shape-validation:default:ShaclErrorHandler" }
+      }]
     }
   ]
 }

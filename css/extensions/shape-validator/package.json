@@ -17,7 +17,8 @@
   "scripts": {
     "build": "npm run build:ts && npm run build:components",
     "build:ts": "tsc --skipLibCheck",
-    "build:components": "componentsjs-generator -s src -c dist/components"
+    "build:components": "componentsjs-generator -s src -c dist/components",
+    "test": "vitest run"
   },
   "dependencies": {
     "rdf-validate-shacl": "^0.6.0"
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "componentsjs-generator": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
   }
 }
