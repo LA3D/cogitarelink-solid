@@ -5,14 +5,17 @@ recaps live in git history and the vault decisions log
 (`~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`).
 For decision IDs, invoke the `decision-lookup` skill.
 
-## Project state (as of 2026-05-16)
+## Project state (as of 2026-05-18)
 
 - **Branch**: main
-- **Shipped**: Phase 1 + 2 + 2b + Rung 1.4 + Phase 5j (URI conformance + TLS + PROF
-  close-out). Read-only Memento, tombstone semantics, wiki-memory L3 reference
-  profile (D78–D81), Pod-as-toolkit capability catalog (D83), PROF profile
-  descriptors + ProfileLinkMetadataWriter + wikirole scheme (D84–D86). 32 Phase 5j
-  integration tests green.
+- **Shipped**: Phase 1 + 2 + 2b + Rung 1.4 + Phase 5j + AddressBook + owner-identity
+  + **Phase 7a wiki-search** (2026-05-18). Read-only Memento, tombstone semantics,
+  wiki-memory L3 reference profile (D78–D81), Pod-as-toolkit capability catalog
+  (D83), PROF profile descriptors + wikirole (D84–D86), AddressBook substrate
+  (D87/D88), owner-identity overlay (D89/D90), wiki-search OSLC Query 3.0 surface
+  (D87 ratified — note: vault and FOLLOWUPS reuse the D87 number for the search
+  layer; cross-reference both in vault decisions log). 77 wiki-search unit tests +
+  14 integration tests green; p95 26.7ms (D87 ceiling 500ms).
 - **Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to
   **wiki-memory L3 as canonical reference profile, vault as one application**
   (D70–D74).
@@ -164,24 +167,82 @@ Companion docs:
 - Design: `~/dev/git/LA3D/agents/solid-agent-skills/docs/superpowers/specs/2026-05-17-pod-owner-setup-skill-design.md`
 - Plan: `~/dev/git/LA3D/agents/solid-agent-skills/docs/superpowers/plans/2026-05-17-pod-owner-setup-skill.md`
 
-## Next plans (post-owner-identity-skills)
+## Phase 7a wiki-search — Shipped (2026-05-18)
+
+Wiki-search CSS extension shipping the first measurable affordance of D87.
+16-task TDD sprint executed via superpowers:subagent-driven-development.
+
+- **`css/extensions/wiki-search/`** — 12 source files: SearchEngine interface
+  + RegexpSearchEngine (pure-Node, escaped literal substring); parseSearchTerms
+  (strict OSLC §7.3 quoted phrases); parseQuery (paging + deferred-params 501
+  flag); score (density-based, log-dampened); snippet (halo-bounded);
+  ResponseBuilder (Turtle with `oslc:nextPage` + `oslc:totalCount`); uri helpers;
+  walker (BFS + WAC subtree-omission, injectable fetch seam); WikiSearchHttpHandler
+  (orchestrator); WikiSearchLinkMetadataWriter (Tier-1 discovery via
+  `Link: rel="queryBase"`).
+- **`overlays/wiki-memory/`** extended with capability `wiki-search-substrate.ttl`
+  + affordance `wiki-search-grep.ttl` + manifest entries.
+- **`css/config/`** wiki-search.json + Components.js consolidation into
+  memento.json's Overrides (K1 limitation handled — single Override per
+  BaseHttpHandler / MetadataWriter instance).
+- **Sibling repo solid-agent-skills**: `solid-pod wiki-search` CLI command +
+  `skills/wiki-search/SKILL.md` (commit `b17be6f`).
+- **77 unit + 14 integration tests** green; p95 latency **26.7ms** (D87 ceiling
+  500ms — 18.7× headroom).
+
+### Architectural deviation — walker rewrite (D91 candidate)
+
+Task 8's original plan called for in-process `ResourceStore.getRepresentation`
+access. Integration testing in Task 12 surfaced a re-entrant lock crash (CSS's
+per-resource write lock + handler running inside its own request context →
+6s lock-expiry + N3StreamWriter crash). Walker rewritten in `eb37bb7` to use
+undici-based HTTP self-requests; `WalkFetch` interface injected for unit
+testability (Approach B, commit `5e9c6c1`). D91 ratification deferred pending
+larger-scale evidence (current pod content is ~dozens of pages; perf measured
+fine but the projected ~1000-page vault hasn't been stress-tested).
+
+### Known gap (blocks WAC tests)
+
+HTTP self-requests in the walker are currently anonymous. WAC enforcement
+runs via `PermissionReader` with real credentials BEFORE the self-request,
+but the self-request itself omits `Authorization` / `DPoP` headers. Under
+dev-allow-all config this is invisible. With real auth, a WAC-protected
+resource that passes the permission gate would fail the anonymous content
+fetch silently (anon-deny = resource excluded from results, even when the
+authenticated user is entitled). **Must fix before un-stubbing the 6 WAC
+scenario tests in `tests/integration/test_wiki_search_e2e.py`.** Pragmatic
+fix: forward original request's Authorization + DPoP headers into the
+undici self-request (~20 LOC in walker.ts). See FOLLOWUPS.md.
+
+Companion docs:
+- Spec: `docs/superpowers/specs/2026-05-18-wiki-search-refinement-design.md`
+- Implementation plan: `docs/superpowers/plans/2026-05-18-wiki-search-implementation.md`
+- Original design: `docs/plans/2026-05-17-wiki-search-design.md`
+
+## Next plans (post-Phase-7a)
 
 In dependency order:
 
-1. **Rung 1.5 eval** (skill-creator harness, with-skill vs without-skill).
-   First measurable claim from the active plan. Eval surfaces which caps +
-   affordances actually get reused vs which are YAGNI, informing FOLLOWUPS
-   trim list. Tests the three new skills (solid-addressbook,
-   solid-wiki-memory-l3, solid-owner-identity) against cold-start agents.
+1. **Anonymous-fetch fix + WAC scenario tests** (~20 LOC walker.ts + 5 test
+   bodies in `test_wiki_search_e2e.py`). Blocks the omit-don't-deny
+   correctness guarantee under real auth. Pre-requisite for Rung 1.5 if
+   any task uses authenticated agents.
 
-2. **Memory Structuring Sprint** — finish wiki-memory L3: two-stage commit
+2. **Rung 1.5 eval** (skill-creator harness, with-skill vs without-skill).
+   First measurable claim from the active plan. Tests the three Phase 5j/6
+   skills (solid-addressbook, solid-wiki-memory-l3, solid-owner-identity)
+   AND the new wiki-search skill against cold-start agents. Eval surfaces
+   which caps + affordances actually get reused vs which are YAGNI,
+   informing FOLLOWUPS trim list.
+
+3. **Memory Structuring Sprint** — finish wiki-memory L3: two-stage commit
    (D73 working-memory → mem:Crystallize → durable), full coverage of the
    remaining shape classes (Concept/Source/Procedure/WorkingMemory/Page),
    memory-substrate triggers (D74 — mem:* AS2 vocab on LDN inbox).
 
-If the wiki URI scheme rethink is picked up (per FOLLOWUPS), it slots
-between #1 and #2 — would inform wiki-side slug changes before scale
-testing in #2.
+Phase 7b/c/d (engine swap, hybrid RRF, in-pod index) are deferred until
+Rung 1.5 evidence justifies. Wiki URI scheme rethink (per FOLLOWUPS) slots
+between #2 and #3 if picked up.
 
 ## Active focus — Rung 1.5 (next round)
 
