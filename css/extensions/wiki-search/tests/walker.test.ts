@@ -1,31 +1,52 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { walkContainer } from "../src/walker";
+import type { WalkFetch } from "../src/walker";
 
-// Minimal fake ResourceStore + PermissionReader matching the shape walkContainer needs.
-// Real implementations from CSS plug in at runtime via Components.js.
+// Layout shape for the fake HTTP fetch seam.
+// Containers have `contains` (list of child URLs); leaf resources have `contentType` + `body`.
+type Layout = Record<
+  string,
+  { contentType: string; body?: string; contains?: string[] }
+>;
 
-function makeFakeStore(layout: Record<string, { contentType: string; body?: string; contains?: string[] }>) {
-  return {
-    async getRepresentation(identifier: { path: string }): Promise<{
-      metadata: { contentType: string };
-      data: AsyncIterable<Buffer>;
-    }> {
-      const node = layout[identifier.path];
-      if (!node) throw new Error(`not found: ${identifier.path}`);
-      const body = node.contains
-        ? node.contains.map((c) => `<${c}>`).join(" ldp:contains ") // crude
-        : (node.body ?? "");
-      const buf = Buffer.from(body);
+/**
+ * Build a WalkFetch stub backed by a static layout map.
+ * - Container URLs (ending "/") return a text/turtle body with ldp:contains triples.
+ * - Leaf URLs return their contentType and body.
+ * - Unknown URLs return 404.
+ */
+function makeFakeFetch(layout: Layout): WalkFetch {
+  return async (url, _headers) => {
+    const node = layout[url];
+    if (!node) {
       return {
-        metadata: { contentType: node.contentType },
-        data: (async function* () { yield buf; })(),
+        status: 404,
+        contentType: "text/plain",
+        text: async () => "not found",
+        dump: async () => {},
       };
-    },
-    // walker uses getChildren which we'll define on the store contract
-    async getChildren(identifier: { path: string }): Promise<{ path: string }[]> {
-      const node = layout[identifier.path];
-      return (node?.contains ?? []).map((p) => ({ path: p }));
-    },
+    }
+    if (node.contains !== undefined) {
+      // Build a minimal Turtle container listing with ldp:contains triples.
+      const contains = node.contains;
+      const turtle = [
+        `@prefix ldp: <http://www.w3.org/ns/ldp#> .`,
+        `<${url}> a ldp:BasicContainer ;`,
+        contains.map((c) => `  ldp:contains <${c}>`).join(" ;\n") + " .",
+      ].join("\n");
+      return {
+        status: 200,
+        contentType: "text/turtle",
+        text: async () => turtle,
+        dump: async () => {},
+      };
+    }
+    return {
+      status: 200,
+      contentType: node.contentType,
+      text: async () => node.body ?? "",
+      dump: async () => {},
+    };
   };
 }
 
@@ -39,7 +60,7 @@ function makePermissionReader(allowed: Set<string>) {
 
 describe("walkContainer", () => {
   it("yields all readable markdown descendants in a single-level container", async () => {
-    const store = makeFakeStore({
+    const layout: Layout = {
       "https://pod.vardeman.me/vault/wiki/": {
         contentType: "text/turtle",
         contains: [
@@ -49,7 +70,8 @@ describe("walkContainer", () => {
       },
       "https://pod.vardeman.me/vault/wiki/a.md": { contentType: "text/markdown", body: "alpha" },
       "https://pod.vardeman.me/vault/wiki/b.md": { contentType: "text/markdown", body: "beta" },
-    });
+    };
+    const fakeFetch = makeFakeFetch(layout);
     const perms = makePermissionReader(new Set([
       "https://pod.vardeman.me/vault/wiki/",
       "https://pod.vardeman.me/vault/wiki/a.md",
@@ -58,9 +80,10 @@ describe("walkContainer", () => {
     const found: string[] = [];
     for await (const { url, body } of walkContainer(
       "https://pod.vardeman.me/vault/wiki/",
-      store as any,
+      {} as any,
       perms as any,
       { read: true } as any,
+      { fetch: fakeFetch },
     )) {
       found.push(url);
       expect(typeof body).toBe("string");
@@ -72,7 +95,7 @@ describe("walkContainer", () => {
   });
 
   it("recurses into subcontainers", async () => {
-    const store = makeFakeStore({
+    const layout: Layout = {
       "https://pod.vardeman.me/vault/wiki/": {
         contentType: "text/turtle",
         contains: ["https://pod.vardeman.me/vault/wiki/pages/"],
@@ -82,7 +105,8 @@ describe("walkContainer", () => {
         contains: ["https://pod.vardeman.me/vault/wiki/pages/foo.md"],
       },
       "https://pod.vardeman.me/vault/wiki/pages/foo.md": { contentType: "text/markdown", body: "x" },
-    });
+    };
+    const fakeFetch = makeFakeFetch(layout);
     const perms = makePermissionReader(new Set([
       "https://pod.vardeman.me/vault/wiki/",
       "https://pod.vardeman.me/vault/wiki/pages/",
@@ -91,9 +115,10 @@ describe("walkContainer", () => {
     const found: string[] = [];
     for await (const r of walkContainer(
       "https://pod.vardeman.me/vault/wiki/",
-      store as any,
+      {} as any,
       perms as any,
       { read: true } as any,
+      { fetch: fakeFetch },
     )) {
       found.push(r.url);
     }
@@ -101,7 +126,7 @@ describe("walkContainer", () => {
   });
 
   it("omits entire subtree when WAC denies subcontainer", async () => {
-    const store = makeFakeStore({
+    const layout: Layout = {
       "https://pod.vardeman.me/vault/wiki/": {
         contentType: "text/turtle",
         contains: [
@@ -119,7 +144,8 @@ describe("walkContainer", () => {
       },
       "https://pod.vardeman.me/vault/wiki/public/a.md": { contentType: "text/markdown", body: "ok" },
       "https://pod.vardeman.me/vault/wiki/private/secret.md": { contentType: "text/markdown", body: "no" },
-    });
+    };
+    const fakeFetch = makeFakeFetch(layout);
     const perms = makePermissionReader(new Set([
       "https://pod.vardeman.me/vault/wiki/",
       "https://pod.vardeman.me/vault/wiki/public/",
@@ -129,9 +155,10 @@ describe("walkContainer", () => {
     const found: string[] = [];
     for await (const r of walkContainer(
       "https://pod.vardeman.me/vault/wiki/",
-      store as any,
+      {} as any,
       perms as any,
       { read: true } as any,
+      { fetch: fakeFetch },
     )) {
       found.push(r.url);
     }
@@ -139,7 +166,7 @@ describe("walkContainer", () => {
   });
 
   it("skips non-markdown resources", async () => {
-    const store = makeFakeStore({
+    const layout: Layout = {
       "https://pod.vardeman.me/vault/wiki/": {
         contentType: "text/turtle",
         contains: [
@@ -149,7 +176,8 @@ describe("walkContainer", () => {
       },
       "https://pod.vardeman.me/vault/wiki/style.css": { contentType: "text/css", body: "css" },
       "https://pod.vardeman.me/vault/wiki/note.md": { contentType: "text/markdown", body: "md" },
-    });
+    };
+    const fakeFetch = makeFakeFetch(layout);
     const perms = makePermissionReader(new Set([
       "https://pod.vardeman.me/vault/wiki/",
       "https://pod.vardeman.me/vault/wiki/style.css",
@@ -158,9 +186,10 @@ describe("walkContainer", () => {
     const found: string[] = [];
     for await (const r of walkContainer(
       "https://pod.vardeman.me/vault/wiki/",
-      store as any,
+      {} as any,
       perms as any,
       { read: true } as any,
+      { fetch: fakeFetch },
     )) {
       found.push(r.url);
     }

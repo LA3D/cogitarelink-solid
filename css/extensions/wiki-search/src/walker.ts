@@ -14,6 +14,16 @@ export interface WalkResult {
   body: string;
 }
 
+/** Minimal fetch interface — injectable for tests; defaults to undici. */
+export interface WalkFetch {
+  (url: string, headers: Record<string, string>): Promise<{
+    status: number;
+    contentType: string;
+    text(): Promise<string>;
+    dump(): Promise<void>;
+  }>;
+}
+
 const MARKDOWN_TYPES = new Set(["text/markdown", "text/x-markdown"]);
 const LDP_CONTAINS = "http://www.w3.org/ns/ldp#contains";
 
@@ -32,26 +42,43 @@ function buildAgent(): Agent | undefined {
 
 const AGENT = buildAgent();
 
-function fetch(url: string, headers: Record<string, string>) {
-  return undiciRequest(url, { headers, dispatcher: AGENT });
-}
+/** Default production fetch — undici with mkcert CA trust. */
+const defaultFetch: WalkFetch = async (url, headers) => {
+  const { statusCode, headers: respHeaders, body } = await undiciRequest(url, {
+    headers,
+    dispatcher: AGENT,
+  });
+  const ct = ((respHeaders["content-type"] as string | undefined) ?? "")
+    .split(";")[0].trim();
+  return {
+    status: statusCode,
+    contentType: ct,
+    text: () => body.text(),
+    dump: () => body.dump(),
+  };
+};
 
 /**
  * Recursive BFS over an LDP container via HTTP. Yields { url, body } for
  * every descendant whose Content-Type is text/markdown AND is read-allowed
  * for the supplied credentials (checked via the CSS PermissionReader).
  *
- * Uses undici HTTP requests rather than ResourceStore.getRepresentation() to
+ * Uses HTTP self-requests rather than ResourceStore.getRepresentation() to
  * avoid acquiring CSS resource locks inside the search request handler. The
  * WAC permission check is still done via PermissionReader so omit-don't-deny
  * semantics (subtree pruning on denied containers) are preserved.
+ *
+ * The optional `fetch` parameter is an injection seam for unit tests.
+ * In production, omit it (or pass undefined) to use the default undici fetch.
  */
 export async function* walkContainer(
   startUrl: string,
   store: ResourceStore,
   permissionReader: PermissionReader,
   credentials: Credentials,
+  options?: { fetch?: WalkFetch },
 ): AsyncGenerator<WalkResult> {
+  const fetchFn = options?.fetch ?? defaultFetch;
   const queue: string[] = [startUrl];
 
   while (queue.length > 0) {
@@ -62,10 +89,10 @@ export async function* walkContainer(
     if (!allowed) continue;
 
     if (currentUrl.endsWith("/")) {
-      const children = await fetchContainerChildren(currentUrl);
+      const children = await fetchContainerChildren(currentUrl, fetchFn);
       for (const child of children) queue.push(child);
     } else {
-      const body = await fetchMarkdownBody(currentUrl);
+      const body = await fetchMarkdownBody(currentUrl, fetchFn);
       if (body !== null) yield { url: currentUrl, body };
     }
   }
@@ -112,15 +139,12 @@ function isReadAllowed(permission: any, url: string): boolean {
  * Fetch an LDP container via HTTP and parse ldp:contains members from the
  * Turtle body. Returns absolute IRIs for all contained children.
  */
-async function fetchContainerChildren(url: string): Promise<string[]> {
+async function fetchContainerChildren(url: string, fetchFn: WalkFetch): Promise<string[]> {
   try {
-    const { statusCode, headers, body } = await fetch(url, {
-      accept: "text/turtle",
-    });
-    if (statusCode !== 200) { await body.dump(); return []; }
-    const ct = ((headers["content-type"] as string | undefined) ?? "");
-    if (!ct.startsWith("text/turtle")) { await body.dump(); return []; }
-    const text = await body.text();
+    const resp = await fetchFn(url, { accept: "text/turtle" });
+    if (resp.status !== 200) { await resp.dump(); return []; }
+    if (!resp.contentType.startsWith("text/turtle")) { await resp.dump(); return []; }
+    const text = await resp.text();
     return parseLdpContains(text, url);
   } catch {
     return [];
@@ -152,16 +176,12 @@ function parseLdpContains(turtle: string, baseUrl: string): string[] {
  * Fetch a non-container resource via HTTP. Returns the body if the
  * Content-Type is text/markdown, null otherwise.
  */
-async function fetchMarkdownBody(url: string): Promise<string | null> {
+async function fetchMarkdownBody(url: string, fetchFn: WalkFetch): Promise<string | null> {
   try {
-    const { statusCode, headers, body } = await fetch(url, {
-      accept: "text/markdown, */*;q=0.1",
-    });
-    if (statusCode !== 200) { await body.dump(); return null; }
-    const ct = ((headers["content-type"] as string | undefined) ?? "")
-      .split(";")[0].trim();
-    if (!MARKDOWN_TYPES.has(ct)) { await body.dump(); return null; }
-    return await body.text();
+    const resp = await fetchFn(url, { accept: "text/markdown, */*;q=0.1" });
+    if (resp.status !== 200) { await resp.dump(); return null; }
+    if (!MARKDOWN_TYPES.has(resp.contentType)) { await resp.dump(); return null; }
+    return await resp.text();
   } catch {
     return null;
   }
