@@ -77,6 +77,9 @@ shapes/
   wiki-memory-l3/           — 6 SHACL shapes: resource + concept + source + person + procedure + working (D77/D78)
   *.ttl                     — legacy shapes (concept-note, project-note, daily-note)
 ontology/        — PROF SolidPodProfile + cached ontology stubs (SKOS, DC, PROV-O)
+overlays/
+  wiki-memory/              — Phase 5d-5g wiki-memory L3 overlay
+  addressbook/              — AddressBook substrate (D87 candidate, shipped 2026-05-17)
 scripts/         — Python CLI tools (vault importer, SPARQL query)
 tests/           — pytest conformance + integration tests
 docs/plans/      — Architecture design documents

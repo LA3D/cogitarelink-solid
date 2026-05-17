@@ -50,6 +50,29 @@ Key implementation findings (see FOLLOWUPS.md for full cleanup list):
 Open Phase 5j follow-ups deferred to post-Rung-1.5 decision points.
 See FOLLOWUPS.md "Phase 5j close-out (2026-05-16)" section.
 
+## AddressBook substrate + capabilities-only overlay deps — Shipped (2026-05-17)
+
+- **`overlays/addressbook/`** — 4 SHACL shapes (Contact, Org, Group, Membership) + 5 templates + 8 read affordances + 5 provided capabilities + bootstrap content + TypeIndex patch + 4 container `.meta` patches wiring `ldp:constrainedBy`
+- **`tmpl:` vocabulary** at `/vault/ontology/template` (D87 candidate)
+- **`/vault/contacts/`** with SolidOS-compatible layout: UUIDv4-slugged Person/Org/Membership cards, mnemonic-slugged Group files, populated `vcard:nameEmailIndex` + `vcard:groupIndex`
+- **ContactCardShape** minimum-metadata invariant enforced: `vcard:fn` + `vcard:inAddressBook` + ≥1 anchor (`owl:sameAs` / `vcard:hasEmail` / `vcard:hasTelephone`); rejected writes return 422 with `text/turtle` `sh:ValidationReport` body
+- **shape-validator extension** now serializes the `sh:ValidationReport` as Turtle in the response body (was previously discarded; templates depended on the feedback loop)
+- **Capabilities-only overlay deps** (`docs/plans/2026-05-16-capabilities-only-overlay-deps.md`): `overlay:dependsOnOverlay` + `overlay:installedOverlay` deprecated; `overlay:providesCapability` added to `apply.py`; storage description stays static in `css/config/void-description.json` per CSS 405-on-PATCH limitation. D87/D88 candidate.
+- **wiki-memory** retroactively declares 4 provided capabilities (wiki-vocabulary, foaf-primarytopic-bridge, wiki-type-index-registration, wiki-page-as-unit) so future overlays can declare typed deps
+- E2E tests at `tests/integration/test_addressbook_e2e.py` pass (4/4): cold-start TypeIndex discovery, create with ORCID, SHACL rejection on missing anchor, find by ORCID
+
+### Known caveats / followups discovered during implementation
+
+- **Person card layout deviates from design**: design said `/vault/contacts/Person/<uuid>/index.ttl#this` (per-person container for attachment co-location); implementation uses flat `/vault/contacts/Person/<uuid>.ttl#this` because CSS rejects sub-container creation within a constrained container. Attachment-on-Person workflows need redesign (e.g., add Photo/ as separate constrained container, OR drop constrainedBy on Person/ and validate on individual cards differently).
+- **vcard:inAddressBook SHACL resolution quirk**: shape uses `sh:hasValue </contacts/index.ttl#this>` which CSS resolves relative to server root (`https://pod.vardeman.me/contacts/index.ttl#this`), not vault root. Cards must use the (counter-intuitive) absolute IRI form to validate. Either shapes need absolute IRIs OR templates document the resolved IRI form.
+- **AddressBook overlay does not have a wiki page bridge instance yet** — no Pod owner contact card exists. Setup-owner CLI flow (next plan) addresses this.
+- **`find-by-orcid` affordance not exercised end-to-end** — E2E test falls back to direct GET+parse because solid-pod CLI not on PATH in test runner. Add proper affordance invocation test in next plan.
+
+Companion docs:
+- Design: `docs/plans/2026-05-16-agentic-addressbook-design.md`
+- Plan: `docs/superpowers/plans/2026-05-16-addressbook-substrate.md`
+- Capabilities-only deps: `docs/plans/2026-05-16-capabilities-only-overlay-deps.md`
+
 ## Active focus — Rung 1.5 (next round)
 
 First measurable evaluation. Conditions: B1 filesystem baseline / B2 brute-force
