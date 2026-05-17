@@ -8,7 +8,12 @@
 
 **Tech Stack:** CSS v8 alpha (Pod server), `scripts/overlay/apply.py` (deploy), rdflib + pyshacl (shape validation tests), httpx (integration tests), shape-validator CSS extension (already deployed). Python at `~/uvws/.venv/bin/python`.
 
-**Companion design doc:** `docs/plans/2026-05-16-agentic-addressbook-design.md`
+**Companion design docs:**
+- `docs/plans/2026-05-16-agentic-addressbook-design.md` (AddressBook design)
+- `docs/plans/2026-05-16-capabilities-only-overlay-deps.md` (substrate-machinery
+  change made before this plan executes — D83 completion, drops the broken
+  `installedOverlay`/`dependsOnOverlay` tracking in favor of capability-only
+  deps via `overlay:providesCapability` + `overlay:requiresCapability`)
 
 ---
 
@@ -30,6 +35,12 @@ overlays/addressbook/
 ├── manifest.ttl                                  # overlay declaration
 ├── vocabulary/
 │   └── template.ttl                              # tmpl: vocabulary
+├── capabilities/                                 # NEW (per capabilities-only deps doc)
+│   ├── vcard-individual-substrate.ttl            # provided capability
+│   ├── vcard-organization-substrate.ttl
+│   ├── external-anchor-tracking.ttl
+│   ├── contact-discovery.ttl
+│   └── tmpl-vocabulary.ttl
 ├── containers/
 │   ├── index.ttl                                 # vcard:AddressBook root
 │   ├── people.ttl                                # vcard:nameEmailIndex
@@ -57,15 +68,24 @@ overlays/addressbook/
 ├── profiles/
 │   ├── contact-card.ttl                          # PROF profile descriptor
 │   └── organization-card.ttl
-├── storage-patch.ttl                             # N3 Patch: wiki:contactCatalog, wiki:templateCatalog
 └── typeindex-patch.ttl                           # N3 Patch: register vcard:AddressBook in publicTypeIndex
 ```
 
+**Note:** No `storage-patch.ttl` in the AddressBook overlay. Per capabilities-only
+deps doc §5, storage description entries (`wiki:contactCatalog`,
+`wiki:templateCatalog`) go in `css/config/void-description.json` instead (CSS
+serves the storage description statically; PATCH returns 405). Edited in
+Task 24; takes effect after `make reset`.
+
 **Modified in this plan:**
 
-- `css/config/pod-templates/base/ontology/overlay.ttl` — add `overlay:installsTemplate` predicate
-- `scripts/overlay/apply.py` — handle `installsTemplate` (mirror `installsShape` logic)
-- `scripts/overlay/verify.py` — verify deployed templates
+- `css/config/pod-templates/base/ontology/overlay.ttl` — add `overlay:installsTemplate` and `overlay:providesCapability` predicates; mark `overlay:dependsOnOverlay` + `overlay:installedOverlay` deprecated
+- `scripts/overlay/apply.py` — handle `installsTemplate` (mirror `installsShape`); remove `check_overlay_dependencies()`; add `providesCapability` iteration
+- `scripts/overlay/common.py` — `Manifest` adds `templates` and `provides` fields
+- `scripts/overlay/verify.py` — verify deployed templates and provided capabilities
+- `css/config/void-description.json` — add `wiki:contactCatalog`, `wiki:templateCatalog` entries
+- `overlays/wiki-memory/manifest.ttl` — add `overlay:providesCapability` declarations
+- `overlays/wiki-memory/capabilities/` (new dir) — provided capability descriptors
 - `tests/integration/test_addressbook_substrate.py` — new integration test file
 
 ---
@@ -240,6 +260,315 @@ design §4). Adds the predicate parallel to installsShape / installsAffordance
 so apply.py can iterate templates in overlay manifests.
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
+
+---
+
+## Task 2a: Add `overlay:providesCapability` predicate; deprecate overlay-tracking predicates
+
+Per the capabilities-only deps design doc (§3, §4): drop `overlay:dependsOnOverlay` and `overlay:installedOverlay` from the dependency mechanism; replace with `overlay:providesCapability` so overlays can install capability descriptors into the catalog at install time.
+
+**Files:**
+- Modify: `css/config/pod-templates/base/ontology/overlay.ttl`
+
+- [ ] **Step 1: Edit the overlay vocabulary**
+
+Add the new predicate definition after `installsTemplate`:
+
+```turtle
+overlay:providesCapability
+    a rdf:Property ;
+    rdfs:label "provides capability" ;
+    rdfs:comment "An overlay provides a capability when installed. apply.py iterates this predicate and PUTs each referenced capability descriptor to /vault/meta/capabilities/. Other overlays declare overlay:requiresCapability against the same descriptor IRI. Replaces the deprecated overlay:installedOverlay tracking (CSS 405 on PATCH to .well-known/solid made that mechanism unworkable; capability catalog is the runtime-mutable substitute per D83)." ;
+    rdfs:domain overlay:Overlay .
+```
+
+Mark the deprecated predicates (add `owl:deprecated true` to each existing definition):
+
+```turtle
+# Add to existing overlay:dependsOnOverlay definition:
+overlay:dependsOnOverlay
+    owl:deprecated true ;
+    rdfs:comment "DEPRECATED: use overlay:requiresCapability against the capability catalog instead. See docs/plans/2026-05-16-capabilities-only-overlay-deps.md." .
+
+# Add to existing overlay:installedOverlay definition:
+overlay:installedOverlay
+    owl:deprecated true ;
+    rdfs:comment "DEPRECATED: overlay installation is tracked via the capability catalog (capabilities provided by an overlay are PUT to /vault/meta/capabilities/ at install time). See docs/plans/2026-05-16-capabilities-only-overlay-deps.md." .
+```
+
+(Make sure to also add `@prefix owl: <http://www.w3.org/2002/07/owl#> .` to the file header if not already present.)
+
+- [ ] **Step 2: Re-deploy the overlay vocabulary**
+
+```bash
+~/uvws/.venv/bin/python -c "
+import httpx
+with open('css/config/pod-templates/base/ontology/overlay.ttl') as f:
+    body = f.read()
+r = httpx.put('https://pod.vardeman.me/vault/ontology/overlay',
+              content=body,
+              headers={'Content-Type': 'text/turtle'},
+              verify=False)
+print(r.status_code)
+"
+```
+
+Expected: `200` or `205`.
+
+- [ ] **Step 3: Verify**
+
+```bash
+curl -sk -H "Accept: text/turtle" https://pod.vardeman.me/vault/ontology/overlay | grep -E "(providesCapability|deprecated)"
+```
+
+Expected: shows `providesCapability` definition + two `deprecated true` markers.
+
+- [ ] **Step 4: Refactor apply.py to drop installedOverlay check; add providesCapability handling**
+
+Edit `scripts/overlay/apply.py`:
+
+1. Delete `check_overlay_dependencies()` entirely
+2. Remove the call to it from `apply_overlay()` (look for `check_overlay_dependencies(client, pod_url, manifest)`)
+3. After the existing artifact-upload blocks (vocabularies, containers, shapes, templates, affordances), add:
+
+```python
+# Upload provided capabilities to the catalog
+for cap in manifest.provides:
+    put_file(client, cap.url, cap.document, "text/turtle")
+    print(f"  capability → {cap.url}")
+```
+
+Edit `scripts/overlay/common.py`:
+
+1. Add a new dataclass alongside `ShapeEntry`/`TemplateEntry`:
+
+```python
+@dataclass
+class CapabilityProvision:
+    url: str        # full URL where the descriptor will live (e.g., /vault/meta/capabilities/foo.ttl)
+    document: str   # raw Turtle body of the descriptor
+```
+
+2. Add `provides: list[CapabilityProvision] = field(default_factory=list)` to the `Manifest` dataclass
+3. Add a parsing block to `parse_manifest` that iterates `overlay:providesCapability` blank nodes. Each blank node has `cap:capability` (the descriptor IRI), `cap:version` (the version), and `cap:descriptor` (the path to the descriptor file in the overlay directory). Mirror the parsing of `installsShape`.
+
+- [ ] **Step 5: Update verify.py**
+
+Add a parallel `verify_capabilities` step that GETs each capability URL and checks 200 + Turtle content-type.
+
+- [ ] **Step 6: Write test for capabilities parsing**
+
+Append to `tests/test_overlay_template_parsing.py`:
+
+```python
+def test_manifest_parses_provides_capability(tmp_path):
+    manifest_text = """
+@prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
+@prefix cap:     <https://pod.vardeman.me/vault/ontology/capability#> .
+
+<https://pod.vardeman.me/vault/ontology/overlay#test-overlay>
+    a overlay:Overlay ;
+    overlay:name "test" ;
+    overlay:version "0.1" ;
+    overlay:providesCapability
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/foo.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/foo.ttl" ] .
+"""
+    (tmp_path / "manifest.ttl").write_text(manifest_text)
+    (tmp_path / "capabilities").mkdir()
+    (tmp_path / "capabilities" / "foo.ttl").write_text("# foo capability descriptor")
+
+    from scripts.overlay.common import parse_manifest
+    m = parse_manifest(tmp_path, pod_url="https://pod.vardeman.me/vault/")
+    assert len(m.provides) == 1
+    assert m.provides[0].url == "https://pod.vardeman.me/vault/meta/capabilities/foo.ttl"
+    assert "foo capability descriptor" in m.provides[0].document
+```
+
+- [ ] **Step 7: Run the test, verify PASS**
+
+```bash
+~/uvws/.venv/bin/python -m pytest tests/test_overlay_template_parsing.py::test_manifest_parses_provides_capability -v
+```
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add css/config/pod-templates/base/ontology/overlay.ttl scripts/overlay/apply.py scripts/overlay/common.py scripts/overlay/verify.py tests/test_overlay_template_parsing.py
+git commit -m "$(cat <<'EOF'
+[Agent: Claude] overlay: capabilities-only deps (D83 completion)
+
+Adds overlay:providesCapability for runtime capability registration; deprecates
+overlay:dependsOnOverlay and overlay:installedOverlay (storage description is
+static per CSS 405-on-PATCH; tracking via .well-known/solid doesn't work and
+the capability catalog at /vault/meta/capabilities/ is the runtime-mutable
+substitute per D83).
+
+apply.py drops check_overlay_dependencies entirely. After artifact uploads,
+iterates manifest.provides and PUTs each capability descriptor to the catalog.
+
+See docs/plans/2026-05-16-capabilities-only-overlay-deps.md for the full
+substrate-machinery rationale, deprecation handling, and migration sequence.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+EOF
+)"
+```
+
+---
+
+## Task 2b: Wiki-memory overlay declares provided capabilities + re-apply
+
+Per the capabilities-only deps doc §6 step 3: wiki-memory advertises the capabilities AddressBook (and future overlays) consume.
+
+**Files:**
+- Modify: `overlays/wiki-memory/manifest.ttl`
+- Create: `overlays/wiki-memory/capabilities/wiki-vocabulary.ttl`
+- Create: `overlays/wiki-memory/capabilities/foaf-primarytopic-bridge.ttl`
+- Create: `overlays/wiki-memory/capabilities/wiki-type-index-registration.ttl`
+- Create: `overlays/wiki-memory/capabilities/wiki-page-as-unit.ttl`
+- Modify: `overlays/wiki-memory/storage-patch.ttl` — remove the `overlay:installedOverlay` line
+
+- [ ] **Step 1: Create capability descriptors**
+
+For each capability, create a minimal Turtle descriptor following the existing pattern in `css/config/pod-templates/base/meta/capabilities/` (e.g., `markdown-content-projection.ttl`, `derived-view.ttl`).
+
+`overlays/wiki-memory/capabilities/wiki-vocabulary.ttl`:
+
+```turtle
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+
+<>  a cap:Capability ;
+    cap:name "wiki-vocabulary" ;
+    cap:version "1.0" ;
+    rdfs:label "Wiki Vocabulary" ;
+    rdfs:comment "The wiki: namespace (https://pod.vardeman.me/vault/ontology/wiki#) is dereferenceable with the wiki-memory L3 class hierarchy (wiki:Resource, wiki:Concept, wiki:Source, wiki:Person, wiki:Procedure, wiki:WorkingNote, wiki:Hub) and predicates (wiki:contextDocument, wiki:shapeCatalog, wiki:affordanceCatalog, wiki:typeIndex). Consumers can rely on dereference + parse." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    cap:hostedAt   <https://pod.vardeman.me/vault/ontology/wiki> .
+```
+
+`overlays/wiki-memory/capabilities/foaf-primarytopic-bridge.ttl`:
+
+```turtle
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "foaf-primarytopic-bridge" ;
+    cap:version "1.0" ;
+    rdfs:label "foaf:primaryTopic Bridge Convention" ;
+    rdfs:comment "Cross-substrate linking via foaf:primaryTopic. Information objects in different substrates (a wiki page, a vcard card, a profile document) declare foaf:primaryTopic pointing at the same agent IRI to assert they are about the same entity. Wiki-memory installs this convention as a substrate primitive; AddressBook and other overlays can rely on it for bridge predicates." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+```
+
+`overlays/wiki-memory/capabilities/wiki-type-index-registration.ttl`:
+
+```turtle
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "wiki-type-index-registration" ;
+    cap:version "1.0" ;
+    rdfs:label "Type Index Registration" ;
+    rdfs:comment "The Pod's publicTypeIndex at /vault/settings/publicTypeIndex accepts solid:TypeRegistration entries via N3 Patch. Wiki-memory installs the type index and the registration convention (one entry per typed container, declaring solid:forClass + solid:instance). Other overlays add their own registrations via the same mechanism." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    cap:hostedAt   <https://pod.vardeman.me/vault/settings/publicTypeIndex> .
+```
+
+`overlays/wiki-memory/capabilities/wiki-page-as-unit.ttl`:
+
+```turtle
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "wiki-page-as-unit" ;
+    cap:version "1.0" ;
+    rdfs:label "Wiki Page as Unit" ;
+    rdfs:comment "D71 convention: a wiki page is the atomic information object. One markdown file per concept/source/person/procedure. Body wikilinks project to .meta via MarkdownProjectionListener (D58/D71/D81). Other substrates referencing a wiki page (e.g., AddressBook via foaf:primaryTopic) can rely on page-as-unit semantics." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+```
+
+- [ ] **Step 2: Update wiki-memory manifest to declare these capabilities**
+
+Append to `overlays/wiki-memory/manifest.ttl` (inside the existing overlay declaration block, before the final `.`):
+
+```turtle
+;
+
+    overlay:providesCapability
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/wiki-vocabulary.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/wiki-vocabulary.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/foaf-primarytopic-bridge.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/foaf-primarytopic-bridge.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/wiki-type-index-registration.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/wiki-type-index-registration.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/wiki-page-as-unit.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/wiki-page-as-unit.ttl" ]
+```
+
+- [ ] **Step 3: Remove the dead `overlay:installedOverlay` line from wiki-memory's storage-patch**
+
+Edit `overlays/wiki-memory/storage-patch.ttl`. Remove the line:
+
+```
+overlay:installedOverlay <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+```
+
+(Keep the rest of the patch file intact for now — full cleanup of dead storage-patch entries is deferred per the capabilities-only deps doc §8.)
+
+- [ ] **Step 4: Re-apply wiki-memory overlay**
+
+```bash
+~/uvws/.venv/bin/python scripts/overlay/apply.py overlays/wiki-memory \
+    --target https://pod.vardeman.me/vault/
+```
+
+Expected output: prints each artifact upload; the new section shows `capability → https://pod.vardeman.me/vault/meta/capabilities/wiki-vocabulary.ttl` (and the other three) being uploaded. Exits 0.
+
+- [ ] **Step 5: Verify capabilities are in the catalog**
+
+```bash
+for cap in wiki-vocabulary foaf-primarytopic-bridge wiki-type-index-registration wiki-page-as-unit; do
+    code=$(curl -sk -o /dev/null -w '%{http_code}' \
+        https://pod.vardeman.me/vault/meta/capabilities/$cap.ttl)
+    echo "$cap: $code"
+done
+```
+
+Expected: all four return `200`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add overlays/wiki-memory/capabilities/ overlays/wiki-memory/manifest.ttl overlays/wiki-memory/storage-patch.ttl
+git commit -m "$(cat <<'EOF'
+[Agent: Claude] wiki-memory: declare provided capabilities for downstream overlays
+
+Adds 4 capability descriptors (wiki-vocabulary, foaf-primarytopic-bridge,
+wiki-type-index-registration, wiki-page-as-unit) and declares them via
+overlay:providesCapability in the manifest. Future overlays (AddressBook,
+etc.) declare overlay:requiresCapability against these descriptor IRIs.
+
+Removes the dead overlay:installedOverlay line from storage-patch (CSS 405
+makes the storage-description PATCH unworkable; capability catalog is the
+runtime-mutable substitute per D83 + capabilities-only deps doc).
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+EOF
+)"
 ```
 
 ---
@@ -1558,45 +1887,82 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 ---
 
-## Task 24: Storage description patch (catalog entries)
+## Task 24: Storage description discovery entries (static config)
+
+Per the capabilities-only deps doc §5: storage description is static (CSS 405 on PATCH). Discovery entries for the AddressBook catalogs go in `css/config/void-description.json`, not in a doomed runtime PATCH.
 
 **Files:**
-- Create: `overlays/addressbook/storage-patch.ttl`
+- Modify: `css/config/void-description.json`
 
-- [ ] **Step 1: Write the patch**
-
-Create `overlays/addressbook/storage-patch.ttl`:
-
-```turtle
-@prefix solid:   <http://www.w3.org/ns/solid/terms#> .
-@prefix wiki:    <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
-
-<> a solid:InsertDeletePatch ;
-   solid:inserts {
-       </vault/.well-known/solid>
-           wiki:contactCatalog  </vault/contacts/> ;
-           wiki:templateCatalog </vault/meta/templates/> ;
-           overlay:installedOverlay <https://pod.vardeman.me/vault/ontology/overlay#addressbook> .
-   } .
-```
-
-- [ ] **Step 2: Add parse test to test_addressbook_bootstrap.py**
-
-```python
-def test_storage_patch_parses():
-    Graph().parse("overlays/addressbook/storage-patch.ttl", format="turtle")
-```
-
-- [ ] **Step 3: Run, verify PASS, commit**
+- [ ] **Step 1: Read the current static config**
 
 ```bash
-git add overlays/addressbook/storage-patch.ttl tests/test_addressbook_bootstrap.py
-git commit -m "[Agent: Claude] addressbook: storage description patch
+cat css/config/void-description.json | head -60
+```
 
-Inserts wiki:contactCatalog + wiki:templateCatalog discovery entries so cold
-agents arriving at /vault/.well-known/solid can find the AddressBook + template
-catalog without prior knowledge.
+Identify the section that emits the storage-description triples — look for `wiki:shapeCatalog`, `wiki:affordanceCatalog`, etc. The new entries go alongside.
+
+- [ ] **Step 2: Add the AddressBook discovery entries**
+
+Edit `css/config/void-description.json`. Add (in the appropriate format used by the file — likely JSON-LD or a Components.js literal-graph block) two new triples on the storage subject (`<../>`):
+
+- `wiki:contactCatalog  </vault/contacts/>` — agents arriving cold discover the AddressBook here
+- `wiki:templateCatalog </vault/meta/templates/>` — agents discover the template catalog here
+
+If the file uses Components.js literal-graph format, the entries look like (adapt to actual file structure):
+
+```json
+{
+  "@id": "../",
+  "https://pod.vardeman.me/vault/ontology/wiki#contactCatalog": { "@id": "../contacts/" },
+  "https://pod.vardeman.me/vault/ontology/wiki#templateCatalog": { "@id": "../meta/templates/" }
+}
+```
+
+If the format is something else, mirror the existing pattern for `wiki:shapeCatalog`.
+
+- [ ] **Step 3: Reset the Pod to pick up the static config change**
+
+```bash
+make reset
+```
+
+Expected: docker-compose tears down, rebuilds CSS, brings up clean. Wait ~30 seconds for services to start.
+
+- [ ] **Step 4: Re-apply the wiki-memory overlay (capabilities must land in catalog)**
+
+After `make reset`, the capability catalog is empty again. Re-apply wiki-memory to repopulate:
+
+```bash
+~/uvws/.venv/bin/python scripts/overlay/apply.py overlays/wiki-memory \
+    --target https://pod.vardeman.me/vault/
+```
+
+Expected: 0 exit, capabilities visible in `/vault/meta/capabilities/`.
+
+- [ ] **Step 5: Verify storage description shows the new catalog entries**
+
+```bash
+curl -sk -H "Accept: text/turtle" https://pod.vardeman.me/vault/.well-known/solid \
+    | grep -E "(contactCatalog|templateCatalog)"
+```
+
+Expected: both predicates present.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add css/config/void-description.json
+git commit -m "[Agent: Claude] storage description: advertise contactCatalog + templateCatalog
+
+Adds wiki:contactCatalog and wiki:templateCatalog so cold agents arriving at
+/vault/.well-known/solid can discover the AddressBook and template catalog.
+
+Goes in static config per capabilities-only deps doc §5 (CSS returns 405 on
+PATCH to .well-known/solid; runtime mutation of the storage description is not
+supported by this CSS version). Substrate-discovery entries are stable and
+suitable for static config; per-overlay tracking moved to the capability
+catalog per D83 + the capabilities-only deps decision.
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
@@ -1608,7 +1974,89 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 **Files:**
 - Create: `overlays/addressbook/manifest.ttl`
 
-- [ ] **Step 1: Write the manifest**
+- [ ] **Step 1: Create AddressBook's own provided capabilities**
+
+Before the manifest, create the capability descriptors AddressBook advertises to future consumers (the contract for downstream overlays — e.g., an email-tool overlay that needs `external-anchor-tracking`).
+
+`overlays/addressbook/capabilities/vcard-individual-substrate.ttl`:
+
+```turtle
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "vcard-individual-substrate" ;
+    cap:version "1.0" ;
+    rdfs:label "vcard:Individual Substrate" ;
+    rdfs:comment "Operational identity records for individuals at /vault/contacts/Person/<uuid>/index.ttl. UUIDv4 slugs (rationale: name collision + rename risk substantively exceeds vault notes), hash-fragment #this for the agent IRI, document URL for the card. ContactCardShape enforces minimum-metadata invariant (vcard:fn + vcard:inAddressBook + ≥1 anchor). Downstream consumers reading individual cards can rely on this shape." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/contacts/Person/> .
+```
+
+`overlays/addressbook/capabilities/vcard-organization-substrate.ttl`:
+
+```turtle
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "vcard-organization-substrate" ;
+    cap:version "1.0" ;
+    rdfs:label "vcard:Organization Substrate" ;
+    rdfs:comment "Operational identity records for organizations at /vault/contacts/Organization/<uuid>/index.ttl. UUIDv4 slugs, owl:sameAs <ror> preferred for institutional orgs. OrganizationCardShape enforces vcard:fn + vcard:inAddressBook + ≥1 anchor (sameAs or hasURL)." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/contacts/Organization/> .
+```
+
+`overlays/addressbook/capabilities/external-anchor-tracking.ttl`:
+
+```turtle
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "external-anchor-tracking" ;
+    cap:version "1.0" ;
+    rdfs:label "External Anchor Tracking" ;
+    rdfs:comment "owl:sameAs network linking contact cards to external canonical identifiers (ORCID, ROR, WebID, wikidata, etc.). Cross-Pod identity reconciliation via shared anchor IRIs (ORCID is the canonical join key). Downstream consumers (email tools, ORCID lookups, WebID resolvers, citation generators) can SPARQL across owl:sameAs to find or verify identity." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> .
+```
+
+`overlays/addressbook/capabilities/contact-discovery.ttl`:
+
+```turtle
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "contact-discovery" ;
+    cap:version "1.0" ;
+    rdfs:label "Contact Discovery Affordances" ;
+    rdfs:comment "Read affordances at /vault/meta/affordances/contact-find-by-* for parameterized lookup by name, ORCID, email, affiliation, group. Each affordance carries embedded SPARQL via wiki:selectQuery (per D52). Consumers can invoke via solid-pod invoke or any LDP+SPARQL client." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/meta/affordances/> .
+```
+
+`overlays/addressbook/capabilities/tmpl-vocabulary.ttl`:
+
+```turtle
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix tmpl:  <https://pod.vardeman.me/vault/ontology/template#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "tmpl-vocabulary" ;
+    cap:version "1.0" ;
+    rdfs:label "Template Vocabulary" ;
+    rdfs:comment "The tmpl: namespace (https://pod.vardeman.me/vault/ontology/template#) and Template/validatesAgainst/operation/targetContainer/slugAlgorithm/templateBody predicates. Pattern: agent fetches template, fills <<PLACEHOLDER>> values, PUTs result; SHACL backstops; 422+ValidationReport flows back for self-correction. D87 candidate; first appearance is the AddressBook substrate." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/ontology/template> .
+```
+
+- [ ] **Step 2: Write the manifest**
 
 Create `overlays/addressbook/manifest.ttl`:
 
@@ -1632,8 +2080,30 @@ Create `overlays/addressbook/manifest.ttl`:
         overlay:hostedAt "/vault/ontology/template"
     ] ;
 
-    overlay:dependsOnOverlay
-        <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    overlay:requiresCapability
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/wiki-vocabulary.ttl> ;
+          cap:minVersion "1.0" ] ,
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/foaf-primarytopic-bridge.ttl> ;
+          cap:minVersion "1.0" ] ,
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/wiki-type-index-registration.ttl> ;
+          cap:minVersion "1.0" ] ;
+
+    overlay:providesCapability
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/vcard-individual-substrate.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/vcard-individual-substrate.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/vcard-organization-substrate.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/vcard-organization-substrate.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/external-anchor-tracking.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/external-anchor-tracking.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/contact-discovery.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/contact-discovery.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/tmpl-vocabulary.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/tmpl-vocabulary.ttl" ] ;
 
     overlay:installsContainer
         </vault/contacts/> ,
@@ -1666,7 +2136,6 @@ Create `overlays/addressbook/manifest.ttl`:
         </vault/meta/affordances/bridge-card-to-wiki.ttl> ;
 
     overlay:installsTypeIndexPatch "typeindex-patch.ttl" ;
-    overlay:installsStoragePatch   "storage-patch.ttl" ;
 
     overlay:installsBootstrapContent
         [ overlay:contentPath "containers/index.ttl" ;
@@ -1677,7 +2146,9 @@ Create `overlays/addressbook/manifest.ttl`:
           overlay:hostedAt "/vault/contacts/groups.ttl" ] .
 ```
 
-- [ ] **Step 2: Test manifest parses via existing common.py**
+Note the absence of `overlay:installsStoragePatch` — replaced by Task 24's edit to `void-description.json`. Also `overlay:dependsOnOverlay` is gone — replaced by `overlay:requiresCapability` against the wiki-memory-provided capability descriptors.
+
+- [ ] **Step 3: Test manifest parses with all artifacts**
 
 Add to `tests/test_overlay_template_parsing.py`:
 
@@ -1691,21 +2162,42 @@ def test_addressbook_manifest_parses_with_all_artifacts():
     assert len(m.templates) == 5
     assert len(m.affordances) == 8
     assert len(m.containers) == 5
+    assert len(m.provides) == 5
+    # requires_capabilities should have 3 entries (wiki-vocabulary, foaf-primarytopic-bridge, wiki-type-index-registration)
+    assert len(m.required_capabilities) == 3
 ```
 
-- [ ] **Step 3: Run, verify PASS** (the test may surface common.py gaps if the manifest uses predicates apply.py doesn't yet know — fix any gaps and retry)
-
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: Run, verify PASS**
 
 ```bash
-git add overlays/addressbook/manifest.ttl tests/test_overlay_template_parsing.py
-git commit -m "[Agent: Claude] addressbook: overlay manifest
+~/uvws/.venv/bin/python -m pytest tests/test_overlay_template_parsing.py::test_addressbook_manifest_parses_with_all_artifacts -v
+```
 
-Declares 4 shapes, 5 templates, 8 affordances, 5 containers, TypeIndex +
-storage patches. Depends on wiki-memory overlay. Declares tmpl: vocabulary at
-/vault/ontology/template.
+If the test surfaces gaps in `common.py` parsing (e.g., `installsTypeIndexPatch` or `installsBootstrapContent` not recognized), add them — mirror existing predicate parsing.
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+- [ ] **Step 5: Commit**
+
+```bash
+git add overlays/addressbook/manifest.ttl overlays/addressbook/capabilities/ tests/test_overlay_template_parsing.py
+git commit -m "$(cat <<'EOF'
+[Agent: Claude] addressbook: overlay manifest with capability-based deps
+
+Manifest declares:
+- 5 provided capabilities (vcard-individual-substrate, vcard-organization-substrate,
+  external-anchor-tracking, contact-discovery, tmpl-vocabulary)
+- 3 required capabilities (wiki-vocabulary, foaf-primarytopic-bridge,
+  wiki-type-index-registration — all provided by wiki-memory overlay)
+- 4 shapes, 5 templates, 8 affordances, 5 containers
+- TypeIndex patch (storage-patch dropped per capabilities-only deps doc §5)
+
+Future overlays can declare overlay:requiresCapability against any of the 5
+AddressBook-provided capabilities (e.g., an email-tool overlay needing
+external-anchor-tracking, a citation-generator needing vcard-individual-
+substrate).
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+EOF
+)"
 ```
 
 ---
