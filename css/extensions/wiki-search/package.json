@@ -1,0 +1,36 @@
+{
+  "name": "@cogitarelink/wiki-search",
+  "version": "0.1.0",
+  "description": "Wiki-search CSS extension (Phase 7a). Intercepts ?ext=search-grep container GETs, runs literal-substring AND-search recursively over text/markdown bodies, returns OSLC Query 3.0 response with WAC-filtered ranked matches. D87.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "lsd:module": "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/wiki-search",
+  "lsd:components": "dist/components/components.jsonld",
+  "lsd:importPaths": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/wiki-search/^0.1.0/components/": "dist/components/",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/wiki-search/^0.1.0/dist/": "dist/"
+  },
+  "lsd:contexts": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/wiki-search/^0.1.0/components/context.jsonld": "dist/components/context.jsonld"
+  },
+  "scripts": {
+    "build": "npm run build:ts && npm run build:components",
+    "build:ts": "tsc --skipLibCheck",
+    "build:components": "componentsjs-generator -s src -c dist/components",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "n3": "^1.17.0"
+  },
+  "peerDependencies": {
+    "@solid/community-server": "*"
+  },
+  "devDependencies": {
+    "@solid/community-server": "^8.0.0-alpha.3",
+    "@types/node": "^22.0.0",
+    "componentsjs-generator": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}
