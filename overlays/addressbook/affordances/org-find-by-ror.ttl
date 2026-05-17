@@ -1,0 +1,31 @@
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+
+</vault/meta/affordances/org-find-by-ror.ttl>
+    a wiki:Affordance ;
+    sh:agentInstruction """
+      Canonical institutional identity lookup via ROR (Research Organization
+      Registry) IRI. Use this when an external source provides a ROR identifier
+      (e.g., from a funding record or ORCID affiliation) and you need the local
+      Organization card.
+
+      Parameter: $ror — the full ROR IRI as a named node, e.g.,
+      <https://ror.org/00mkhxb43> (University of Notre Dame).
+      Pass the angle-bracketed form in SPARQL; the affordance engine substitutes
+      it as an IRI.
+
+      Sources: Organization cards at /vault/contacts/Organization/*/index.ttl.
+      Enumerate via LDP listing of </vault/contacts/Organization/> or use
+      Comunica link-traversal with the Organization container as entry point.
+
+      Returns 0..1 ?org IRIs. Zero means no Organization card exists for this
+      ROR; the agent should prompt to create a stub card via the addressbook
+      overlay templates.
+    """ ;
+    wiki:selectQuery """
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT ?org WHERE {
+  ?org owl:sameAs $ror .
+}
+    """ .

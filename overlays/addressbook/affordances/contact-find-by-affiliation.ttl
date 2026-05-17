@@ -1,0 +1,32 @@
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+
+</vault/meta/affordances/contact-find-by-affiliation.ttl>
+    a wiki:Affordance ;
+    sh:agentInstruction """
+      List all Person cards affiliated with a given organization, using the
+      W3C Organization Ontology membership model. Returns both current and
+      historical memberships unless the caller filters by date.
+
+      Parameter: $org — the Organization card IRI, e.g.,
+      </vault/contacts/Organization/notre-dame/index.ttl#this>.
+
+      Sources: Person card files (for org:hasMembership triples) and Membership
+      card files (for org:organization triples). Both are needed because the
+      membership triple may be split across card boundaries. Use Comunica
+      link-traversal over the /vault/contacts/ container, or enumerate Person
+      and Membership cards explicitly via LDP listing.
+
+      Returns ?person (the Person card IRI) and ?membership (the Membership
+      node IRI, which carries role/period metadata). To filter to current
+      members, add: FILTER NOT EXISTS { ?membership org:memberDuring/time:hasEnd ?end }
+      using the W3C Time Ontology.
+    """ ;
+    wiki:selectQuery """
+PREFIX org: <http://www.w3.org/ns/org#>
+
+SELECT ?person ?membership WHERE {
+  ?person org:hasMembership ?membership .
+  ?membership org:organization $org .
+}
+    """ .

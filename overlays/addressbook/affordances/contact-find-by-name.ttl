@@ -1,0 +1,26 @@
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+
+</vault/meta/affordances/contact-find-by-name.ttl>
+    a wiki:Affordance ;
+    sh:agentInstruction """
+      Case-insensitive full-name lookup across all Person and Individual cards.
+
+      Parameter: $name — a string fragment to match (e.g., "Wang Wei", "Smith").
+      Returns all ?person IRIs whose vcard:fn contains the fragment (case-insensitive).
+      Multiple matches are expected for common names; use orcid lookup
+      (contact-find-by-orcid) or affiliation (contact-find-by-affiliation) to
+      disambiguate when the result set is larger than 1.
+
+      Source: the aggregated contacts index at </vault/contacts/people.ttl>.
+      Pass this URL as --default-graph-uri when invoking via solid-pod sparql
+      (RQ-Pod-4 workaround for non-RDF resource traversal).
+    """ ;
+    wiki:selectQuery """
+PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+
+SELECT ?person ?fn WHERE {
+  ?person vcard:fn ?fn .
+  FILTER(CONTAINS(LCASE(STR(?fn)), LCASE(STR($name))))
+}
+    """ .

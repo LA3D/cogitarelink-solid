@@ -1,0 +1,27 @@
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+
+</vault/meta/affordances/contact-find-by-group.ttl>
+    a wiki:Affordance ;
+    sh:agentInstruction """
+      Enumerate all Person cards that are members of a specific vCard Group.
+      Groups collect ad-hoc sets of contacts (e.g., "nd-collaborators",
+      "ci-compass-team") for targeted communication or task routing.
+
+      Parameter: $group — the Group IRI, e.g.,
+      </vault/contacts/Group/nd-collaborators.ttl#this>.
+
+      Source: the Group file itself (e.g., /vault/contacts/Group/nd-collaborators.ttl).
+      Pass this URL as --default-graph-uri. The vcard:hasMember triples are
+      stored in the group file, pointing to Person card IRIs.
+
+      Returns ?person IRIs (Person card fragment identifiers). Dereference each
+      IRI to retrieve full contact metadata.
+    """ ;
+    wiki:selectQuery """
+PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+
+SELECT ?person WHERE {
+  $group vcard:hasMember ?person .
+}
+    """ .

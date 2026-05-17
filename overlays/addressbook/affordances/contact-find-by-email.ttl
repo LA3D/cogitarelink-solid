@@ -1,0 +1,27 @@
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+
+</vault/meta/affordances/contact-find-by-email.ttl>
+    a wiki:Affordance ;
+    sh:agentInstruction """
+      Email-based contact lookup. Useful when processing inbound messages: given
+      the sender's email address, find the corresponding Person card in the
+      AddressBook to retrieve identity metadata, affiliations, and wiki links.
+
+      Parameter: $email — the email IRI in mailto: form, e.g.,
+      <mailto:user@example.org>. Must be passed as an IRI, not a plain string.
+
+      Sources: </vault/contacts/people.ttl> (aggregated index) plus individual
+      Person card files at /vault/contacts/Person/*/index.ttl. Start with the
+      aggregated index; fall back to per-card traversal if not found.
+
+      Returns 0..1 ?person IRIs. Multiple results indicate duplicate cards for
+      the same email address — surface this to the user as a data quality issue.
+    """ ;
+    wiki:selectQuery """
+PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+
+SELECT ?person WHERE {
+  ?person vcard:hasEmail $email .
+}
+    """ .
