@@ -14,6 +14,7 @@ import {
   readableToQuads,
 } from '@solid/community-server';
 import { getLoggerFor } from 'global-logger-factory';
+import type { Quad } from '@rdfjs/types';
 import type { Store } from 'n3';
 import { Writer } from 'n3';
 import SHACLValidator from 'rdf-validate-shacl';
@@ -86,7 +87,7 @@ export class ShaclValidator extends ShapeValidator {
     }
   }
 
-  private serializeReport(dataset: Iterable<any>): Promise<string> {
+  private serializeReport(dataset: Iterable<Quad>): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       const writer = new Writer({
         prefixes: {
