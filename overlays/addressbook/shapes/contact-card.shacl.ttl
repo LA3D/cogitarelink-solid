@@ -1,0 +1,50 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+
+<https://pod.vardeman.me/vault/meta/shapes/contact-card.shacl.ttl#ContactCardShape>
+    a sh:NodeShape ;
+    sh:targetClass vcard:Individual ;
+    sh:closed false ;
+    sh:agentInstruction """
+      A vcard:Individual card. Required: vcard:fn (one), vcard:inAddressBook
+      (one, value </contacts/index.ttl#this>), and at least one operational
+      anchor — owl:sameAs (ORCID, WebID, wikidata), vcard:hasEmail, or
+      vcard:hasTelephone. Without an anchor, no deterministic agent operation
+      can act on this contact. Substrate-governed predicates: rdf:type,
+      vcard:inAddressBook. Agent-owned: everything else.
+    """ ;
+
+    sh:property [
+        sh:path vcard:fn ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Contact must have exactly one vcard:fn (display name)." ;
+    ] ;
+
+    sh:property [
+        sh:path vcard:inAddressBook ;
+        sh:minCount 1 ;
+        sh:hasValue </contacts/index.ttl#this> ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Contact must declare vcard:inAddressBook </contacts/index.ttl#this>." ;
+    ] ;
+
+    sh:or (
+        [ sh:property [ sh:path owl:sameAs ;        sh:minCount 1 ; sh:nodeKind sh:IRI ] ]
+        [ sh:property [ sh:path vcard:hasEmail ;    sh:minCount 1 ] ]
+        [ sh:property [ sh:path vcard:hasTelephone ; sh:minCount 1 ] ]
+    ) ;
+    sh:message """
+      Contact must have at least one external anchor:
+        owl:sameAs (ORCID, WebID, wikidata, etc.) — preferred for cross-pod reconciliation
+        vcard:hasEmail
+        vcard:hasTelephone
+      Without an anchor, the contact serves no deterministic operation (email,
+      lookup, dedupe, scheduling) and belongs in working memory (/wiki/working/),
+      not the AddressBook.
+    """ .

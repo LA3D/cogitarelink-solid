@@ -1,0 +1,87 @@
+"""SHACL conformance tests for AddressBook shapes."""
+from pathlib import Path
+import pytest
+from rdflib import Graph, Namespace
+from pyshacl import validate
+
+SHAPES_DIR = Path(__file__).parent.parent / "overlays" / "addressbook" / "shapes"
+VCARD = Namespace("http://www.w3.org/2006/vcard/ns#")
+FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+OWL = Namespace("http://www.w3.org/2002/07/owl#")
+ORG = Namespace("http://www.w3.org/ns/org#")
+
+
+def load_shapes(filename: str) -> Graph:
+    return Graph().parse(SHAPES_DIR / filename, format="turtle")
+
+
+# ----- ContactCardShape -----
+
+CONTACT_VALID_WITH_ORCID = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+
+<#this> a vcard:Individual, foaf:Person ;
+    vcard:fn "Jarek Nabrzyski" ;
+    vcard:inAddressBook </contacts/index.ttl#this> ;
+    owl:sameAs <https://orcid.org/0000-0001-7882-1326> .
+"""
+
+CONTACT_VALID_WITH_EMAIL = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+
+<#this> a vcard:Individual, foaf:Person ;
+    vcard:fn "Wang Wei" ;
+    vcard:inAddressBook </contacts/index.ttl#this> ;
+    vcard:hasEmail <mailto:wangwei@example.org> .
+"""
+
+CONTACT_MISSING_FN = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+
+<#this> a vcard:Individual, foaf:Person ;
+    vcard:inAddressBook </contacts/index.ttl#this> ;
+    owl:sameAs <https://orcid.org/0000-0000-0000-0000> .
+"""
+
+CONTACT_NO_ANCHOR = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+
+<#this> a vcard:Individual, foaf:Person ;
+    vcard:fn "Just A Name" ;
+    vcard:inAddressBook </contacts/index.ttl#this> .
+"""
+
+
+def _validate(data_turtle: str, shape_file: str) -> tuple[bool, str]:
+    data = Graph().parse(data=data_turtle, format="turtle")
+    shapes = load_shapes(shape_file)
+    conforms, _report_graph, report_text = validate(data, shacl_graph=shapes)
+    return conforms, report_text
+
+
+def test_contact_valid_with_orcid_passes():
+    conforms, report = _validate(CONTACT_VALID_WITH_ORCID, "contact-card.shacl.ttl")
+    assert conforms, f"Expected conformance, got:\n{report}"
+
+
+def test_contact_valid_with_email_passes():
+    conforms, report = _validate(CONTACT_VALID_WITH_EMAIL, "contact-card.shacl.ttl")
+    assert conforms, f"Expected conformance, got:\n{report}"
+
+
+def test_contact_missing_fn_fails():
+    conforms, report = _validate(CONTACT_MISSING_FN, "contact-card.shacl.ttl")
+    assert not conforms
+    assert "vcard:fn" in report or "fn" in report.lower()
+
+
+def test_contact_no_anchor_fails():
+    conforms, report = _validate(CONTACT_NO_ANCHOR, "contact-card.shacl.ttl")
+    assert not conforms
+    assert "anchor" in report.lower() or "owl:sameAs" in report or "vcard:hasEmail" in report
