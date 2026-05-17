@@ -80,17 +80,94 @@ Companion docs:
 
 See `.claude/skills/decision-lookup/decisions.md` for full text.
 
-## Next plans (post-AddressBook-substrate)
+## owner-identity overlay + setup-owner skill suite — Shipped (2026-05-17)
+
+Picked up MEMORY plan items #1 + #2 in one sprint as a skill-only approach (no
+new CLI surface — orchestrates existing `solid-pod` commands).
+
+- **`overlays/owner-identity/`** — new substrate overlay above AddressBook.
+  Two shapes (PodOwnerWebIDShape spec-grounded against Solid WebID Profile
+  editor draft https://solid.github.io/webid-profile/; PodOwnerPreferencesShape
+  as agent↔human elicitation contract). Two templates (webid-enrich.ttl —
+  first PATCH-flavor template using tmpl:targetResource v1.1; prefs-init.ttl).
+  Five capability descriptors. Resource `.meta` patch on /vault/profile/card
+  adds dct:conformsTo + ldp:constrainedBy via new `installsResourceMetaPatch`
+  manifest predicate.
+- **`tmpl:targetResource`** predicate added (v1.1) for PATCH templates
+  targeting an existing resource. The XOR invariant (target either container
+  OR resource, never both) is documented in the predicate's rdfs:comment;
+  per-template tests in T6/T7 enforce; a SHACL TemplateShape with `sh:xone`
+  is a candidate cleanup (see FOLLOWUPS).
+- **Apply.py extension** — `installsResourceMetaPatch` predicate handled in
+  manifest parser + applied in apply.py step 11b. Plain-Turtle patch bodies
+  are re-parsed with the target as publicID, then wrapped in N3 Patch envelope
+  via `n3_patch_inserts` (distinct from container-meta-patch which expects
+  pre-wrapped N3 Patch bodies).
+- **Three new agent skills** in `~/dev/git/LA3D/agents/solid-agent-skills/`:
+  - `solid-addressbook` — discover, read, create Person/Org/Membership, find
+    by 8 affordances. Documents the absolute-`vcard:inAddressBook` IRI quirk
+    and flat-layout caveat from AddressBook MEMORY.
+  - `solid-wiki-memory-l3` (minimal scope: Person class + bridge procedure).
+    Two-stage commit, full shape coverage, mem:* triggers deferred to a
+    follow-on Memory Structuring Sprint.
+  - `solid-owner-identity` — orchestrator. SetupPodOwner Phases A–F with
+    full idempotence semantics and failure-mode handling. Phase A walks the
+    human through preferences-file elicitation; Phases B/C call into
+    solid-addressbook; Phase D optionally calls into solid-wiki-memory-l3;
+    Phase E PATCHes the WebID; Phase F marks setupOwnerCompleted.
+- **Follow-the-nose discovery** (A+C combined per design): webid-enrich
+  template inlines `<wiki-page> a wiki:Person` in the WebID response so a
+  single dereference reveals the L3 agentic-memory record without extra
+  round-trips.
+
+Integration test (`tests/integration/test_owner_identity_e2e.py`) passes 3/3
+against the live Pod: all 10 overlay artifacts dereference, `/vault/profile/card.meta`
+advertises the shape via dct:conformsTo + ldp:constrainedBy, webid-enrich
+template declares PATCH + targetResource correctly.
+
+### Caveat / pre-flight requirement
+
+The owner-identity overlay requires `tmpl-vocabulary v1.1` (for
+`tmpl:targetResource`). On a fresh Pod, the AddressBook overlay's capability
+descriptor needs to be re-uploaded before owner-identity applies — the
+in-repo file is at v1.1 but the live Pod may still have v1.0 from the
+AddressBook sprint. A direct PUT of `overlays/addressbook/capabilities/tmpl-vocabulary.ttl`
+fixes this; future apply.py runs of addressbook will refresh it automatically.
+
+### Candidate decisions awaiting first-telemetry ratification
+
+- **D89** — Owner-identity overlay as substrate-level concern (above
+  AddressBook + wiki-memory). Justified by forward extensibility to VCs,
+  DIDs, ACL ownership.
+- **D90** — Agent↔human elicitation via `pim:preferencesFile`
+  (`/vault/settings/prefs.ttl`). Spec MUST + private + per-Pod-owner =
+  natural elicitation surface.
+
+Both ratify after the end-to-end run validates the design against agent
+behavior. See `.claude/skills/decision-lookup/decisions.md`.
+
+Companion docs:
+- Design: `~/dev/git/LA3D/agents/solid-agent-skills/docs/superpowers/specs/2026-05-17-pod-owner-setup-skill-design.md`
+- Plan: `~/dev/git/LA3D/agents/solid-agent-skills/docs/superpowers/plans/2026-05-17-pod-owner-setup-skill.md`
+
+## Next plans (post-owner-identity-skills)
 
 In dependency order:
 
-1. **`solid-pod setup-owner` CLI** (sibling `solid-agent-skills` repo) — mints Pod-owner contact card, enriches WebID, wires `foaf:primaryTopic` bridge to existing wiki page if one exists. Closes the missing-Pod-owner gap flagged in MEMORY.md caveats.
+1. **Rung 1.5 eval** (skill-creator harness, with-skill vs without-skill).
+   First measurable claim from the active plan. Eval surfaces which caps +
+   affordances actually get reused vs which are YAGNI, informing FOLLOWUPS
+   trim list. Tests the three new skills (solid-addressbook,
+   solid-wiki-memory-l3, solid-owner-identity) against cold-start agents.
 
-2. **`solid-addressbook` skill + `solid-wiki-memory-l3` skill refinement** (`.claude/skills/`). The agent-facing layer for the substrate. Wiki skill picks up the bridge predicate; addressbook skill teaches Pod operations as access patterns. Together they enable Rung 1.5 eval.
+2. **Memory Structuring Sprint** — finish wiki-memory L3: two-stage commit
+   (D73 working-memory → mem:Crystallize → durable), full coverage of the
+   remaining shape classes (Concept/Source/Procedure/WorkingMemory/Page),
+   memory-substrate triggers (D74 — mem:* AS2 vocab on LDN inbox).
 
-3. **Rung 1.5 eval** (skill-creator harness, with-skill vs without-skill). First measurable claim from the active plan. Eval surfaces which caps + affordances actually get reused vs which are YAGNI, informing FOLLOWUPS trim list.
-
-If the wiki URI scheme rethink is picked up (per FOLLOWUPS), it likely fits between #2 and #3 — would inform any wiki-side slug changes before agents are tested at scale.
+If the wiki URI scheme rethink is picked up (per FOLLOWUPS), it slots
+between #1 and #2 — would inform wiki-side slug changes before scale
+testing in #2.
 
 ## Active focus — Rung 1.5 (next round)
 
