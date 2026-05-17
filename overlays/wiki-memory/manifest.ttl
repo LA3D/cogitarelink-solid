@@ -48,7 +48,8 @@
         </vault/meta/affordances/markdown-projection.ttl> ,
         </vault/meta/affordances/hub-view.ttl> ,
         </vault/meta/affordances/breadcrumb-view.ttl> ,
-        </vault/meta/affordances/memento.ttl> ;
+        </vault/meta/affordances/memento.ttl> ,
+        </vault/meta/affordances/wiki-search-grep.ttl> ;
 
     overlay:installsRoleScheme
         </vault/ontology/wikirole> ;
@@ -80,4 +81,7 @@
           cap:descriptor "capabilities/wiki-type-index-registration.ttl" ] ,
         [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/wiki-page-as-unit.ttl> ;
           cap:version "1.0" ;
-          cap:descriptor "capabilities/wiki-page-as-unit.ttl" ] .
+          cap:descriptor "capabilities/wiki-page-as-unit.ttl" ] ,
+        [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/wiki-search-substrate.ttl> ;
+          cap:version "1.0" ;
+          cap:descriptor "capabilities/wiki-search-substrate.ttl" ] .

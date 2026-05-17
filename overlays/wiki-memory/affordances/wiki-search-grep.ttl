@@ -1,0 +1,57 @@
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix oslc:     <http://open-services.net/ns/core#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+
+<>  a wiki:SearchAffordance ,
+       prof:ResourceDescriptor ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ,
+                   <https://docs.oasis-open-projects.org/oslc-op/query/v3.0/oslc-query.html> ;
+    prof:hasRole wikirole:search-affordance ;
+    rdfs:label "Wiki Grep Search" ;
+    rdfs:comment "Recursive literal-substring AND-search over all readable text/markdown descendants of the target container. Paginated per OSLC Query 3.0 — see oslc:nextPage in responses." ;
+    wiki:targetContainer </vault/wiki/> ;
+    wiki:dispatchPattern "?ext=search-grep" ;
+    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    sh:agentInstruction """
+      Recursive literal-witness search over wiki-memory pages.
+
+      Wire form (HTTP GET):
+        /vault/wiki/?ext=search-grep&oslc.searchTerms=%22<phrase>%22[,%22<phrase>%22…]&oslc.pageSize=<n>&oslc.startIndex=<n>
+
+      Required: oslc.searchTerms — comma-separated double-quoted phrases per
+      OSLC Query 3.0 §7.3. URL-encode the quote characters. Multiple terms
+      are AND'd: a resource matches iff every term appears in its body at
+      least once.
+
+      Optional: oslc.pageSize (default 25, max 100), oslc.startIndex
+      (default 0). Response includes oslc:totalCount (full match count) and
+      oslc:nextPage when more pages exist.
+
+      WAC enforced server-side: matches the requester cannot read are
+      omitted, not denied. Subcontainer-level WAC denial omits the entire
+      subtree from enumeration.
+
+      Best for: exact phrases, named entities, citation keys, code
+      identifiers, URLs. For paraphrase/synthesis queries follow up with
+      wiki-meta-query (SPARQL over .meta).
+
+      Consumer CLI:
+        solid-pod wiki-search <container-url> "phrase 1" "phrase 2" …
+    """ ;
+    wiki:queryParameter [
+        wiki:parameter "oslc.searchTerms" ;
+        rdfs:comment "Comma-separated quoted phrases per OSLC Query 3.0 §7.3. URL-encoded. Required." ;
+        wiki:required true
+    ] , [
+        wiki:parameter "oslc.pageSize" ;
+        rdfs:comment "Max results per page. Default 25, server cap 100." ;
+        wiki:required false
+    ] , [
+        wiki:parameter "oslc.startIndex" ;
+        rdfs:comment "0-based result offset. Default 0." ;
+        wiki:required false
+    ] .

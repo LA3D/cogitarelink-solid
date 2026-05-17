@@ -1,0 +1,10 @@
+@prefix cap:   <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>  a cap:Capability ;
+    cap:name "wiki-search-substrate" ;
+    cap:version "1.0" ;
+    rdfs:label "Wiki Full-Text Search Substrate" ;
+    rdfs:comment "Full-text literal-substring search over wiki-memory L3 markdown bodies. GET /vault/wiki/?ext=search-grep&oslc.searchTerms=<terms> recursively walks the container subtree, AND-filters resources where every term appears, returns an LDP container of matches ranked by oslc:score per OSLC Query 3.0 (OASIS Standard, 2021), paginated via oslc:nextPage. WAC/ACP enforced server-side at result construction (omit-don't-deny extended to subtree omission). Phase 1 engine is Node RegExp behind a SearchEngine interface for future BM25/ripgrep upgrades. See docs/plans/2026-05-17-wiki-search-design.md + docs/superpowers/specs/2026-05-18-wiki-search-refinement-design.md." ;
+    cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    cap:hostedAt <https://pod.vardeman.me/vault/meta/affordances/wiki-search-grep.ttl> .
