@@ -1,0 +1,218 @@
+---
+type: wiki:Page
+dct:title: "Wiki-Memory L3 — Profile Synthesis"
+dct:conformsTo: <https://pod.vardeman.me/vault/meta/profiles/wiki-memory-l3>
+wiki:profileDocument: <>
+---
+
+# Wiki-Memory L3 — Profile Synthesis
+
+<!-- This page is the primary entry point for agents navigating this Pod's
+     wiki-memory. It is itself a wiki-memory page; if you can read it, you
+     can read every other page in this substrate. -->
+
+## Overview
+
+Wiki-memory L3 is a memory substrate built on Solid Protocol. This page is itself a wiki-memory page — if you can read it via standard Solid primitives, you can read every other page here.
+
+**Navigation principle** — this is a Linked Data substrate. Three layered dereferencing primitives:
+
+1. **Resources** — any URI in this Pod is dereferenceable via HTTP `GET`. Resources have multiple representations: ask for `Accept: text/markdown` for body prose, `Accept: text/turtle` for the RDF `.meta`, or `Accept: text/html` for rendered HTML (with embedded JSON-LD in a `<script>` block).
+
+2. **Link headers** — every response carries `Link` headers naming related resources: `rel="describedby"` (the `.meta` sidecar), `rel="type"` (the LDP / class kind), `rel="profile"` (the PROF descriptor).
+
+3. **Vocabularies are also Linked Data** — class and predicate IRIs are themselves dereferenceable. When you see `wiki:Concept` (a prefixed form of `https://pod.vardeman.me/vault/ontology/wiki#Concept`), strip the fragment and `GET https://pod.vardeman.me/vault/ontology/wiki` to receive the full vocabulary as RDF. Look for the `#Concept` fragment to learn what `Concept` means (`rdfs:label`, `rdfs:comment`, `rdfs:subClassOf`, `sh:agentInstruction`, etc.). The storage description at [`/vault/.well-known/solid`](/vault/.well-known/solid) lists every vocabulary in use as `void:vocabulary` triples — that's the substrate's complete vocabulary inventory.
+
+Prefixes (`wiki:`, `mem:`, `dct:`, etc.) expand to full IRIs per the JSON-LD context at [`/vault/meta/context.jsonld`](/vault/meta/context.jsonld), or via `@prefix` declarations in any Turtle document.
+
+**Follow your nose.**
+
+### What you can do from here
+
+- **Browse content by class** (`wiki:Concept`, `wiki:Source`, `wiki:Person`, `wiki:Procedure`, `wiki:WorkingMemory`) — see [Container layout](#container-layout) below, or fetch the [Type Index](/vault/settings/publicTypeIndex) for class → container routing.
+- **Search by text** — `GET /vault/wiki/?ext=search-grep&oslc.searchTerms=...` (OSLC Query 3.0). Returns scored matches across all wiki pages.
+- **Find what references a resource** — `GET /vault/wiki/<resource>?ext=backlinks`.
+- **Read a resource** — `GET /vault/wiki/<class>/<slug>.md` for body markdown; append `.meta` for the typed-edge RDF.
+- **Write or modify content** — six memory operations (Crystallize, Supersede, Merge, Demote, Archive, Link), each with an affordance descriptor at `/vault/meta/affordances/<operation>`. See [Operations](#operations).
+- **Catch up on recent activity** — [`/vault/wiki/.operations/`](/vault/wiki/.operations/) (agent announcements) and [`/vault/wiki/.events/`](/vault/wiki/.events/) (substrate analysis signals). See [Cross-session orientation](#cross-session-orientation).
+
+### Architectural position
+
+Three-layer stack: **L1** Solid Protocol (LDP, WAC, `.well-known/`); **L2** memory-substrate invariants (bounded branching, tiered retrieval, lifecycle metadata, separable procedural memory, hybrid blob+graph storage, OOD honesty); **L3** wiki-memory — the canonical reference profile, layered on by other applications.
+
+### Two client tracks
+
+- **Skilled agent** — loads `solid-wiki-memory-l3` and per-operation skills. Uses primitives directly. Faster, fewer tokens.
+- **Blind agent** — HTTP + RDF parsing only (`curl`-equivalent). Bootstraps from this page + the catalogs it points at. More tokens, but no prerequisites.
+
+## Container layout
+
+Wiki-memory content lives in class-specific containers under `/vault/wiki/`:
+
+| Container | Holds | Default class |
+|---|---|---|
+| [`/vault/wiki/concepts/`](/vault/wiki/concepts/) | Concept notes — theories, definitions, models | `wiki:Concept` |
+| [`/vault/wiki/sources/`](/vault/wiki/sources/) | Literature notes — papers, books, talks, blog posts | `wiki:Source` |
+| [`/vault/wiki/people/`](/vault/wiki/people/) | Person notes — authors, collaborators, organizations | `wiki:Person` |
+| [`/vault/wiki/procedures/`](/vault/wiki/procedures/) | Procedure notes — methods, workflows, recipes | `wiki:Procedure` |
+| [`/vault/wiki/working/`](/vault/wiki/working/) | Working-memory notes — drafts under permissive constraint | `wiki:WorkingMemory` |
+| [`/vault/wiki/pages/`](/vault/wiki/pages/) | Free-form pages (this synthesis lives one level up at the substrate root) | `wiki:Page` |
+
+Two reserved sibling containers carry the notification machinery (see [Events and announcements](#events-and-announcements)):
+
+| Container | Holds |
+|---|---|
+| [`/vault/wiki/.operations/`](/vault/wiki/.operations/) | Agent-emitted operation announcements (`mem:Announcement` subclasses) |
+| [`/vault/wiki/.events/`](/vault/wiki/.events/) | Substrate-emitted analysis events (`mem:Event` subclasses) |
+
+To enumerate a container: `GET <container-url>` with `Accept: text/turtle`. The response is an LDP `BasicContainer` with `ldp:contains` triples listing each child resource. To find which container a class lives in: dereference the [Type Index](/vault/settings/publicTypeIndex) — it maps class → container for every governed class.
+
+## Type taxonomy
+
+Six SHACL shapes govern the content classes in wiki-memory L3. The shape catalog is at [`/vault/meta/shapes/`](/vault/meta/shapes/); each shape is an LDP resource carrying the `sh:NodeShape` for one class.
+
+| Shape | Class | Purpose |
+|---|---|---|
+| [`page.ttl`](/vault/meta/shapes/page.ttl) | `wiki:Page` | Generic page (the most permissive; this synthesis conforms) |
+| [`concept.ttl`](/vault/meta/shapes/concept.ttl) | `wiki:Concept` | Concepts: requires `dct:title`, `skos:prefLabel`, at least one `wiki:extends` or `skos:broader` |
+| [`source.ttl`](/vault/meta/shapes/source.ttl) | `wiki:Source` | Literature: requires `dct:title`, `dct:creator`, `dct:date`, an identifier (DOI / ISBN / URL) |
+| [`person.ttl`](/vault/meta/shapes/person.ttl) | `wiki:Person` | People: requires `vcard:fn`, at least one anchor (`owl:sameAs` ORCID, email, or telephone) |
+| [`procedure.ttl`](/vault/meta/shapes/procedure.ttl) | `wiki:Procedure` | Procedures: requires `dct:title`, ordered `wiki:step` list, optional precondition / postcondition |
+| [`working.ttl`](/vault/meta/shapes/working.ttl) | `wiki:WorkingMemory` | Working memory: permissive (only `dct:title` required); drafts live here before crystallization |
+
+**Class-based targeting** (D78): shapes target `rdf:type` via `sh:targetClass`, not URL path. The Type Index at [`/vault/settings/publicTypeIndex`](/vault/settings/publicTypeIndex) does the routing — given a class IRI, it returns the canonical container URL. To find all resources of class X, look up X in the Type Index, then `GET` the listed container.
+
+Each shape's `sh:agentInstruction` (per D50) carries procedural guidance — read the shape before authoring a new resource of that class.
+
+## Conventions
+
+Three substrate conventions every agent should internalize.
+
+### Dual-layer linking
+
+Every wiki-memory resource has two linked surfaces: **body markdown** and **`.meta` RDF**. The body uses Obsidian-style wikilinks (`[[Target]]` and class-hint variants `[[Target]]{.concept}`); the `.meta` uses typed RDF predicates (`wiki:extends`, `wiki:supports`, `cito:cites`, etc.). The `markdown-projection` substrate behavior (see [Affordances](#affordances-available)) projects body wikilinks into `.meta` triples at write time. As an agent, you can author at either layer or both; the substrate keeps them consistent.
+
+### Two-stage commit
+
+Wiki-memory has two write tiers:
+
+1. **Working memory** (`/vault/wiki/working/`) — permissive SHACL, fast iteration. Use for drafts.
+2. **Durable memory** (class-specific containers) — strict SHACL, validated at PUT. Use for crystallized content.
+
+The transition between them is the `mem:CrystallizeOperation` (see [Operations](#operations)) — fetch from working, PUT to the destination class container, DELETE the source. The substrate captures both events via Memento.
+
+### Predicate-level governance
+
+Each SHACL shape declares which RDF predicates the substrate **governs** (via `wiki:governs` properties on the shape). The substrate owns those predicates: it validates them, may project them from body content, and refuses external changes that violate them. **All other predicates the agent owns** — write them via standard PATCH to `.meta`. The dividing line is per-shape; check the shape's `wiki:governs` list before patching.
+
+## Affordances available
+
+Substrate behaviors registered at [`/vault/meta/affordances/`](/vault/meta/affordances/). Each affordance is a `prof:ResourceDescriptor` describing what the behavior does, its preconditions, and its invocation pattern.
+
+| Affordance | Invocation | Purpose |
+|---|---|---|
+| [`markdown-projection`](/vault/meta/affordances/markdown-projection) | passive (on PUT to working) | Projects body wikilinks → `.meta` typed predicates |
+| [`hub-view`](/vault/meta/affordances/hub-view) | `GET /vault/wiki/?ext=hub-view` | Returns curated hub list ordered by inbound link count |
+| [`breadcrumb-view`](/vault/meta/affordances/breadcrumb-view) | `GET /vault/wiki/<resource>?ext=breadcrumbs` | Returns the resource's ancestor chain via `dct:isPartOf` |
+| [`memento`](/vault/meta/affordances/memento) | `Accept-Datetime` header | RFC 7089 time-travel; returns the resource as of a given instant |
+| [`wiki-search-grep`](/vault/meta/affordances/wiki-search-grep) | `GET /vault/wiki/?ext=search-grep&oslc.searchTerms=...` | Recursive literal substring search across all wiki pages |
+| [`crystallize`](/vault/meta/affordances/crystallize) | agent-performed (see [Operations](#operations)) | Promote a working note to durable storage |
+| [`supersede`](/vault/meta/affordances/supersede) | agent-performed | Replace a durable resource with a refined version |
+| [`merge`](/vault/meta/affordances/merge) | agent-performed | Combine N durable resources into one |
+| [`demote`](/vault/meta/affordances/demote) | agent-performed | Move a durable resource back to working memory |
+| [`archive`](/vault/meta/affordances/archive) | agent-performed | Soft-delete via tombstone |
+| [`link`](/vault/meta/affordances/link) | agent-performed | Add a typed cross-reference edge to a resource's `.meta` |
+
+Dereference any affordance URL to read its full descriptor — precondition, postcondition, error mode, procedure steps, governed predicates.
+
+## Operations
+
+The substrate defines six memory operations as RDF classes in the [`mem:`](/vault/ontology/mem) vocabulary. Each is a category of agent action, performed as a sequence of direct LDP operations.
+
+| Operation | Class | What it does |
+|---|---|---|
+| Crystallize | `mem:CrystallizeOperation` | Working → durable; SHACL validates the destination shape |
+| Supersede | `mem:SupersedeOperation` | Replace a durable resource (prior version captured by Memento) |
+| Merge | `mem:MergeOperation` | Combine N durable resources into one (`prov:wasDerivedFrom` records inputs) |
+| Demote | `mem:DemoteOperation` | Durable → working for reconsideration |
+| Archive | `mem:ArchiveOperation` | Tombstone the resource; preserved but inactive |
+| Link | `mem:LinkOperation` | Add a typed edge to a resource's `.meta` (substrate-governed predicates only) |
+
+**Recording the operation**: after performing an operation, write `prov:wasGeneratedBy [ a mem:<Operation> ; ... ]` into the resulting resource's `.meta`. This is the substrate's source of truth for what kind of action produced each resource.
+
+**Announcing the operation**: post a corresponding `mem:<PastTense>` activity (e.g., `mem:Crystallized`) to [`/vault/wiki/.operations/`](/vault/wiki/.operations/). The substrate fans this out to subscribers via Solid Notifications. See [Events and announcements](#events-and-announcements).
+
+For full procedures, dereference each operation's affordance descriptor (e.g., [`/vault/meta/affordances/crystallize`](/vault/meta/affordances/crystallize)) — it carries the exact LDP procedure, error mode, and pre/post conditions.
+
+## Events and announcements
+
+Two append-only containers carry the substrate's notification machinery.
+
+### Operations log
+
+[`/vault/wiki/.operations/`](/vault/wiki/.operations/) — agent-emitted announcements of completed operations. Each entry is an AS2 `as:Activity` with one or more `mem:Announcement` subclass types — `mem:Crystallized`, `mem:Superseded`, `mem:Merged`, `mem:Demoted`, `mem:Archived`, `mem:Linked`. Entries are append-only by convention; older entries are not edited.
+
+Reading the operations log is the canonical way to learn what's happened in the wiki-memory across sessions — see [Cross-session orientation](#cross-session-orientation).
+
+### Substrate events
+
+[`/vault/wiki/.events/`](/vault/wiki/.events/) — substrate-emitted analysis events. Each entry is an AS2 `as:Activity` with one or more `mem:Event` subclass types:
+
+| Event class | Emitted when |
+|---|---|
+| `mem:UnprocessableWrite` | A SHACL-validated write was rejected; carries `sh:ValidationReport` in `as:context` |
+| `mem:BoundExceeded` | A container's `ldp:contains` count crossed 12 (Fano branching bound) |
+| `mem:ContradictionDetected` | Two resources express conflicting typed-edge claims |
+| `mem:ConsolidationSuggested` | Multiple resources cluster around a topic without a curated hub |
+| `mem:ReflectionDue` | Periodic signal that the substrate hasn't been linted recently |
+| `mem:OODQuerySignal` | A wiki-search query returned zero or low-quality results |
+
+### Subscribing
+
+Both containers integrate with Solid Notifications. To subscribe via Webhook:
+
+```http
+POST /.notifications/WebhookChannel2023/
+Content-Type: application/ld+json
+
+{
+  "@context": "https://www.w3.org/ns/solid/notifications/v1",
+  "type": "WebhookChannel2023",
+  "topic": "https://pod.vardeman.me/vault/wiki/.operations/",
+  "sendTo": "<your-callback-url>"
+}
+```
+
+Repeat for `/vault/wiki/.events/`. The substrate fan-outs each new entry to subscribed callbacks. For real-time within a session, prefer `StreamingHTTPChannel2023`.
+
+**Polling alternative**: agents that aren't continuously running can poll the containers on next wake. `GET <container-url>` returns `ldp:contains` ordered by creation time; the agent filters by `as:published` to find recent activity.
+
+## Cross-session orientation
+
+Wiki-memory agents are typically stateless across sessions. On wake, the canonical "what happened" workflow:
+
+1. **`GET /vault/wiki/.operations/`** with `Accept: text/turtle`. Returns the LDP container with `ldp:contains` listing every announcement.
+2. **Filter by recency**: read each entry's `as:published` timestamp; consider the last N hours / since-last-session.
+3. **Dispatch by type**: for each recent entry, read its `rdf:type` to find the `mem:Announcement` subclass. Group by operation kind.
+4. **Drill in selectively**: for entries that affect resources you care about, follow `as:object` (the affected resource) and `prov:wasDerivedFrom` (sources) to read the new state.
+
+Optionally: `GET /vault/wiki/.events/` to learn what the substrate flagged (BoundExceeded, ContradictionDetected, etc.). Events represent substrate-detected conditions the substrate thinks an agent should address.
+
+The operations log is what makes this substrate **navigable across sessions without state**. Treat it like `git log --oneline --since="<interval>"` — chronological, semantic, cheap to consume.
+
+## Pointers
+
+| Resource | Purpose |
+|---|---|
+| [`/vault/.well-known/solid`](/vault/.well-known/solid) | Storage description; lists all vocabularies and catalogs |
+| [`/vault/meta/shapes/`](/vault/meta/shapes/) | SHACL shape catalog (one per class) |
+| [`/vault/meta/affordances/`](/vault/meta/affordances/) | Affordance descriptors (substrate behaviors) |
+| [`/vault/meta/capabilities/`](/vault/meta/capabilities/) | Capability catalog (installed overlay capabilities) |
+| [`/vault/meta/profiles/`](/vault/meta/profiles/) | PROF profile descriptors (kind-hints per resource) |
+| [`/vault/meta/context.jsonld`](/vault/meta/context.jsonld) | Canonical prefix → IRI mapping |
+| [`/vault/settings/publicTypeIndex`](/vault/settings/publicTypeIndex) | Class → container routing |
+| [`/vault/ontology/wiki`](/vault/ontology/wiki) | The `wiki:` vocabulary |
+| [`/vault/ontology/mem`](/vault/ontology/mem) | The `mem:` operation/event/announcement vocabulary |
+| [`/vault/ontology/wikirole`](/vault/ontology/wikirole) | The `wikirole:` SKOS scheme for substrate roles |
+| [`/vault/wiki/.operations/`](/vault/wiki/.operations/) | Agent operation announcement log |
+| [`/vault/wiki/.events/`](/vault/wiki/.events/) | Substrate-emitted analysis events |
