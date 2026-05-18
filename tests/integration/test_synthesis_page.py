@@ -85,19 +85,36 @@ def test_synthesis_page_html_embeds_jsonld_script():
     assert SYNTH in html
 
 
-def test_all_shape_agent_instructions_reference_synthesis():
-    """U-shape: every SHACL shape's sh:agentInstruction back-references the synthesis."""
+def test_all_wiki_memory_shape_agent_instructions_reference_synthesis():
+    """U-shape: every wiki-memory L3 SHACL shape's sh:agentInstruction back-references the synthesis.
+
+    Filtered to wiki-memory L3 shapes (page, source, person, procedure, working, resource).
+    AddressBook overlay shapes (contact-card, organization-card, group, membership,
+    pod-owner-preferences, webid-profile) live in the same /vault/meta/shapes/ catalog
+    but are NOT in scope of the wiki-memory L3 U-shape append; they have their own
+    overlay's conventions.
+    """
     SHACL_AI = URIRef("http://www.w3.org/ns/shacl#agentInstruction")
     LDP_CONTAINS = URIRef("http://www.w3.org/ns/ldp#contains")
+
+    WIKI_MEMORY_SHAPES = {
+        "page.shacl.ttl", "source.shacl.ttl", "person.shacl.ttl",
+        "procedure.shacl.ttl", "working.shacl.ttl", "resource.shacl.ttl",
+    }
 
     r = httpx.get(f"{POD}meta/shapes/",
                   headers={"Accept": "text/turtle"}, verify=False)
     assert r.status_code == 200
     container = Graph().parse(data=r.text, format="turtle", publicID=f"{POD}meta/shapes/")
-    shape_urls = list(container.objects(predicate=LDP_CONTAINS))
-    assert len(shape_urls) >= 5, f"Expected ≥5 shapes in catalog, got {len(shape_urls)}"
+    all_shape_urls = list(container.objects(predicate=LDP_CONTAINS))
+    wiki_memory_shapes = [s for s in all_shape_urls
+                          if str(s).rsplit("/", 1)[-1] in WIKI_MEMORY_SHAPES]
+    assert len(wiki_memory_shapes) >= 5, (
+        f"Expected ≥5 wiki-memory L3 shapes in catalog, got {len(wiki_memory_shapes)}: "
+        f"{[str(s).rsplit('/', 1)[-1] for s in wiki_memory_shapes]}"
+    )
 
-    for shape_url in shape_urls:
+    for shape_url in wiki_memory_shapes:
         rr = httpx.get(str(shape_url),
                        headers={"Accept": "text/turtle"}, verify=False)
         assert rr.status_code == 200, f"Failed to GET shape {shape_url}: {rr.status_code}"
