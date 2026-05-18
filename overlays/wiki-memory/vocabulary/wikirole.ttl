@@ -51,3 +51,35 @@
     skos:broader :affordance ;
     skos:prefLabel "Derived-navigation affordance" ;
     skos:definition "An affordance computing derived navigation structure — breadcrumb trails, link maps, traversal indices." .
+
+# Added 2026-05-18 — Memory Structuring Sprint Phase A
+# Synthesis-layer role concepts referenced by /vault/meta/profiles/page
+# via prof:hasResource. See </vault/wiki/> for full L3 profile.
+
+:overview
+    a skos:Concept , prof:ResourceRole ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:prefLabel "Profile overview" ;
+    skos:definition "Synthesis page that describes the L3 profile's overall purpose, layout, conventions, and operations. The primary agent entry point." ;
+    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> .
+
+:operation-vocabulary
+    a skos:Concept , prof:ResourceRole ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:prefLabel "Operation vocabulary" ;
+    skos:definition "The mem:* class hierarchy declaring memory operations agents can perform, plus the events the substrate emits and announcements agents can post." ;
+    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> .
+
+:operation-log
+    a skos:Concept , prof:ResourceRole ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:prefLabel "Operation log" ;
+    skos:definition "Append-only LDP container holding agent-emitted memory-operation announcements (mem:Announcement subclasses)." ;
+    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> .
+
+:event-stream
+    a skos:Concept , prof:ResourceRole ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:prefLabel "Event stream" ;
+    skos:definition "Append-only LDP container holding substrate-emitted analysis events (mem:Event subclasses)." ;
+    skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> .
