@@ -62,7 +62,7 @@ Two reserved sibling containers carry the notification machinery (see [Events an
 
 | Container | Holds |
 |---|---|
-| [`/vault/wiki/.operations/`](/vault/wiki/.operations/) | Agent-emitted operation announcements (`mem:Announcement` subclasses) |
+| [`/vault/wiki/.operations/`](/vault/wiki/.operations/) | Agent-emitted action announcements (`as:Announce` multi-typed with `mem:*Action`) |
 | [`/vault/wiki/.events/`](/vault/wiki/.events/) | Substrate-emitted analysis events (`mem:Event` subclasses) |
 
 To enumerate a container: `GET <container-url>` with `Accept: text/turtle`. The response is an LDP `BasicContainer` with `ldp:contains` triples listing each child resource. To find which container a class lives in: dereference the [Type Index](/vault/settings/publicTypeIndex) — it maps class → container for every governed class.
@@ -99,7 +99,7 @@ Wiki-memory has two write tiers:
 1. **Working memory** (`/vault/wiki/working/`) — permissive SHACL, fast iteration. Use for drafts.
 2. **Durable memory** (class-specific containers) — strict SHACL, validated at PUT. Use for crystallized content.
 
-The transition between them is the `mem:CrystallizeOperation` (see [Operations](#operations)) — fetch from working, PUT to the destination class container, DELETE the source. The substrate captures both events via Memento.
+The transition between them is the `mem:CrystallizeAction` (see [Operations](#operations)) — fetch from working, PUT to the destination class container, DELETE the source. The substrate captures both events via Memento.
 
 ### Predicate-level governance
 
@@ -129,20 +129,30 @@ Dereference any affordance URL to read its full descriptor — precondition, pos
 
 The substrate defines six memory operations as RDF classes in the [`mem:`](/vault/ontology/mem) vocabulary. Each is a category of agent action, performed as a sequence of direct LDP operations.
 
-| Operation | Class | What it does |
-|---|---|---|
-| Crystallize | `mem:CrystallizeOperation` | Working → durable; SHACL validates the destination shape |
-| Supersede | `mem:SupersedeOperation` | Replace a durable resource (prior version captured by Memento) |
-| Merge | `mem:MergeOperation` | Combine N durable resources into one (`prov:wasDerivedFrom` records inputs) |
-| Demote | `mem:DemoteOperation` | Durable → working for reconsideration |
-| Archive | `mem:ArchiveOperation` | Tombstone the resource; preserved but inactive |
-| Link | `mem:LinkOperation` | Add a typed edge to a resource's `.meta` (substrate-governed predicates only) |
+| Action | Class | What it does | Proto-grounded parent |
+|---|---|---|---|
+| Crystallize | `mem:CrystallizeAction` | Working → durable; SHACL validates the destination shape | `as:Move` |
+| Supersede | `mem:SupersedeAction` | Replace a durable resource (prior version captured by Memento) | `schema:ReplaceAction` |
+| Merge | `mem:MergeAction` | Combine N durable resources into one (`prov:wasDerivedFrom` records inputs) | — |
+| Demote | `mem:DemoteAction` | Durable → working for reconsideration | `as:Undo` |
+| Archive | `mem:ArchiveAction` | Tombstone the resource; preserved but inactive | `as:Delete` |
+| Link | `mem:LinkAction` | Add a typed edge to a resource's `.meta` (substrate-governed predicates only) | `as:Add` |
 
-**Recording the operation**: after performing an operation, write `prov:wasGeneratedBy [ a mem:<Operation> ; ... ]` into the resulting resource's `.meta`. This is the substrate's source of truth for what kind of action produced each resource.
+**Recording the action**: after performing an action, write `prov:wasGeneratedBy [ a mem:<XAction> ; ... ]` into the resulting resource's `.meta`. This is the substrate's source of truth for what kind of action produced each resource.
 
-**Announcing the operation**: post a corresponding `mem:<PastTense>` activity (e.g., `mem:Crystallized`) to [`/vault/wiki/.operations/`](/vault/wiki/.operations/). The substrate fans this out to subscribers via Solid Notifications. See [Events and announcements](#events-and-announcements).
+**Announcing the action**: post an `as:Announce` activity to [`/vault/wiki/.operations/`](/vault/wiki/.operations/), **multi-typed with the same Action class** (COAR Notify pattern). Example:
 
-For full procedures, dereference each operation's affordance descriptor (e.g., [`/vault/meta/affordances/crystallize`](/vault/meta/affordances/crystallize)) — it carries the exact LDP procedure, error mode, and pre/post conditions.
+```turtle
+[] a as:Announce, mem:CrystallizeAction ;
+   as:actor    <agent-webid> ;
+   as:object   <durable-resource> ;
+   prov:wasDerivedFrom <working-source> ;
+   as:published "..."^^xsd:dateTime .
+```
+
+The substrate fans this out to subscribers via Solid Notifications. See [Events and announcements](#events-and-announcements). No separate past-tense class is needed; the Action class is reused for both the PROV-O record and the announcement activity.
+
+For full procedures, dereference each action's affordance descriptor (e.g., [`/vault/meta/affordances/crystallize`](/vault/meta/affordances/crystallize)) — it carries the exact LDP procedure, error mode, and pre/post conditions.
 
 ## Events and announcements
 
@@ -150,7 +160,7 @@ Two append-only containers carry the substrate's notification machinery.
 
 ### Operations log
 
-[`/vault/wiki/.operations/`](/vault/wiki/.operations/) — agent-emitted announcements of completed operations. Each entry is an AS2 `as:Activity` with one or more `mem:Announcement` subclass types — `mem:Crystallized`, `mem:Superseded`, `mem:Merged`, `mem:Demoted`, `mem:Archived`, `mem:Linked`. Entries are append-only by convention; older entries are not edited.
+[`/vault/wiki/.operations/`](/vault/wiki/.operations/) — agent-emitted announcements of completed actions. Each entry is an AS2 `as:Announce` activity **multi-typed with a `mem:*Action` class** (COAR Notify pattern) — `[as:Announce, mem:CrystallizeAction]`, `[as:Announce, mem:SupersedeAction]`, and so on for Merge/Demote/Archive/Link. The same Action class appears in the resulting resource's `prov:wasGeneratedBy` PROV-O record, so the substrate's source of truth and the agent's announcement reference the same type. Entries are append-only by convention; older entries are not edited.
 
 Reading the operations log is the canonical way to learn what's happened in the wiki-memory across sessions — see [Cross-session orientation](#cross-session-orientation).
 
@@ -193,7 +203,7 @@ Wiki-memory agents are typically stateless across sessions. On wake, the canonic
 
 1. **`GET /vault/wiki/.operations/`** with `Accept: text/turtle`. Returns the LDP container with `ldp:contains` listing every announcement.
 2. **Filter by recency**: read each entry's `as:published` timestamp; consider the last N hours / since-last-session.
-3. **Dispatch by type**: for each recent entry, read its `rdf:type` to find the `mem:Announcement` subclass. Group by operation kind.
+3. **Dispatch by type**: for each recent entry, read its `rdf:type` array. Entries carry both `as:Announce` (it's an announcement) and a `mem:*Action` class (what was announced). Group by the Action class.
 4. **Drill in selectively**: for entries that affect resources you care about, follow `as:object` (the affected resource) and `prov:wasDerivedFrom` (sources) to read the new state.
 
 Optionally: `GET /vault/wiki/.events/` to learn what the substrate flagged (BoundExceeded, ContradictionDetected, etc.). Events represent substrate-detected conditions the substrate thinks an agent should address.

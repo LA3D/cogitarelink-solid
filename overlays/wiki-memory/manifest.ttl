@@ -1,6 +1,7 @@
 @prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
 @prefix cap:     <https://pod.vardeman.me/vault/ontology/capability#> .
 @prefix wiki:    <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:     <https://pod.vardeman.me/vault/ontology/mem#> .
 @prefix dct:     <http://purl.org/dc/terms/> .
 @prefix solid:   <http://www.w3.org/ns/solid/terms#> .
 
@@ -14,6 +15,10 @@
         overlay:namespace wiki: ;
         overlay:document "vocabulary/wiki.ttl" ;
         overlay:hostedAt "/vault/ontology/wiki"
+    ] , [
+        overlay:namespace mem: ;
+        overlay:document "ontology/mem.ttl" ;
+        overlay:hostedAt "/vault/ontology/mem"
     ] ;
 
     overlay:requiresCapability
