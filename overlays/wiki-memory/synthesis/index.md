@@ -1,7 +1,7 @@
 ---
 type: wiki:Page
 dct:title: "Wiki-Memory L3 — Profile Synthesis"
-dct:conformsTo: <https://pod.vardeman.me/vault/meta/profiles/wiki-memory-l3>
+dct:conformsTo: <https://pod.vardeman.me/vault/meta/profiles/page>
 wiki:profileDocument: <>
 ---
 
