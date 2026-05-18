@@ -148,3 +148,24 @@ RUN rm -rf /community-server/extensions/wiki-search/node_modules/@solid/communit
 RUN mkdir -p /community-server/node_modules/@cogitarelink && \
     ln -sf /community-server/extensions/wiki-search \
        /community-server/node_modules/@cogitarelink/wiki-search
+
+# ============================================================================
+# mem-trigger — MemTriggerListener (Phase C, Memory Structuring Sprint).
+# MonitoringStore CDC subscriber that runs cross-resource detectors over
+# /vault/wiki/* writes and emits mem:Event activities to /vault/wiki/.events/.
+# Unscoped npm name (lsd:module = npmd:mem-trigger), so symlinked at
+# node_modules/mem-trigger (not under @cogitarelink/).
+# ============================================================================
+
+COPY extensions/mem-trigger /community-server/extensions/mem-trigger
+
+RUN cd extensions/mem-trigger && npm install --ignore-scripts
+
+RUN cd extensions/mem-trigger && npx tsc --skipLibCheck
+
+RUN cd extensions/mem-trigger && npx componentsjs-generator -s src -c dist/components
+
+RUN rm -rf /community-server/extensions/mem-trigger/node_modules/@solid/community-server && \
+    ln -sf /community-server /community-server/extensions/mem-trigger/node_modules/@solid/community-server
+
+RUN ln -sf /community-server/extensions/mem-trigger /community-server/node_modules/mem-trigger
