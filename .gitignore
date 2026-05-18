@@ -44,5 +44,8 @@ htmlcov/
 # Claude Code
 .claude/settings.local.json
 
+# Superpowers brainstorming visual companion (mockup HTML + state, not source)
+.superpowers/
+
 # TLS certs — generated locally via mkcert, never committed
 css/certs/
