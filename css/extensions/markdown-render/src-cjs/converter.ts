@@ -21,6 +21,7 @@ import { BaseTypedRepresentationConverter } from "@solid/community-server/dist/s
 import type { Representation } from "@solid/community-server/dist/http/representation/Representation";
 import type { RepresentationConverterArgs } from "@solid/community-server/dist/storage/conversion/RepresentationConverter";
 import * as path from "path";
+import { JsonLdScriptInjector } from "./JsonLdScriptInjector";
 
 // Simple debug logger — writes to stderr which CSS captures in docker logs.
 // We don't use CSS's getLoggerFor because the @solid/community-server npm
@@ -69,10 +70,12 @@ function getRenderMarkdown(): Promise<RenderMarkdownFn> {
 
 export class MarkdownRdfaConverter extends BaseTypedRepresentationConverter {
   private readonly podBase?: string;
+  private readonly injector: JsonLdScriptInjector;
 
   public constructor(podBase?: string) {
     super(TEXT_MARKDOWN, TEXT_HTML);
     this.podBase = podBase;
+    this.injector = new JsonLdScriptInjector();
     debug(`initialised (podBase=${podBase ?? "none"})`);
   }
 
@@ -85,11 +88,70 @@ export class MarkdownRdfaConverter extends BaseTypedRepresentationConverter {
       debug(`renderMarkdown loaded`);
       const html = await renderMarkdown(markdown, { podBase: this.podBase });
       debug(`rendered ${html.length} bytes of HTML`);
-      return new BasicRepresentation(html, representation.metadata, TEXT_HTML);
+
+      const enriched = this.injectJsonLd(html, identifier.path, representation.metadata);
+      return new BasicRepresentation(enriched, representation.metadata, TEXT_HTML);
     } catch (err) {
       debug(`FAILED: ${(err as Error).message}`);
       debug((err as Error).stack ?? "no stack");
       throw err;
     }
+  }
+
+  // Inject a <script type="application/ld+json"> block carrying the
+  // resource's .meta-derived triples into the rendered HTML. The .meta
+  // triples are already present on representation.metadata — CSS's
+  // FileDataAccessor.getRawMetadata() parses the .meta Turtle and adds the
+  // quads at request time. Subject filter inside the injector keeps only
+  // triples whose subject = the resource IRI.
+  //
+  // Injection point:
+  //   - before </head> when the rehype-document <head> is present (always
+  //     the case when renderMarkdown wraps in rehype-document, which it
+  //     does by default)
+  //   - falls back to before </body> if </head> isn't found
+  //   - falls back to appending at the end of the string if neither is
+  //     present (e.g. fragment renders)
+  //
+  // Empty-metadata case: injector returns "" and the HTML is returned
+  // unchanged. Idempotence: the marker substring already-injected check
+  // guards against double-emit if the converter is re-invoked.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private injectJsonLd(html: string, resourceIri: string, metadata: any): string {
+    let quads: unknown;
+    try {
+      quads = typeof metadata?.quads === "function" ? metadata.quads() : [];
+    } catch (err) {
+      debug(`metadata.quads() threw: ${(err as Error).message}`);
+      return html;
+    }
+    if (!Array.isArray(quads) || quads.length === 0) return html;
+
+    // Idempotence: if some prior pass already injected a JSON-LD script,
+    // do not double-emit. (renderMarkdown's <head> never contains this.)
+    if (html.includes('<script type="application/ld+json">')) {
+      debug(`JSON-LD <script> already present, skipping injection`);
+      return html;
+    }
+
+    const scriptTag = this.injector.buildScriptTag(resourceIri, quads as never);
+    if (scriptTag.length === 0) {
+      debug(`no triples for ${resourceIri}, skipping injection`);
+      return html;
+    }
+
+    const insertion = `${scriptTag}\n`;
+    const headClose = html.lastIndexOf("</head>");
+    if (headClose !== -1) {
+      debug(`injecting ${scriptTag.length} bytes of JSON-LD before </head>`);
+      return html.slice(0, headClose) + insertion + html.slice(headClose);
+    }
+    const bodyClose = html.lastIndexOf("</body>");
+    if (bodyClose !== -1) {
+      debug(`no </head>, injecting JSON-LD before </body>`);
+      return html.slice(0, bodyClose) + insertion + html.slice(bodyClose);
+    }
+    debug(`no </head> or </body>, appending JSON-LD at end`);
+    return html + "\n" + insertion;
   }
 }
