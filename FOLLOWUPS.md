@@ -25,29 +25,50 @@ Key commits (cogitarelink-solid):
 Sibling repo (solid-agent-skills):
 - Consumer CLI + Claude skill: `b17be6f`
 
-### Architectural deviations from plan (D91 candidate)
+### Architectural deviations from plan
 
-- [ ] **D91 — Walker uses HTTP self-requests, not in-process ResourceStore.**
-  Original Task 8 plan called for `ResourceStore.getRepresentation`. Integration
-  testing surfaced a re-entrant lock crash (CSS's per-resource write lock held
-  during the handler's own request context produced 6s lock-expiry +
-  N3StreamWriter crash). Walker rewritten in `eb37bb7` to use undici-based
-  HTTP self-requests against the pod's own HTTPS endpoint, going through the
-  full request pipeline (auth + WAC + projection). WalkFetch interface
-  injected for unit testability (Approach B from review, commit `5e9c6c1`).
-  Perf impact: p95 26.7ms on current vault — fine. Ratify D91 after the
-  approach survives larger vault scale.
+- [x] ~~**D91 — Walker uses HTTP self-requests, not in-process ResourceStore.**~~
+  **Provisional D91 retracted on 2026-05-18 spike.** The recorded narrative
+  bundled two independent fixes ("HTTP-self-request rewrite" + `isReadAllowed`
+  permission-shape fix) and credited the wrong one for resolving the original
+  test failures. The actual root cause is re-entrant lock on the *request
+  target itself* — not a general ResourceStore problem. Header forwarding
+  to fix the anonymous-content leak is **architecturally impossible** under
+  Solid-OIDC (DPoP proofs are bound to htm/htu/jti and one-shot; the server
+  cannot mint replacement proofs without the client's private key).
+  Replaced by Path 1a (DataAccessor for seed enumeration, ResourceStore for
+  descendants). See `docs/plans/2026-05-18-wiki-search-walker-redesign.md`
+  for the full reproduced failure mode, CSS architecture probes, multi-agent
+  threat model, and revised recommendation. D92 ratification follows
+  implementation sprint.
 
-- [ ] **Anonymous content-fetch leak under auth**. The HTTP self-requests
-  for content fetching are currently anonymous. WAC enforcement runs via
-  `PermissionReader` with real credentials BEFORE the self-request, but the
-  self-request itself omits Authorization/DPoP headers. Under dev-allow-all
-  this is invisible; with real auth, a WAC-protected resource that passes
-  the permission gate will fail the content fetch silently (anon-deny =
-  resource excluded from results, even when the authenticated user is
-  entitled). MUST FIX before un-stubbing TestWacScenarios. Pragmatic fix:
-  forward the original request's Authorization + DPoP headers into the
-  undici self-request.
+- [ ] **Wiki-search walker Path 1a redesign sprint.** Re-architect per
+  `docs/plans/2026-05-18-wiki-search-walker-redesign.md`. Handler injects
+  `DataAccessor` as a second store dependency; enumerates target children
+  lockless via `DataAccessor.getChildren()` (sits below `LockingResourceStore`
+  in the CSS chain). Walker takes `seedUrls: string[]` and recurses via
+  `store.getRepresentation()` — no deadlock because the target identifier
+  is never enqueued. Inherits request auth context naturally (Solid-OIDC,
+  DPoP, WAC, ACP, future VC, federation). Un-stubs all 5+1 WAC scenarios
+  in `tests/integration/test_wiki_search_e2e.py::TestWacScenarios`.
+  Estimated half-day. Ratify as **D92** in
+  `.claude/skills/decision-lookup/decisions.md` once shipped; sync to
+  vault `SOLID-Pod-Decisions.md`.
+
+- [ ] **VC credential extension (future research-track).** CSS v8 has
+  the `@solidlab/policy-engine` VC matcher (`evaluateVc`) and ACP support,
+  but **no `VerifiableCredentialExtractor`** ships out of the box.
+  Roadmap in `docs/plans/2026-05-18-vc-credential-roadmap.md` covers:
+  CSS v8 credential machinery state, the Inrupt UMA + Access Grants flow
+  (gConsent), the SolidLab UMA AS landscape (real, MIT-licensed, but no
+  W3C VC claim_token support yet), TypeScript VC library survey
+  (`@digitalbazaar/vc` recommended core), and three routes — B rejected
+  (build from scratch), C as v1 prototype (custom header + inline
+  verifier, ~150 LOC), A' as v2 destination (SolidLab UMA + custom
+  `VcVerifier` + `VcAuthorizer`, ~400 LOC contribution upstream).
+  Not scoped to a sprint. Implementation triggers documented in the
+  roadmap; typically Rung 1.5 eval evidence or a concrete use case
+  requiring VC-gated access.
 
 ### Deferred to Phase 7b/c/d (out of scope for 7a)
 
@@ -65,8 +86,8 @@ Sibling repo (solid-agent-skills):
 
 - [ ] **WAC scenario integration tests** (test_a–test_e in
   `tests/integration/test_wiki_search_e2e.py`). Stubbed pending the
-  authenticated-client harness shared with `test_addressbook_e2e.py`. Blocked
-  by the anonymous-content-fetch issue above — fix that first, then implement.
+  authenticated-client harness shared with `test_addressbook_e2e.py`.
+  Unblocked by Path 1a redesign above; un-stub as part of that sprint.
 - [ ] **Score formula tuning** (RQ-Search-1). v1 baseline is density + log
   dampening; tune against Rung 1.5 eval evidence.
 - [ ] **Whether to embed `.meta` triples in search responses** (RQ-Search-4).

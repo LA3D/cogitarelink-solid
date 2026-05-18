@@ -226,10 +226,17 @@ Companion docs:
 
 In dependency order:
 
-1. **Anonymous-fetch fix + WAC scenario tests** (~20 LOC walker.ts + 5 test
-   bodies in `test_wiki_search_e2e.py`). Blocks the omit-don't-deny
-   correctness guarantee under real auth. Pre-requisite for Rung 1.5 if
-   any task uses authenticated agents.
+1. **Wiki-search walker Path 1a redesign** (~half a day). Re-architects
+   per `docs/plans/2026-05-18-wiki-search-walker-redesign.md` —
+   `DataAccessor.getChildren()` for seed enumeration (lockless), then
+   `store.getRepresentation()` for descendants. Inherits request auth
+   context naturally; solves the omit-don't-deny correctness gap;
+   un-stubs the 5+1 WAC scenario tests. **Provisional D91 retracted
+   on 2026-05-18 spike** — the original "HTTP-self-request rewrite"
+   narrative bundled two independent fixes and credited the wrong
+   one; header forwarding to the self-request is architecturally
+   impossible under Solid-OIDC (DPoP one-shot binding). Ratify as
+   **D92** once shipped.
 
 2. **Rung 1.5 eval** (skill-creator harness, with-skill vs without-skill).
    First measurable claim from the active plan. Tests the three Phase 5j/6
@@ -246,6 +253,16 @@ In dependency order:
 Phase 7b/c/d (engine swap, hybrid RRF, in-pod index) are deferred until
 Rung 1.5 evidence justifies. Wiki URI scheme rethink (per FOLLOWUPS) slots
 between #2 and #3 if picked up.
+
+### Research-track (not scoped to a sprint)
+
+- **VC credential extension** — CSS v8 has policy-engine VC matchers but
+  no `VerifiableCredentialExtractor`. Three routes documented in
+  `docs/plans/2026-05-18-vc-credential-roadmap.md` (B rejected as
+  duplicating SolidLab UMA AS; C as ~150-LOC custom-header v1 prototype;
+  A' as SolidLab-UMA + contributed `VcVerifier` for v2 production).
+  Implementation triggers on Rung 1.5 evidence or a concrete VC-gated
+  access use case.
 
 ## Active focus — Rung 1.5 (next round)
 
