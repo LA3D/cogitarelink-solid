@@ -29,7 +29,7 @@ Prefixes (`wiki:`, `mem:`, `dct:`, etc.) expand to full IRIs per the JSON-LD con
 
 ### What you can do from here
 
-- **Browse content by class** (`wiki:Concept`, `wiki:Source`, `wiki:Person`, `wiki:Procedure`, `wiki:WorkingNote`) — see [Container layout](#container-layout) below, or fetch the [Type Index](/vault/settings/publicTypeIndex) for class → container routing.
+- **Browse content by class** (`wiki:Page` / `wiki:Concept`, `wiki:Source`, `wiki:Person`, `wiki:Procedure`, `wiki:WorkingNote`) — see [Container layout](#container-layout) below, or fetch the [Type Index](/vault/settings/publicTypeIndex) for class → container routing.
 - **Search by text** — `GET /vault/wiki/?ext=search-grep&oslc.searchTerms=...` (OSLC Query 3.0). Returns scored matches across all wiki pages.
 - **Find what references a resource** — `GET /vault/wiki/<resource>?ext=backlinks`.
 - **Read a resource** — `GET /vault/wiki/<class>/<slug>.md` for body markdown; append `.meta` for the typed-edge RDF.
@@ -51,12 +51,11 @@ Wiki-memory content lives in class-specific containers under `/vault/wiki/`:
 
 | Container | Holds | Default class |
 |---|---|---|
-| [`/vault/wiki/concepts/`](/vault/wiki/concepts/) | Concept notes — theories, definitions, models | `wiki:Concept` |
+| [`/vault/wiki/pages/`](/vault/wiki/pages/) | All wiki pages, including concept notes — theories, definitions, models. `wiki:Concept` is a subclass of `wiki:Page` and lives here. | `wiki:Page` (`wiki:Concept`, `wiki:MOC` as subclasses) |
 | [`/vault/wiki/sources/`](/vault/wiki/sources/) | Literature notes — papers, books, talks, blog posts | `wiki:Source` |
 | [`/vault/wiki/people/`](/vault/wiki/people/) | Person notes — authors, collaborators, organizations | `wiki:Person` |
 | [`/vault/wiki/procedures/`](/vault/wiki/procedures/) | Procedure notes — methods, workflows, recipes | `wiki:Procedure` |
 | [`/vault/wiki/working/`](/vault/wiki/working/) | Working-memory notes — drafts under permissive constraint | `wiki:WorkingNote` |
-| [`/vault/wiki/pages/`](/vault/wiki/pages/) | Free-form pages (this synthesis lives one level up at the substrate root) | `wiki:Page` |
 
 Two reserved sibling containers carry the notification machinery (see [Events and announcements](#events-and-announcements)):
 
@@ -73,12 +72,12 @@ Six SHACL shapes govern the content classes in wiki-memory L3. The shape catalog
 
 | Shape | Class | Purpose |
 |---|---|---|
-| [`page.ttl`](/vault/meta/shapes/page.ttl) | `wiki:Page` | Generic page (the most permissive; this synthesis conforms) |
-| [`concept.ttl`](/vault/meta/shapes/concept.ttl) | `wiki:Concept` | Concepts: requires `dct:title`, `skos:prefLabel`, at least one `wiki:extends` or `skos:broader` |
-| [`source.ttl`](/vault/meta/shapes/source.ttl) | `wiki:Source` | Literature: requires `dct:title`, `dct:creator`, `dct:date`, an identifier (DOI / ISBN / URL) |
-| [`person.ttl`](/vault/meta/shapes/person.ttl) | `wiki:Person` | People: requires `vcard:fn`, at least one anchor (`owl:sameAs` ORCID, email, or telephone) |
-| [`procedure.ttl`](/vault/meta/shapes/procedure.ttl) | `wiki:Procedure` | Procedures: requires `dct:title`, ordered `wiki:step` list, optional precondition / postcondition |
-| [`working.ttl`](/vault/meta/shapes/working.ttl) | `wiki:WorkingNote` | Working memory: permissive (only `dct:title` required); drafts live here before crystallization |
+| [`resource.shacl.ttl`](/vault/meta/shapes/resource.shacl.ttl) | `wiki:Resource` | Abstract root — defines invariants every wiki resource carries (rdf:type, dct:title, etc.) |
+| [`page.shacl.ttl`](/vault/meta/shapes/page.shacl.ttl) | `wiki:Page` (and `wiki:Concept`, `wiki:MOC` via subClassOf) | Pages: the broad category for narrative content + concept notes |
+| [`source.shacl.ttl`](/vault/meta/shapes/source.shacl.ttl) | `wiki:Source` | Literature: citation records with an external identifier |
+| [`person.shacl.ttl`](/vault/meta/shapes/person.shacl.ttl) | `wiki:Person` | People: `vcard:fn` + at least one anchor (`owl:sameAs` ORCID, email, telephone) |
+| [`procedure.shacl.ttl`](/vault/meta/shapes/procedure.shacl.ttl) | `wiki:Procedure` | Procedures: ordered workflows / methods / recipes |
+| [`working.shacl.ttl`](/vault/meta/shapes/working.shacl.ttl) | `wiki:WorkingNote` | Working memory: permissive (drafts before crystallization) |
 
 **Class-based targeting** (D78): shapes target `rdf:type` via `sh:targetClass`, not URL path. The Type Index at [`/vault/settings/publicTypeIndex`](/vault/settings/publicTypeIndex) does the routing — given a class IRI, it returns the canonical container URL. To find all resources of class X, look up X in the Type Index, then `GET` the listed container.
 
