@@ -17,7 +17,11 @@
   prof:hasResource
     <https://pod.vardeman.me/vault/meta/profiles/page#shape> ,
     <https://pod.vardeman.me/vault/meta/profiles/page#context> ,
-    <https://pod.vardeman.me/vault/meta/profiles/page#vocab> .
+    <https://pod.vardeman.me/vault/meta/profiles/page#vocab> ,
+    <https://pod.vardeman.me/vault/meta/profiles/page#synthesis> ,
+    <https://pod.vardeman.me/vault/meta/profiles/page#mem-vocab> ,
+    <https://pod.vardeman.me/vault/meta/profiles/page#operation-log> ,
+    <https://pod.vardeman.me/vault/meta/profiles/page#event-stream> .
 
 <https://pod.vardeman.me/vault/meta/profiles/page#shape>
   a prof:ResourceDescriptor ;
@@ -40,3 +44,35 @@
   dct:format "text/turtle" ;
   prof:hasRole role:vocabulary ;
   prof:hasArtifact <https://pod.vardeman.me/vault/ontology/wiki> .
+
+# Added 2026-05-18 — Memory Structuring Sprint Phase A
+# NOTE: wikirole: prefix here is <https://pod.vardeman.me/vault/ontology/wiki/role#>
+# (as declared in this file's prefix block). The wikirole.ttl vocabulary file uses
+# <https://pod.vardeman.me/vault/ontology/wikirole#> — a pre-existing inconsistency.
+# These role IRIs will not resolve to the same concepts as those in wikirole.ttl
+# until the prefix mismatch is fixed (separate cleanup task).
+<https://pod.vardeman.me/vault/meta/profiles/page#synthesis>
+  a prof:ResourceDescriptor ;
+  rdfs:label "Wiki-memory L3 synthesis (overview)" ;
+  dct:format "text/markdown" ;
+  prof:hasRole wikirole:overview ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/wiki/> .
+
+<https://pod.vardeman.me/vault/meta/profiles/page#mem-vocab>
+  a prof:ResourceDescriptor ;
+  rdfs:label "mem: memory operation/event/announcement vocabulary" ;
+  dct:format "text/turtle" ;
+  prof:hasRole wikirole:operation-vocabulary ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/ontology/mem> .
+
+<https://pod.vardeman.me/vault/meta/profiles/page#operation-log>
+  a prof:ResourceDescriptor ;
+  rdfs:label "Agent operation log" ;
+  prof:hasRole wikirole:operation-log ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/wiki/.operations/> .
+
+<https://pod.vardeman.me/vault/meta/profiles/page#event-stream>
+  a prof:ResourceDescriptor ;
+  rdfs:label "Substrate event stream" ;
+  prof:hasRole wikirole:event-stream ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/wiki/.events/> .
