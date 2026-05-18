@@ -4,7 +4,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wiki/role#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 
 <https://pod.vardeman.me/vault/meta/profiles/page>
   a prof:Profile ;
@@ -45,12 +45,10 @@
   prof:hasRole role:vocabulary ;
   prof:hasArtifact <https://pod.vardeman.me/vault/ontology/wiki> .
 
-# Added 2026-05-18 — Memory Structuring Sprint Phase A
-# NOTE: wikirole: prefix here is <https://pod.vardeman.me/vault/ontology/wiki/role#>
-# (as declared in this file's prefix block). The wikirole.ttl vocabulary file uses
-# <https://pod.vardeman.me/vault/ontology/wikirole#> — a pre-existing inconsistency.
-# These role IRIs will not resolve to the same concepts as those in wikirole.ttl
-# until the prefix mismatch is fixed (separate cleanup task).
+# Added 2026-05-18 — Memory Structuring Sprint Phase A.
+# Synthesis-layer ResourceDescriptors. The wikirole: prefix in this file
+# is aligned with the wikirole.ttl vocabulary file and the storage description
+# (https://pod.vardeman.me/vault/ontology/wikirole#).
 <https://pod.vardeman.me/vault/meta/profiles/page#synthesis>
   a prof:ResourceDescriptor ;
   rdfs:label "Wiki-memory L3 synthesis (overview)" ;
