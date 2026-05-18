@@ -102,3 +102,27 @@ wiki:WikiMemoryProfile a dct:Standard ;
     rdfs:label "Wiki-memory application profile v1.0" ;
     dct:hasVersion "1.0" ;
     rdfs:isDefinedBy <> .
+
+# Added 2026-05-18 — Memory Structuring Sprint Phase A
+# See <https://pod.vardeman.me/vault/wiki/> for usage context.
+
+wiki:profileDocument
+    a rdf:Property ;
+    rdfs:label "profile document" ;
+    rdfs:comment "Points at the wiki-memory L3 synthesis page from any resource that wants to declare conformance to this substrate. Subject is any resource; object is the synthesis page URL. Used for U-shape reinforcement: every substrate self-description resource links back to the synthesis." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range wiki:Page .
+
+wiki:bootstrapResource
+    a rdf:Property ;
+    rdfs:label "bootstrap resource" ;
+    rdfs:comment "Points at a resource a blind agent should fetch during cold-start orientation. Subject is the synthesis page; object is a catalog or descriptor needed for bootstrap. Multiple instances expected per synthesis." ;
+    rdfs:domain wiki:Page ;
+    rdfs:range rdfs:Resource .
+
+wiki:eventStream
+    a rdf:Property ;
+    rdfs:label "event stream" ;
+    rdfs:comment "Points at a substrate's event inbox (typically /wiki/.events/), a sibling concept to ldp:inbox. Distinguishes substrate-emitted analysis events from peer-emitted inbox notifications." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource .
