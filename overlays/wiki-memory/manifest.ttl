@@ -39,7 +39,9 @@
         </vault/wiki/sources/> ,
         </vault/wiki/people/> ,
         </vault/wiki/procedures/> ,
-        </vault/wiki/working/> ;
+        </vault/wiki/working/> ,
+        </vault/wiki/.operations/> ,
+        </vault/wiki/.events/> ;
 
     overlay:installsShape
         </vault/meta/shapes/resource.shacl.ttl> ,

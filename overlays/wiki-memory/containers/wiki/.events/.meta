@@ -1,0 +1,15 @@
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix ldp:   <http://www.w3.org/ns/ldp#> .
+
+<> a ldp:Container, ldp:BasicContainer ;
+   dct:title "Wiki-memory substrate event stream" ;
+   dct:description "Append-only stream of substrate-emitted analysis events. Each entry is an as:Activity multi-typed with a mem:Event subclass (BoundExceeded, ContradictionDetected, ConsolidationSuggested, ReflectionDue, OODQuerySignal, UnprocessableWrite). Emitted by the MemTriggerListener CSS extension; agents READ these (never POST). Subscribe via Solid Notifications WebhookChannel2023 to /.notifications/." ;
+   dct:isPartOf <https://pod.vardeman.me/vault/wiki/index.md> ;
+   wiki:profileDocument <https://pod.vardeman.me/vault/wiki/index.md> ;
+   wiki:eventStream <> ;
+   wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+   sh:agentInstruction "Append-only, substrate-owned. Agents read events from this container; they do NOT POST events themselves (that would be a category error — substrate owns event production). Subscribe via Solid Notifications for fan-out, or poll on agent wake. See </vault/wiki/index.md> for the full Event taxonomy and per-class semantics." .
