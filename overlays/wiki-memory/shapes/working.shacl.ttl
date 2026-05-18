@@ -7,4 +7,4 @@
 wiki:WorkingMemoryShape a sh:NodeShape ;
     sh:targetClass wiki:WorkingNote ;
     sh:closed false ;
-    sh:agentInstruction "Permissive low-ceremony scratchpad (D73). Only dct:title strictly recommended. Notes here are promotable to durable containers via mem:Crystallize once their content matures (D73 deferred to Phase 2c+; until then, agents manually copy + delete)." .
+    sh:agentInstruction "Permissive low-ceremony scratchpad (D73). Only dct:title strictly recommended. Notes here are promotable to durable containers via mem:Crystallize once their content matures (D73 deferred to Phase 2c+; until then, agents manually copy + delete). See <https://pod.vardeman.me/vault/wiki/index.md> for the full L3 profile and inter-shape conventions." .

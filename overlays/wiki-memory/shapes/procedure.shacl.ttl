@@ -7,7 +7,7 @@
 wiki:ProcedureShape a sh:NodeShape ;
     sh:targetClass wiki:Procedure ;
     sh:closed false ;
-    sh:agentInstruction "Procedural memory. dct:title is the procedure name. The procedure body is in the resource's markdown content — agents read it as instructions. sh:agentInstruction on the resource itself MAY duplicate the body for non-markdown clients." ;
+    sh:agentInstruction "Procedural memory. dct:title is the procedure name. The procedure body is in the resource's markdown content — agents read it as instructions. sh:agentInstruction on the resource itself MAY duplicate the body for non-markdown clients. See <https://pod.vardeman.me/vault/wiki/index.md> for the full L3 profile and inter-shape conventions." ;
     sh:property [
         sh:path dct:title ;
         sh:minCount 1 ;

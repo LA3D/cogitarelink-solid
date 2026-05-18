@@ -9,7 +9,7 @@
 wiki:PageShape a sh:NodeShape ;
     sh:targetClass wiki:Page ;
     sh:closed false ;
-    sh:agentInstruction "Wiki page. Required: dct:title. Common: skos:broader (parent), skos:related (lateral). For typed citations to sources, use cito:extends, cito:agreesWith, cito:disagreesWith. The substrate governs dct:title, dct:identifier, dct:created, dct:modified, skos:broader, skos:related, cito:* via the markdown-projection affordance (D81 Model A) — edit body+frontmatter, don't PATCH .meta directly for these." ;
+    sh:agentInstruction "Wiki page. Required: dct:title. Common: skos:broader (parent), skos:related (lateral). For typed citations to sources, use cito:extends, cito:agreesWith, cito:disagreesWith. The substrate governs dct:title, dct:identifier, dct:created, dct:modified, skos:broader, skos:related, cito:* via the markdown-projection affordance (D81 Model A) — edit body+frontmatter, don't PATCH .meta directly for these. See <https://pod.vardeman.me/vault/wiki/index.md> for the full L3 profile and inter-shape conventions." ;
     sh:property [
         sh:path dct:title ;
         sh:minCount 1 ;

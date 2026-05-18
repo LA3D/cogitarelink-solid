@@ -8,7 +8,7 @@
 wiki:PersonShape a sh:NodeShape ;
     sh:targetClass wiki:Person ;
     sh:closed false ;
-    sh:agentInstruction "Person record. FOAF-based. foaf:name preferred over dct:title. foaf:nick lists aliases for cross-system linking (citekey patterns, Twitter handles, Readwise display names). Use foaf:Organization for institutional affiliations via affiliation predicate." ;
+    sh:agentInstruction "Person record. FOAF-based. foaf:name preferred over dct:title. foaf:nick lists aliases for cross-system linking (citekey patterns, Twitter handles, Readwise display names). Use foaf:Organization for institutional affiliations via affiliation predicate. See <https://pod.vardeman.me/vault/wiki/index.md> for the full L3 profile and inter-shape conventions." ;
     sh:property [
         sh:path foaf:name ;
         sh:minCount 1 ;
