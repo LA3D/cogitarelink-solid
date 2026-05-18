@@ -198,12 +198,12 @@
             ]
           },
           {
-            "comment": "L3: wiki-memory profile document — primary agent entry point per D93",
+            "comment": "L3: wiki-memory profile document — primary agent entry point per D93. The synthesis page is at /vault/wiki/index.md (a resource), not /vault/wiki/ (the container) — CSS treats trailing-slash URLs as containers and ignores arbitrary bodies PUT to them.",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#profileDocument",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/"
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/index.md"
               }
             ]
           },

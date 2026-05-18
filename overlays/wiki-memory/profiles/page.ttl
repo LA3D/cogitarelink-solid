@@ -54,7 +54,7 @@
   rdfs:label "Wiki-memory L3 synthesis (overview)" ;
   dct:format "text/markdown" ;
   prof:hasRole wikirole:overview ;
-  prof:hasArtifact <https://pod.vardeman.me/vault/wiki/> .
+  prof:hasArtifact <https://pod.vardeman.me/vault/wiki/index.md> .
 
 <https://pod.vardeman.me/vault/meta/profiles/page#mem-vocab>
   a prof:ResourceDescriptor ;
