@@ -158,6 +158,17 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             put_file(client, url, bc.local_path, bc.content_type)
             print(f"  bootstrap → {url}")
 
+        # 9c. Deploy installsPage entries: PUT body + PUT .meta atomically.
+        #     Body is text/markdown, meta is text/turtle. Pattern mirrors bootstrap
+        #     but uses explicit paths for body + sidecar to keep them co-deployed.
+        for page in manifest.page_installs:
+            body_url = absolutize(pod_url, page.target_resource)
+            meta_url = body_url + ".meta"
+            put_file(client, body_url, page.body_path, "text/markdown")
+            print(f"  page body → {body_url}")
+            put_file(client, meta_url, page.meta_path, "text/turtle")
+            print(f"  page meta → {meta_url}")
+
         # 10. PATCH Type Index with structured registrations
         if manifest.type_registrations:
             ti_url = pod_url.rstrip("/") + "/settings/publicTypeIndex"

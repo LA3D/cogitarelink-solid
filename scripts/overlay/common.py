@@ -82,6 +82,19 @@ class BootstrapContent:
 
 
 @dataclass(frozen=True)
+class PageInstall:
+    """Deploy a wiki-memory page (body + .meta sidecar) to a target resource URL.
+
+    Body is text/markdown; meta is text/turtle. Used for the wiki-memory L3
+    synthesis page at /vault/wiki/index.md and any future per-overlay page
+    deployments that need both body and meta committed atomically.
+    """
+    target_resource: str  # Pod URL where the page is deployed
+    body_path: Path       # local body file (markdown), relative to overlay_dir
+    meta_path: Path       # local .meta file (Turtle), relative to overlay_dir
+
+
+@dataclass(frozen=True)
 class Manifest:
     """Parsed view of an overlay's manifest.ttl."""
     name: str
@@ -100,6 +113,7 @@ class Manifest:
     provides: list[CapabilityProvision]
     templates: list[TemplateEntry]
     bootstrap_content: list[BootstrapContent]
+    page_installs: list[PageInstall]
     container_meta_patches: list[ContainerMetaPatch]
     resource_meta_patches: list[ResourceMetaPatch]
     overlay_dir: Path                 # local directory holding manifest + artifacts
@@ -233,6 +247,23 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
                 content_type=str(ct),
             ))
 
+    # pod_prefix is used to strip the resolved publicID from body/meta IRIs
+    # back to overlay-relative paths (e.g., "synthesis/index.md").
+    pod_prefix = (pod_url or "").rstrip("/") + "/"
+    page_installs = []
+    for pi_node in many(OVERLAY.installsPage):
+        target = next(g.objects(pi_node, OVERLAY.targetResource), None)
+        body = next(g.objects(pi_node, OVERLAY.body), None)
+        meta = next(g.objects(pi_node, OVERLAY.meta), None)
+        if target and body and meta:
+            body_rel = str(body).removeprefix(pod_prefix)
+            meta_rel = str(meta).removeprefix(pod_prefix)
+            page_installs.append(PageInstall(
+                target_resource=str(target),
+                body_path=overlay_dir / body_rel,
+                meta_path=overlay_dir / meta_rel,
+            ))
+
     return Manifest(
         name=name, version=version, overlay_iri=overlay_iri, profile_iri=profile_iri,
         required_capabilities=req_caps, optional_capabilities=opt_caps,
@@ -243,6 +274,7 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         provides=cap_provisions,
         templates=templates,
         bootstrap_content=bootstrap,
+        page_installs=page_installs,
         container_meta_patches=meta_patches,
         resource_meta_patches=res_meta_patches,
         overlay_dir=overlay_dir,
