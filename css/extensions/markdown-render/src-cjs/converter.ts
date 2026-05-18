@@ -56,10 +56,21 @@ let renderMarkdownCache: Promise<RenderMarkdownFn> | null = null;
 
 function getRenderMarkdown(): Promise<RenderMarkdownFn> {
   if (renderMarkdownCache === null) {
-    // Build an absolute file:// URL for the ESM render module. At runtime
-    // this file lives at dist-cjs/converter.js, so ../dist/render.js points
-    // at the compiled ESM pipeline.
-    const renderJsPath = path.resolve(__dirname, "..", "dist", "render.js");
+    // Build an absolute file:// URL for the ESM render module. The ESM build
+    // uses tsconfig rootDir=../.. so output paths preserve the rooted-from-
+    // parent structure: src/render.ts compiles to
+    // dist/extensions/markdown-render/src/render.js (not dist/render.js).
+    // At runtime this file lives at dist-cjs/converter.js, so we navigate
+    // up to extension root, then into the nested ESM output path.
+    const renderJsPath = path.resolve(
+      __dirname,
+      "..",
+      "dist",
+      "extensions",
+      "markdown-render",
+      "src",
+      "render.js",
+    );
     const fileUrl = "file://" + renderJsPath;
     renderMarkdownCache = runtimeImport(fileUrl).then(
       (m) => m.renderMarkdown as RenderMarkdownFn,
