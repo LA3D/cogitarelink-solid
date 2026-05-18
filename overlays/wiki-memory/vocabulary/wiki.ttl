@@ -1,4 +1,5 @@
 @prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:  <https://pod.vardeman.me/vault/ontology/mem#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
@@ -6,123 +7,805 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 <https://pod.vardeman.me/vault/ontology/wiki>
     a owl:Ontology ;
-    dct:conformsTo <http://www.w3.org/2000/01/rdf-schema> .
+    rdfs:label "Wiki-memory L3 vocabulary" ;
+    rdfs:comment "Class hierarchy and predicates for the wiki-memory L3 reference profile. Defines (a) the wiki:Resource hierarchy that resources at /vault/wiki/{pages,sources,people,procedures,working}/ instantiate, (b) the affordance descriptor classes the catalog at /vault/meta/affordances/ uses, (c) the storage-description predicates that /vault/.well-known/solid emits, and (d) the lifecycle predicate wiki:maturity with its three SKOS values." ;
+    dct:conformsTo <http://www.w3.org/2000/01/rdf-schema> ;
+    rdfs:seeAlso <https://pod.vardeman.me/vault/wiki/index.md> .
 
-# Abstract root
-wiki:Resource a rdfs:Class ;
+# ============================================================
+# Class hierarchy — wiki:Resource and its subclasses
+# ============================================================
+
+wiki:Resource
+    a rdfs:Class ;
     rdfs:label "Wiki resource" ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Abstract root class for all wiki-memory L3 content. Any resource hosted under /vault/wiki/ that participates in the L3 profile is a wiki:Resource (directly or via a subclass)." ;
+    skos:scopeNote "Rarely used as rdf:type directly — prefer a concrete subclass (wiki:Concept, wiki:Source, wiki:Person, wiki:Procedure, wiki:WorkingNote). Used as a SHACL sh:targetClass when a shape applies to all wiki content regardless of subclass (e.g., the resource.shacl.ttl shape governs invariants every wiki:Resource must hold)." ;
+    skos:example """
+        # In a shape governing all wiki content:
+        wiki:ResourceShape a sh:NodeShape ;
+            sh:targetClass wiki:Resource ;
+            sh:property [ sh:path dct:title ; sh:minCount 1 ] .
+    """ ;
+    rdfs:seeAlso </vault/meta/shapes/resource.ttl> .
 
-# Per-container base classes
-wiki:Page         rdfs:subClassOf wiki:Resource ;
+wiki:Page
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Resource ;
     rdfs:label "Wiki page" ;
-    rdfs:comment "General wiki content. Lives in /wiki/pages/." ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "General wiki content. Default container is /vault/wiki/pages/. Parent of wiki:Concept and wiki:MOC. Used when the content doesn't fit the more specific subclasses (Concept = atomic conceptual unit, MOC = navigational hub)." ;
+    skos:scopeNote "Use as rdf:type on resources in /vault/wiki/pages/ that aren't specifically Concepts or MOCs (essays, notes, narrative documents). Do NOT use for citations (wiki:Source), people (wiki:Person), or procedures (wiki:Procedure) — each has its own subclass + container." ;
+    skos:example """
+        # In <https://pod.vardeman.me/vault/wiki/pages/general-notes.md.meta>:
+        <> a wiki:Page ;
+           dct:title "General notes on the topic" .
+    """ ;
+    rdfs:seeAlso </vault/wiki/pages/> , </vault/meta/shapes/page.ttl> .
 
-wiki:Source       rdfs:subClassOf wiki:Resource ;
+wiki:Source
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Resource ;
     rdfs:label "Source" ;
-    rdfs:comment "Citation record. Lives in /wiki/sources/." ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Citation record. Default container is /vault/wiki/sources/. Represents an external work (paper, book, blog post, dataset) referenced by wiki content via dct:source or cito:cites." ;
+    skos:scopeNote "Use as rdf:type on resources in /vault/wiki/sources/ that record bibliographic metadata for external works. NOT used for internal cross-references between wiki resources — those are skos:related / wiki:extends / wiki:supports edges, not separate Source records." ;
+    skos:example """
+        # In <https://pod.vardeman.me/vault/wiki/sources/hu-2026-beyond-rag.md.meta>:
+        <> a wiki:Source ;
+           dct:title "Beyond RAG: ..." ;
+           dct:creator <https://pod.vardeman.me/vault/wiki/people/hu-jian.md> ;
+           dct:date "2026"^^xsd:gYear .
+    """ ;
+    rdfs:seeAlso </vault/wiki/sources/> , </vault/meta/shapes/source.ttl> .
 
-wiki:Person       rdfs:subClassOf wiki:Resource, foaf:Person ;
+wiki:Person
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Resource , foaf:Person ;
     rdfs:label "Person" ;
-    rdfs:comment "Person record. Lives in /wiki/people/." ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Person record. Default container is /vault/wiki/people/. Subclass of foaf:Person so existing FOAF tooling can discover wiki people. Each Person record canonicalizes a single human identity used as dct:creator / dct:contributor across wiki content." ;
+    skos:scopeNote "Use as rdf:type on resources in /vault/wiki/people/. For Pod-owner identity, use the WebID at /vault/profile/card#me — Person records in /vault/wiki/people/ are bibliography-class records for cited authors, collaborators, and subjects, not WebIDs. The AddressBook substrate at /vault/contacts/ holds vCard contacts; wiki:Person at /vault/wiki/people/ is the narrative-memory counterpart." ;
+    skos:example """
+        # In <https://pod.vardeman.me/vault/wiki/people/hu-jian.md.meta>:
+        <> a wiki:Person , foaf:Person ;
+           foaf:name "Jian Hu" ;
+           owl:sameAs <https://orcid.org/0000-0000-0000-0000> .
+    """ ;
+    rdfs:seeAlso </vault/wiki/people/> , </vault/meta/shapes/person.ttl> , </vault/contacts/> .
 
-wiki:Procedure    rdfs:subClassOf wiki:Resource ;
+wiki:Procedure
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Resource ;
     rdfs:label "Procedure" ;
-    rdfs:comment "Procedural memory. Lives in /wiki/procedures/." ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Procedural memory record. Default container is /vault/wiki/procedures/. Captures a reusable how-to: ordered steps, optional precondition, optional postcondition. Counterpart to declarative content (wiki:Concept) in the CoALA memory partition model." ;
+    skos:scopeNote "Use as rdf:type on resources that document a procedure (workflow, recipe, repeatable analysis). A procedure SHOULD carry an ordered wiki:procedure (rdf:List of wiki:step strings) plus optional wiki:precondition / wiki:postcondition / wiki:errorMode. Do NOT use for narrative essays describing how something happened once — that's wiki:Page or wiki:Concept." ;
+    skos:example """
+        # In <https://pod.vardeman.me/vault/wiki/procedures/crystallize.md.meta>:
+        <> a wiki:Procedure ;
+           dct:title "How to crystallize a working note" ;
+           wiki:precondition "Working note has dct:title and at least one concept reference." ;
+           wiki:procedure ( "GET working note" "Validate against destination shape" "PUT to destination" "DELETE working note" ) ;
+           wiki:postcondition "Durable resource exists; working URL returns 404." .
+    """ ;
+    rdfs:seeAlso </vault/wiki/procedures/> , </vault/meta/shapes/procedure.ttl> .
 
-wiki:WorkingNote  rdfs:subClassOf wiki:Resource ;
+wiki:WorkingNote
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Resource ;
     rdfs:label "Working note" ;
-    rdfs:comment "Permissive scratchpad. Lives in /wiki/working/." ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Permissive scratchpad content. Default container is /vault/wiki/working/. Governed by the working SHACL shape, which requires only dct:title — agents draft freely here before promoting to a durable class via mem:CrystallizeAction." ;
+    skos:scopeNote "Use as rdf:type on resources in /vault/wiki/working/ that are still being developed. Once content stabilizes, promote via mem:CrystallizeAction to the class-appropriate durable container (wiki:Concept → /vault/wiki/concepts/, etc.). Do NOT leave content in WorkingNote indefinitely — that defeats the two-stage commit (D73)." ;
+    skos:example """
+        # In <https://pod.vardeman.me/vault/wiki/working/draft-concept.md.meta>:
+        <> a wiki:WorkingNote ;
+           dct:title "Draft: bounded branching theorem" ;
+           dct:created "2026-05-18T09:00:00Z"^^xsd:dateTime .
+    """ ;
+    rdfs:seeAlso </vault/wiki/working/> , </vault/meta/shapes/working.ttl> .
 
-# wiki:Page subclasses
-wiki:Concept      rdfs:subClassOf wiki:Page, skos:Concept ;
+# ----- wiki:Page subclasses -----
+
+wiki:Concept
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Page , skos:Concept ;
     rdfs:label "Concept" ;
-    rdfs:comment "Conceptual knowledge unit. Most common page kind." ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Atomic conceptual knowledge unit. Subclass of skos:Concept so SKOS hierarchies (skos:broader / skos:narrower) compose with wiki content. The default class for wiki content that names and explains a single idea." ;
+    skos:scopeNote "Use as rdf:type on resources that name a single concept (a theorem, a pattern, a definition). Default container is /vault/wiki/concepts/ if available (else /vault/wiki/pages/ per the Type Index). A wiki:Concept SHOULD have skos:prefLabel + dct:title + at least one outgoing edge (skos:broader, wiki:extends, or dct:source). NOT used for multi-concept essays — split those into wiki:Concept records and link." ;
+    skos:example """
+        # In <https://pod.vardeman.me/vault/wiki/concepts/bounded-branching.md.meta>:
+        <> a wiki:Concept ;
+           dct:title "Bounded branching" ;
+           skos:prefLabel "Bounded branching" ;
+           skos:broader <https://pod.vardeman.me/vault/wiki/concepts/wiki-memory-l3.md> ;
+           dct:source <https://pod.vardeman.me/vault/wiki/sources/hu-2026-beyond-rag.md> .
+    """ ;
+    rdfs:seeAlso </vault/meta/profiles/concept> .
 
-wiki:MOC          rdfs:subClassOf wiki:Page ;
+wiki:MOC
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Page ;
     rdfs:label "Map of Content" ;
-    rdfs:comment "Navigational hub page that organizes other pages." ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Navigational hub page that organizes other pages by topic. Authored by agents (in contrast to wiki:Hub, which is substrate-derived from inbound skos:broader counts). MOCs are the curated counterpart to derived hubs." ;
+    skos:scopeNote "Use when an agent has assembled a curated set of pointers (dct:hasPart) to other wiki resources under a topic banner. Distinct from wiki:Hub — MOCs are authored; Hubs are substrate-computed. A page MAY be both wiki:MOC AND wiki:Hub when curation coincides with derived-class threshold." ;
+    skos:example """
+        # In <https://pod.vardeman.me/vault/wiki/pages/agentic-memory-moc.md.meta>:
+        <> a wiki:MOC , wiki:Page ;
+           dct:title "Agentic Memory MOC" ;
+           dct:hasPart <https://pod.vardeman.me/vault/wiki/concepts/context-graphs.md> ,
+                       <https://pod.vardeman.me/vault/wiki/concepts/procedural-memory.md> .
+    """ ;
+    rdfs:seeAlso wiki:Hub .
 
-# Derived class (substrate-computed via hub-view affordance)
-wiki:Hub          rdfs:subClassOf wiki:Resource ;
+wiki:Hub
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Resource ;
     rdfs:label "Hub" ;
-    rdfs:comment "A wiki:Resource with ≥3 incoming skos:broader. Derived; never asserted directly." ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Derived class: a wiki:Resource with ≥3 incoming skos:broader edges. Substrate-computed via the hub-view affordance; agents do NOT assert wiki:Hub directly. Threshold is configurable in the DerivedClassAffordance descriptor." ;
+    skos:scopeNote "Never asserted as rdf:type by agents — wiki:Hub is materialized by SPARQL CONSTRUCT run against the Pod's wiki containers (Comunica or equivalent). To check whether a resource IS a Hub, run the construct query in /vault/meta/affordances/hub-view. The substrate provides the affordance; the agent runs it in its own engine (the Pod has no SPARQL endpoint)." ;
+    skos:example """
+        # CONSTRUCT (run client-side via Comunica) that materializes wiki:Hub:
+        CONSTRUCT { ?hub a wiki:Hub }
+        WHERE {
+          ?child skos:broader ?hub .
+          ?hub a wiki:Resource .
+        }
+        GROUP BY ?hub HAVING (COUNT(?child) >= 3)
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/hub-view> , wiki:MOC .
 
-# Lifecycle predicate
-wiki:maturity a rdf:Property ;
+# ============================================================
+# Lifecycle: wiki:maturity + skos values
+# ============================================================
+
+wiki:maturity
+    a rdf:Property ;
+    rdfs:label "maturity" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Lifecycle marker on a wiki:Resource. Values are skos:Concepts from this vocabulary: wiki:draft (initial), wiki:validated (passed shape + content review), wiki:core (deeply integrated — ≥3 incoming typed edges)." ;
+    skos:scopeNote "Authored by the agent that owns the resource. Promotions from draft to validated require the resource passes its shape AND a content review. Promotion to core is computed (≥3 incoming typed edges); demote back if the count drops. Distinct from the SKOS hierarchy edges (skos:broader); maturity is orthogonal to topical structure." ;
     rdfs:domain wiki:Resource ;
     rdfs:range skos:Concept ;
-    rdfs:isDefinedBy <> .
+    skos:example """
+        # In <https://pod.vardeman.me/vault/wiki/concepts/foo.md.meta>:
+        <> a wiki:Concept ;
+           wiki:maturity wiki:validated .
+    """ ;
+    rdfs:seeAlso wiki:draft , wiki:validated , wiki:core .
 
-wiki:draft     a skos:Concept ; skos:prefLabel "draft" .
-wiki:validated a skos:Concept ; skos:prefLabel "validated" .
-wiki:core      a skos:Concept ; skos:prefLabel "core" .
+wiki:draft
+    a skos:Concept ;
+    rdfs:isDefinedBy <> ;
+    skos:prefLabel "draft" ;
+    skos:scopeNote "Initial lifecycle state. Default for new resources. Promote to wiki:validated after the resource passes its SHACL shape AND a content-quality review." .
 
-# Write affordance class
-wiki:WriteAffordance a rdfs:Class ;
+wiki:validated
+    a skos:Concept ;
+    rdfs:isDefinedBy <> ;
+    skos:prefLabel "validated" ;
+    skos:scopeNote "Resource has passed shape conformance AND content-quality review. Eligible for promotion to wiki:core once ≥3 distinct wiki:Resource instances point at it via typed edges (skos:broader, wiki:extends, dct:source, etc.)." .
+
+wiki:core
+    a skos:Concept ;
+    rdfs:isDefinedBy <> ;
+    skos:prefLabel "core" ;
+    skos:scopeNote "Resource is well-integrated structurally: ≥3 incoming typed edges. Promotion is computed by the substrate, not asserted by the agent. Demote back to wiki:validated if the incoming-edge count falls below threshold." .
+
+# ============================================================
+# Affordance descriptor classes
+# ============================================================
+
+wiki:Affordance
+    a rdfs:Class ;
+    rdfs:label "Affordance" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Abstract root class for substrate affordance descriptors served from /vault/meta/affordances/. An affordance is a substrate behavior an agent can discover and invoke (or rely on) — content projection, derived views, search, time-travel, memory actions." ;
+    skos:scopeNote "Use a concrete subclass (wiki:WriteAffordance, wiki:DerivedClassAffordance, wiki:DerivedNavigationAffordance, wiki:VersionAffordance, wiki:SearchAffordance). Every affordance descriptor declares wiki:installedBy, sh:agentInstruction (free-form guidance), and a subclass-specific payload (CONSTRUCT/SELECT query, governance lists, dispatch pattern)." ;
+    skos:example """
+        # In <https://pod.vardeman.me/vault/meta/affordances/example>:
+        <> a wiki:Affordance ;
+           rdfs:label "Example affordance" ;
+           sh:agentInstruction \"\"\"Free-form guidance for the agent.\"\"\" ;
+           wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/> .
+
+wiki:WriteAffordance
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Affordance ;
     rdfs:label "Write affordance" ;
-    rdfs:comment "Substrate-write configuration for a container. Consumed by cap:ContentProjection." ;
-    rdfs:isDefinedBy <> .
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Substrate-write configuration descriptor. Declares which predicates the substrate writes (wiki:governs), which frontmatter keys project into .meta (wiki:projectsFromFrontmatter), and which class-hint table the markdown-projection listener consults (wiki:classHintTable). Consumed by capability cap:ContentProjection." ;
+    skos:scopeNote "Used as rdf:type on the affordance descriptor at /vault/meta/affordances/markdown-projection. Agents read it to learn which predicates they should NOT PATCH .meta for directly (the substrate owns them), and which body+frontmatter idioms produce which RDF. Reference implementation: the markdown-projection extension." ;
+    skos:example """
+        <> a wiki:WriteAffordance ;
+           wiki:governs rdf:type , wiki:maturity , dct:title ;
+           wiki:projectsFromFrontmatter "type" , "title" , "maturity" ;
+           wiki:classHintTable <../context.jsonld> ;
+           wiki:requiresCapability </vault/meta/capabilities/markdown-content-projection.ttl> ;
+           wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/markdown-projection> .
 
-wiki:governs               a rdf:Property ; rdfs:isDefinedBy <> .
-wiki:projectsFromFrontmatter a rdf:Property ; rdfs:isDefinedBy <> .
-wiki:classHintTable        a rdf:Property ; rdfs:isDefinedBy <> .
-wiki:installedBy           a rdf:Property ; rdfs:isDefinedBy <> .
-wiki:shape                 a rdf:Property ; rdfs:isDefinedBy <> .
-wiki:requiresCapability    a rdf:Property ; rdfs:isDefinedBy <> .
+wiki:DerivedClassAffordance
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Affordance ;
+    rdfs:label "Derived class affordance" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Affordance descriptor for a substrate-computed class. Declares which class is derived (wiki:deriveClass), which target class it applies to (wiki:targetClass), a numeric threshold (wiki:threshold) where applicable, and a SPARQL CONSTRUCT that materializes the derived rdf:type triples (wiki:constructQuery)." ;
+    skos:scopeNote "Used as rdf:type on /vault/meta/affordances/hub-view. The construct query is run client-side (Comunica or equivalent), with the Pod's wiki containers as sources — the Pod itself has no SPARQL endpoint. NOT used for affordances that don't derive a class (those are wiki:DerivedNavigationAffordance for views or wiki:SearchAffordance for query surfaces)." ;
+    skos:example """
+        <> a wiki:DerivedClassAffordance ;
+           wiki:deriveClass wiki:Hub ;
+           wiki:targetClass wiki:Resource ;
+           wiki:threshold 3 ;
+           wiki:constructQuery \"\"\"CONSTRUCT { ?hub a wiki:Hub } WHERE { ?c skos:broader ?hub }\"\"\" ;
+           wiki:requiresCapability </vault/meta/capabilities/derived-view.ttl> ;
+           wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/hub-view> .
 
-wiki:DerivedClassAffordance a rdfs:Class ; rdfs:subClassOf rdfs:Class ;
-    rdfs:isDefinedBy <> .
+wiki:DerivedNavigationAffordance
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Affordance ;
+    rdfs:label "Derived navigation affordance" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Affordance descriptor for a substrate-computed navigation view (e.g., breadcrumb trails, MOC indexes). Carries a SPARQL SELECT (wiki:selectQuery) the agent runs against the Pod's wiki containers." ;
+    skos:scopeNote "Used as rdf:type on /vault/meta/affordances/breadcrumb-view. The select query produces tabular bindings (e.g., trail rows for a breadcrumb display). Different from wiki:DerivedClassAffordance — derived navigation does not extend the class hierarchy, only computes a view." ;
+    skos:example """
+        <> a wiki:DerivedNavigationAffordance ;
+           wiki:selectQuery \"\"\"SELECT ?ancestor ?depth WHERE { ?subject skos:broader+ ?ancestor }\"\"\" ;
+           wiki:requiresCapability </vault/meta/capabilities/derived-view.ttl> ;
+           wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/breadcrumb-view> .
 
-wiki:DerivedNavigationAffordance a rdfs:Class ; rdfs:subClassOf rdfs:Class ;
-    rdfs:isDefinedBy <> .
+wiki:VersionAffordance
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Affordance ;
+    rdfs:label "Version affordance" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Affordance descriptor for time-travel / versioning behaviors. Used by the Memento extension to advertise RFC 7089 conformance, TimeGate location, and supported operations (read-only vs writeable)." ;
+    skos:scopeNote "Used as rdf:type on /vault/meta/affordances/memento. The descriptor's conformance pointers (wiki:conformsTo RFC 7089) tell an agent which time-travel protocol to use; the agent issues Accept-Datetime HTTP requests to the resource's TimeGate." ;
+    skos:example """
+        <> a wiki:VersionAffordance ;
+           wiki:conformsTo <http://www.rfc-editor.org/rfc/rfc7089.txt> ;
+           wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#memento> .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/memento> .
 
-wiki:VersionAffordance a rdfs:Class ;
-    rdfs:isDefinedBy <> .
+wiki:SearchAffordance
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Affordance ;
+    rdfs:label "Search affordance" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Affordance descriptor for a query surface (recursive substring grep, SPARQL endpoint, type-filtered listing). Carries wiki:targetContainer (root for the search), wiki:dispatchPattern (URL query suffix that invokes the affordance), and wiki:queryParameter blank nodes describing each accepted parameter." ;
+    skos:scopeNote "Used as rdf:type on /vault/meta/affordances/wiki-search-grep. The descriptor pairs with an OSLC Query 3.0 / dct:conformsTo declaration so consumers can rely on the well-known parameter conventions. Agents discover the surface via Tier-1 Link rel=queryBase headers or via the affordance catalog at /vault/meta/affordances/." ;
+    skos:example """
+        <> a wiki:SearchAffordance ;
+           wiki:targetContainer </vault/wiki/> ;
+           wiki:dispatchPattern "?ext=search-grep" ;
+           wiki:queryParameter [ wiki:parameter "oslc.searchTerms" ; wiki:required true ] ;
+           dct:conformsTo <https://docs.oasis-open-projects.org/oslc-op/query/v3.0/oslc-query.html> .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/wiki-search-grep> .
 
-wiki:deriveClass     a rdf:Property ; rdfs:isDefinedBy <> .
-wiki:targetClass     a rdf:Property ; rdfs:isDefinedBy <> .
-wiki:threshold       a rdf:Property ; rdfs:isDefinedBy <> .
-wiki:constructQuery  a rdf:Property ; rdfs:isDefinedBy <> .
-wiki:selectQuery     a rdf:Property ; rdfs:isDefinedBy <> .
+# ============================================================
+# Affordance descriptor predicates (general)
+# ============================================================
 
-# Application profile
-wiki:WikiMemoryProfile a dct:Standard ;
+wiki:governs
+    a rdf:Property ;
+    rdfs:label "governs" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Lists predicates that a substrate-write affordance (or its associated SHACL shape) owns — i.e., the agent must NOT PATCH them directly; instead edit the body+frontmatter and let the projection listener write them. Per D81 (predicate-level governance, Model A)." ;
+    skos:scopeNote "Set on a wiki:WriteAffordance descriptor OR on a sh:NodeShape that declares predicate-level governance. The complement (predicates not in this list) is agent-extensible: the agent may PATCH .meta freely for those. Use this to avoid write conflicts between the projection listener and direct agent PATCHes." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range rdf:Property ;
+    skos:example """
+        <> a wiki:WriteAffordance ;
+           wiki:governs rdf:type , wiki:maturity , dct:title .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/markdown-projection> .
+
+wiki:projectsFromFrontmatter
+    a rdf:Property ;
+    rdfs:label "projects from frontmatter" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Lists YAML frontmatter keys that the markdown-projection listener reads from the body and projects into .meta triples on write. Each value is the frontmatter key as a literal string." ;
+    skos:scopeNote "Set on a wiki:WriteAffordance descriptor. Tells the agent: editing this frontmatter key WILL change the corresponding .meta triple. The mapping from key to RDF predicate is in the JSON-LD context referenced by wiki:classHintTable." ;
+    rdfs:domain wiki:WriteAffordance ;
+    rdfs:range xsd:string ;
+    skos:example """
+        <> a wiki:WriteAffordance ;
+           wiki:projectsFromFrontmatter "type" , "title" , "maturity" , "concept" .
+    """ ;
+    rdfs:seeAlso wiki:classHintTable .
+
+wiki:classHintTable
+    a rdf:Property ;
+    rdfs:label "class hint table" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at a JSON-LD context document that maps body wikilink class hints (e.g., the `.concept` in `[[Target]]{.concept}`) to RDF predicates. Used by the markdown-projection listener to project typed wikilinks into typed .meta edges." ;
+    skos:scopeNote "Set on a wiki:WriteAffordance descriptor. The agent reads the referenced context to learn which class hints are supported. Adding a class hint without updating the context = the wikilink projects to an untyped link (skos:related fallback)." ;
+    rdfs:domain wiki:WriteAffordance ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        <> a wiki:WriteAffordance ;
+           wiki:classHintTable </vault/meta/context.jsonld> .
+    """ ;
+    rdfs:seeAlso </vault/meta/context.jsonld> .
+
+wiki:installedBy
+    a rdf:Property ;
+    rdfs:label "installed by" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Provenance pointer linking an artifact (affordance descriptor, capability, shape, profile, vocabulary fragment) back to the overlay that installed it. Lets the substrate trace which overlay owns a given artifact when overlays are uninstalled or upgraded." ;
+    skos:scopeNote "Set on any artifact installed by an overlay. Object is the overlay's identifying IRI (typically <https://pod.vardeman.me/vault/ontology/overlay#<name>>). Single-valued in practice — an artifact belongs to one overlay." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        <> a wiki:WriteAffordance ;
+           wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+    """ ;
+    rdfs:seeAlso </vault/meta/capabilities/> .
+
+wiki:shape
+    a rdf:Property ;
+    rdfs:label "shape" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at a SHACL NodeShape (typically in /vault/meta/shapes/) that validates instances of a given class or container." ;
+    skos:scopeNote "Used on capability or affordance descriptors that need to advertise an associated shape, or on profile descriptors that list their constraint resources. For per-container constraint binding, prefer LDP's ldp:constrainedBy on the container's .meta." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range sh:NodeShape ;
+    skos:example """
+        <> a wiki:Affordance ;
+           wiki:shape </vault/meta/shapes/concept.ttl> .
+    """ ;
+    rdfs:seeAlso </vault/meta/shapes/> .
+
+wiki:requiresCapability
+    a rdf:Property ;
+    rdfs:label "requires capability" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Declares that an affordance requires a specific substrate capability descriptor (in /vault/meta/capabilities/). Lets an agent verify the affordance is fully wired before relying on it." ;
+    skos:scopeNote "Set on a wiki:Affordance descriptor. Object is a capability descriptor IRI. Multiple values allowed when an affordance needs more than one capability. Agents SHOULD dereference the capability to confirm the substrate genuinely provides the named behavior; absence of the capability = the affordance descriptor is stale." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        <> a wiki:WriteAffordance ;
+           wiki:requiresCapability </vault/meta/capabilities/markdown-content-projection.ttl> .
+    """ ;
+    rdfs:seeAlso </vault/meta/capabilities/> .
+
+wiki:deriveClass
+    a rdf:Property ;
+    rdfs:label "derive class" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "On a wiki:DerivedClassAffordance, names the class IRI the affordance materializes (e.g., wiki:Hub). The derived class is added as rdf:type via the affordance's CONSTRUCT query." ;
+    skos:scopeNote "Single-valued per affordance. Distinct from wiki:targetClass (which scopes the input set the CONSTRUCT runs over)." ;
+    rdfs:domain wiki:DerivedClassAffordance ;
+    rdfs:range rdfs:Class ;
+    skos:example """
+        <> a wiki:DerivedClassAffordance ;
+           wiki:deriveClass wiki:Hub .
+    """ ;
+    rdfs:seeAlso wiki:targetClass .
+
+wiki:targetClass
+    a rdf:Property ;
+    rdfs:label "target class" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "On a wiki:DerivedClassAffordance, names the class whose instances are eligible to be classified as the derived class. Lets the affordance scope its CONSTRUCT over a specific subset of the wiki content." ;
+    skos:scopeNote "Single-valued per affordance. Different from sh:targetClass (a SHACL property used inside shapes) — wiki:targetClass appears only on derived-class affordance descriptors." ;
+    rdfs:domain wiki:DerivedClassAffordance ;
+    rdfs:range rdfs:Class ;
+    skos:example """
+        <> a wiki:DerivedClassAffordance ;
+           wiki:deriveClass wiki:Hub ;
+           wiki:targetClass wiki:Resource .
+    """ ;
+    rdfs:seeAlso wiki:deriveClass , sh:targetClass .
+
+wiki:threshold
+    a rdf:Property ;
+    rdfs:label "threshold" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Numeric threshold parameter for a derived-class or derived-navigation affordance. For wiki:Hub this is the minimum incoming-edge count (default 3). Surfaces the magic number so consumers can adjust their UX expectations." ;
+    skos:scopeNote "Single-valued per affordance, typed xsd:integer. The affordance's CONSTRUCT/SELECT query usually references this value directly (HAVING (COUNT(?x) >= 3)); changing the threshold requires editing the query as well." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range xsd:integer ;
+    skos:example """
+        <> a wiki:DerivedClassAffordance ;
+           wiki:threshold 3 .
+    """ .
+
+wiki:constructQuery
+    a rdf:Property ;
+    rdfs:label "CONSTRUCT query" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "SPARQL CONSTRUCT body, as an xsd:string, that an agent runs against the Pod's wiki containers (client-side, no Pod SPARQL endpoint) to materialize a derived view." ;
+    skos:scopeNote "Set on wiki:DerivedClassAffordance. Pre-resolved prefixes are conventionally inlined in the query string (PREFIX wiki: ..., PREFIX skos: ...) so the agent can copy-paste into Comunica without context. NOT used for SELECT queries — those are wiki:selectQuery." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range xsd:string ;
+    skos:example """
+        <> a wiki:DerivedClassAffordance ;
+           wiki:constructQuery \"\"\"PREFIX wiki: <https://pod.vardeman.me/vault/ontology/wiki#>
+              CONSTRUCT { ?hub a wiki:Hub }
+              WHERE { ?c skos:broader ?hub }\"\"\" .
+    """ ;
+    rdfs:seeAlso wiki:selectQuery .
+
+wiki:selectQuery
+    a rdf:Property ;
+    rdfs:label "SELECT query" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "SPARQL SELECT body, as an xsd:string, that an agent runs client-side over the Pod's wiki containers to compute a derived view (breadcrumb trail, listing, search result table)." ;
+    skos:scopeNote "Set on wiki:DerivedNavigationAffordance and wiki:SearchAffordance. Pre-resolved prefixes conventionally inlined. NOT used for class-deriving affordances (those are wiki:constructQuery)." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range xsd:string ;
+    skos:example """
+        <> a wiki:DerivedNavigationAffordance ;
+           wiki:selectQuery \"\"\"SELECT ?ancestor ?depth WHERE { ?subject skos:broader+ ?ancestor }\"\"\" .
+    """ ;
+    rdfs:seeAlso wiki:constructQuery .
+
+# ============================================================
+# Search-affordance predicates (orphan terms used in wiki-search-grep.ttl)
+# ============================================================
+
+wiki:targetContainer
+    a rdf:Property ;
+    rdfs:label "target container" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "The LDP container an affordance applies to. Wiki-search uses it to scope grep recursion; agents read it to learn where to send their query." ;
+    skos:scopeNote "Single-valued per affordance. Object is a container URL (typically ends with /). For a Pod-wide search affordance, use </vault/wiki/>; for a class-scoped affordance, use the class's instance container (e.g., </vault/wiki/concepts/>)." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        <> a wiki:SearchAffordance ;
+           wiki:targetContainer </vault/wiki/> .
+    """ .
+
+wiki:dispatchPattern
+    a rdf:Property ;
+    rdfs:label "dispatch pattern" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "URL query-string suffix that activates an affordance against its target container. For wiki-search-grep this is `?ext=search-grep` — appending it to the container URL invokes the affordance." ;
+    skos:scopeNote "Single-valued per affordance. Typed xsd:string. The pattern is appended to the wiki:targetContainer URL; query parameters follow. Agents that consume the affordance compose `<targetContainer><dispatchPattern>&<query parameters>`." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range xsd:string ;
+    skos:example """
+        <> a wiki:SearchAffordance ;
+           wiki:dispatchPattern "?ext=search-grep" .
+    """ .
+
+wiki:queryParameter
+    a rdf:Property ;
+    rdfs:label "query parameter" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Declares an accepted query parameter for an affordance. Object is a blank node carrying wiki:parameter (the name), wiki:required (bool), and optionally rdfs:comment (free-form description)." ;
+    skos:scopeNote "Repeat once per accepted parameter. Lets the agent enumerate the parameter surface without fetching documentation. NOT for shape constraints on the parameter values; that's still free-form for v1." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        <> a wiki:SearchAffordance ;
+           wiki:queryParameter [ wiki:parameter "oslc.searchTerms" ; wiki:required true ] ,
+                               [ wiki:parameter "oslc.pageSize" ; wiki:required false ] .
+    """ ;
+    rdfs:seeAlso wiki:parameter , wiki:required .
+
+wiki:parameter
+    a rdf:Property ;
+    rdfs:label "parameter" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "The name of a query parameter, as an xsd:string. Object of wiki:queryParameter blank nodes." ;
+    skos:scopeNote "Single-valued per blank node. The name MUST match the wire-form parameter the affordance accepts (e.g., 'oslc.searchTerms' not 'searchTerms')." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range xsd:string ;
+    skos:example """
+        [ wiki:parameter "oslc.searchTerms" ; wiki:required true ]
+    """ .
+
+wiki:required
+    a rdf:Property ;
+    rdfs:label "required" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Whether a query parameter is required for the affordance to be invoked. Object of wiki:queryParameter blank nodes." ;
+    skos:scopeNote "Typed xsd:boolean. True = the agent MUST supply this parameter. False (or absent) = optional with documented defaults (see rdfs:comment on the blank node)." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range xsd:boolean ;
+    skos:example """
+        [ wiki:parameter "oslc.searchTerms" ; wiki:required true ]
+    """ .
+
+# ============================================================
+# Affordance descriptor predicates (NEW Phase A — Memory Structuring Sprint)
+# Predicates documenting an affordance's contract — what mem:Action it performs,
+# its pre/post conditions, its failure modes, and its procedural steps.
+# ============================================================
+
+wiki:action
+    a rdf:Property ;
+    rdfs:label "action" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Links a wiki:Affordance descriptor to the mem:Action subclass it performs. Lets an agent ask 'which affordance crystallizes a working note?' by joining over wiki:action = mem:CrystallizeAction." ;
+    skos:scopeNote "Single-valued per affordance. Object is a mem:Action subclass IRI (mem:CrystallizeAction, mem:SupersedeAction, etc.). NOT used for read-only affordances (search, derived views) — those don't perform a memory action." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range mem:Action ;
+    skos:example """
+        </vault/meta/affordances/crystallize> a wiki:Affordance ;
+           wiki:action mem:CrystallizeAction .
+    """ ;
+    rdfs:seeAlso mem:Action .
+
+wiki:precondition
+    a rdf:Property ;
+    rdfs:label "precondition" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Natural-language description of what must be true before the agent invokes the affordance. One-sentence narrative; not a formal logical clause." ;
+    skos:scopeNote "Use on wiki:Affordance descriptors and wiki:Procedure resources. Multiple values allowed when multiple distinct preconditions apply; phrase each as a single declarative sentence. NOT a SHACL constraint — preconditions are informational, not validated by the substrate." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range xsd:string ;
+    skos:example """
+        <> a wiki:Affordance ;
+           wiki:precondition "Working note exists at the source URL and conforms to the working shape." .
+    """ ;
+    rdfs:seeAlso wiki:postcondition .
+
+wiki:postcondition
+    a rdf:Property ;
+    rdfs:label "postcondition" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Natural-language description of what is true after the affordance is successfully invoked. One-sentence narrative; complements wiki:precondition." ;
+    skos:scopeNote "Use on wiki:Affordance descriptors and wiki:Procedure resources. Helps the agent confirm a successful invocation (the world matches the postcondition) and detect partial-failure (postcondition false despite no error)." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range xsd:string ;
+    skos:example """
+        <> a wiki:Affordance ;
+           wiki:postcondition "Durable resource exists at the destination URL; the working URL returns 404 or a tombstone." .
+    """ ;
+    rdfs:seeAlso wiki:precondition .
+
+wiki:errorMode
+    a rdf:Property ;
+    rdfs:label "error mode" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Natural-language description of how the affordance fails (rejection, validation error, conflict, lock timeout). Helps the agent plan its retry/recovery logic and recognize substrate-reported failures correctly." ;
+    skos:scopeNote "Use on wiki:Affordance descriptors. Repeat once per distinct failure mode (422 on shape violation, 409 on conflict, 412 on precondition fail). Pair each with a single declarative sentence." ;
+    rdfs:domain wiki:Affordance ;
+    rdfs:range xsd:string ;
+    skos:example """
+        <> a wiki:Affordance ;
+           wiki:errorMode "422 with sh:ValidationReport body when destination shape rejects the resource." ,
+                          "409 when destination URL already exists and If-None-Match was sent." .
+    """ ;
+    rdfs:seeAlso mem:UnprocessableWrite .
+
+wiki:procedure
+    a rdf:Property ;
+    rdfs:label "procedure" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Ordered list of LDP/HTTP steps the agent (or substrate) performs to invoke the affordance. Object is an rdf:List of xsd:string values; each string is one step description." ;
+    skos:scopeNote "Use on wiki:Affordance descriptors and wiki:Procedure resources. The rdf:List preserves step order — agents MUST execute steps in sequence. For unordered prerequisite sets, prefer multiple wiki:precondition triples." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdf:List ;
+    skos:example """
+        <> a wiki:Affordance ;
+           wiki:procedure ( "GET <source>" "Validate against destination shape" "PUT to <destination>" "DELETE <source>" ) .
+    """ ;
+    rdfs:seeAlso wiki:step .
+
+wiki:step
+    a rdf:Property ;
+    rdfs:label "step" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "A single step in a wiki:Procedure. Alternative to wiki:procedure (rdf:List) for procedures where ordering is encoded via separate sequence triples (e.g., dct:hasPart + rdf:value of an xsd:integer index)." ;
+    skos:scopeNote "Prefer wiki:procedure (rdf:List) when possible — rdf:List captures order natively. wiki:step is for shapes that need to attach per-step metadata (timing, owner, retry policy) that doesn't fit inside an rdf:List literal." ;
+    rdfs:domain wiki:Procedure ;
+    rdfs:range xsd:string ;
+    skos:example """
+        <> a wiki:Procedure ;
+           wiki:step "Step 1: GET source" , "Step 2: PUT destination" .
+    """ ;
+    rdfs:seeAlso wiki:procedure .
+
+# ============================================================
+# Application profile + storage-description predicates
+# ============================================================
+
+wiki:WikiMemoryProfile
+    a dct:Standard ;
     rdfs:label "Wiki-memory application profile v1.0" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Application profile that pulls together this vocabulary, the 6-shape SHACL catalog at /vault/meta/shapes/, the affordance catalog at /vault/meta/affordances/, and the Type Index at /vault/settings/publicTypeIndex into a single conformance target. Resources hosted under /vault/wiki/ declare dct:conformsTo wiki:WikiMemoryProfile." ;
     dct:hasVersion "1.0" ;
-    rdfs:isDefinedBy <> .
+    skos:scopeNote "Used as the object of dct:conformsTo on wiki resources, container .meta, and overlay manifests. Distinct from wiki:L3Profile (which is the L3 layer identity in the storage description). For the substrate-level conformance declaration, use both." ;
+    skos:example """
+        <https://pod.vardeman.me/vault/wiki/concepts/foo.md> dct:conformsTo wiki:WikiMemoryProfile .
+    """ ;
+    rdfs:seeAlso </vault/meta/shapes/> , </vault/meta/affordances/> , wiki:L3Profile .
 
-# Added 2026-05-18 — Memory Structuring Sprint Phase A
-# See <https://pod.vardeman.me/vault/wiki/> for usage context.
+wiki:L3Profile
+    a dct:Standard ;
+    rdfs:label "Wiki-memory L3 profile identity" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "The L3 layer identity used by the storage description's wiki:conformsTo triple. Sibling to wiki:WikiMemoryProfile — same conformance target, different role: L3Profile is what the substrate declares as its layer (per D70 L1/L2/L3 stratification); WikiMemoryProfile is what individual resources conform to." ;
+    dct:hasVersion "1.0" ;
+    skos:scopeNote "Use as the object of wiki:conformsTo on /vault/.well-known/solid. Distinct from wiki:WikiMemoryProfile in role even though the underlying conformance commitments are aligned. Do NOT use both interchangeably — substrate uses L3Profile, individual resources use WikiMemoryProfile." ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:conformsTo wiki:L3Profile .
+    """ ;
+    rdfs:seeAlso wiki:WikiMemoryProfile .
+
+wiki:conformsTo
+    a rdf:Property ;
+    rdfs:label "conforms to" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Wiki-specific conformance predicate used at the storage-description level. Pairs with wiki:L3Profile / wiki:WikiMemoryProfile. Distinct from dct:conformsTo (used at the resource level and on overlay manifests)." ;
+    skos:scopeNote "Use on /vault/.well-known/solid to declare the substrate's L3-layer conformance. For resource-level conformance (individual wiki:Concept/Source/etc. resources), prefer dct:conformsTo wiki:WikiMemoryProfile — that's what shape validators and PROF tooling expect." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range dct:Standard ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:conformsTo wiki:L3Profile .
+    """ ;
+    rdfs:seeAlso dct:conformsTo .
+
+wiki:contextDocument
+    a rdf:Property ;
+    rdfs:label "context document" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at the JSON-LD context document at /vault/meta/context.jsonld. The context defines short-form predicates and class-hint mappings used by the markdown-projection listener and by clients composing JSON-LD bodies." ;
+    skos:scopeNote "Used at the storage-description level (on /vault/.well-known/solid) to advertise the canonical prefix→IRI registry. A blind agent fetches the value of this predicate to learn the short-form vocabulary the substrate uses on the wire." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:contextDocument </vault/meta/context.jsonld> .
+    """ ;
+    rdfs:seeAlso </vault/meta/context.jsonld> .
+
+wiki:shapeCatalog
+    a rdf:Property ;
+    rdfs:label "shape catalog" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at the LDP container of SHACL shapes (/vault/meta/shapes/). An agent dereferencing /vault/.well-known/solid follows this predicate to enumerate the shape catalog." ;
+    skos:scopeNote "Used at the storage-description level. Object is a container URL (trailing slash). To learn which shape validates a given class, GET the container and inspect the .meta of each contained shape file for sh:targetClass." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:shapeCatalog </vault/meta/shapes/> .
+    """ ;
+    rdfs:seeAlso </vault/meta/shapes/> .
+
+wiki:affordanceCatalog
+    a rdf:Property ;
+    rdfs:label "affordance catalog" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at the LDP container of affordance descriptors (/vault/meta/affordances/). Per D52, an agent dereferencing /vault/.well-known/solid follows this predicate to discover substrate behaviors (write affordances, derived views, search, time-travel)." ;
+    skos:scopeNote "Used at the storage-description level. Each item in the container is a wiki:Affordance subclass descriptor with sh:agentInstruction prose plus a typed payload (CONSTRUCT/SELECT, governance lists, dispatch pattern)." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:affordanceCatalog </vault/meta/affordances/> .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/> .
+
+wiki:capabilityCatalog
+    a rdf:Property ;
+    rdfs:label "capability catalog" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at the LDP container of capability descriptors (/vault/meta/capabilities/). Per D83 (Pod-as-toolkit), capabilities are reusable substrate behaviors that affordances reference via wiki:requiresCapability." ;
+    skos:scopeNote "Used at the storage-description level. Distinct from wiki:affordanceCatalog: capabilities are reusable building blocks (ContentProjection, DerivedView, TimeTravel); affordances are user-facing behavior descriptors that compose one or more capabilities." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:capabilityCatalog </vault/meta/capabilities/> .
+    """ ;
+    rdfs:seeAlso </vault/meta/capabilities/> .
+
+wiki:typeIndex
+    a rdf:Property ;
+    rdfs:label "type index" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at the Solid Type Index at /vault/settings/publicTypeIndex. Per D8 (Type Index for class→container routing) and D78 (class-based shape targeting), the Type Index maps each wiki class to its instance container — letting an agent discover where to PUT a new wiki:Concept without out-of-band knowledge." ;
+    skos:scopeNote "Used at the storage-description level. Object is the Type Index resource URL. An agent looking up class→container routing GETs the Type Index and queries for solid:TypeRegistration with solid:forClass <target-class>." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:typeIndex </vault/settings/publicTypeIndex> .
+    """ ;
+    rdfs:seeAlso </vault/settings/publicTypeIndex> .
+
+wiki:contactCatalog
+    a rdf:Property ;
+    rdfs:label "contact catalog" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at the AddressBook contact catalog (/vault/contacts/). Used by the AddressBook substrate overlay; orthogonal to wiki:Person at /vault/wiki/people/ (narrative-memory people) — wiki:contactCatalog is the operational vCard contact store." ;
+    skos:scopeNote "Used at the storage-description level. An agent doing contact lookup (find-by-orcid, find-by-name) starts from this predicate. NOT a wiki-memory L3 term per se; included here because the AddressBook overlay re-uses the wiki: namespace for its storage-description pointers." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:contactCatalog </vault/contacts/> .
+    """ ;
+    rdfs:seeAlso </vault/contacts/> , wiki:Person .
+
+wiki:templateCatalog
+    a rdf:Property ;
+    rdfs:label "template catalog" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at the substrate template catalog (/vault/meta/templates/). Templates encode the tmpl: vocabulary for cold-start resource creation (D88) — they pair a target container or resource with a parameterized body that satisfies the destination shape." ;
+    skos:scopeNote "Used at the storage-description level. An agent wanting to create a class-conformant resource without inventing the body GETs this catalog and finds the matching tmpl:targetContainer / tmpl:targetResource template, substitutes parameters, and PUT/PATCHes." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:templateCatalog </vault/meta/templates/> .
+    """ ;
+    rdfs:seeAlso </vault/meta/templates/> .
+
+# ============================================================
+# Substrate self-description predicates (Phase A, 2026-05-18)
+# ============================================================
 
 wiki:profileDocument
     a rdf:Property ;
     rdfs:label "profile document" ;
-    rdfs:comment "Points at the wiki-memory L3 synthesis page from any resource that wants to declare conformance to this substrate. Subject is any resource; object is the synthesis page URL. Used for U-shape reinforcement: every substrate self-description resource links back to the synthesis." ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at the wiki-memory L3 synthesis page (typically /vault/wiki/index.md) from any resource that wants to declare conformance to this substrate. Subject is any resource; object is the synthesis page URL. Used for U-shape reinforcement: every substrate self-description resource links back to the synthesis." ;
+    skos:scopeNote "Use on /vault/.well-known/solid and on resource .meta where the resource wants to point a blind agent at the L3 narrative entry point. Distinct from dct:conformsTo (which points at a profile-of-conformance, not a human-readable page)." ;
     rdfs:domain rdfs:Resource ;
-    rdfs:range wiki:Page .
+    rdfs:range wiki:Page ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> wiki:profileDocument </vault/wiki/index.md> .
+    """ ;
+    rdfs:seeAlso </vault/wiki/index.md> .
 
 wiki:bootstrapResource
     a rdf:Property ;
     rdfs:label "bootstrap resource" ;
+    rdfs:isDefinedBy <> ;
     rdfs:comment "Points at a resource a blind agent should fetch during cold-start orientation. Subject is the synthesis page; object is a catalog or descriptor needed for bootstrap. Multiple instances expected per synthesis." ;
+    skos:scopeNote "Use on the wiki-memory synthesis page to enumerate the catalogs (shapes, affordances, capabilities, Type Index) and key descriptors a blind agent must read before issuing writes. Distinct from rdfs:seeAlso (which is loose cross-reference) — bootstrapResource is a strict 'read this' obligation." ;
     rdfs:domain wiki:Page ;
-    rdfs:range rdfs:Resource .
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/wiki/index.md.meta:
+        <> wiki:bootstrapResource </vault/.well-known/solid> ,
+                                  </vault/meta/shapes/> ,
+                                  </vault/meta/affordances/> ,
+                                  </vault/settings/publicTypeIndex> .
+    """ ;
+    rdfs:seeAlso </vault/.well-known/solid> .
 
 wiki:eventStream
     a rdf:Property ;
     rdfs:label "event stream" ;
-    rdfs:comment "Points at a substrate's event inbox (typically /wiki/.events/), a sibling concept to ldp:inbox. Distinguishes substrate-emitted analysis events from peer-emitted inbox notifications." ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Points at a substrate's event inbox (typically /vault/wiki/.events/), a sibling concept to ldp:inbox. Distinguishes substrate-emitted analysis events (mem:Event subclasses) from peer-emitted inbox notifications (ldp:inbox)." ;
+    skos:scopeNote "Use on the synthesis page or on /vault/.well-known/solid to advertise the event source. An agent subscribes via Solid Notifications against this URL to receive mem:Event instances. NOT for outbound posting — agents do not POST events; the substrate owns event production." ;
     rdfs:domain rdfs:Resource ;
-    rdfs:range rdfs:Resource .
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/wiki/index.md.meta:
+        <> wiki:eventStream </vault/wiki/.events/> .
+    """ ;
+    rdfs:seeAlso mem:Event , </vault/wiki/.events/> .
