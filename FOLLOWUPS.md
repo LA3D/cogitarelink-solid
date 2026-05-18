@@ -2,6 +2,55 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## Phase C.10 — MemTrigger v1 wiring (Memory Structuring Sprint, 2026-05-18)
+
+Phase C.10 + C.11 shipped MemTriggerListener as a MonitoringStore CDC
+subscriber and wired it into the WorkerParallelInitializer alongside
+MementoCommitListener and MarkdownProjectionListener. Listener attaches,
+onChange runs the filter pipeline (skip .events/.operations/ + restrict
+to baseUrl), serializes work via chain Promise.
+
+v1 stubs and deferred wiring:
+
+- **BoundExceededDetector**: `checkBound()` is a documented no-op stub.
+  Real implementation needs to read the parent container via
+  `store.getRepresentation`, parse Turtle, count `ldp:contains`, then
+  invoke `bound.maybeEmit` with childCount + lastEmittedForContainer.
+  Then call `emitter.emit(turtle)` if non-null.
+- **UnprocessableWriteDetector**: never invoked. Needs a substrate-side
+  hook on shape-validator's `ShaclValidationError` path; not exposed via
+  MonitoringStore's `'changed'` event (only successful writes fire it).
+  Hook-point candidate: shape-validator extension's
+  `ShaclValidator.handle()` could emit a side-channel event.
+- **ReflectionDueDetector**: never invoked. Needs a setInterval timer in
+  `handle()` plus per-subject activity tracking (last-write timestamps
+  per `/wiki/{class}/<resource>`). Should also coordinate with the
+  durable-promotion path (mem:Crystallize) so reflections fire only on
+  durable subjects.
+- **ContradictionDetector**: never invoked. Needs body-projection edge
+  harvesting (the .meta triples MarkdownProjectionListener just wrote
+  for the target resource); pass `edges` to `contradiction.maybeEmit`.
+  Coordinate ordering: contradiction must run AFTER markdown-projection
+  on the same write so the .meta is fresh.
+
+Listener attachment is verified via the `[markdown-projection]` log line
+on each PUT — the WorkerParallelInitializer is running all three handlers
+in parallel and all three subscribe to MonitoringStore. MemTriggerListener's
+attach-time log uses `getLoggerFor(this).info(...)` which doesn't appear
+in container output (same as MementoCommitListener — `global-logger-factory`
+output at info level is silent under the current logging config). Behavior
+is confirmed by smoke writes producing no errors + memento `.git/COMMIT_EDITMSG`
+updating + markdown-projection firing.
+
+### K1 consolidation note
+
+`mem-trigger.json` now holds the WorkerParallelInitializer Override
+listing all three listeners. Components.js rejected the configuration
+when two files (markdown-projection.json + mem-trigger.json) both declared
+Overrides on the same instance — "Found multiple Overrides targeting" is
+a hard preprocessing error, not resolved by import order. Future memory
+substrate listeners must be added to mem-trigger.json's handlers list.
+
 ## Phase 7a wiki-search — shipped (2026-05-18)
 
 D87 ratified. Wiki-search CSS extension + Link MetadataWriter + capability
