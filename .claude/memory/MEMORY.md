@@ -17,8 +17,12 @@ For decision IDs, invoke the `decision-lookup` skill.
   skipped D78–D86 numbering. The repo `decision-lookup` skill is canonical for
   sequential D-numbering, so use D91 in code/commit references going forward;
   prior Phase 7a commits already merged say "D87" — accept the dual-numbering
-  on past commits, use D91 from now on). 77 wiki-search unit tests + 14
-  integration tests green; p95 26.7ms (500ms ceiling).
+  on past commits, use D91 from now on), and **Phase 7a closeout: wiki-search
+  walker using `DataAccessor` end-to-end** (D92 in repo / vault-D88, ratified
+  2026-05-18, commit `2f2f28b`). 77/77 wiki-search unit tests + 13/13
+  non-skipped integration tests green; p95 7.6 ms (3.5× faster than
+  HTTP-self-request architecture; 500ms ceiling). Six `TestWacScenarios`
+  remain stubbed under the behavior-before-security sequencing principle.
 - **Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to
   **wiki-memory L3 as canonical reference profile, vault as one application**
   (D70–D74).
@@ -226,33 +230,33 @@ Companion docs:
 
 In dependency order:
 
-1. **Wiki-search walker Path 1a redesign** (~half a day). Re-architects
-   per `docs/plans/2026-05-18-wiki-search-walker-redesign.md` —
-   `DataAccessor.getChildren()` for seed enumeration (lockless), then
-   `store.getRepresentation()` for descendants. Inherits request auth
-   context naturally; solves the omit-don't-deny correctness gap;
-   un-stubs the 5+1 WAC scenario tests. **Provisional D91 retracted
-   on 2026-05-18 spike** — the original "HTTP-self-request rewrite"
-   narrative bundled two independent fixes and credited the wrong
-   one; header forwarding to the self-request is architecturally
-   impossible under Solid-OIDC (DPoP one-shot binding). Ratify as
-   **D92** once shipped.
+1. **Memory Structuring Sprint** (next sprint). Finish wiki-memory L3:
+   two-stage commit (D73 working-memory → `mem:Crystallize` → durable),
+   full coverage of the remaining shape classes
+   (Concept/Source/Procedure/WorkingMemory/Page), memory-substrate
+   triggers (D74 — `mem:*` AS2 vocab on LDN inbox + Solid Notifications).
+   Runs under `dev-allow-all` per the behavior-before-security
+   sequencing principle.
 
-2. **Rung 1.5 eval** (skill-creator harness, with-skill vs without-skill).
-   First measurable claim from the active plan. Tests the three Phase 5j/6
-   skills (solid-addressbook, solid-wiki-memory-l3, solid-owner-identity)
-   AND the new wiki-search skill against cold-start agents. Eval surfaces
-   which caps + affordances actually get reused vs which are YAGNI,
-   informing FOLLOWUPS trim list.
-
-3. **Memory Structuring Sprint** — finish wiki-memory L3: two-stage commit
-   (D73 working-memory → mem:Crystallize → durable), full coverage of the
-   remaining shape classes (Concept/Source/Procedure/WorkingMemory/Page),
-   memory-substrate triggers (D74 — mem:* AS2 vocab on LDN inbox).
+2. **Rung 1.5 eval** (after Memory Structuring Sprint). Skill-creator
+   harness, with-skill vs without-skill. First measurable claim from
+   the active plan. Tests solid-addressbook + solid-wiki-memory-l3 +
+   solid-owner-identity + wiki-search against cold-start agents.
+   Eval surfaces which caps + affordances actually get reused vs which
+   are YAGNI, informing FOLLOWUPS trim list. **Also surfaces evidence
+   for the credential-model design** that gates un-stubbing the six
+   `TestWacScenarios` (see Phase 7a closeout).
 
 Phase 7b/c/d (engine swap, hybrid RRF, in-pod index) are deferred until
 Rung 1.5 evidence justifies. Wiki URI scheme rethink (per FOLLOWUPS) slots
-between #2 and #3 if picked up.
+between #1 and #2 if picked up.
+
+### Closed (2026-05-18)
+
+- ~~**Wiki-search walker Path 1a redesign**~~ — shipped commit `2f2f28b`.
+  Ratified as **D92** in repo / vault-D88. DataAccessor end-to-end
+  (broader than the originally-planned hybrid — see decision text for
+  why). p95 7.6 ms.
 
 ### Research-track (not scoped to a sprint)
 

@@ -1,6 +1,6 @@
 # SOLID Pod Decisions Index
 
-Always loaded. Concise index of all architectural decisions (D1-D91, K1-K3). Vault is canonical source:
+Always loaded. Concise index of all architectural decisions (D1-D92, K1-K3). Vault is canonical source:
 `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
 ## Skill cross-reference
@@ -26,6 +26,8 @@ CSS-builder skills (no D-cluster but referenced by many decisions): `css-extensi
 **D87 (capabilities-only overlay deps), D88 (tmpl: vocab), D89 (owner-identity overlay), D90 (agent↔human elicitation)** — Phase 5k substrate decisions; no dedicated skill yet. See Phase 5k section below.
 
 **D91 (wiki-memory search layer)** — Phase 7 decision. No dedicated skill yet; buildable spec at `docs/plans/2026-05-17-wiki-search-design.md`.
+
+**D92 (wiki-search walker — DataAccessor end-to-end)** — Phase 7a closeout decision. Supersedes provisional/retracted D91-walker-architecture (HTTP self-request rewrite). Design + findings doc: `docs/plans/2026-05-18-wiki-search-walker-redesign.md`.
 
 ## Phase 1 foundation (D1–D28)
 
@@ -502,6 +504,40 @@ GET /vault/wiki/?ext=search-grep&oslc.searchTerms=progressive+disclosure&oslc.wh
 - RQ-Search-5: Cross-container search — per-container only in v1; pod-root search is Phase 5/multi-application concern
 
 **See also**: D16 (OSLC Query), D17 (TRS — superseded by D56), D18 (SQLite FTS5+sqlite-vec, location revised), D19 (CSS extension pattern), D44 (storage description as router), D45 (CONSTRUCT view / `?ext=…` affordance pattern — search reuses), D55 (three-tier access), D58 (body affordances first-class), D71 (wiki-memory L3 dual-layer linking), D83 (Pod-as-toolkit capability catalog), D87-D90 (capabilities/templates/owner-identity sprint).
+
+### D92 — Wiki-Search Walker Uses DataAccessor End-to-End
+
+**Status**: Ratified 2026-05-18 (commit `2f2f28b` in cogitarelink-solid). Vault sync as D88 (vault sequence; vault-D88 = repo-D92).
+
+**Note on numbering**: The vault assigns this decision as D88 (continuing the vault's own sequence after vault-D87 = repo-D91). The repo numbering is canonical for sequential D-references in code and commits going forward.
+
+**Supersedes**: Provisional D91-walker-architecture ("HTTP self-request rewrite", commit `eb37bb7`) — retracted 2026-05-18 after a spike showed the recorded narrative bundled two independent fixes and credited the wrong one. The architectural soundness gap (credential forwarding to HTTP self-requests is impossible under Solid-OIDC DPoP binding) is documented in `FOLLOWUPS.md` and `docs/plans/2026-05-18-wiki-search-walker-redesign.md`.
+
+**Decision**: The wiki-search walker uses `DataAccessor` for **all** Pod data access — container enumeration via `getChildren()`, document metadata via `getMetadata()`, document bodies via `getData()`. No `ResourceStore.getRepresentation()` calls anywhere in the walker. The `PermissionReader` gate remains the security boundary; the `Credentials` object propagated to the gate inherits the request's full auth context automatically.
+
+**Why DataAccessor end-to-end (not the originally-planned hybrid)**: Path 1a originally specified `DataAccessor` for seed enumeration + `ResourceStore` for descendants. Integration testing during the sprint revealed two additional crash modes beyond the originally diagnosed re-entrant lock:
+
+1. **Re-entrant lock on request target** (originally diagnosed) — `store.getRepresentation(target)` deadlocks because the outer request holds the target's lock.
+2. **Container body drain hangs on subcontainers** (new finding) — fresh lock; `N3StreamWriter` (CSS's lazy container Turtle serializer) doesn't drain cleanly when consumed inside a handler.
+3. **Document stream consumption hangs/crashes** (new finding) — `node:internal/streams/end-of-stream` uncaught exception with a callback-shape mismatch in `readable-stream`.
+
+Root cause is a stream lifecycle bug in CSS's wrapping of `N3StreamWriter` / `Guarded<Readable>` — manifests whenever a handler tries to drain a stream rather than pipe it to a response. Not root-caused (CSS-internal). `DataAccessor.getData()` returns the raw file `Readable` and bypasses CSS's fragile stream wrapping entirely.
+
+**Security model**: unchanged from the original Path 1a analysis. CSS v8 has no permission-aware store wrapper, so both `ResourceStore` and `DataAccessor` are privileged-by-design at the data layer. The `PermissionReader` gate is the security boundary either way. The trade-off properties Path 1a's analysis identified (per-agent inheritance, ACP conjunctive matching, federation readiness, future VC support) come from the `Credentials` object propagated to the gate, not from going through `ResourceStore`.
+
+**Performance**: p95 latency improved from 26.7ms (HTTP self-request architecture) to **7.6ms** (DataAccessor end-to-end) on the existing perf-smoke corpus — 3.5× faster. The HTTP round-trip per resource was paying for the wrong architecture.
+
+**Test status**: 77/77 unit tests pass (walker test mocks rewritten to DataAccessor shape); 13/13 non-skipped integration tests pass. Six `TestWacScenarios` integration tests remain stubbed pending an authenticated-client fixture shared with `test_addressbook_e2e.py` — deferred per behavior-before-security sequencing (agent credential storage / DPoP / VC delegation design is downstream of behavior eval).
+
+**Files**:
+- `css/extensions/wiki-search/src/walker.ts` — full rewrite
+- `css/extensions/wiki-search/src/WikiSearchHttpHandler.ts` — dropped `ResourceStore` dep, added `DataAccessor` dep
+- `css/extensions/wiki-search/tests/walker.test.ts` — mocks rewritten with fake DataAccessor
+- `css/extensions/wiki-search/tests/WikiSearchHttpHandler.test.ts` — constructor positional args
+- `css/config/wiki-search.json` — Components.js wiring (`dataAccessor` injected as `urn:solid-server:default:FileDataAccessor`)
+- `docs/plans/2026-05-18-wiki-search-walker-redesign.md` — design note + implementation findings section
+
+**See also**: D91 (wiki-memory search layer — D92 closes out the walker architecture decision left open after D91 ratified the API surface); `solid-identity-stack` skill (`references/dpop.md` documents why credential forwarding to HTTP self-requests is architecturally impossible under Solid-OIDC).
 
 ## Open research questions
 

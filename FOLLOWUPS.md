@@ -42,18 +42,32 @@ Sibling repo (solid-agent-skills):
   threat model, and revised recommendation. D92 ratification follows
   implementation sprint.
 
-- [ ] **Wiki-search walker Path 1a redesign sprint.** Re-architect per
-  `docs/plans/2026-05-18-wiki-search-walker-redesign.md`. Handler injects
-  `DataAccessor` as a second store dependency; enumerates target children
-  lockless via `DataAccessor.getChildren()` (sits below `LockingResourceStore`
-  in the CSS chain). Walker takes `seedUrls: string[]` and recurses via
-  `store.getRepresentation()` — no deadlock because the target identifier
-  is never enqueued. Inherits request auth context naturally (Solid-OIDC,
-  DPoP, WAC, ACP, future VC, federation). Un-stubs all 5+1 WAC scenarios
-  in `tests/integration/test_wiki_search_e2e.py::TestWacScenarios`.
-  Estimated half-day. Ratify as **D92** in
-  `.claude/skills/decision-lookup/decisions.md` once shipped; sync to
-  vault `SOLID-Pod-Decisions.md`.
+- [x] ~~**Wiki-search walker Path 1a redesign sprint.**~~ **Shipped 2026-05-18,
+  commit `2f2f28b`.** Ratified as **D92** in
+  `.claude/skills/decision-lookup/decisions.md`; synced to vault as D88
+  (`SOLID-Pod-Decisions.md`). Implementation found two crash modes beyond
+  the originally diagnosed re-entrant lock — both rooted in CSS's
+  `N3StreamWriter` / `Guarded<Readable>` stream wrapping rather than in
+  locking — so the final architecture uses `DataAccessor` for **all** Pod
+  data access (`getChildren()` for container enumeration, `getMetadata()`
+  for content-type checks, `getData()` for document bodies). No
+  `ResourceStore.getRepresentation()` calls in the walker. p95 latency
+  improved 3.5× (26.7ms → 7.6ms). 77/77 unit + 13/13 non-skipped
+  integration tests pass. Findings recorded in
+  `docs/plans/2026-05-18-wiki-search-walker-redesign.md` "Implementation
+  findings" section.
+
+- [ ] **WAC scenario integration tests un-stubbed.** Six tests in
+  `tests/integration/test_wiki_search_e2e.py::TestWacScenarios` remain
+  stubbed pending an authenticated-client fixture shared with
+  `test_addressbook_e2e.py`. **Deferred under the behavior-before-security
+  sequencing principle**: agent credential storage (DPoP key management,
+  agent-vs-human WebID, VC delegation, refresh semantics) is its own
+  design exercise downstream of Rung 1.5 (or equivalent) eval evidence
+  about how agents actually traverse the substrate. Don't lock in a
+  fixture shape until the credential model is designed; don't design the
+  credential model until behavior is observed. See project MEMORY
+  `behavior_before_security.md`.
 
 - [ ] **VC credential extension (future research-track).** CSS v8 has
   the `@solidlab/policy-engine` VC matcher (`evaluateVc`) and ACP support,
@@ -84,10 +98,10 @@ Sibling repo (solid-agent-skills):
 
 ### Deferred from Phase 7a implementation
 
-- [ ] **WAC scenario integration tests** (test_a–test_e in
-  `tests/integration/test_wiki_search_e2e.py`). Stubbed pending the
-  authenticated-client harness shared with `test_addressbook_e2e.py`.
-  Unblocked by Path 1a redesign above; un-stub as part of that sprint.
+- [ ] **WAC scenario integration tests** — see the dedicated entry above
+  under "Architectural deviations from plan". Deferred under
+  behavior-before-security; not blocked by Path 1a (Path 1a is shipped),
+  blocked by the agent credential-model design exercise.
 - [ ] **Score formula tuning** (RQ-Search-1). v1 baseline is density + log
   dampening; tune against Rung 1.5 eval evidence.
 - [ ] **Whether to embed `.meta` triples in search responses** (RQ-Search-4).
