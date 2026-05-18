@@ -14,7 +14,7 @@ You're designing a new resource type for the Pod (e.g., a new note category, a n
 
 ## Where shapes live
 
-- `shapes/wiki-memory-l3/` — canonical shape files in Turtle (one shape per wiki-memory class). Uploaded to the Pod at `/vault/meta/shapes/<name>.shacl.ttl` by the wiki-memory overlay (`scripts/overlay/apply.py overlays/wiki-memory`). Post-substrate-cleanup the legacy `/vault/procedures/shapes/` path no longer exists.
+- `overlays/wiki-memory/shapes/` — canonical shape files in Turtle (one shape per wiki-memory class). Uploaded to the Pod at `/vault/meta/shapes/<name>.shacl.ttl` by the wiki-memory overlay (`scripts/overlay/apply.py overlays/wiki-memory`). Post-substrate-cleanup the legacy `/vault/procedures/shapes/` Pod path no longer exists, and the legacy repo path `shapes/wiki-memory-l3/` was retired (the substrate-cleanup sprint moved the shapes into the overlay and renamed `concept.shacl.ttl` → `page.shacl.ttl`).
 - `css/extensions/shape-validator/` — the CSS extension that enforces validation at write time via `ldp:constrainedBy`.
 - Container `.meta` sidecars reference shapes via `ldp:constrainedBy` so the validator knows which shape applies to which container's writes.
 

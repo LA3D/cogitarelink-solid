@@ -36,7 +36,7 @@ Wiki-memory L3 URI layout, slug algorithm, resolver, and attachment convention �
 
 ### D77 — SHACL shape catalog (5 shapes)
 
-Wiki-memory L3 SHACL shape catalog — five shapes, one per D76 container: `wiki:PageShape` (general wiki content, permissive), `wiki:SourceShape` (citation records with `dct:identifier` required), `wiki:PersonShape` (FOAF-based with `foaf:nick` aliases for cross-system linking), `wiki:ProcedureShape` (procedural memory with `sh:agentInstruction` carrying the procedure body), `wiki:WorkingMemoryShape` (permissive per D73). Each carries `sh:agentInstruction` per D50. Flavor-within-shape pattern: 12+ vault L4 note types collapse into 5 L3 shapes distinguished by `.meta` predicates (`vault:kind`, `vault:isMOC`, `vault:isOrganization`) rather than separate containers. The vault L4 specialization extends via shape subclassing without modifying the L3 baseline. Shape files at `shapes/wiki-memory-l3/{page,source,person,procedure,working}.shacl.ttl`.
+Wiki-memory L3 SHACL shape catalog — five shapes, one per D76 container: `wiki:PageShape` (general wiki content, permissive), `wiki:SourceShape` (citation records with `dct:identifier` required), `wiki:PersonShape` (FOAF-based with `foaf:nick` aliases for cross-system linking), `wiki:ProcedureShape` (procedural memory with `sh:agentInstruction` carrying the procedure body), `wiki:WorkingNoteShape` (permissive per D73). Each carries `sh:agentInstruction` per D50. Flavor-within-shape pattern: 12+ vault L4 note types collapse into 5 L3 shapes distinguished by `.meta` predicates (`vault:kind`, `vault:isMOC`, `vault:isOrganization`) rather than separate containers. The vault L4 specialization extends via shape subclassing without modifying the L3 baseline. Shape files at `overlays/wiki-memory/shapes/{page,source,person,procedure,working}.shacl.ttl`.
 
 ## Phase 5f — Rung 1.4 implementation decisions
 
@@ -72,5 +72,5 @@ Predicate-level governance (Model A) — SHACL shape declares which predicates t
 - RQ-Listener-1 mitigation analysis: `docs/plans/2026-05-15-rq-listener-1-mitigation-design.md`
 - RDF-star candidate D82: `docs/plans/2026-05-15-rdf-star-provenance-exploration.md`
 - RQ-Pod-4 workaround notes: `docs/plans/2026-05-15-rq-pod-4-workaround-notes.md`
-- SHACL shapes: `shapes/wiki-memory-l3/`
+- SHACL shapes: `overlays/wiki-memory/shapes/`
 - MarkdownProjectionListener: `css/extensions/markdown-projection/`

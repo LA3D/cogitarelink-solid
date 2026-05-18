@@ -35,7 +35,7 @@ Canonical L3 memory profile built from first principles on W3C standards. Full d
 
 - `css/extensions/markdown-projection/` — MarkdownProjectionListener (D58 sharpened by D70/D71)
 - `css/extensions/markdown-render/` — HTML rendering with semantic CSS classes (RDFa dropped per D75)
-- `shapes/wiki-memory-l3/` — 6 SHACL shape files (resource + 5 entity shapes)
+- `overlays/wiki-memory/shapes/` — 6 SHACL shape files (resource + 5 entity shapes)
 
 ## Related skills
 

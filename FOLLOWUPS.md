@@ -2,6 +2,28 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## Shape catalog reconciliation (2026-05-18) — pyshacl fixture rebaseline
+
+The shape-catalog reconciliation commit deleted the legacy `shapes/wiki-memory-l3/`
+directory and re-pointed `tests/test_wiki_memory_l3_shapes.py` at the canonical
+`overlays/wiki-memory/shapes/`. The four `test_bundle_fixture_validates` cases are
+now `xfail` (strict) because the canonical shapes have tighter constraints than
+the Rung-1.4-vintage fixtures.
+
+Known fixture violations against canonical shapes:
+
+- `karpathy-andrej.md.meta` — canonical `PersonShape` requires `foaf:name`
+  (minCount 1); fixture has only `dct:title` + `foaf:nick`.
+- Other bundle fixtures share the same combined-graph failure mode; need to
+  re-validate each against canonical shapes individually to enumerate the
+  delta.
+
+This is part of **Shape Completion sprint** scope, not a standalone fix:
+the sprint will retighten/finalize the shapes (page, source, person,
+procedure, working) and add a Concept-specific shape, then rebaseline
+fixtures to match. Once fixtures pass, remove the `@pytest.mark.xfail`
+decorator and `strict=True` will catch any subsequent regression.
+
 ## Phase C.10 — MemTrigger v1 wiring (Memory Structuring Sprint, 2026-05-18)
 
 Phase C.10 + C.11 shipped MemTriggerListener as a MonitoringStore CDC

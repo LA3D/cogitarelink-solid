@@ -2,7 +2,7 @@
 
 Truth function for the `MarkdownProjectionListener`. Tests assert:
 - Listener output for `bodies/X.md` graph-equals `meta/X.md.meta`
-- pyshacl validates `meta/X.md.meta` against the shape at `shapes/wiki-memory-l3/<shape>.shacl.ttl`
+- pyshacl validates `meta/X.md.meta` against the shape at `overlays/wiki-memory/shapes/<shape>.shacl.ttl`
 - The 3 traversal queries in `traversal-queries/` return expected results against the loaded bundle
 
 ## Bundle
