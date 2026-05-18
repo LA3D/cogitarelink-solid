@@ -1,0 +1,24 @@
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+
+<>
+    a wiki:Affordance , wiki:WriteAffordance , prof:ResourceDescriptor ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    prof:hasRole wikirole:write-affordance ;
+    rdfs:label "Archive" ;
+    wiki:action mem:ArchiveAction ;
+    dct:title "Soft-delete a durable resource via tombstone." ;
+    dct:description "Marks a durable resource as archived using the tombstone pattern (D64). The resource's body remains accessible (for Memento time-travel and historical references) but its .meta declares 'a as:Tombstone' so agents know it's no longer active. See </vault/wiki/index.md> for the full L3 profile." ;
+    dct:isPartOf </vault/wiki/index.md> ;
+    wiki:precondition "Durable resource exists at /vault/wiki/{class}/{slug}.md and is not already archived (no existing as:Tombstone triple)." ;
+    wiki:postcondition "Resource's .meta carries 'a as:Tombstone' and prov:wasGeneratedBy [a mem:ArchiveAction; ...]; the body remains at its URL for time-travel access; agents reading the resource see the tombstone and treat it as archived." ;
+    wiki:errorMode "If PATCH fails (e.g., resource doesn't exist, agent lacks write permission), the appropriate HTTP error is returned; resource state unchanged." ;
+    wiki:procedure (
+        "PATCH /vault/wiki/{class}/{slug}.md.meta inserting the tombstone triple (<resource> a as:Tombstone) and prov:wasGeneratedBy [a mem:ArchiveAction; ...]"
+        "POST as:Announce activity multi-typed with mem:ArchiveAction to /vault/wiki/.operations/"
+    ) ;
+    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .

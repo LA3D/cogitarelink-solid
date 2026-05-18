@@ -1,0 +1,26 @@
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+
+<>
+    a wiki:Affordance , wiki:WriteAffordance , prof:ResourceDescriptor ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    prof:hasRole wikirole:write-affordance ;
+    rdfs:label "Supersede" ;
+    wiki:action mem:SupersedeAction ;
+    dct:title "Supersede an existing durable resource with a refined version." ;
+    dct:description "Replaces a durable resource with a refined version, preserving the prior version as a Memento snapshot and recording the supersession via prov:wasRevisionOf. Used when the resource's content is substantively rewritten while keeping the same URL identity. See </vault/wiki/index.md> for the full L3 profile." ;
+    dct:isPartOf </vault/wiki/index.md> ;
+    wiki:precondition "Target resource exists at /vault/wiki/{class}/{slug}.md; the refined version conforms to the same class's SHACL shape; the prior version's Memento URI is discoverable via response Link headers (rel=memento or rel=timegate)." ;
+    wiki:postcondition "Resource at /vault/wiki/{class}/{slug}.md is the refined version; Memento has captured the prior version; PROV-O records a mem:SupersedeAction with prov:wasRevisionOf pointing at the prior Memento URI." ;
+    wiki:errorMode "If destination SHACL rejects, 422 returned with sh:ValidationReport body; prior version remains intact." ;
+    wiki:procedure (
+        "GET /vault/wiki/{class}/{slug}.md to read the existing version and discover Memento URI from Link headers"
+        "Compose the refined body and .meta including prov:wasGeneratedBy [a mem:SupersedeAction; ...] and prov:wasRevisionOf <prior-memento-uri>"
+        "PUT /vault/wiki/{class}/{slug}.md with refined body; PATCH .meta with the Turtle (Memento snapshots prior automatically)"
+        "POST as:Announce activity multi-typed with mem:SupersedeAction to /vault/wiki/.operations/"
+    ) ;
+    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .

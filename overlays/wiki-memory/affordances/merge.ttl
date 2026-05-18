@@ -1,0 +1,28 @@
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+
+<>
+    a wiki:Affordance , wiki:WriteAffordance , prof:ResourceDescriptor ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    prof:hasRole wikirole:write-affordance ;
+    rdfs:label "Merge" ;
+    wiki:action mem:MergeAction ;
+    dct:title "Combine multiple durable resources into one." ;
+    dct:description "Composes N durable resources into a single merged resource, recording all inputs via prov:wasDerivedFrom and deleting the inputs. Used for deduplication and contradiction resolution. All inputs must be the same class; the merged resource preserves the class. See </vault/wiki/index.md> for the full L3 profile." ;
+    dct:isPartOf </vault/wiki/index.md> ;
+    wiki:precondition "All N input resources exist and conform to the same class's SHACL shape; agent has write permission on all inputs and on the merged target URL." ;
+    wiki:postcondition "Merged resource exists at /vault/wiki/{class}/{merged-slug}.md, conforms to the class's SHACL shape, and carries prov:wasDerivedFrom for each input; inputs have been deleted; Memento has captured deletions; the announcement enumerates all inputs and the merged resource." ;
+    wiki:errorMode "If merged SHACL fails, 422 returned with sh:ValidationReport body; no inputs deleted. If any input DELETE fails after the merged PUT succeeded, log the partial state in the announcement so a human can clean up." ;
+    wiki:procedure (
+        "GET each input resource to fetch body + .meta"
+        "Choose the merged target URL (canonical name if one exists, otherwise compose a slug from the merged content's title)"
+        "Compose the merged body and .meta including prov:wasGeneratedBy [a mem:MergeAction; ...] and prov:wasDerivedFrom <input-1>, <input-2>, ... for each input"
+        "PUT /vault/wiki/{class}/{merged-slug}.md with body; PATCH .meta with the Turtle"
+        "On 201, DELETE each input resource sequentially"
+        "POST as:Announce activity multi-typed with mem:MergeAction to /vault/wiki/.operations/, with as:object listing all inputs and as:result pointing at the merged resource"
+    ) ;
+    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .

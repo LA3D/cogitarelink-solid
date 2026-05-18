@@ -1,0 +1,28 @@
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+
+<>
+    a wiki:Affordance , wiki:WriteAffordance , prof:ResourceDescriptor ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    prof:hasRole wikirole:write-affordance ;
+    rdfs:label "Crystallize" ;
+    wiki:action mem:CrystallizeAction ;
+    dct:title "Crystallize a working note to durable storage." ;
+    dct:description "Promotes a working note from /vault/wiki/working/ to its class-appropriate durable container (per Type Index D78), validating against the destination class's SHACL shape. The substrate captures Memento snapshots of both events and records the action in PROV-O. See </vault/wiki/index.md> for the full L3 profile." ;
+    dct:isPartOf </vault/wiki/index.md> ;
+    wiki:precondition "Source resource exists at /vault/wiki/working/{slug}.md and conforms to the working SHACL shape; the source's rdf:type declares the destination class." ;
+    wiki:postcondition "Resource appears at /vault/wiki/{class-container}/{slug}.md and conforms to that class's SHACL shape; source has been deleted; Memento has captured both events; PROV-O records a mem:CrystallizeAction in the destination's .meta with prov:wasDerivedFrom pointing at the source URL." ;
+    wiki:errorMode "If destination SHACL rejects, 422 returned with sh:ValidationReport body; agent retries with a corrected resource. Source is NOT deleted on failure." ;
+    wiki:procedure (
+        "GET /vault/wiki/working/{slug}.md to fetch the source body and .meta"
+        "Look up destination container via Type Index lookup on the source's rdf:type"
+        "Compose destination body (markdown) and .meta (Turtle) including prov:wasGeneratedBy [a mem:CrystallizeAction; ...] and prov:wasDerivedFrom <working-source>"
+        "PUT /vault/wiki/{class-container}/{slug}.md with body; PATCH .meta with the Turtle"
+        "On 201, DELETE /vault/wiki/working/{slug}.md"
+        "POST as:Announce activity multi-typed with mem:CrystallizeAction to /vault/wiki/.operations/"
+    ) ;
+    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .

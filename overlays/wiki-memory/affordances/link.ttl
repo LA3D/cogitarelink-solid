@@ -1,0 +1,26 @@
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+
+<>
+    a wiki:Affordance , wiki:WriteAffordance , prof:ResourceDescriptor ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    prof:hasRole wikirole:write-affordance ;
+    rdfs:label "Link" ;
+    wiki:action mem:LinkAction ;
+    dct:title "Add a typed cross-reference edge between resources." ;
+    dct:description "Patches a subject resource's .meta to add a typed edge (e.g., wiki:extends, wiki:supports, cito:cites) pointing at another resource. Only substrate-governed predicates per D81 are accepted; check the subject's class shape's wiki:governs list before invoking. See </vault/wiki/index.md> for the full L3 profile." ;
+    dct:isPartOf </vault/wiki/index.md> ;
+    wiki:precondition "Subject and object resources both exist; the chosen predicate is one of the substrate-governed predicates listed in the subject's class shape (via wiki:governs); agent has write permission on the subject's .meta." ;
+    wiki:postcondition "Subject's .meta contains the new triple <subject> <predicate> <object>; PROV-O records a mem:LinkAction on the .meta." ;
+    wiki:errorMode "If the chosen predicate is not substrate-governed for the subject's class, the PATCH validation rejects with 422 and sh:ValidationReport; .meta unchanged." ;
+    wiki:procedure (
+        "GET /vault/wiki/{class}/{slug}.md.meta to inspect current edges and read the class shape's wiki:governs list"
+        "Verify the chosen predicate is in wiki:governs for the subject's class; if not, fail with a clear error to the user"
+        "PATCH /vault/wiki/{class}/{slug}.md.meta inserting the typed edge triple and prov:wasGeneratedBy [a mem:LinkAction; ...]"
+        "POST as:Announce activity multi-typed with mem:LinkAction to /vault/wiki/.operations/"
+    ) ;
+    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
