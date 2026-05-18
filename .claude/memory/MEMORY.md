@@ -5,24 +5,21 @@ recaps live in git history and the vault decisions log
 (`~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`).
 For decision IDs, invoke the `decision-lookup` skill.
 
-## Project state (as of 2026-05-18)
+## Project state (as of 2026-05-18, end of Memory Structuring Sprint)
 
-- **Branch**: main
+- **Branch**: sprint worktree `worktree-sprint+memory-structuring-2026-05-18` (in `.claude/worktrees/sprint+memory-structuring-2026-05-18`). Ready to merge to main when reviewed.
 - **Shipped**: Phase 1 + 2 + 2b + Rung 1.4 + Phase 5j + AddressBook + owner-identity
-  + **Phase 7a wiki-search** (2026-05-18). Read-only Memento, tombstone semantics,
-  wiki-memory L3 reference profile (D78–D81), Pod-as-toolkit capability catalog
-  (D83), PROF profile descriptors + wikirole (D84–D86), AddressBook substrate
-  (D87/D88), owner-identity overlay (D89/D90), wiki-search OSLC Query 3.0 surface
-  (**D91 in repo decisions; the vault decisions log calls it D87** — vault
-  skipped D78–D86 numbering. The repo `decision-lookup` skill is canonical for
-  sequential D-numbering, so use D91 in code/commit references going forward;
-  prior Phase 7a commits already merged say "D87" — accept the dual-numbering
-  on past commits, use D91 from now on), and **Phase 7a closeout: wiki-search
-  walker using `DataAccessor` end-to-end** (D92 in repo / vault-D88, ratified
-  2026-05-18, commit `2f2f28b`). 77/77 wiki-search unit tests + 13/13
-  non-skipped integration tests green; p95 7.6 ms (3.5× faster than
-  HTTP-self-request architecture; 500ms ceiling). Six `TestWacScenarios`
-  remain stubbed under the behavior-before-security sequencing principle.
+  + Phase 7a wiki-search + Phase 7a closeout + **Memory Structuring Sprint** (2026-05-18).
+  Read-only Memento, tombstone semantics, wiki-memory L3 reference profile (D78–D81),
+  Pod-as-toolkit capability catalog (D83), PROF profile descriptors + wikirole (D84–D86),
+  AddressBook substrate (D87/D88), owner-identity overlay (D89/D90 repo-numbered as
+  D89/D90 in vault; vault skipped D78–D86), wiki-search OSLC Query 3.0 surface
+  (repo D91 / vault D87; dual-numbering legacy), Phase 7a closeout DataAccessor walker
+  (repo D92 / vault D88), and **Memory Structuring Sprint shipped** (repo D93/D94/K4
+  / vault D89/D90/K-note). 17 integration tests passing on the live Pod across Phase A
+  (synthesis), Phase B (six action E2E), and Phase C (announcement log + Solid
+  Notifications subscription smoke); 4 documented `pytest.skip` for substrate
+  emission tests pending MemTriggerListener detector hook integration.
 - **Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to
   **wiki-memory L3 as canonical reference profile, vault as one application**
   (D70–D74).
@@ -226,37 +223,77 @@ Companion docs:
 - Implementation plan: `docs/superpowers/plans/2026-05-18-wiki-search-implementation.md`
 - Original design: `docs/plans/2026-05-17-wiki-search-design.md`
 
-## Next plans (post-Phase-7a)
+## Next plans (post-Memory-Structuring-Sprint)
 
 In dependency order:
 
-1. **Memory Structuring Sprint** (next sprint). Finish wiki-memory L3:
-   two-stage commit (D73 working-memory → `mem:Crystallize` → durable),
-   full coverage of the remaining shape classes
-   (Concept/Source/Procedure/WorkingMemory/Page), memory-substrate
-   triggers (D74 — `mem:*` AS2 vocab on LDN inbox + Solid Notifications).
-   Runs under `dev-allow-all` per the behavior-before-security
-   sequencing principle.
+1. **Shape Completion follow-on sprint** (deferred from Memory Structuring Sprint
+   scope decision). Adds full predicate sets + cardinalities + templates +
+   per-shape affordances + agent instructions for Concept/Source/Procedure/
+   WorkingMemory/Page shapes. Substrate infrastructure (synthesis page, mem:
+   vocabulary, operations layer, notifications layer) shipped in the Memory
+   Structuring Sprint; this completes the content-shape side.
 
-2. **Rung 1.5 eval** (after Memory Structuring Sprint). Skill-creator
-   harness, with-skill vs without-skill. First measurable claim from
-   the active plan. Tests solid-addressbook + solid-wiki-memory-l3 +
-   solid-owner-identity + wiki-search against cold-start agents.
-   Eval surfaces which caps + affordances actually get reused vs which
-   are YAGNI, informing FOLLOWUPS trim list. **Also surfaces evidence
-   for the credential-model design** that gates un-stubbing the six
+2. **MemTriggerListener detector wiring** (substrate hook integration).
+   Detectors (UnprocessableWrite, BoundExceeded, ContradictionDetected,
+   ReflectionDue) are unit-tested but not invoked from the listener's
+   `changed` handler in v1. Each needs a specific substrate hook (shape-
+   validator failure pathway, ldp:contains counter, edge-conflict analysis,
+   timer integration). Documented in FOLLOWUPS.md "Phase C.10 wiring scope
+   + deferrals". Un-skip the 4 mem_events integration tests as each detector
+   gets wired.
+
+3. **Rung 1.5 eval** (after #1 + #2). Skill-creator harness, with-skill vs
+   without-skill. First measurable claim from the active plan. Tests
+   solid-addressbook + solid-wiki-memory-l3 + solid-owner-identity +
+   wiki-search + the 6 new action skills + the 3 new inbox skills against
+   cold-start agents. Eval surfaces which caps + affordances actually get
+   reused vs which are YAGNI, informing FOLLOWUPS trim list. **Also surfaces
+   evidence for the credential-model design** that gates un-stubbing the six
    `TestWacScenarios` (see Phase 7a closeout).
 
 Phase 7b/c/d (engine swap, hybrid RRF, in-pod index) are deferred until
 Rung 1.5 evidence justifies. Wiki URI scheme rethink (per FOLLOWUPS) slots
-between #1 and #2 if picked up.
+between #1 and #3 if picked up.
 
 ### Closed (2026-05-18)
+
+- ~~**Memory Structuring Sprint**~~ — shipped this session. Ratified
+  D93 (synthesis page) + D94 (mem: vocabulary, Action/Event taxonomy
+  with proto-grounded parents) + K4 (JSON-LD <script> compatible with
+  D75) in repo decisions; vault D89/D90/K-note. 17 integration tests
+  passing across Phase A/B/C, 4 documented skips for substrate emission
+  pending detector hook integration (see Next plan #2). Sprint tag:
+  `memory-structuring-sprint-complete`. Substantive deviations from
+  original spec: vocabulary renamed Operation→Action (proto-knowledge
+  with schema.org), Announcement category collapsed into multi-typed
+  as:Announce activities (COAR Notify pattern). Six substrate-behavior
+  findings recorded in decisions.md.
 
 - ~~**Wiki-search walker Path 1a redesign**~~ — shipped commit `2f2f28b`.
   Ratified as **D92** in repo / vault-D88. DataAccessor end-to-end
   (broader than the originally-planned hybrid — see decision text for
   why). p95 7.6 ms.
+
+### Memory Structuring Sprint findings (durable substrate constraints)
+
+Recorded in vault decisions log "Substrate-behavior findings" section.
+Worth remembering across sessions:
+
+- **N3 Patch rejects blank nodes in `solid:inserts`** (HTTP 422). PROV-O
+  activity nodes MUST use named fragment URIs, not `[a Type; ...]` blank
+  nodes. Agents performing memory actions: translate. Detectors emit
+  with `urn:uuid:{...}` activity subjects.
+- **CSS treats trailing-slash URLs as LDP containers**. Body PUTs to
+  `/foo/` are rejected or body ignored. The synthesis page is at
+  `/vault/wiki/index.md`, not `/vault/wiki/`.
+- **Storage description PATCH returns 405** — fully static via Components.js
+  void-description.json; runtime PATCH not supported.
+- **Components.js Override enforcement**: only ONE Override per instance
+  at preprocess time. Multiple Overrides raise ErrorResourcesContext. Last-
+  imported does NOT win. mem-trigger.json is the canonical owner of the
+  WorkerParallelInitializer Override (lists Memento+MarkdownProjection+
+  MemTrigger handlers).
 
 ### Research-track (not scoped to a sprint)
 

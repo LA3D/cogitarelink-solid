@@ -1,6 +1,6 @@
 # SOLID Pod Decisions Index
 
-Always loaded. Concise index of all architectural decisions (D1-D92, K1-K3). Vault is canonical source:
+Always loaded. Concise index of all architectural decisions (D1-D94, K1-K4). Vault is canonical source:
 `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
 ## Skill cross-reference
@@ -28,6 +28,8 @@ CSS-builder skills (no D-cluster but referenced by many decisions): `css-extensi
 **D91 (wiki-memory search layer)** — Phase 7 decision. No dedicated skill yet; buildable spec at `docs/plans/2026-05-17-wiki-search-design.md`.
 
 **D92 (wiki-search walker — DataAccessor end-to-end)** — Phase 7a closeout decision. Supersedes provisional/retracted D91-walker-architecture (HTTP self-request rewrite). Design + findings doc: `docs/plans/2026-05-18-wiki-search-walker-redesign.md`.
+
+**D93 (synthesis page as primary agent entry point) + D94 (mem: Action/Event vocabulary) + K4 (JSON-LD script tag is not RDFa)** — Memory Structuring Sprint. Design + plan: `docs/superpowers/specs/2026-05-18-memory-structuring-sprint-design.md` + `docs/superpowers/plans/2026-05-18-memory-structuring-sprint.md`. See "Memory Structuring Sprint" section below + the substrate-behavior findings recorded in the same section.
 
 ## Phase 1 foundation (D1–D28)
 
@@ -538,6 +540,67 @@ Root cause is a stream lifecycle bug in CSS's wrapping of `N3StreamWriter` / `Gu
 - `docs/plans/2026-05-18-wiki-search-walker-redesign.md` — design note + implementation findings section
 
 **See also**: D91 (wiki-memory search layer — D92 closes out the walker architecture decision left open after D91 ratified the API surface); `solid-identity-stack` skill (`references/dpop.md` documents why credential forwarding to HTTP self-requests is architecturally impossible under Solid-OIDC).
+
+## Memory Structuring Sprint (D93, D94, K4, 2026-05-18)
+
+### D93 — Wiki-Memory L3 Synthesis Page as Primary Agent Entry Point
+
+**Status**: Ratified 2026-05-18 (Memory Structuring Sprint Phase A shipped). Vault sync as D89 (vault sequence; vault-D89 = repo-D93).
+
+**Decision**: The wiki-memory L3 substrate exposes one well-known agent entry point at `/vault/wiki/index.md` (a regular resource, NOT the trailing-slash container URL — CSS rejects PUT on container URLs with the body ignored) as a dogfooded wiki-memory page. The page returns three representations: `text/markdown` body, `text/turtle` `.meta`, and rendered HTML with embedded JSON-LD in a `<script type="application/ld+json">` block.
+
+Cross-references from every SHACL shape's `sh:agentInstruction`, the storage description's `wiki:profileDocument` predicate, the PROF descriptor at `/vault/meta/profiles/page` (`prof:hasResource` with `prof:role wikirole:overview`), and the inbox/event container `.meta` resources all point back to the synthesis (U-shape reinforcement). The synthesis carries a navigation principle near the top declaring three layered dereferencing primitives (resources, Link headers, vocabularies-as-Linked-Data) and a "follow your nose" instruction so blind agents can bootstrap the schema by dereferencing class IRIs.
+
+Parallels the emerging entry-point pattern in `llms.txt` (Howard / fast.ai), A2A `/.well-known/agent.json` (Google), and NLWeb's schema.org-embedded discovery (Microsoft + Schema.org), but uses Solid-native vocabularies (LDP, AS2, SHACL, PROF, VoID, PROV-O, RFC 6906) throughout.
+
+Serves two agent use cases simultaneously: skilled agents (using `solid-wiki-memory-l3` or per-action skills) and blind agents (generic web clients with only HTTP + RDF parsing).
+
+**See also**: D44 (storage description as router), D52 (affordance descriptors), D58 (dual-layer linking), D70/D71 (L3 stratification), D75 (rendered HTML; K4 clarifies JSON-LD compatibility), D77/D78 (shape catalog + class-based targeting), D84/D86 (URI conformance + PROF), `docs/superpowers/specs/2026-05-18-memory-structuring-sprint-design.md`.
+
+### D94 — `mem:` vocabulary: Action / Event taxonomy with proto-grounded parents
+
+**Status**: Ratified 2026-05-18 (Memory Structuring Sprint Phase B shipped). Vault sync as D90.
+
+**Decision**: The wiki-memory L3 memory-action vocabulary is published at `https://pod.vardeman.me/vault/ontology/mem` (hash-namespace per D84) with two top-level Classes — `mem:Action` (categories of agent action; not messages; standalone) and `mem:Event` (substrate-emitted analysis activities; subclass of `as:Activity`). Twelve subclasses follow.
+
+**Refinement during the sprint** (over the original spec): renamed from `mem:Operation` to `mem:Action` to align with schema.org Action's proto-knowledge in LLM training data. The original spec also defined a third top-level category `mem:Announcement` with six past-tense subclasses (Crystallized, Superseded, etc.); the sprint **collapsed this category** in favor of the COAR Notify multi-typing pattern — agents post `as:Announce` activities multi-typed with the same `mem:*Action` class used in the PROV-O record. The vocabulary shrunk from 18 to 14 classes.
+
+**Action subclasses** (six): `CrystallizeAction` (rdfs:subClassOf as:Move), `SupersedeAction` (schema:ReplaceAction), `MergeAction` (no clean proto parent), `DemoteAction` (as:Undo), `ArchiveAction` (as:Delete), `LinkAction` (as:Add).
+
+**Event subclasses** (six): `BoundExceeded` (no proto parent), `ContradictionDetected` (as:Flag), `ConsolidationSuggested` (as:Offer), `ReflectionDue` (no proto parent), `OODQuerySignal` (no proto parent), `UnprocessableWrite` (as:Reject).
+
+Proto-grounded subclass inheritance lets an LLM dereference any `mem:*` class and learn its semantics from the AS2 / schema.org parent the model already knows from pre-training. Where no clean proto-match exists (multi-source merge, Fano-bound, scheduling, ML OOD signals), the subclass inherits only from `mem:Action` or `mem:Event` — accept the inventiveness.
+
+Memory actions are performed as direct LDP CRUD sequences (per Model B — LDN is NOT the primary write API, just the side channel for events). The action's type is recorded in the resulting resource's `.meta` via `prov:wasGeneratedBy`. After completing an action, the agent posts an `as:Announce` activity multi-typed with the same Action class to `/vault/wiki/.operations/`.
+
+Events are emitted by the `MemTriggerListener` CSS extension on cross-resource analysis. v1 has the listener attached but most detectors stubbed pending substrate hook integration (per `FOLLOWUPS.md "Phase C.10 wiring scope + deferrals"`).
+
+**FAIR enrichment**: every `mem:` term carries `rdfs:label`, `rdfs:isDefinedBy`, `rdfs:comment`, `skos:scopeNote`, `skos:example` (inline Turtle), and `rdfs:seeAlso`. The wiki: vocab was simultaneously FAIR-enriched and gained 5 new affordance-descriptor predicates (`wiki:action`, `wiki:precondition`, `wiki:postcondition`, `wiki:errorMode`, `wiki:procedure`) plus 7+ previously-orphaned storage-description terms (`wiki:L3Profile`, `wiki:typeIndex`, `wiki:shapeCatalog`, etc.).
+
+Refines D74 (which named five `mem:*` triggers as a category) by enumerating the full Event set, adding the Action category, and collapsing the spec's planned Announcement category.
+
+**See also**: D73 (two-stage commit; `CrystallizeAction` is the durable-promotion verb), D74 (the original `mem:*` trigger framing), D58 (dual-layer linking; .meta is where PROV-O lives), D81 (predicate-level governance; affects `LinkAction`), D17/D65 (MonitoringStore CDC; `MemTriggerListener` builds on this), D56 (Solid Notifications), AS2/PROV-O specifications. `docs/superpowers/specs/2026-05-18-memory-structuring-sprint-design.md`.
+
+### K4 — JSON-LD `<script>` Tag in Rendered HTML is Not RDFa (D75 Clarification)
+
+**Status**: K-note, 2026-05-18.
+
+**Clarification**: D75 ("Rendered HTML Serves Humans; No RDFa Embedding") forbids RDFa attribute-tangled markup. Embedded JSON-LD `<script type="application/ld+json">` blocks are not RDFa — they're cleanly separable from HTML body markup, follow the schema.org / NLWeb / Google Knowledge Graph pattern, and serve agents who chose HTML as their representation. The `markdown-render` extension's emission of JSON-LD script tags (per the Memory Structuring Sprint Phase A; `JsonLdScriptInjector`) is therefore compatible with D75's framing.
+
+The motivation for D75 (avoiding maintenance complexity from attribute-tangled triples interleaved with display markup) does not apply to script tags. The injected JSON-LD comes from the resource's `.meta` triples (filtered to subject = the resource IRI); the rendered HTML body remains RDFa-free.
+
+**See also**: D75, this sprint's design doc.
+
+## Substrate-behavior findings (Memory Structuring Sprint, 2026-05-18)
+
+Discovered while running the Phase B + Phase C integration tests against live CSS. Worth recording as durable substrate constraints (RQ-CSS-* etc. may be filed against these in future):
+
+1. **CSS returns HTTP 205** (Reset Content) for successful PUT-update and DELETE, not 204. Test assertions accept (200, 201, 204, 205).
+2. **Memento returns HTTP 410 Gone** for deleted resources with prior Memento history — correct RFC 7089 tombstone semantics. Test assertions accept (404, 410) for "resource gone."
+3. **N3 Patch rejects blank nodes in `solid:inserts` formulas** (HTTP 422 "An N3 Patch delete/insert formula can not contain blank nodes"). PROV-O activity nodes MUST use named fragment URIs (e.g., `<resource#act-{timestamp}>` or `<urn:uuid:...>`), NOT the `[a mem:Action]` blank-node syntax. The affordance descriptor `wiki:procedure` instructions imply blank-node patterns; agents performing actions must translate to named URIs. Skolemization is also a viable workaround for nested blank nodes in SHACL ValidationReports (see UnprocessableWriteDetector implementation).
+4. **Memento version URIs are available immediately** after first PUT — the TimeMap at `{resource}?ext=timemap` returns a `memento:Memento` entry with a `?version=YYYYMMDDHHMMSS` URI usable for `prov:wasRevisionOf` from the next PUT.
+5. **Storage description PATCH returns HTTP 405** ("Only GET requests can target the storage description"). The storage description is fully static via Components.js `void-description.json`; runtime PATCH is not supported. `apply.py` logs a warning and continues — overlay data remains discoverable via the static config + per-resource `.meta` patches.
+6. **Components.js Override enforcement**: only ONE Override per instance is allowed at preprocess time. Multiple Overrides targeting the same `urn:solid-server:default:<Instance>` raise `ErrorResourcesContext: Found multiple Overrides targeting...`. Last-imported does NOT win; pre-flight rejection. Workaround: consolidate. Per K1 (pre-existing), some Override variants (`OverrideListInsertAt` vs empty list) have separate edge cases.
 
 ## Open research questions
 
