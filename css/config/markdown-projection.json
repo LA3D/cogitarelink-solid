@@ -7,24 +7,12 @@
   ],
   "@graph": [
     {
-      "comment": "MarkdownProjectionListener — subscribes to MonitoringStore 'changed' events, projects body wikilinks + frontmatter to .meta Turtle for every /wiki/*.md write (D58/D71/D72). Mirrors the MementoCommitListener wiring pattern.",
+      "comment": "MarkdownProjectionListener — subscribes to MonitoringStore 'changed' events, projects body wikilinks + frontmatter to .meta Turtle for every /wiki/*.md write (D58/D71/D72). Mirrors the MementoCommitListener wiring pattern. K1: the WorkerParallelInitializer Override that registers this listener lives in mem-trigger.json (single Override per instance — all three listeners enumerated there).",
       "@id": "urn:cogitarelink:MarkdownProjectionListener",
       "@type": "MarkdownProjectionListener",
       "store": { "@id": "urn:solid-server:default:ResourceStore" },
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
       "dataDir": { "@id": "urn:solid-server:default:variable:rootFilePath" }
-    },
-    {
-      "comment": "Replace WorkerParallelInitializer handlers list with both MementoCommitListener AND MarkdownProjectionListener. This config is imported after memento.json so its overrideParameters wins. K1: OverrideListInsertAt fails on empty list so we use full replacement (same K1 workaround as memento.json). Both listeners must be listed here.",
-      "@type": "Override",
-      "overrideInstance": { "@id": "urn:solid-server:default:WorkerParallelInitializer" },
-      "overrideParameters": {
-        "@type": "ParallelHandler",
-        "handlers": [
-          { "@id": "urn:cogitarelink:MementoCommitListener" },
-          { "@id": "urn:cogitarelink:MarkdownProjectionListener" }
-        ]
-      }
     }
   ]
 }
