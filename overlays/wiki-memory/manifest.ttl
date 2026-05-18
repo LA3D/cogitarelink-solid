@@ -54,7 +54,13 @@
         </vault/meta/affordances/hub-view.ttl> ,
         </vault/meta/affordances/breadcrumb-view.ttl> ,
         </vault/meta/affordances/memento.ttl> ,
-        </vault/meta/affordances/wiki-search-grep.ttl> ;
+        </vault/meta/affordances/wiki-search-grep.ttl> ,
+        </vault/meta/affordances/crystallize.ttl> ,
+        </vault/meta/affordances/supersede.ttl> ,
+        </vault/meta/affordances/merge.ttl> ,
+        </vault/meta/affordances/demote.ttl> ,
+        </vault/meta/affordances/archive.ttl> ,
+        </vault/meta/affordances/link.ttl> ;
 
     overlay:installsRoleScheme
         </vault/ontology/wikirole> ;
