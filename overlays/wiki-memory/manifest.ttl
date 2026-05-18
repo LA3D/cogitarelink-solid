@@ -62,6 +62,13 @@
         </vault/meta/profiles/procedure> ,
         </vault/meta/profiles/working> ;
 
+    overlay:installsPage [
+        overlay:targetResource <https://pod.vardeman.me/vault/wiki/index.md> ;
+        overlay:body <synthesis/index.md> ;
+        overlay:meta <synthesis/index.md.meta.ttl> ;
+        dct:title "Wiki-memory L3 synthesis (deploy at substrate root)"
+    ] ;
+
     overlay:installsTypeRegistration
         [ solid:forClass wiki:Page       ; solid:instanceContainer </vault/wiki/pages/> ] ,
         [ solid:forClass wiki:Source     ; solid:instanceContainer </vault/wiki/sources/> ] ,
