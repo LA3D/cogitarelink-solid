@@ -1,9 +1,5 @@
-import { readFileSync } from "node:fs";
-import { request as undiciRequest, Agent } from "undici";
-import { Parser as N3Parser } from "n3";
-
 import type {
-  ResourceStore,
+  DataAccessor,
   PermissionReader,
   Credentials,
   ResourceIdentifier,
@@ -14,86 +10,93 @@ export interface WalkResult {
   body: string;
 }
 
-/** Minimal fetch interface — injectable for tests; defaults to undici. */
-export interface WalkFetch {
-  (url: string, headers: Record<string, string>): Promise<{
-    status: number;
-    contentType: string;
-    text(): Promise<string>;
-    dump(): Promise<void>;
-  }>;
-}
-
 const MARKDOWN_TYPES = new Set(["text/markdown", "text/x-markdown"]);
-const LDP_CONTAINS = "http://www.w3.org/ns/ldp#contains";
-
-// Build an undici Agent that trusts the mkcert root CA (or any CA in
-// NODE_EXTRA_CA_CERTS) so self-signed dev certs work without disabling verification.
-function buildAgent(): Agent | undefined {
-  const caPath = process.env.NODE_EXTRA_CA_CERTS;
-  if (!caPath) return undefined;
-  try {
-    const ca = readFileSync(caPath);
-    return new Agent({ connect: { ca } });
-  } catch {
-    return undefined;
-  }
-}
-
-const AGENT = buildAgent();
-
-/** Default production fetch — undici with mkcert CA trust. */
-const defaultFetch: WalkFetch = async (url, headers) => {
-  const { statusCode, headers: respHeaders, body } = await undiciRequest(url, {
-    headers,
-    dispatcher: AGENT,
-  });
-  const ct = ((respHeaders["content-type"] as string | undefined) ?? "")
-    .split(";")[0].trim();
-  return {
-    status: statusCode,
-    contentType: ct,
-    text: () => body.text(),
-    dump: () => body.dump(),
-  };
-};
+const RDF_CONTENT_TYPE_PREDICATE = "urn:npm:solid:community-server:internal:contentType";
 
 /**
- * Recursive BFS over an LDP container via HTTP. Yields { url, body } for
+ * Recursive BFS over an LDP container's descendants. Yields { url, body } for
  * every descendant whose Content-Type is text/markdown AND is read-allowed
- * for the supplied credentials (checked via the CSS PermissionReader).
+ * for the supplied credentials.
  *
- * Uses HTTP self-requests rather than ResourceStore.getRepresentation() to
- * avoid acquiring CSS resource locks inside the search request handler. The
- * WAC permission check is still done via PermissionReader so omit-don't-deny
- * semantics (subtree pruning on denied containers) are preserved.
+ * Architecture: everything goes through DataAccessor (the lowest layer,
+ * below `LockingResourceStore` and below `RepresentationConvertingStore`).
+ * Containers are enumerated via `getChildren()`; document content types
+ * come from `getMetadata()`; document bodies come from `getData()`. No
+ * `store.getRepresentation()` calls anywhere in the walker.
  *
- * The optional `fetch` parameter is an injection seam for unit tests.
- * In production, omit it (or pass undefined) to use the default undici fetch.
+ * Why not ResourceStore: integration testing showed that consuming any
+ * store-returned stream from inside the handler reliably hits an
+ * N3StreamWriter `callback is not a function` uncaught exception that
+ * crashes the CSS process. This affects both containers (lazy Turtle
+ * body serialization) and documents (the readable-stream lifecycle
+ * wrapping that CSS layers on top of the raw file stream). DataAccessor
+ * returns a simple Readable directly from the file system, bypassing
+ * the layered stream wrapping that triggers the bug.
+ *
+ * Security model: identical to what was originally planned for Path 1a.
+ * The `PermissionReader` gate is the only thing protecting unauthorized
+ * callers — CSS v8 has no permission-aware store wrapper, so
+ * `dataAccessor.*` and `store.getRepresentation` are both
+ * privileged-by-design at the data layer. Using DataAccessor here makes
+ * the privileged-deputy pattern explicit rather than implicit.
+ *
+ * See docs/plans/2026-05-18-wiki-search-walker-redesign.md.
  */
 export async function* walkContainer(
-  startUrl: string,
-  store: ResourceStore,
+  seedUrls: string[],
+  dataAccessor: DataAccessor,
   permissionReader: PermissionReader,
   credentials: Credentials,
-  options?: { fetch?: WalkFetch },
 ): AsyncGenerator<WalkResult> {
-  const fetchFn = options?.fetch ?? defaultFetch;
-  const queue: string[] = [startUrl];
+  const queue: string[] = [...seedUrls];
 
   while (queue.length > 0) {
     const currentUrl = queue.shift()!;
     const identifier: ResourceIdentifier = { path: currentUrl };
 
+    // ─── SECURITY BOUNDARY ─────────────────────────────────────────────
+    // This PermissionReader check is the ONLY thing protecting unauthorized
+    // callers from reading resources the requester isn't entitled to.
+    // CSS v8 has no permission-aware store wrapper; DataAccessor is
+    // privileged-by-design (it's the file-system layer). A bug here is a
+    // data leak. Do not remove this check on the grounds that "we'll add
+    // store-layer auth later" — that infrastructure does not exist.
+    //
+    // Omit-don't-deny: a denied descendant is silently skipped. For
+    // containers, this prunes the entire subtree.
+    // ─────────────────────────────────────────────────────────────────
     const allowed = await checkRead(permissionReader, identifier, credentials);
     if (!allowed) continue;
 
     if (currentUrl.endsWith("/")) {
-      const children = await fetchContainerChildren(currentUrl, fetchFn);
-      for (const child of children) queue.push(child);
+      // Container: enumerate children, no stream involved.
+      try {
+        for await (const childMeta of dataAccessor.getChildren(identifier)) {
+          const childIri = (childMeta as any).identifier?.value;
+          if (typeof childIri === "string" && childIri.length > 0) {
+            queue.push(childIri);
+          }
+        }
+      } catch {
+        // Container missing or read failed; skip subtree.
+      }
     } else {
-      const body = await fetchMarkdownBody(currentUrl, fetchFn);
-      if (body !== null) yield { url: currentUrl, body };
+      // Document: check content type via metadata, then read body via getData.
+      let ct = "";
+      try {
+        const meta: any = await dataAccessor.getMetadata(identifier);
+        ct = extractContentType(meta);
+      } catch {
+        continue;
+      }
+      if (!MARKDOWN_TYPES.has(ct)) continue;
+      try {
+        const stream = await dataAccessor.getData(identifier);
+        const body = await readBody(stream);
+        yield { url: currentUrl, body };
+      } catch {
+        continue;
+      }
     }
   }
 }
@@ -115,7 +118,7 @@ async function checkRead(
   }
 }
 
-// CSS AllStaticReader + WAC readers return an IdentifierMap whose values
+// CSS v8 AllStaticReader + WAC readers return an IdentifierMap whose values
 // are keyed by the PERMISSIONS IRI from @solidlab/policy-engine.
 const PERMISSIONS_READ_IRI = "urn:report:permissions:Read";
 
@@ -136,53 +139,29 @@ function isReadAllowed(permission: any, url: string): boolean {
 }
 
 /**
- * Fetch an LDP container via HTTP and parse ldp:contains members from the
- * Turtle body. Returns absolute IRIs for all contained children.
+ * Extract contentType from a RepresentationMetadata. The metadata object
+ * has a `contentType` accessor in CSS, but in tests we also accept the
+ * raw predicate-keyed shape.
  */
-async function fetchContainerChildren(url: string, fetchFn: WalkFetch): Promise<string[]> {
-  try {
-    const resp = await fetchFn(url, { accept: "text/turtle" });
-    if (resp.status !== 200) { await resp.dump(); return []; }
-    if (!resp.contentType.startsWith("text/turtle")) { await resp.dump(); return []; }
-    const text = await resp.text();
-    return parseLdpContains(text, url);
-  } catch {
-    return [];
+function extractContentType(meta: any): string {
+  if (typeof meta?.contentType === "string") {
+    return meta.contentType.split(";")[0].trim();
   }
-}
-
-/**
- * Parse ldp:contains IRI values from a Turtle container listing.
- * Relative IRIs are resolved against the container URL (base).
- */
-function parseLdpContains(turtle: string, baseUrl: string): string[] {
-  const children: string[] = [];
   try {
-    const parser = new N3Parser({ baseIRI: baseUrl });
-    const quads = parser.parse(turtle);
-    for (const quad of quads) {
-      if (
-        quad.predicate.value === LDP_CONTAINS &&
-        quad.object.termType === "NamedNode"
-      ) {
-        children.push(quad.object.value);
-      }
+    if (typeof meta?.get === "function") {
+      const term = meta.get(RDF_CONTENT_TYPE_PREDICATE);
+      if (term?.value) return String(term.value).split(";")[0].trim();
     }
-  } catch { /* skip malformed containers */ }
-  return children;
+  } catch { /* fall through */ }
+  return "";
 }
 
-/**
- * Fetch a non-container resource via HTTP. Returns the body if the
- * Content-Type is text/markdown, null otherwise.
- */
-async function fetchMarkdownBody(url: string, fetchFn: WalkFetch): Promise<string | null> {
-  try {
-    const resp = await fetchFn(url, { accept: "text/markdown, */*;q=0.1" });
-    if (resp.status !== 200) { await resp.dump(); return null; }
-    if (!MARKDOWN_TYPES.has(resp.contentType)) { await resp.dump(); return null; }
-    return await resp.text();
-  } catch {
-    return null;
+async function readBody(data: AsyncIterable<any>): Promise<string> {
+  let out = "";
+  for await (const chunk of data) {
+    out += typeof chunk === "string" ? chunk : Buffer.isBuffer(chunk)
+      ? chunk.toString("utf-8")
+      : String(chunk);
   }
+  return out;
 }

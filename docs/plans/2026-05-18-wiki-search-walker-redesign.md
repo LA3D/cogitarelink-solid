@@ -376,11 +376,95 @@ future sprint when VC use is non-experimental.
 
 1. ✅ Probes complete (DataAccessor confirmed; permission-aware store
    confirmed absent; lock-granularity confirmed per-identifier).
-2. Implement Path 1a as the sprint above. ~half a day.
-3. Ratify as **D92** in `.claude/skills/decision-lookup/decisions.md`
-   once shipped; sync to vault `SOLID-Pod-Decisions.md`.
+2. ✅ Implementation sprint complete (2026-05-18). See "Implementation
+   findings" below for architectural deviation from the original Path 1a
+   plan.
+3. Ratify as **D92** in `.claude/skills/decision-lookup/decisions.md`;
+   sync to vault `SOLID-Pod-Decisions.md`.
 4. Retract provisional D91 from FOLLOWUPS (already noted as superseded
    in this design doc; FOLLOWUPS entry struck through).
+
+## Implementation findings (sprint, 2026-05-18 evening)
+
+The Path 1a plan called for `DataAccessor.getChildren()` for the seed
+and `store.getRepresentation()` for descendants. Integration testing
+during the sprint revealed that the original lock-deadlock failure
+mode was only one symptom of a broader problem: **consuming any
+store-returned stream from inside a handler is fragile under CSS's
+readable-stream wrapping.**
+
+Three observed crash modes during implementation:
+
+1. **Re-entrant lock on request target** (the originally diagnosed bug).
+   `store.getRepresentation(target)` deadlocks because the outer
+   request pipeline holds the target's lock. Fixed by seeding via
+   `DataAccessor.getChildren()`.
+
+2. **Container body drain hangs on subcontainers** (new finding).
+   Calling `store.getRepresentation(subcontainer)` and draining its
+   data stream — even though the lock is fresh — reliably hangs.
+   N3StreamWriter, which CSS uses to lazily serialize container Turtle
+   bodies, doesn't drain cleanly when consumed inside a handler.
+   After the 6s lock expiry, the same N3StreamWriter `callback is not
+   a function` uncaught exception crashes the CSS process.
+
+3. **Document stream consumption hangs/crashes** (new finding).
+   Even for non-container documents, calling
+   `store.getRepresentation(doc)` and reading the body via
+   `for await (const chunk of rep.data)` triggers the same
+   `node:internal/streams/end-of-stream` uncaught exception with a
+   callback-shape mismatch. No lock-expiry message this time, but
+   the same crash pattern in `readable-stream`.
+
+Root cause appears to be a stream lifecycle bug in CSS's wrapping of
+N3StreamWriter and/or its `Guarded<Readable>` shim. It manifests
+whenever a handler tries to drain a stream rather than pipe it to a
+response. We did not root-cause the underlying readable-stream
+defect — that's CSS-internal.
+
+**Resulting architecture:** the walker uses `DataAccessor` for
+**everything** — container enumeration via `getChildren()`, document
+content-type checks via `getMetadata()`, document bodies via
+`getData()`. No `ResourceStore.getRepresentation()` calls anywhere
+in the walker. The handler injects only `DataAccessor` (the
+`ResourceStore` dependency was removed entirely from the handler's
+constructor signature).
+
+**Security implications:** unchanged from the original Path 1a
+analysis. CSS v8 has no permission-aware store wrapper, so both
+`store.getRepresentation` and `dataAccessor.*` are
+privileged-by-design at the data layer. The `PermissionReader` gate
+remains the security boundary. The trade-off table in the
+"Multi-agent threat model" section above still applies — Path 1a's
+properties (per-agent inheritance, ACP conjunctive matching,
+federation readiness) come from the `Credentials` propagated to the
+gate, not from going through ResourceStore.
+
+**Performance impact:** p95 latency improved from 26.7ms (HTTP
+self-request architecture) to **7.6ms** (DataAccessor end-to-end) on
+the existing perf-smoke test corpus. 3.5× faster — the HTTP
+round-trip per resource was paying for the wrong architecture.
+
+**Tests:** 77 unit tests pass (walker test mocks fully rewritten to
+DataAccessor shape). 13 of 19 integration tests pass; the remaining
+6 are `TestWacScenarios` which remain stubbed pending the
+authenticated-client fixture shared with `test_addressbook_e2e.py`
+(separate scope, not part of this sprint).
+
+**Files changed:**
+- `css/extensions/wiki-search/src/WikiSearchHttpHandler.ts` — removed
+  `ResourceStore` dep, added `DataAccessor` dep, replaced walker
+  invocation with `dataAccessor.getChildren()` seed enumeration
+- `css/extensions/wiki-search/src/walker.ts` — full rewrite, takes
+  `(seedUrls, dataAccessor, permissionReader, credentials)`,
+  ~80 LOC net reduction (removed undici + WalkFetch + buildAgent)
+- `css/extensions/wiki-search/tests/walker.test.ts` — mocks rewritten
+  with fake DataAccessor (getChildren/getMetadata/getData)
+- `css/extensions/wiki-search/tests/WikiSearchHttpHandler.test.ts` —
+  constructor positional arg updated
+- `css/config/wiki-search.json` — Components.js: `dataAccessor`
+  injected as `urn:solid-server:default:FileDataAccessor`,
+  `store` dependency removed
 
 ## Related
 

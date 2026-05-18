@@ -2,9 +2,10 @@ import {
   HttpHandler,
   type HttpHandlerInput,
   NotImplementedHttpError,
-  type ResourceStore,
   type PermissionReader,
   type CredentialsExtractor,
+  type DataAccessor,
+  type ResourceIdentifier,
 } from "@solid/community-server";
 import { getLoggerFor } from "global-logger-factory";
 
@@ -25,21 +26,33 @@ interface PerResource {
 export class WikiSearchHttpHandler extends HttpHandler {
   private readonly logger = getLoggerFor(this);
   private readonly engine: SearchEngine;
-  private readonly store: ResourceStore;
+  private readonly dataAccessor: DataAccessor;
   private readonly permissionReader: PermissionReader;
   private readonly credentialsExtractor: CredentialsExtractor;
   private readonly baseUrl: string;
 
+  // DataAccessor is the only storage dependency: it sits below
+  // LockingResourceStore in the CSS chain, so reads are lockless. The
+  // walker uses it for both container enumeration (getChildren) and
+  // document reads (getMetadata + getData). Going through ResourceStore
+  // instead reliably deadlocks on the outer request's target lock and
+  // crashes N3StreamWriter when the 6s expiry fires; even for descendants,
+  // consuming store-returned streams from inside a handler triggers a
+  // stream-lifecycle bug in CSS's readable-stream wrapping. See
+  // docs/plans/2026-05-18-wiki-search-walker-redesign.md for the full
+  // analysis. Security: the PermissionReader gate is the boundary; CSS v8
+  // has no permission-aware store wrapper, so DataAccessor is
+  // privileged-by-design exactly as store.getRepresentation would have been.
   public constructor(
     engine: SearchEngine,
-    store: ResourceStore,
+    dataAccessor: DataAccessor,
     permissionReader: PermissionReader,
     credentialsExtractor: CredentialsExtractor,
     baseUrl: string,
   ) {
     super();
     this.engine = engine;
-    this.store = store;
+    this.dataAccessor = dataAccessor;
     this.permissionReader = permissionReader;
     this.credentialsExtractor = credentialsExtractor;
     this.baseUrl = baseUrl.replace(/\/$/, "");
@@ -95,11 +108,28 @@ export class WikiSearchHttpHandler extends HttpHandler {
     // Resolve requester credentials. Anonymous if none.
     const credentials = await this.credentialsExtractor.handleSafe(request as any);
 
+    // Enumerate the search target's children via DataAccessor (lockless —
+    // sits below LockingResourceStore). Authorization was already done at
+    // the request level by AuthorizingHttpHandler; this read is safe.
+    const targetPath = requestUrl.split("?")[0];
+    const targetId: ResourceIdentifier = { path: targetPath };
+    const seedUrls: string[] = [];
+    try {
+      for await (const childMeta of this.dataAccessor.getChildren(targetId)) {
+        const childIri = childMeta.identifier?.value;
+        if (typeof childIri === "string" && childIri.length > 0) {
+          seedUrls.push(childIri);
+        }
+      }
+    } catch (e: any) {
+      this.logger.warn(`Failed to enumerate seed children for ${targetPath}: ${e?.message ?? e}`);
+    }
+
     // Walk + match + AND filter (single pass, retains body for snippet rendering).
     const perResource: PerResource[] = [];
     for await (const { url, body } of walkContainer(
-      requestUrl.split("?")[0],
-      this.store,
+      seedUrls,
+      this.dataAccessor,
       this.permissionReader,
       credentials,
     )) {

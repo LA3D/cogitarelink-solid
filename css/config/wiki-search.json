@@ -10,11 +10,11 @@
       "@type": "RegexpSearchEngine"
     },
     {
-      "comment": "Wiki-search HTTP handler. Intercepts container GETs with ?ext=search-grep. Recursive over /vault/wiki/. WAC-enforced. Paginated per OSLC Query 3.0.",
+      "comment": "Wiki-search HTTP handler. Intercepts container GETs with ?ext=search-grep. Recursive over /vault/wiki/. WAC-enforced. Paginated per OSLC Query 3.0. Uses DataAccessor exclusively (below the LockingResourceStore layer) — store.getRepresentation deadlocks and crashes N3StreamWriter when called from inside the request's own handler. See docs/plans/2026-05-18-wiki-search-walker-redesign.md.",
       "@id": "urn:cogitarelink:WikiSearchHttpHandler",
       "@type": "WikiSearchHttpHandler",
       "engine": { "@id": "urn:cogitarelink:WikiSearchEngine" },
-      "store": { "@id": "urn:solid-server:default:ResourceStore" },
+      "dataAccessor": { "@id": "urn:solid-server:default:FileDataAccessor" },
       "permissionReader": { "@id": "urn:solid-server:default:PermissionReader" },
       "credentialsExtractor": { "@id": "urn:solid-server:default:CredentialsExtractor" },
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }

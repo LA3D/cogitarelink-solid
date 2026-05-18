@@ -8,7 +8,7 @@ import { WikiSearchHttpHandler } from "../src/WikiSearchHttpHandler";
 describe("WikiSearchHttpHandler.canHandle", () => {
   const handler = new WikiSearchHttpHandler(
     {} as any,  // engine
-    {} as any,  // store
+    {} as any,  // dataAccessor
     {} as any,  // permissionReader
     {} as any,  // credentialsExtractor
     "https://pod.vardeman.me",
