@@ -1,0 +1,36 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/asynchronous-handlers/^1.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/memento/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/markdown-projection/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/mem-trigger/^0.1.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "comment": "MemTriggerListener — subscribes to MonitoringStore 'changed' events on /vault/wiki/*, runs cross-resource detectors (BoundExceeded, ContradictionDetected, ReflectionDue, UnprocessableWrite), and emits mem:Event activities to /vault/wiki/.events/. v1 attaches the listener + filter pipeline; only the BoundExceeded path is wired (currently a stub). The other three detectors are instantiated for future use. See FOLLOWUPS.md ('Phase C.10 — MemTrigger v1 wiring').",
+      "@id": "urn:cogitarelink:MemTriggerListener",
+      "@type": "MemTriggerListener",
+      "monitoringStore": { "@id": "urn:solid-server:default:ResourceStore" },
+      "store": { "@id": "urn:solid-server:default:ResourceStore" },
+      "eventsContainer": "https://pod.vardeman.me/vault/wiki/.events/",
+      "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
+      "boundThreshold": 12,
+      "reflectionIntervalMs": 86400000,
+      "contradictoryPairs": []
+    },
+    {
+      "comment": "Replace WorkerParallelInitializer handlers with all three listeners. This Override is imported AFTER markdown-projection.json (which sets [Memento, MarkdownProjection]) so its overrideParameters wins. K1: only one Override per instance, hence the consolidation pattern (same as memento.json ↔ markdown-projection.json relationship). All three listeners MUST be listed here because Override semantics replace rather than append.",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:WorkerParallelInitializer" },
+      "overrideParameters": {
+        "@type": "ParallelHandler",
+        "handlers": [
+          { "@id": "urn:cogitarelink:MementoCommitListener" },
+          { "@id": "urn:cogitarelink:MarkdownProjectionListener" },
+          { "@id": "urn:cogitarelink:MemTriggerListener" }
+        ]
+      }
+    }
+  ]
+}
