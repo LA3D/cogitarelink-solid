@@ -22,7 +22,7 @@
           overlay:hostedAt "/vault/ontology/biz" ] ;
 
     overlay:installsShape
-        [ overlay:document "shapes/equipment.shacl.ttl" ;
+        [ overlay:document "shapes/biz-equipment.shacl.ttl" ;
           overlay:hostedAt "/vault/meta/shapes/biz-equipment.shacl.ttl" ] ;
 
     overlay:installsContainer </biz/equipment/> ;
