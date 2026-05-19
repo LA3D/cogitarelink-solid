@@ -4,6 +4,8 @@
 @prefix mem:     <https://pod.vardeman.me/vault/ontology/mem#> .
 @prefix dct:     <http://purl.org/dc/terms/> .
 @prefix solid:   <http://www.w3.org/ns/solid/terms#> .
+@prefix schema:  <https://schema.org/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 
 <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory>
     a overlay:Overlay ;
@@ -35,21 +37,39 @@
 
     overlay:installsContainer
         </vault/wiki/> ,
-        </vault/wiki/pages/> ,
-        </vault/wiki/sources/> ,
+        </vault/wiki/concepts/> ,
         </vault/wiki/people/> ,
+        </vault/wiki/places/> ,
+        </vault/wiki/events/> ,
+        </vault/wiki/organizations/> ,
         </vault/wiki/procedures/> ,
         </vault/wiki/working/> ,
         </vault/wiki/.operations/> ,
         </vault/wiki/.events/> ;
 
     overlay:installsShape
-        </vault/meta/shapes/resource.shacl.ttl> ,
-        </vault/meta/shapes/page.shacl.ttl> ,
-        </vault/meta/shapes/source.shacl.ttl> ,
-        </vault/meta/shapes/person.shacl.ttl> ,
-        </vault/meta/shapes/procedure.shacl.ttl> ,
-        </vault/meta/shapes/working.shacl.ttl> ;
+        [ overlay:document "shapes/resource.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/resource.shacl.ttl" ] ,
+        [ overlay:document "shapes/page.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/page.shacl.ttl" ] ,
+        [ overlay:document "shapes/thing.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/thing.shacl.ttl" ] ,
+        [ overlay:document "shapes/concept.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/concept.shacl.ttl" ] ,
+        [ overlay:document "shapes/person.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/person.shacl.ttl" ] ,
+        [ overlay:document "shapes/place.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/place.shacl.ttl" ] ,
+        [ overlay:document "shapes/event.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/event.shacl.ttl" ] ,
+        [ overlay:document "shapes/organization.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/organization.shacl.ttl" ] ,
+        [ overlay:document "shapes/howto.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/howto.shacl.ttl" ] ,
+        [ overlay:document "shapes/working.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/working.shacl.ttl" ] ,
+        [ overlay:document "shapes/template.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/template.shacl.ttl" ] ;
 
     overlay:installsAffordance
         </vault/meta/affordances/markdown-projection.ttl> ,
@@ -69,11 +89,15 @@
 
     overlay:installsProfile
         </vault/meta/profiles/page> ,
+        </vault/meta/profiles/thing> ,
         </vault/meta/profiles/concept> ,
-        </vault/meta/profiles/source> ,
         </vault/meta/profiles/person> ,
-        </vault/meta/profiles/procedure> ,
-        </vault/meta/profiles/working> ;
+        </vault/meta/profiles/place> ,
+        </vault/meta/profiles/event> ,
+        </vault/meta/profiles/organization> ,
+        </vault/meta/profiles/howto> ,
+        </vault/meta/profiles/working> ,
+        </vault/meta/profiles/template> ;
 
     overlay:installsPage [
         overlay:targetResource <https://pod.vardeman.me/vault/wiki/index.md> ;
@@ -83,10 +107,14 @@
     ] ;
 
     overlay:installsTypeRegistration
-        [ solid:forClass wiki:Page       ; solid:instanceContainer </vault/wiki/pages/> ] ,
-        [ solid:forClass wiki:Source     ; solid:instanceContainer </vault/wiki/sources/> ] ,
-        [ solid:forClass wiki:Person     ; solid:instanceContainer </vault/wiki/people/> ] ,
-        [ solid:forClass wiki:Procedure  ; solid:instanceContainer </vault/wiki/procedures/> ] ,
+        [ solid:forClass wiki:Page       ; solid:instanceContainer </vault/wiki/> ] ,
+        [ solid:forClass schema:Thing    ; solid:instanceContainer </vault/wiki/> ] ,
+        [ solid:forClass skos:Concept   ; solid:instanceContainer </vault/wiki/concepts/> ] ,
+        [ solid:forClass schema:Person   ; solid:instanceContainer </vault/wiki/people/> ] ,
+        [ solid:forClass schema:Place    ; solid:instanceContainer </vault/wiki/places/> ] ,
+        [ solid:forClass schema:Event    ; solid:instanceContainer </vault/wiki/events/> ] ,
+        [ solid:forClass schema:Organization ; solid:instanceContainer </vault/wiki/organizations/> ] ,
+        [ solid:forClass schema:HowTo    ; solid:instanceContainer </vault/wiki/procedures/> ] ,
         [ solid:forClass wiki:WorkingNote; solid:instanceContainer </vault/wiki/working/> ] ;
 
     overlay:providesCapability
@@ -104,4 +132,8 @@
           cap:descriptor "capabilities/wiki-page-as-unit.ttl" ] ,
         [ cap:capability <https://pod.vardeman.me/vault/meta/capabilities/wiki-search-substrate.ttl> ;
           cap:version "1.0" ;
-          cap:descriptor "capabilities/wiki-search-substrate.ttl" ] .
+          cap:descriptor "capabilities/wiki-search-substrate.ttl" ] ;
+
+    overlay:installsExtensionGuide
+        [ overlay:document "extending-l3.md" ;
+          overlay:hostedAt "/vault/meta/extending-l3.md" ] .
