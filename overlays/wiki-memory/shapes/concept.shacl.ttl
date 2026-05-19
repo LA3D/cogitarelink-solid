@@ -1,0 +1,51 @@
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix cito:   <http://purl.org/spar/cito/> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+wiki:ConceptShape
+    a sh:NodeShape ;
+    rdfs:label "Wiki Concept Shape" ;
+    rdfs:comment "SHACL shape governing wiki pages about abstract concepts, theories, and ideas. Validates the page's <#this> Thing fragment when it is typed as skos:Concept. Inherits common Thing predicates from wiki:ThingShape." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> , <https://www.w3.org/2009/08/skos-reference/skos.html> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+
+    sh:targetClass skos:Concept ;
+    sh:closed false ;
+
+    sh:agentInstruction """
+Substrate governs: skos:prefLabel, skos:altLabel, skos:definition, skos:broader, skos:narrower, skos:related, skos:exactMatch, skos:closeMatch, cito:extends, cito:agreesWith, cito:disagreesWith, cito:cites. Agent owns everything else not in this list.
+
+Wikilink hints projecting to this shape's predicates: {.related} → skos:related, {.broader} → skos:broader, {.narrower} → skos:narrower, {.extends} → cito:extends, {.supports} → cito:agreesWith, {.criticizes} → cito:disagreesWith, {.cites} → cito:cites.
+
+Preserve source specifics when updating the body; do not summarize toward a single consensus voice. Record contradictions via cito:disagreesWith rather than harmonizing prose. Memento captures every prior version.
+
+To extend (e.g., for vault:LiteratureNote-style citation traversal), subclass skos:Concept or schema:CreativeWork and add your shape. See </vault/meta/extending-l3.md>.
+""" ;
+
+    sh:property [
+        sh:path skos:prefLabel ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        rdfs:label "Preferred label"
+    ] ;
+    sh:property [ sh:path skos:altLabel ; sh:datatype xsd:string ; rdfs:label "Alternative label" ] ;
+    sh:property [ sh:path skos:definition ; sh:datatype xsd:string ; rdfs:label "Definition" ] ;
+    sh:property [ sh:path skos:broader ; sh:nodeKind sh:IRI ; rdfs:label "Broader concept" ] ;
+    sh:property [ sh:path skos:narrower ; sh:nodeKind sh:IRI ; rdfs:label "Narrower concept" ] ;
+    sh:property [ sh:path skos:related ; sh:nodeKind sh:IRI ; rdfs:label "Related concept" ] ;
+    sh:property [ sh:path skos:exactMatch ; sh:nodeKind sh:IRI ; rdfs:label "Exact match (cross-scheme)" ] ;
+    sh:property [ sh:path skos:closeMatch ; sh:nodeKind sh:IRI ; rdfs:label "Close match (cross-scheme)" ] ;
+    sh:property [ sh:path cito:extends ; sh:nodeKind sh:IRI ; rdfs:label "Extends (citation)" ] ;
+    sh:property [ sh:path cito:agreesWith ; sh:nodeKind sh:IRI ; rdfs:label "Agrees with (citation)" ] ;
+    sh:property [ sh:path cito:disagreesWith ; sh:nodeKind sh:IRI ; rdfs:label "Disagrees with (citation)" ] ;
+    sh:property [ sh:path cito:cites ; sh:nodeKind sh:IRI ; rdfs:label "Cites" ] .
