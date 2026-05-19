@@ -241,4 +241,52 @@ describe("ShapeValidationStore.checkPathConstraint (D99 Layer 2)", () => {
     await expect(store.testCheckPathConstraint(identifier, turtleRep(identifier.path, body)))
       .rejects.toThrow(ShaclValidationError);
   });
+
+  // Bug E: .meta resources must be skipped regardless of rdf:type content.
+  // Container .meta PATCHes include ldp:Container / ldp:BasicContainer type
+  // assertions that false-positive against substrate-only allow-lists.
+  it("skips path constraint for .meta resource with ldp:Container types (Bug E)", async () => {
+    const constraintsWithAllowList: PathConstraintConfig[] = [
+      {
+        pathPrefix: "/wiki/.events/",
+        allowedClasses: ["https://www.w3.org/ns/activitystreams#Activity"],
+        forbiddenClasses: [],
+      },
+    ];
+    const store = makeStore(constraintsWithAllowList);
+    // Simulate a container .meta PATCH: path ends in .meta, body has LDP types
+    const identifier = { path: "https://pod.example.org/wiki/.events/foo.md.meta" };
+    const body = `
+      @prefix ldp: <http://www.w3.org/ns/ldp#> .
+      @prefix dct: <http://purl.org/dc/terms/> .
+      <https://pod.example.org/wiki/.events/foo.md>
+        a ldp:BasicContainer, ldp:Container ;
+        dct:title "Events container" .
+    `;
+    // Must not throw ShaclValidationError — ldp:BasicContainer is not as:Activity
+    // but .meta paths are skipped before the allow-list check fires.
+    await expect(store.testCheckPathConstraint(identifier, turtleRep(identifier.path, body)))
+      .resolves.toBeUndefined();
+  });
+
+  it("still applies path constraint for non-.meta resource on constrained path (Bug E regression guard)", async () => {
+    const constraintsWithAllowList: PathConstraintConfig[] = [
+      {
+        pathPrefix: "/wiki/.events/",
+        allowedClasses: ["https://www.w3.org/ns/activitystreams#Activity"],
+        forbiddenClasses: [],
+      },
+    ];
+    const store = makeStore(constraintsWithAllowList);
+    // Same content body, but this is the resource itself (no .meta suffix)
+    const identifier = { path: "https://pod.example.org/wiki/.events/foo.md" };
+    const body = `
+      @prefix ldp: <http://www.w3.org/ns/ldp#> .
+      <https://pod.example.org/wiki/.events/foo.md>
+        a ldp:BasicContainer, ldp:Container .
+    `;
+    // ldp:BasicContainer is not in allowedClasses → constraint fires
+    await expect(store.testCheckPathConstraint(identifier, turtleRep(identifier.path, body)))
+      .rejects.toThrow(ShaclValidationError);
+  });
 });

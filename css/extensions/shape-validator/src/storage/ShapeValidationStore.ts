@@ -187,6 +187,16 @@ export class ShapeValidationStore extends PassthroughStore {
       return;
     }
 
+    // Path constraints govern agent content writes (resource bodies), not
+    // substrate-internal .meta operations. Skip the check for .meta resources;
+    // the substrate's own .meta machinery emits LDP-protocol type assertions
+    // (ldp:Container, ldp:BasicContainer, etc.) that would false-positive against
+    // substrate-only allow-lists. See FOLLOWUPS.md for primary-topic-only
+    // rdf:type extraction (Option 2).
+    if (resourcePath.endsWith('.meta') || resourcePath.endsWith('.meta/')) {
+      return;
+    }
+
     const result = evaluatePathConstraint(resourcePath, resourceClasses, this.pathConstraints);
     if (!result.ok && result.violation) {
       const violatingClass = result.violation.forbiddenClass ?? result.violation.notInAllowList ?? '';

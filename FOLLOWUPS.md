@@ -418,6 +418,21 @@ as need arises.
 
 - **`tmpl:Template` XOR invariant unenforced by SHACL** (T1 code review). The vocab `rdfs:comment` says exactly one of `tmpl:targetContainer` / `tmpl:targetResource` must be present, but this is documentation-only. Per-template tests in T6 (`assert not container` for prefs-init) and T7 (`assert not container` for webid-enrich) cover the immediate risk for this sprint's templates. A `TemplateShape` `sh:NodeShape` with `sh:xone` over the two predicates would enforce substrate-wide and surface in any future template's ValidationReport. Low-priority — current discipline is two assertions in test files.
 
+## Path constraint primary-topic-only rdf:type extraction (post-Bug-E)
+
+Bug E (2026-05-19) fixed a false positive where container `.meta`
+PATCHes were rejected because `rdf:type` was extracted from ALL
+subjects in the body. The current fix skips path constraint
+checks entirely for `.meta` resources (Option 1).
+
+The cleaner long-term fix is Option 2: restrict `rdf:type`
+extraction to the primary-topic subject (the resource IRI or its
+hash fragment). This would let the substrate enforce path
+constraints on `.meta` content with precision, in case an L4 use
+case demands it.
+
+Effort: ~30 min in checkPathConstraint + new unit tests.
+
 ## Pre-existing (earlier rungs)
 
 - **RQ-Harness-1** — fabric namespace minting at `https://cogitarelink.org/ns/fabric#` — blocks all `fabric:*` predicates past prototype.
