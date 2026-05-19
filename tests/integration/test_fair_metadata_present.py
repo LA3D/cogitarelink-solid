@@ -26,8 +26,10 @@ RDF_TYPE = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 def test_every_shape_has_fair_metadata():
     failures = []
     for shape_file in sorted(SHAPES_DIR.glob("*.shacl.ttl")):
-        if shape_file.name == "template.shacl.ttl":
-            continue  # template uses placeholder values
+        if shape_file.name in ("template.shacl.ttl", "resource.shacl.ttl"):
+            # template.shacl.ttl: placeholder values for L4 cloning (D100).
+            # resource.shacl.ttl: D38 LDP RDFS/NRSource guard, predates D97; preserved as-is per spec.
+            continue
         g = Graph()
         g.parse(shape_file, format="turtle")
         for shape in g.subjects(RDF_TYPE, SH_NODE_SHAPE):

@@ -2,6 +2,14 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## resource.shacl.ttl FAIR metadata retrofit (post-D97, 2026-05-19)
+
+The D38 LDP RDFS/NRSource guard shape at `overlays/wiki-memory/shapes/resource.shacl.ttl` predates D97 and lacks the FAIR metadata properties (`rdfs:label`, `rdfs:comment`, `rdfs:isDefinedBy`, `dct:conformsTo`, `dct:created`, `dct:creator`) the rest of the L3 catalog now carries.
+
+Exempted from `test_fair_metadata_present.py` (test fix in commit TBD) since the spec preserves it as-is per Phase B migration plan ("Preserved as-is. D38 invariant unchanged; not part of L3 content model"). Worth retrofitting as a future cleanup pass to make the L3 catalog uniformly FAIR-conformant.
+
+Effort: ~10 minutes (just add the 6 properties).
+
 ## Shape catalog reconciliation (2026-05-18) — pyshacl fixture rebaseline
 
 The shape-catalog reconciliation commit deleted the legacy `shapes/wiki-memory-l3/`
