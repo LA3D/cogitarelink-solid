@@ -1,0 +1,80 @@
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+wiki:ThingShape
+    a sh:NodeShape ;
+    rdfs:label "Wiki Thing Shape" ;
+    rdfs:comment "Abstract parent shape governing common schema:Thing predicates. Every Thing the substrate manages — Concept, Person, Place, Event, Organization, HowTo, or any L4 subclass — is validated by this shape via class-based dispatch (D78). Constrains the <#this> subject of every L3 page." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+
+    sh:targetClass schema:Thing ;
+    sh:closed false ;
+
+    sh:agentInstruction """
+Substrate governs: schema:name, schema:mainEntityOfPage, schema:identifier, schema:sameAs, schema:description, schema:image, schema:keywords, schema:dateCreated. Agent owns everything else not in this list.
+
+The Thing IRI is the page's <#this> fragment. Pages and Thing IRIs are 1-to-1 per L3 commitment. For multiple pages about one Thing, chain via mem:SupersedeAction.
+
+To extend for a new Thing type, subclass schema:Thing (preferring a schema.org parent class where one fits — schema:Person, schema:Place, schema:Event, schema:Organization, schema:HowTo, skos:Concept) and author a new shape targeting your subclass. See </vault/meta/extending-l3.md>.
+""" ;
+
+    sh:property [
+        sh:path schema:name ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        rdfs:label "Name"
+    ] ;
+
+    sh:property [
+        sh:path schema:mainEntityOfPage ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        rdfs:label "Main entity of page (the page resource <>)"
+    ] ;
+
+    sh:property [
+        sh:path schema:identifier ;
+        rdfs:label "Identifier (literal — DOI, ORCID, ROR, etc.)"
+    ] ;
+
+    sh:property [
+        sh:path schema:sameAs ;
+        sh:nodeKind sh:IRI ;
+        rdfs:label "Same as (Wikidata, schema.org type, dereferenceable URI)"
+    ] ;
+
+    sh:property [
+        sh:path schema:description ;
+        sh:datatype xsd:string ;
+        rdfs:label "Description"
+    ] ;
+
+    sh:property [
+        sh:path schema:image ;
+        sh:nodeKind sh:IRI ;
+        rdfs:label "Image (attached media reference)"
+    ] ;
+
+    sh:property [
+        sh:path schema:keywords ;
+        sh:datatype xsd:string ;
+        rdfs:label "Keywords (for indexing)"
+    ] ;
+
+    sh:property [
+        sh:path schema:dateCreated ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        rdfs:label "Date created"
+    ] .
