@@ -7,18 +7,53 @@
 //   - dct:title — extracted from the first H1 heading when not in frontmatter
 //   - dct:identifier — derived from the URI slug when not in frontmatter
 //   - prov:wasGeneratedBy — stamped to the affordance descriptor URI (D69)
+//   - substrate invariants — Page+Thing bridge per D98 (emitSubstrateInvariants)
 
-import { DataFactory, Quad } from "n3";
+import { DataFactory, NamedNode, Quad } from "n3";
 import * as YAML from "yaml";
 import { projectFrontmatter, Frontmatter } from "./frontmatterProjection.js";
 import { projectWikilinks } from "./wikilinkProjection.js";
+import { resolveThingClass, TypeIndex } from "./typeIndexLookup.js";
 
 const { namedNode, literal, quad } = DataFactory;
 
-const DCT_TITLE       = "http://purl.org/dc/terms/title";
-const DCT_IDENTIFIER  = "http://purl.org/dc/terms/identifier";
-const PROV_GEN_BY     = "http://www.w3.org/ns/prov#wasGeneratedBy";
-const AFFORDANCE_PATH = "/meta/affordances/markdown-projection";
+const DCT_TITLE                = "http://purl.org/dc/terms/title";
+const DCT_IDENTIFIER           = "http://purl.org/dc/terms/identifier";
+const PROV_GEN_BY              = "http://www.w3.org/ns/prov#wasGeneratedBy";
+const AFFORDANCE_PATH          = "/meta/affordances/markdown-projection";
+const RDF_TYPE                 = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+const SCHEMA_MAIN_ENTITY       = "https://schema.org/mainEntity";
+const SCHEMA_MAIN_ENTITY_OF_PAGE = "https://schema.org/mainEntityOfPage";
+const WIKI_PAGE                = "https://pod.vardeman.me/vault/ontology/wiki#Page";
+
+// ---------------------------------------------------------------------------
+// Substrate invariants (D98 Page+Thing bridge)
+// ---------------------------------------------------------------------------
+
+export interface SubstrateInvariantsArgs {
+    pageIRI: NamedNode;   // <>
+    thingIRI: NamedNode;  // <#this>
+    thingClass: string;    // rdf:type IRI for the Thing
+}
+
+/**
+ * Emit the four substrate-invariant triples present on every L3 page (D98):
+ *   <>      a wiki:Page
+ *   <>      schema:mainEntity   <#this>
+ *   <#this> a <thingClass>
+ *   <#this> schema:mainEntityOfPage <>
+ *
+ * These are always set by the substrate on body PUT and cannot be overridden
+ * by the agent. They are part of the substrate-governed predicate set.
+ */
+export function emitSubstrateInvariants(args: SubstrateInvariantsArgs): Quad[] {
+    return [
+        quad(args.pageIRI, namedNode(RDF_TYPE), namedNode(WIKI_PAGE)),
+        quad(args.pageIRI, namedNode(SCHEMA_MAIN_ENTITY), args.thingIRI),
+        quad(args.thingIRI, namedNode(RDF_TYPE), namedNode(args.thingClass)),
+        quad(args.thingIRI, namedNode(SCHEMA_MAIN_ENTITY_OF_PAGE), args.pageIRI),
+    ];
+}
 
 // ---------------------------------------------------------------------------
 // Frontmatter splitting
@@ -90,7 +125,21 @@ function rebindSubject(triples: Quad[], realSubject: string): Quad[] {
 // ---------------------------------------------------------------------------
 
 export const projectionPipeline = {
-    async run(resourceUri: string, body: string): Promise<Quad[]> {
+    /**
+     * Run the full projection pipeline for a resource body.
+     *
+     * @param resourceUri  Absolute URI of the resource being written
+     * @param body         Raw resource body (may include YAML frontmatter)
+     * @param typeIndex    Optional Type Index map (container prefix → class IRI).
+     *                     When provided, substrate invariants (D98) are emitted
+     *                     when a Thing class can be resolved. Pass an empty
+     *                     object or omit to skip invariant emission (backward compat).
+     */
+    async run(
+        resourceUri: string,
+        body: string,
+        typeIndex: TypeIndex = {},
+    ): Promise<Quad[]> {
         const { fm, rest } = splitFrontmatter(body);
 
         // Frontmatter → quads (subject still urn:placeholder:subject)
@@ -124,6 +173,29 @@ export const projectionPipeline = {
             namedNode(affordanceUri),
         );
 
-        return [...fmTriples, ...derived, ...wikiTriples, provTriple];
+        // Substrate invariants (D98 Page+Thing bridge) — emitted when Type Index
+        // can resolve a Thing class. frontmatterType (fm.type) wins over container.
+        const invariants: Quad[] = [];
+        // Only pass fm.type as a class IRI if it's an absolute IRI.
+        // Short vault type strings like "concept" or "person" are not class IRIs;
+        // they require mapping through the Type Index (task for the listener layer).
+        const fmTypeIRI =
+            typeof fm.type === "string" && fm.type.startsWith("http")
+                ? fm.type
+                : undefined;
+        const thingClass = resolveThingClass(
+            new URL(resourceUri).pathname,
+            typeIndex,
+            fmTypeIRI,
+        );
+        if (thingClass) {
+            const pageIRI  = namedNode(resourceUri);
+            const thingIRI = namedNode(`${resourceUri}#this`);
+            invariants.push(...emitSubstrateInvariants({ pageIRI, thingIRI, thingClass }));
+        }
+        // When thingClass is undefined: no invariants emitted, no warning here
+        // (listener context has better logging; pipeline stays pure).
+
+        return [...fmTriples, ...derived, ...wikiTriples, provTriple, ...invariants];
     },
 };
