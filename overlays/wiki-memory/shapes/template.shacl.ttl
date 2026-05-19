@@ -1,0 +1,61 @@
+# ============================================================
+# Template SHACL shape for L4 extension of wiki-memory L3.
+#
+# Clone this file, rename to <your-shape>.shacl.ttl, and modify
+# the marked sections. See /vault/meta/extending-l3.md for the
+# full extension procedure with worked examples.
+# ============================================================
+
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix schema: <https://schema.org/> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+# === MODIFY: Replace YOURPFX with your domain prefix ===
+@prefix YOURPFX: <https://YOUR.DOMAIN.example/ns/> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+# === MODIFY: Replace YourThing with your subclass name ===
+YOURPFX:YourThingShape
+    a sh:NodeShape ;
+    rdfs:label "[YOUR SHAPE NAME]" ;
+    rdfs:comment "[ONE-PARAGRAPH DESCRIPTION of what this shape governs and what kind of Thing it targets]" ;
+    skos:scopeNote "[WHEN to use this shape; when NOT to use it]" ;
+    rdfs:isDefinedBy <[YOUR VOCABULARY IRI]> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "[YYYY-MM-DD]"^^xsd:date ;
+    dct:creator <[YOUR ORCID OR WEBID]> ;
+
+    # === MODIFY: Target your subclass.
+    # The subclass MUST rdfs:subClassOf schema:Thing
+    # (or a schema.org Thing subclass like schema:Person / schema:Place / etc.)
+    # ===
+    sh:targetClass YOURPFX:YourThing ;
+
+    # D81 Model A — keep sh:closed false; agent owns predicates outside the governed list
+    sh:closed false ;
+
+    sh:agentInstruction """
+Substrate governs: [LIST your governed predicates, one per line]. Agent owns everything else not in this list.
+
+[OPTIONAL: Identifier discipline: describe how this shape uses schema:identifier, schema:sameAs, or domain-specific identifiers.]
+
+[OPTIONAL: Wikilink hints: document any {.class} conventions for body→.meta projection (D58/D71).]
+
+[OPTIONAL: Model-collapse defense: if your shape uses a pattern that could collapse semantically under inference, document the constraint you're relying on.]
+
+To extend (e.g., domain-specific subclass), subclass [YOUR CLASS] and add your shape. See </vault/meta/extending-l3.md>.
+""" ;
+
+    # === MODIFY: Add your domain-specific property shapes here ===
+    sh:property [
+        sh:path schema:name ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        rdfs:label "Name"
+    ] .
