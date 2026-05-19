@@ -1,0 +1,16 @@
+@prefix biz:    <https://chuck.example/biz/> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+biz:EquipmentShape a sh:NodeShape ;
+    rdfs:label "Test Equipment Shape" ;
+    rdfs:isDefinedBy <https://chuck.example/biz> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    sh:targetClass biz:Equipment ;
+    sh:closed false ;
+    sh:agentInstruction "Test fixture for L4 extension test. See </vault/meta/extending-l3.md>." ;
+    sh:property [ sh:path biz:serialNumber ; sh:minCount 1 ; sh:datatype xsd:string ; rdfs:label "Serial number" ] .

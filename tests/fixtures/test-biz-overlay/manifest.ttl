@@ -1,0 +1,32 @@
+@prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
+@prefix cap:     <https://pod.vardeman.me/vault/ontology/capability#> .
+@prefix biz:     <https://chuck.example/biz/> .
+@prefix schema:  <https://schema.org/> .
+@prefix solid:   <http://www.w3.org/ns/solid/terms#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+<#test-biz-overlay>
+    a overlay:Overlay ;
+    overlay:name "test-biz-overlay" ;
+    overlay:version "1.0-test" ;
+    dct:created "2026-05-19"^^xsd:date ;
+
+    overlay:requiresCapability
+        [ cap:requires <https://pod.vardeman.me/vault/meta/capabilities/wiki-vocabulary.ttl> ;
+          cap:minVersion "1.0" ] ;
+
+    overlay:declaresVocabulary
+        [ overlay:namespace biz: ;
+          overlay:document "vocabulary/biz.ttl" ;
+          overlay:hostedAt "/vault/ontology/biz" ] ;
+
+    overlay:installsShape
+        [ overlay:document "shapes/equipment.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/biz-equipment.shacl.ttl" ] ;
+
+    overlay:installsContainer </biz/equipment/> ;
+
+    overlay:installsTypeRegistration
+        [ solid:forClass biz:Equipment ;
+          solid:instanceContainer </biz/equipment/> ] .

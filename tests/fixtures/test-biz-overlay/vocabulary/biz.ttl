@@ -1,0 +1,15 @@
+@prefix biz:    <https://chuck.example/biz/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+<https://chuck.example/biz> a owl:Ontology ;
+    rdfs:label "Test Business overlay (fixture only)" ;
+    vann:preferredNamespacePrefix "biz" ;
+    vann:preferredNamespaceUri "https://chuck.example/biz/" ;
+    dct:created "2026-05-19"^^xsd:date .
+
+biz:Equipment rdfs:subClassOf schema:Product , schema:Thing .
