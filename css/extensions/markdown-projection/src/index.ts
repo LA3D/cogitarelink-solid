@@ -1,4 +1,10 @@
-export { governedPredicates, GOVERNED_FOR } from "./governedPredicates.js";
+export {
+    governedPredicates,
+    GOVERNED_FOR,
+    PAGE_GOVERNED_PREDICATES,
+    THING_GOVERNED_PREDICATES,
+    getThingGovernedPredicates,
+} from "./governedPredicates.js";
 export { projectFrontmatter } from "./frontmatterProjection.js";
 export type { Frontmatter } from "./frontmatterProjection.js";
 export { projectWikilinks, projectWikilink, HINT_TO_PROJECTION } from "./wikilinkProjection.js";
