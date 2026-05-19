@@ -1,10 +1,36 @@
-@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
-@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 
 <> dct:conformsTo <https://www.w3.org/TR/shacl/> .
 
-wiki:WorkingMemoryShape a sh:NodeShape ;
+wiki:WorkingNoteShape
+    a sh:NodeShape ;
+    rdfs:label "Wiki Working Note Shape" ;
+    rdfs:comment "Permissive D73 drafting tier. Accepts any Thing type without strict validation. mem:CrystallizeAction promotes to class-appropriate durable container under strict shape per D73 two-stage commit." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/affordances/crystallize> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+
     sh:targetClass wiki:WorkingNote ;
     sh:closed false ;
-    sh:agentInstruction "Permissive low-ceremony scratchpad (D73). Only dct:title strictly recommended. Notes here are promotable to durable containers via mem:Crystallize once their content matures (D73 deferred to Phase 2c+; until then, agents manually copy + delete). See <https://pod.vardeman.me/vault/wiki/index.md> for the full L3 profile and inter-shape conventions." .
+
+    sh:agentInstruction """
+Permissive umbrella for D73 two-stage commit. Substrate governs: dct:created, dct:modified, prov:wasGeneratedBy. Nothing else mandatory.
+
+Use working memory for low-ceremony body-only writes. When ready to promote, invoke mem:CrystallizeAction; the substrate validates against the class-appropriate durable shape (PageShape + ThingShape + a Thing-type shape) and routes to the right container.
+
+Do NOT use wiki:WorkingNote in durable containers — it bypasses the shape catalog's invariants.
+""" ;
+
+    sh:property [
+        sh:path dct:created ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        rdfs:label "Created"
+    ] .
