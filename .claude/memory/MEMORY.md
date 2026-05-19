@@ -30,16 +30,9 @@ For decision IDs, invoke the `decision-lookup` skill.
 - Path constraints skip `.meta` resources (substrate-internal vs agent-content distinction).
 - Live Type Index is the canonical dispatch oracle (D78 alignment); container rename without Type Index update silently breaks `<#this>` projection.
 - FAIR metadata invariant: D38 `resource.shacl.ttl` exempted; do not use as style reference.
-
-## Project state (as of 2026-05-19, Task 27 pre-sprint)
-
-- **Task 27 — L4 extension overlay integration test (stub biz overlay)** SHIPPED.
-  Fixture demonstrates D100 extension contract: L4 overlay declares 
-  `biz:Equipment rdfs:subClassOf schema:Product, schema:Thing`; apply.py 
-  installs on top of wiki-memory L3; integration test verifies a 
-  `biz:Equipment` page validates against both L3 (ThingShape) and L4 
-  (EquipmentShape). Commit 03c580b. Test skipped pending Phase H Task 30 Pod rebuild.
-  (Fixture triples: biz.ttl 7, equipment.shacl.ttl 13, manifest.ttl 18.)
+- **Components.js cannot instantiate TypeScript `interface`** — config types referenced from Components.js Override entries (e.g., `PathConstraintConfig`) must be declared as `class` with a constructor; otherwise componentsjs-generator emits an `AbstractClass` descriptor and Components.js throws "Failed to get module element" at boot.
+- **apply.py shape-deploy convention**: the local file lookup uses `basename(overlay:hostedAt)`. If an overlay manifest declares `installsShape` with mismatched `overlay:document` local name vs `overlay:hostedAt` hosted basename, the deploy step fails. Match the basenames or extend `common.py` to parse `overlay:document` explicitly.
+- **Listener path filter is vestigial** — the original `isWikiResource()` `/wiki/` substring filter was replaced by Type-Index-based dispatch (D78 oracle). Any L4 overlay's Type Index registration triggers full substrate treatment without `/wiki/` prefix.
 
 ## Project state (as of 2026-05-19, end of Wiki-Memory L3 Shape Completion Sprint)
 
