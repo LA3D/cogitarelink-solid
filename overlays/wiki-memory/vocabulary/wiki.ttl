@@ -817,3 +817,15 @@ wiki:eventStream
         <> wiki:eventStream </vault/wiki/.events/> .
     """ ;
     rdfs:seeAlso mem:Event , </vault/wiki/.events/> .
+
+# ============================================================
+# Cross-stratum disjointness (D99 — belt-and-braces enforcement)
+# ============================================================
+# schema:Event (content memory) is disjoint with mem:Event (substrate signal).
+# schema:HowTo (content memory) is disjoint with mem:Action (substrate operation).
+# Layer 1 of D99 disjointness; SHACL sh:not constraints in EventShape and
+# HowToShape provide Layer 3 belt-and-braces enforcement; path constraints
+# in shape-validator provide Layer 2.
+
+schema:Event owl:disjointWith mem:Event .
+schema:HowTo owl:disjointWith mem:Action .
