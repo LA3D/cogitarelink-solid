@@ -37,10 +37,16 @@ function debug(...args: unknown[]): void {
 const runtimeImport = new Function("specifier", "return import(specifier)") as (s: string) => Promise<any>;
 
 interface ProjectionModule {
-    projectionPipeline: { run(uri: string, body: string): Promise<import("n3").Quad[]> };
+    projectionPipeline: { run(uri: string, body: string, typeIndex?: Record<string, string>): Promise<import("n3").Quad[]> };
     resolveGovernedForWikiClass: (cls: string) => { page: string[]; thing: string[] };
     detectClass: (triples: import("n3").Quad[]) => string | undefined;
     MetaWriter: new() => { replaceGoverned(target: string, projected: import("n3").Quad[], governed: string[], resourceUrl?: string): Promise<void> };
+    resolveThingClass: (path: string, typeIndex: Record<string, string>, frontmatterType: string | undefined) => string | undefined;
+    TypeIndexLoader: new(podBase: string) => {
+        getTypeIndex(): Promise<Record<string, string>>;
+        refresh(): Promise<Record<string, string>>;
+        invalidate(): void;
+    };
 }
 
 let pipelineCache: Promise<ProjectionModule> | null = null;
@@ -63,6 +69,30 @@ function getPipeline(): Promise<ProjectionModule> {
         pipelineCache = runtimeImport(fileUrl);
     }
     return pipelineCache;
+}
+
+// ------------------------------------------------------------------
+// Lightweight frontmatter type extractor (no YAML dep needed — just grep)
+// ------------------------------------------------------------------
+
+function extractFrontmatterType(body: string): string | undefined {
+    if (!body.startsWith("---\n")) return undefined;
+    const end = body.indexOf("\n---\n", 4);
+    if (end < 0) return undefined;
+    const fm = body.slice(4, end);
+    const m = fm.match(/^type:\s*(.+)$/m);
+    if (!m) return undefined;
+    const raw = m[1].trim().replace(/^["']|["']$/g, "");
+    // Return only absolute IRI forms; short names (concept, person, etc.) are
+    // handled by projectionPipeline's resolveCURIE path.
+    return raw.startsWith("http://") || raw.startsWith("https://") ? raw : undefined;
+}
+
+// A path is a candidate for a freshly-installed L4 container if it does NOT
+// contain /wiki/ (which is always in DEFAULT_WIKI_TYPE_INDEX). This avoids
+// refreshing the Type Index on every unknown /wiki/-adjacent path.
+function couldBeL4Container(url: string): boolean {
+    return !url.includes("/wiki/");
 }
 
 // ------------------------------------------------------------------
@@ -96,6 +126,10 @@ export class MarkdownProjectionListener extends Initializer {
     private readonly dataDir: string;
     // Serialise concurrent writes per the D68 chain pattern
     private chain: Promise<void> = Promise.resolve();
+    // Live Type Index loader — instanced on first project() call once pipeline is loaded.
+    // Typed as any because the class is loaded from the ESM module at runtime.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private typeIndexLoader: any = null;
 
     public constructor(store: MonitoringStore, baseUrl: string, dataDir: string) {
         super();
@@ -123,14 +157,16 @@ export class MarkdownProjectionListener extends Initializer {
 
     // ------------------------------------------------------------------
 
-    private isWikiResource(id: ResourceIdentifier): boolean {
+    private isProjectableResource(id: ResourceIdentifier): boolean {
         const p = id.path;
-        // Must contain /wiki/ segment and end with .md (not a .meta sidecar)
-        return p.includes("/wiki/") && p.endsWith(".md") && !p.includes("?");
+        // Must end with .md and not be a .meta sidecar or have a query string.
+        // The /wiki/ prefix filter was removed in Bug G — class-based dispatch
+        // via the live Type Index is now the "do I govern this?" oracle (D78).
+        return p.endsWith(".md") && !p.includes("?");
     }
 
     private onChange(target: ResourceIdentifier, activityIri: string): void {
-        if (!this.isWikiResource(target)) return;
+        if (!this.isProjectableResource(target)) return;
         // Delete events — CSS + Memento handle .meta cleanup, skip projection
         if (
             activityIri === String(AS.Delete) ||
@@ -171,10 +207,51 @@ export class MarkdownProjectionListener extends Initializer {
         }
 
         // Load ESM projection pipeline lazily
-        const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter } =
+        const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter,
+                resolveThingClass, TypeIndexLoader } =
             await getPipeline();
 
-        const triples = await projectionPipeline.run(target.path, body);
+        // Instance TypeIndexLoader on first use (after pipeline is loaded).
+        // The loader caches the live Type Index; refresh-on-miss handles newly-
+        // installed L4 overlays whose container registrations aren't cached yet.
+        if (this.typeIndexLoader === null) {
+            this.typeIndexLoader = new TypeIndexLoader(this.baseUrl);
+        }
+
+        // URI-independent dispatch: resolve the Thing class via the live Type
+        // Index (D78 class-based dispatch, Bug G fix). Skip resources whose path
+        // doesn't map to any known class — substrate doesn't govern them.
+        //
+        // Parse frontmatter type for the resolver (frontmatter type wins over
+        // container path). We do a lightweight YAML parse here rather than
+        // re-running the full pipeline just to get the type field.
+        const fmType = extractFrontmatterType(body);
+
+        let typeIndex = await this.typeIndexLoader.getTypeIndex();
+        let thingClass = resolveThingClass(
+            new URL(target.path).pathname,
+            typeIndex,
+            fmType,
+        );
+
+        if (thingClass === undefined) {
+            // Refresh-on-miss: the resource may belong to a freshly-installed L4
+            // overlay whose Type Index entry isn't in the cache yet. Try once.
+            if (fmType !== undefined || couldBeL4Container(target.path)) {
+                typeIndex = await this.typeIndexLoader.refresh();
+                thingClass = resolveThingClass(
+                    new URL(target.path).pathname,
+                    typeIndex,
+                    fmType,
+                );
+            }
+            if (thingClass === undefined) {
+                debug(`no governed class for ${target.path} — not a substrate-governed path`);
+                return;
+            }
+        }
+
+        const triples = await projectionPipeline.run(target.path, body, typeIndex);
 
         const cls = detectClass(triples);
         if (!cls) {

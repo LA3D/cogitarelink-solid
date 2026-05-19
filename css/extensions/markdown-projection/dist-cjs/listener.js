@@ -76,6 +76,30 @@ function getPipeline() {
     return pipelineCache;
 }
 // ------------------------------------------------------------------
+// Lightweight frontmatter type extractor (no YAML dep needed — just grep)
+// ------------------------------------------------------------------
+function extractFrontmatterType(body) {
+    if (!body.startsWith("---\n"))
+        return undefined;
+    const end = body.indexOf("\n---\n", 4);
+    if (end < 0)
+        return undefined;
+    const fm = body.slice(4, end);
+    const m = fm.match(/^type:\s*(.+)$/m);
+    if (!m)
+        return undefined;
+    const raw = m[1].trim().replace(/^["']|["']$/g, "");
+    // Return only absolute IRI forms; short names (concept, person, etc.) are
+    // handled by projectionPipeline's resolveCURIE path.
+    return raw.startsWith("http://") || raw.startsWith("https://") ? raw : undefined;
+}
+// A path is a candidate for a freshly-installed L4 container if it does NOT
+// contain /wiki/ (which is always in DEFAULT_WIKI_TYPE_INDEX). This avoids
+// refreshing the Type Index on every unknown /wiki/-adjacent path.
+function couldBeL4Container(url) {
+    return !url.includes("/wiki/");
+}
+// ------------------------------------------------------------------
 // Path resolution — mirrors MementoCommitListener's fsPathFromUrl
 // ------------------------------------------------------------------
 function trimSlash(s) { return s.replace(/\/$/, ""); }
@@ -94,6 +118,10 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
     dataDir;
     // Serialise concurrent writes per the D68 chain pattern
     chain = Promise.resolve();
+    // Live Type Index loader — instanced on first project() call once pipeline is loaded.
+    // Typed as any because the class is loaded from the ESM module at runtime.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    typeIndexLoader = null;
     constructor(store, baseUrl, dataDir) {
         super();
         this.store = store;
@@ -109,13 +137,15 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
         debug(`attached to MonitoringStore (baseUrl=${this.baseUrl}, dataDir=${this.dataDir})`);
     }
     // ------------------------------------------------------------------
-    isWikiResource(id) {
+    isProjectableResource(id) {
         const p = id.path;
-        // Must contain /wiki/ segment and end with .md (not a .meta sidecar)
-        return p.includes("/wiki/") && p.endsWith(".md") && !p.includes("?");
+        // Must end with .md and not be a .meta sidecar or have a query string.
+        // The /wiki/ prefix filter was removed in Bug G — class-based dispatch
+        // via the live Type Index is now the "do I govern this?" oracle (D78).
+        return p.endsWith(".md") && !p.includes("?");
     }
     onChange(target, activityIri) {
-        if (!this.isWikiResource(target))
+        if (!this.isProjectableResource(target))
             return;
         // Delete events — CSS + Memento handle .meta cleanup, skip projection
         if (activityIri === String(Vocabularies_1.AS.Delete) ||
@@ -153,8 +183,36 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
             return;
         }
         // Load ESM projection pipeline lazily
-        const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter } = await getPipeline();
-        const triples = await projectionPipeline.run(target.path, body);
+        const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter, resolveThingClass, TypeIndexLoader } = await getPipeline();
+        // Instance TypeIndexLoader on first use (after pipeline is loaded).
+        // The loader caches the live Type Index; refresh-on-miss handles newly-
+        // installed L4 overlays whose container registrations aren't cached yet.
+        if (this.typeIndexLoader === null) {
+            this.typeIndexLoader = new TypeIndexLoader(this.baseUrl);
+        }
+        // URI-independent dispatch: resolve the Thing class via the live Type
+        // Index (D78 class-based dispatch, Bug G fix). Skip resources whose path
+        // doesn't map to any known class — substrate doesn't govern them.
+        //
+        // Parse frontmatter type for the resolver (frontmatter type wins over
+        // container path). We do a lightweight YAML parse here rather than
+        // re-running the full pipeline just to get the type field.
+        const fmType = extractFrontmatterType(body);
+        let typeIndex = await this.typeIndexLoader.getTypeIndex();
+        let thingClass = resolveThingClass(new URL(target.path).pathname, typeIndex, fmType);
+        if (thingClass === undefined) {
+            // Refresh-on-miss: the resource may belong to a freshly-installed L4
+            // overlay whose Type Index entry isn't in the cache yet. Try once.
+            if (fmType !== undefined || couldBeL4Container(target.path)) {
+                typeIndex = await this.typeIndexLoader.refresh();
+                thingClass = resolveThingClass(new URL(target.path).pathname, typeIndex, fmType);
+            }
+            if (thingClass === undefined) {
+                debug(`no governed class for ${target.path} — not a substrate-governed path`);
+                return;
+            }
+        }
+        const triples = await projectionPipeline.run(target.path, body, typeIndex);
         const cls = detectClass(triples);
         if (!cls) {
             debug(`no rdf:type projected for ${target.path} — resource may lack type frontmatter`);

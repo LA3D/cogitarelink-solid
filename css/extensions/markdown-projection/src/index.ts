@@ -17,3 +17,4 @@ export type { TwoSubjectPatchArgs } from "./metaWriter.js";
 export { detectClass } from "./detectClass.js";
 export { resolveThingClass, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
 export type { TypeIndex } from "./typeIndexLookup.js";
+export { TypeIndexLoader } from "./typeIndexLoader.js";

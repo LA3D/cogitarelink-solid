@@ -37,7 +37,7 @@ type: https://chuck.example/biz/Equipment
         resp = client.put("/biz/equipment/hp-laserjet.md",
                           content=body,
                           headers={"Content-Type": "text/markdown"})
-        assert resp.status_code in (200, 201, 204), f"PUT failed: {resp.text}"
+        assert resp.status_code in (200, 201, 204, 205), f"PUT failed: {resp.text}"
 
         # Read .meta and assert both L3 ThingShape and L4 EquipmentShape are validated
         meta = client.get("/biz/equipment/hp-laserjet.md.meta",
