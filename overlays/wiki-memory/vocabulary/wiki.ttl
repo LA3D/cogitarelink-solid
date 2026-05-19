@@ -1,20 +1,26 @@
-@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix mem:  <https://pod.vardeman.me/vault/ontology/mem#> .
-@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
-@prefix dct:  <http://purl.org/dc/terms/> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix owl:  <http://www.w3.org/2002/07/owl#> .
-@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:    <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix foaf:   <http://xmlns.com/foaf/0.1/> .
+@prefix schema: <https://schema.org/> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 
 <https://pod.vardeman.me/vault/ontology/wiki>
     a owl:Ontology ;
     rdfs:label "Wiki-memory L3 vocabulary" ;
-    rdfs:comment "Class hierarchy and predicates for the wiki-memory L3 reference profile. Defines (a) the wiki:Resource hierarchy that resources at /vault/wiki/{pages,sources,people,procedures,working}/ instantiate, (b) the affordance descriptor classes the catalog at /vault/meta/affordances/ uses, (c) the storage-description predicates that /vault/.well-known/solid emits, and (d) the lifecycle predicate wiki:maturity with its three SKOS values." ;
-    dct:conformsTo <http://www.w3.org/2000/01/rdf-schema> ;
-    rdfs:seeAlso <https://pod.vardeman.me/vault/wiki/index.md> .
+    rdfs:comment "Substrate-minted classes and properties for the wiki-memory L3 reference profile. Composes with schema.org, SKOS, FOAF, CITO, PROV, DCT; mints wiki:* only for genuine gaps per D79." ;
+    vann:preferredNamespacePrefix "wiki" ;
+    vann:preferredNamespaceUri "https://pod.vardeman.me/vault/ontology/wiki#" ;
+    dct:conformsTo <https://www.w3.org/TR/owl2-overview/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> .
 
 # ============================================================
 # Class hierarchy — wiki:Resource and its subclasses
@@ -35,18 +41,15 @@ wiki:Resource
     rdfs:seeAlso </vault/meta/shapes/resource.ttl> .
 
 wiki:Page
-    a rdfs:Class ;
-    rdfs:subClassOf wiki:Resource ;
-    rdfs:label "Wiki page" ;
-    rdfs:isDefinedBy <> ;
-    rdfs:comment "General wiki content. Default container is /vault/wiki/pages/. Parent of wiki:Concept and wiki:MOC. Used when the content doesn't fit the more specific subclasses (Concept = atomic conceptual unit, MOC = navigational hub)." ;
-    skos:scopeNote "Use as rdf:type on resources in /vault/wiki/pages/ that aren't specifically Concepts or MOCs (essays, notes, narrative documents). Do NOT use for citations (wiki:Source), people (wiki:Person), or procedures (wiki:Procedure) — each has its own subclass + container." ;
-    skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/pages/general-notes.md.meta>:
-        <> a wiki:Page ;
-           dct:title "General notes on the topic" .
-    """ ;
-    rdfs:seeAlso </vault/wiki/pages/> , </vault/meta/shapes/page.ttl> .
+    a owl:Class ;
+    rdfs:label "Wiki Page" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:comment "An information resource (markdown body + .meta sidecar) in the wiki-memory L3 substrate. Each wiki:Page describes exactly one Thing via schema:mainEntity. The Thing IRI is the page's <#this> fragment." ;
+    skos:definition "The page-resource side of the dual-layer L3 architecture. Pages are information resources; the Things they describe are the queryable entities." ;
+    skos:scopeNote "1-to-1 with the Thing it describes. For multiple pages per Thing, use mem:SupersedeAction." ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> .
 
 wiki:Source
     a rdfs:Class ;
@@ -97,19 +100,23 @@ wiki:Procedure
     rdfs:seeAlso </vault/wiki/procedures/> , </vault/meta/shapes/procedure.ttl> .
 
 wiki:WorkingNote
-    a rdfs:Class ;
-    rdfs:subClassOf wiki:Resource ;
-    rdfs:label "Working note" ;
-    rdfs:isDefinedBy <> ;
-    rdfs:comment "Permissive scratchpad content. Default container is /vault/wiki/working/. Governed by the working SHACL shape, which requires only dct:title — agents draft freely here before promoting to a durable class via mem:CrystallizeAction." ;
-    skos:scopeNote "Use as rdf:type on resources in /vault/wiki/working/ that are still being developed. Once content stabilizes, promote via mem:CrystallizeAction to the class-appropriate durable container (wiki:Concept → /vault/wiki/concepts/, etc.). Do NOT leave content in WorkingNote indefinitely — that defeats the two-stage commit (D73)." ;
-    skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/working/draft-concept.md.meta>:
-        <> a wiki:WorkingNote ;
-           dct:title "Draft: bounded branching theorem" ;
-           dct:created "2026-05-18T09:00:00Z"^^xsd:dateTime .
-    """ ;
-    rdfs:seeAlso </vault/wiki/working/> , </vault/meta/shapes/working.ttl> .
+    a owl:Class ;
+    rdfs:subClassOf wiki:Page ;
+    rdfs:label "Working Note" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:comment "Permissive subclass of wiki:Page for D73 two-stage commit drafting. Working notes accept any Thing type without strict validation. mem:CrystallizeAction promotes them to durable containers." ;
+    skos:scopeNote "Used only for low-ceremony body-only writes. Strict validation happens at crystallize-time." ;
+    rdfs:seeAlso </vault/meta/affordances/crystallize> ;
+    dct:created "2026-05-19"^^xsd:date .
+
+wiki:ExtensionGuide
+    a owl:Class ;
+    rdfs:subClassOf schema:HowTo ;
+    rdfs:label "Extension Guide" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:comment "A wiki page documenting how to extend a substrate vocabulary or shape catalog. Canonical instance: /vault/meta/extending-l3.md." ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> ;
+    dct:created "2026-05-19"^^xsd:date .
 
 # ----- wiki:Page subclasses -----
 
