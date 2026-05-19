@@ -23,7 +23,7 @@ wiki:PageShape
     sh:closed false ;
 
     sh:agentInstruction """
-Substrate governs: dct:title, schema:mainEntity, wiki:maturity, dct:created, dct:modified, prov:wasGeneratedBy. Agent owns everything else not in this list.
+Substrate governs: dct:title, schema:mainEntity, wiki:maturity, dct:created, dct:modified, prov:wasGeneratedBy, wiki:embeds. Agent owns everything else not in this list.
 
 This shape constrains the page resource <>. The Thing the page is about lives at <#this> and is constrained by wiki:ThingShape plus a Thing-type-specific shape (Concept/Person/Place/Event/Organization/HowTo).
 
@@ -64,4 +64,6 @@ To extend, subclass wiki:Page (rare — most extension happens at Thing level) o
         sh:datatype xsd:dateTime ;
         sh:maxCount 1 ;
         rdfs:label "Modified"
-    ] .
+    ] ;
+
+    sh:property [ sh:path wiki:embeds ; sh:nodeKind sh:IRI ; rdfs:label "Embedded resource" ] .

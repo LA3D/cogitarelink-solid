@@ -23,9 +23,9 @@ wiki:ConceptShape
     sh:closed false ;
 
     sh:agentInstruction """
-Substrate governs: skos:prefLabel, skos:altLabel, skos:definition, skos:broader, skos:narrower, skos:related, skos:exactMatch, skos:closeMatch, cito:extends, cito:agreesWith, cito:disagreesWith, cito:cites. Agent owns everything else not in this list.
+Substrate governs: skos:prefLabel, skos:altLabel, skos:definition, skos:broader, skos:narrower, skos:related, skos:exactMatch, skos:closeMatch, cito:extends, cito:agreesWith, cito:disagreesWith, cito:cites, dct:source, dct:contributor. Agent owns everything else not in this list.
 
-Wikilink hints projecting to this shape's predicates: {.related} → skos:related, {.broader} → skos:broader, {.narrower} → skos:narrower, {.extends} → cito:extends, {.supports} → cito:agreesWith, {.criticizes} → cito:disagreesWith, {.cites} → cito:cites.
+Wikilink hints projecting to this shape's predicates: {.related} → skos:related, {.broader} → skos:broader, {.narrower} → skos:narrower, {.extends} → cito:extends, {.supports} → cito:agreesWith, {.criticizes} → cito:disagreesWith, {.cites} → cito:cites, {.source} → dct:source, {.author} → dct:contributor.
 
 Preserve source specifics when updating the body; do not summarize toward a single consensus voice. Record contradictions via cito:disagreesWith rather than harmonizing prose. Memento captures every prior version.
 
@@ -48,4 +48,6 @@ To extend (e.g., for vault:LiteratureNote-style citation traversal), subclass sk
     sh:property [ sh:path cito:extends ; sh:nodeKind sh:IRI ; rdfs:label "Extends (citation)" ] ;
     sh:property [ sh:path cito:agreesWith ; sh:nodeKind sh:IRI ; rdfs:label "Agrees with (citation)" ] ;
     sh:property [ sh:path cito:disagreesWith ; sh:nodeKind sh:IRI ; rdfs:label "Disagrees with (citation)" ] ;
-    sh:property [ sh:path cito:cites ; sh:nodeKind sh:IRI ; rdfs:label "Cites" ] .
+    sh:property [ sh:path cito:cites ; sh:nodeKind sh:IRI ; rdfs:label "Cites" ] ;
+    sh:property [ sh:path dct:source ; sh:nodeKind sh:IRI ; rdfs:label "Source (citation)" ] ;
+    sh:property [ sh:path dct:contributor ; sh:nodeKind sh:IRI ; rdfs:label "Contributor (author)" ] .

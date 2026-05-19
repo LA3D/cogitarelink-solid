@@ -76,6 +76,8 @@ const concept: NamedNode[] = [
     namedNode(CITO + "agreesWith"),
     namedNode(CITO + "disagreesWith"),
     namedNode(CITO + "cites"),
+    namedNode(DCT  + "source"),
+    namedNode(DCT  + "contributor"),
 ];
 
 const person: NamedNode[] = [
