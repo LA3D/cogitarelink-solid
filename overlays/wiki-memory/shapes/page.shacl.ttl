@@ -1,26 +1,67 @@
-@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
-@prefix dct:  <http://purl.org/dc/terms/> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix schema: <https://schema.org/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 
 <> dct:conformsTo <https://www.w3.org/TR/shacl/> .
 
-wiki:PageShape a sh:NodeShape ;
+wiki:PageShape
+    a sh:NodeShape ;
+    rdfs:label "Wiki Page Shape" ;
+    rdfs:comment "SHACL shape governing the page-resource <> subject in every L3 wiki page's .meta. Carries page metadata (title, maturity, mainEntity link, timestamps). Distinct from Thing-shapes which target the <#this> subject." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+
     sh:targetClass wiki:Page ;
     sh:closed false ;
-    sh:agentInstruction "Wiki page. Required: dct:title. Common: skos:broader (parent), skos:related (lateral). For typed citations to sources, use cito:extends, cito:agreesWith, cito:disagreesWith. The substrate governs dct:title, dct:identifier, dct:created, dct:modified, skos:broader, skos:related, cito:* via the markdown-projection affordance (D81 Model A) — edit body+frontmatter, don't PATCH .meta directly for these. See <https://pod.vardeman.me/vault/wiki/index.md> for the full L3 profile and inter-shape conventions." ;
+
+    sh:agentInstruction """
+Substrate governs: dct:title, schema:mainEntity, wiki:maturity, dct:created, dct:modified, prov:wasGeneratedBy. Agent owns everything else not in this list.
+
+This shape constrains the page resource <>. The Thing the page is about lives at <#this> and is constrained by wiki:ThingShape plus a Thing-type-specific shape (Concept/Person/Place/Event/Organization/HowTo).
+
+To extend, subclass wiki:Page (rare — most extension happens at Thing level) or add an L4 shape targeting wiki:Page with additional constraints. See </vault/meta/extending-l3.md>.
+""" ;
+
     sh:property [
         sh:path dct:title ;
         sh:minCount 1 ;
         sh:datatype xsd:string ;
+        rdfs:label "Title"
     ] ;
+
     sh:property [
-        sh:path skos:broader ;
+        sh:path schema:mainEntity ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
         sh:nodeKind sh:IRI ;
+        rdfs:label "Main entity (the Thing this page is about)"
     ] ;
+
     sh:property [
         sh:path wiki:maturity ;
         sh:in ( wiki:draft wiki:validated wiki:core ) ;
         sh:maxCount 1 ;
+        rdfs:label "Maturity"
+    ] ;
+
+    sh:property [
+        sh:path dct:created ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        rdfs:label "Created"
+    ] ;
+
+    sh:property [
+        sh:path dct:modified ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        rdfs:label "Modified"
     ] .
