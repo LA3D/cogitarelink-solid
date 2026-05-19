@@ -42,8 +42,9 @@ wiki:Resource
 
 wiki:Page
     a owl:Class ;
+    rdfs:subClassOf wiki:Resource ;
     rdfs:label "Wiki Page" ;
-    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:isDefinedBy <> ;
     rdfs:comment "An information resource (markdown body + .meta sidecar) in the wiki-memory L3 substrate. Each wiki:Page describes exactly one Thing via schema:mainEntity. The Thing IRI is the page's <#this> fragment." ;
     skos:definition "The page-resource side of the dual-layer L3 architecture. Pages are information resources; the Things they describe are the queryable entities." ;
     skos:scopeNote "1-to-1 with the Thing it describes. For multiple pages per Thing, use mem:SupersedeAction." ;
@@ -103,7 +104,7 @@ wiki:WorkingNote
     a owl:Class ;
     rdfs:subClassOf wiki:Page ;
     rdfs:label "Working Note" ;
-    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:isDefinedBy <> ;
     rdfs:comment "Permissive subclass of wiki:Page for D73 two-stage commit drafting. Working notes accept any Thing type without strict validation. mem:CrystallizeAction promotes them to durable containers." ;
     skos:scopeNote "Used only for low-ceremony body-only writes. Strict validation happens at crystallize-time." ;
     rdfs:seeAlso </vault/meta/affordances/crystallize> ;
@@ -113,7 +114,7 @@ wiki:ExtensionGuide
     a owl:Class ;
     rdfs:subClassOf schema:HowTo ;
     rdfs:label "Extension Guide" ;
-    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:isDefinedBy <> ;
     rdfs:comment "A wiki page documenting how to extend a substrate vocabulary or shape catalog. Canonical instance: /vault/meta/extending-l3.md." ;
     rdfs:seeAlso </vault/meta/extending-l3.md> ;
     dct:created "2026-05-19"^^xsd:date .
