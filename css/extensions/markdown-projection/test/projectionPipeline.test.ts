@@ -93,4 +93,39 @@ describe("projectionPipeline", () => {
         expect(new Store(t1).size).toBe(new Store(t2).size);
         expect(isographic(new Store(t1), new Store(t2))).toBe(true);
     });
+
+    it("Bug F: page resource rdf:type deduplication — prevents <> from being typed as domain class when invariants emit it on <#this>", async () => {
+        const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+        const SKOS_CONCEPT = "http://www.w3.org/2004/02/skos/core#Concept";
+        const WIKI_PAGE = "https://pod.vardeman.me/vault/ontology/wiki#Page";
+
+        const body = `---
+title: Bug F Smoke Test
+type: skos:Concept
+---
+
+# Bug F Smoke Test
+
+Body content.`;
+        const resourceUri = "http://localhost:3000/wiki/concepts/bugf-smoke.md";
+        const triples = await projectionPipeline.run(resourceUri, body);
+        const store = new Store(triples);
+
+        // Page resource <> should have wiki:Page type
+        const pageTypes = store
+            .getQuads(null, null, null, null)
+            .filter((q) => q.subject.value === resourceUri && q.predicate.value === RDF_TYPE)
+            .map((q) => q.object.value);
+        expect(pageTypes).toContain(WIKI_PAGE);
+
+        // Page resource <> should NOT have the domain Thing class (skos:Concept) — Bug F
+        expect(pageTypes).not.toContain(SKOS_CONCEPT);
+
+        // Thing <#this> should have skos:Concept type
+        const thingTypes = store
+            .getQuads(null, null, null, null)
+            .filter((q) => q.subject.value === resourceUri + "#this" && q.predicate.value === RDF_TYPE)
+            .map((q) => q.object.value);
+        expect(thingTypes).toContain(SKOS_CONCEPT);
+    });
 });

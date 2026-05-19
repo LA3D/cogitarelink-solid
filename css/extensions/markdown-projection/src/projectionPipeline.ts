@@ -196,6 +196,16 @@ export const projectionPipeline = {
         // When thingClass is undefined: no invariants emitted, no warning here
         // (listener context has better logging; pipeline stays pure).
 
-        return [...fmTriples, ...derived, ...wikiTriples, provTriple, ...invariants];
+        // Bug F: When invariants emit the Thing's rdf:type on <#this>, prevent
+        // frontmatter projection from also emitting the same type on <> (the page
+        // resource). The page resource should be typed only as wiki:Page (set by
+        // invariants); the domain class belongs exclusively on <#this>.
+        const filteredFmTriples = invariants.length > 0
+            ? fmTriples.filter(
+                  (q) => !(q.subject.value === resourceUri && q.predicate.value === RDF_TYPE),
+              )
+            : fmTriples;
+
+        return [...filteredFmTriples, ...derived, ...wikiTriples, provTriple, ...invariants];
     },
 };
