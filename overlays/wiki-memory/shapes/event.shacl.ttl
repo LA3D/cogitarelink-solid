@@ -1,0 +1,52 @@
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix mem:    <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+wiki:EventShape
+    a sh:NodeShape ;
+    rdfs:label "Wiki Event Shape" ;
+    rdfs:comment "SHACL shape governing wiki pages about real-world events. Targets schema:Event. DISJOINT from mem:Event (substrate analysis signal) and mem:Action (substrate operation) per D99." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+
+    sh:targetClass schema:Event ;
+    sh:closed false ;
+
+    sh:not [
+        sh:class mem:Event ;
+        sh:message "schema:Event (content memory about a real-world event) is disjoint with mem:Event (substrate analysis signal). See </vault/ontology/wiki>."
+    ] ;
+    sh:not [
+        sh:class mem:Action ;
+        sh:message "schema:Event is disjoint with mem:Action (substrate write operations). See </vault/ontology/wiki>."
+    ] ;
+
+    sh:agentInstruction """
+Substrate governs: schema:startDate, schema:endDate, schema:location, schema:attendee, schema:organizer, schema:about, schema:superEvent, schema:subEvent. Agent owns everything else.
+
+DISJOINT from mem:Event (substrate analysis-signal vocabulary emitted to /vault/wiki/.events/) and mem:Action (substrate write operations recorded as PROV-O activities). schema:Event lives at /vault/wiki/events/, written by agents about real-world events.
+
+Wikilink hints: {.location} → schema:location, {.attendee} → schema:attendee, {.organizer} → schema:organizer, {.about} → schema:about.
+
+For events with bounded duration, set both schema:startDate and schema:endDate.
+
+To extend (e.g., biz:OrderPlacedEvent), subclass schema:Event and add your shape. See </vault/meta/extending-l3.md>.
+""" ;
+
+    sh:property [ sh:path schema:startDate ; sh:datatype xsd:dateTime ; rdfs:label "Start date" ] ;
+    sh:property [ sh:path schema:endDate ; sh:datatype xsd:dateTime ; rdfs:label "End date" ] ;
+    sh:property [ sh:path schema:location ; sh:nodeKind sh:IRI ; rdfs:label "Location (→ schema:Place)" ] ;
+    sh:property [ sh:path schema:attendee ; sh:nodeKind sh:IRI ; rdfs:label "Attendee (→ schema:Person)" ] ;
+    sh:property [ sh:path schema:organizer ; sh:nodeKind sh:IRI ; rdfs:label "Organizer" ] ;
+    sh:property [ sh:path schema:about ; sh:nodeKind sh:IRI ; rdfs:label "About (→ any Thing)" ] ;
+    sh:property [ sh:path schema:superEvent ; sh:nodeKind sh:IRI ; rdfs:label "Super-event" ] ;
+    sh:property [ sh:path schema:subEvent ; sh:nodeKind sh:IRI ; rdfs:label "Sub-event" ] .
