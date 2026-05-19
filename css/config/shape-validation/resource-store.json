@@ -14,7 +14,7 @@
       }
     },
     {
-      "comment": "Validates resources when parent container has ldp:constrainedBy in its metadata.",
+      "comment": "Validates resources when parent container has ldp:constrainedBy in its metadata. Also enforces D99 Layer 2 path-based class disjointness via pathConstraints.",
       "@id": "urn:shape-validation:default:ResourceStore_Shape",
       "@type": "ShapeValidationStore",
       "identifierStrategy": { "@id": "urn:solid-server:default:IdentifierStrategy" },
@@ -26,6 +26,45 @@
         "@type": "ShaclValidator",
         "converter": { "@id": "urn:solid-server:default:RepresentationConverter" },
         "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" }
+      },
+      "pathConstraints": {
+        "@list": [
+          {
+            "comment": "mem:Event resources belong in /wiki/.events/ (ephemeral layer), not /wiki/events/ (content layer)",
+            "pathPrefix": "/vault/wiki/.events/",
+            "allowedClasses": {
+              "@list": ["https://pod.vardeman.me/vault/ontology/mem#Event"]
+            },
+            "forbiddenClasses": { "@list": [] }
+          },
+          {
+            "comment": "mem:Action resources belong in /wiki/.operations/ (ephemeral layer)",
+            "pathPrefix": "/vault/wiki/.operations/",
+            "allowedClasses": {
+              "@list": ["https://www.w3.org/ns/activitystreams#Activity"]
+            },
+            "forbiddenClasses": { "@list": [] }
+          },
+          {
+            "comment": "Content /wiki/events/ must not contain mem:Event or mem:Action (use .events/ instead)",
+            "pathPrefix": "/vault/wiki/events/",
+            "allowedClasses": { "@list": [] },
+            "forbiddenClasses": {
+              "@list": [
+                "https://pod.vardeman.me/vault/ontology/mem#Event",
+                "https://pod.vardeman.me/vault/ontology/mem#Action"
+              ]
+            }
+          },
+          {
+            "comment": "Content /wiki/procedures/ must not contain mem:Action (use .operations/ instead)",
+            "pathPrefix": "/vault/wiki/procedures/",
+            "allowedClasses": { "@list": [] },
+            "forbiddenClasses": {
+              "@list": ["https://pod.vardeman.me/vault/ontology/mem#Action"]
+            }
+          }
+        ]
       }
     }
   ]
