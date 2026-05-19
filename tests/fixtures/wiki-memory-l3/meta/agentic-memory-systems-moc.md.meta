@@ -11,8 +11,10 @@
     dct:created "2026-04-01T00:00:00Z"^^xsd:dateTime ;
     dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
     wiki:maturity "validated" ;
-    skos:related </wiki/pages/wiki-memory-l3-profile.md> ;
-    skos:related </wiki/pages/memory-substrate-vs-memory-profile.md> ;
-    skos:related </wiki/pages/procedural-memory.md> ;
-    skos:related </wiki/pages/compile-once-principle.md> ;
     prov:wasGeneratedBy </meta/affordances/markdown-projection> .
+
+<#this>
+    skos:related </wiki/pages/wiki-memory-l3-profile.md#this> ;
+    skos:related </wiki/pages/memory-substrate-vs-memory-profile.md#this> ;
+    skos:related </wiki/pages/procedural-memory.md#this> ;
+    skos:related </wiki/pages/compile-once-principle.md#this> .

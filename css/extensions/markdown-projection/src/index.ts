@@ -1,7 +1,8 @@
 export { governedPredicates, GOVERNED_FOR } from "./governedPredicates.js";
 export { projectFrontmatter } from "./frontmatterProjection.js";
 export type { Frontmatter } from "./frontmatterProjection.js";
-export { projectWikilinks } from "./wikilinkProjection.js";
+export { projectWikilinks, projectWikilink, HINT_TO_PROJECTION } from "./wikilinkProjection.js";
+export type { Projection, ProjectionSubject, ProjectWikilinkArgs } from "./wikilinkProjection.js";
 export { projectionPipeline } from "./projectionPipeline.js";
 export { MetaWriter } from "./metaWriter.js";
 export { detectClass } from "./detectClass.js";

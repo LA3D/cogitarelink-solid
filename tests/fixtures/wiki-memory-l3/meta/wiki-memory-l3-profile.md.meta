@@ -1,6 +1,5 @@
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
-@prefix cito:  <http://purl.org/spar/cito/> .
 @prefix prov:  <http://www.w3.org/ns/prov#> .
 @prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
@@ -12,7 +11,9 @@
     dct:created "2026-05-15T00:00:00Z"^^xsd:dateTime ;
     dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
     wiki:maturity "draft" ;
-    skos:broader </wiki/pages/agentic-memory-systems-moc.md> ;
-    dct:references </wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md> ;
-    dct:contributor </wiki/people/karpathy-andrej.md> ;
     prov:wasGeneratedBy </meta/affordances/markdown-projection> .
+
+<#this>
+    skos:broader </wiki/pages/agentic-memory-systems-moc.md#this> ;
+    dct:source </wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md#this> ;
+    dct:contributor </wiki/people/karpathy-andrej.md#this> .

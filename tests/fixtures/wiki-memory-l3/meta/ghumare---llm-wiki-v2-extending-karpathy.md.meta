@@ -10,5 +10,7 @@
     dct:created "2026-03-15T00:00:00Z"^^xsd:dateTime ;
     dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
     wiki:maturity "draft" ;
-    dct:contributor </wiki/people/karpathy-andrej.md> ;
     prov:wasGeneratedBy </meta/affordances/markdown-projection> .
+
+<#this>
+    dct:contributor </wiki/people/karpathy-andrej.md#this> .
