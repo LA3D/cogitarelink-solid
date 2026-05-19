@@ -15,11 +15,6 @@ import httpx
 POD = os.environ.get("POD_URL", "https://pod.vardeman.me/vault")
 PYTHON = os.environ.get("VENV_PYTHON", os.path.expanduser("~/uvws/.venv/bin/python"))
 
-pytestmark = pytest.mark.skip(
-    reason="Requires Pod rebuild via apply.py (Phase H Task 30); reactivate then."
-)
-
-
 def test_biz_overlay_applies_and_validates_equipment():
     # Apply the stub overlay
     result = subprocess.run(

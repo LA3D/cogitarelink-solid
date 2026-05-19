@@ -7,11 +7,6 @@ from rdflib import Graph, URIRef
 POD = os.environ.get("POD_URL", "https://pod.vardeman.me/vault")
 WIKI = "https://pod.vardeman.me/vault/ontology/wiki#"
 
-pytestmark = pytest.mark.skip(
-    reason="Requires Pod rebuild via apply.py (Phase H Task 30); reactivate then."
-)
-
-
 def test_extending_l3_md_accessible():
     with httpx.Client(verify=False, base_url=POD) as client:
         resp = client.get("/meta/extending-l3.md",

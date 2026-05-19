@@ -6,10 +6,6 @@ from rdflib import Graph, URIRef
 POD = "https://pod.vardeman.me/vault"
 SKOS = "http://www.w3.org/2004/02/skos/core#"
 
-pytestmark = pytest.mark.skip(
-    reason="Requires Pod rebuild via apply.py (Phase H Task 30); reactivate then."
-)
-
 CLIENT = httpx.Client(verify=False, timeout=10)
 
 

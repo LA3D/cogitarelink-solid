@@ -13,11 +13,6 @@ import httpx
 
 POD = os.environ.get("POD_URL", "https://pod.vardeman.me/vault")
 
-pytestmark = pytest.mark.skip(
-    reason="Requires Pod rebuild via apply.py (Phase H Task 30); reactivate then."
-)
-
-
 def test_event_multitype_schema_event_and_mem_event_rejected():
     """Multi-typing schema:Event + mem:Event is rejected by SHACL sh:not."""
     body = """@prefix schema: <https://schema.org/> .

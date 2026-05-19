@@ -11,11 +11,6 @@ import httpx
 
 POD = os.environ.get("POD_URL", "https://pod.vardeman.me/vault")
 
-pytestmark = pytest.mark.skip(
-    reason="Requires Pod rebuild via apply.py (Phase H Task 30); reactivate then."
-)
-
-
 def test_substrate_mem_event_at_events_ephemeral_path_skipped():
     """Substrate should POST mem:Event to /wiki/.events/ (ephemeral layer).
 
