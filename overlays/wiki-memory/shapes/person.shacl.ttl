@@ -1,15 +1,40 @@
-@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
-@prefix dct:  <http://purl.org/dc/terms/> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix foaf:   <http://xmlns.com/foaf/0.1/> .
+@prefix org:    <http://www.w3.org/ns/org#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 
 <> dct:conformsTo <https://www.w3.org/TR/shacl/> .
 
-wiki:PersonShape a sh:NodeShape ;
-    sh:targetClass wiki:Person ;
+wiki:PersonShape
+    a sh:NodeShape ;
+    rdfs:label "Wiki Person Shape" ;
+    rdfs:comment "SHACL shape governing wiki pages about people. Targets schema:Person. Inherits common Thing predicates from wiki:ThingShape." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> , <https://solid.github.io/webid-profile/> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+
+    sh:targetClass schema:Person ;
     sh:closed false ;
-    sh:agentInstruction "Person record. FOAF-based. foaf:name preferred over dct:title. foaf:nick lists aliases for cross-system linking (citekey patterns, Twitter handles, Readwise display names). Use foaf:Organization for institutional affiliations via affiliation predicate. See <https://pod.vardeman.me/vault/wiki/index.md> for the full L3 profile and inter-shape conventions." ;
-    sh:property [
-        sh:path foaf:name ;
-        sh:minCount 1 ;
-    ] .
+
+    sh:agentInstruction """
+Substrate governs: schema:givenName, schema:familyName, schema:email, schema:affiliation, foaf:nick, org:hasMembership. Agent owns everything else not in this list.
+
+Identifier discipline: ORCID/WebID as literal in schema:identifier (inherited from ThingShape); dereferenceable URI in schema:sameAs. Matches AddressBook patterns.
+
+Wikilink hints: {.affiliation} → schema:affiliation, {.member} → schema:member.
+
+To extend (e.g., business contacts, family genealogy), subclass schema:Person and add your shape. See </vault/meta/extending-l3.md>.
+""" ;
+
+    sh:property [ sh:path schema:givenName ; sh:datatype xsd:string ; rdfs:label "Given name" ] ;
+    sh:property [ sh:path schema:familyName ; sh:datatype xsd:string ; rdfs:label "Family name" ] ;
+    sh:property [ sh:path schema:email ; rdfs:label "Email" ] ;
+    sh:property [ sh:path schema:affiliation ; sh:nodeKind sh:IRI ; rdfs:label "Affiliation (→ schema:Organization)" ] ;
+    sh:property [ sh:path foaf:nick ; sh:datatype xsd:string ; rdfs:label "Nickname / cross-system alias" ] ;
+    sh:property [ sh:path org:hasMembership ; sh:nodeKind sh:IRI ; rdfs:label "Time-scoped membership" ] .
