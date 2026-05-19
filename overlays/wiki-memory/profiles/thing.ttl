@@ -1,0 +1,44 @@
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix role: <http://www.w3.org/ns/dx/prof/role/> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+<https://pod.vardeman.me/vault/meta/profiles/thing>
+  a prof:Profile ;
+  rdfs:label "Wiki-Memory L3 — Thing page profile" ;
+  rdfs:comment "Profile for wiki:Thing pages. Base named-entity profile; concrete types (Person, Place, Event, Organization) profile this." ;
+  dct:publisher <https://orcid.org/0000-0003-4091-6059> ;
+  dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+  prof:hasToken "wiki-thing"^^xsd:token ;
+  prof:isProfileOf <https://pod.vardeman.me/vault/meta/profiles/page> ;
+  prof:isTransitiveProfileOf
+    <https://pod.vardeman.me/vault/meta/profiles/page> ,
+    <https://solidproject.org/TR/protocol> ;
+  prof:hasResource
+    <https://pod.vardeman.me/vault/meta/profiles/thing#shape> ,
+    <https://pod.vardeman.me/vault/meta/profiles/thing#context> ,
+    <https://pod.vardeman.me/vault/meta/profiles/thing#vocab> .
+
+<https://pod.vardeman.me/vault/meta/profiles/thing#shape>
+  a prof:ResourceDescriptor ;
+  rdfs:label "SHACL shape for wiki:Thing" ;
+  dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+  dct:format "text/turtle" ;
+  prof:hasRole role:validation ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/meta/shapes/thing.shacl.ttl> .
+
+<https://pod.vardeman.me/vault/meta/profiles/thing#context>
+  a prof:ResourceDescriptor ;
+  rdfs:label "JSON-LD context" ;
+  dct:format "application/ld+json" ;
+  prof:hasRole role:schema ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/meta/context.jsonld> .
+
+<https://pod.vardeman.me/vault/meta/profiles/thing#vocab>
+  a prof:ResourceDescriptor ;
+  rdfs:label "wiki vocabulary" ;
+  dct:format "text/turtle" ;
+  prof:hasRole role:vocabulary ;
+  prof:hasArtifact <https://pod.vardeman.me/vault/ontology/wiki> .

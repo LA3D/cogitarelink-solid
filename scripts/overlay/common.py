@@ -199,7 +199,18 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
             vocabs.append(VocabularyDeclaration(URIRef(ns), overlay_dir / str(doc), str(host)))
 
     containers = [str(o) for o in many(OVERLAY.installsContainer)]
-    shapes = [str(o) for o in many(OVERLAY.installsShape)]
+    # installsShape supports both flat URI refs (legacy) and structured blank nodes
+    # [ overlay:document "shapes/foo.ttl" ; overlay:hostedAt "/vault/meta/shapes/foo.ttl" ]
+    # extract hostedAt when present, fall back to str(node) for plain URIRefs
+    from rdflib import BNode as _BNode
+    shapes = []
+    for s_node in many(OVERLAY.installsShape):
+        if isinstance(s_node, _BNode):
+            ha = next(g.objects(s_node, OVERLAY.hostedAt), None)
+            if ha:
+                shapes.append(str(ha))
+        else:
+            shapes.append(str(s_node))
     affordances = [str(o) for o in many(OVERLAY.installsAffordance)]
     role_schemes = sorted(str(o) for o in many(OVERLAY.installsRoleScheme))
     profiles = sorted(str(o) for o in many(OVERLAY.installsProfile))
