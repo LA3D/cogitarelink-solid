@@ -19,11 +19,27 @@
  * allowedClasses: If non-empty, at least one resource class must match.
  *                 If empty, no allow-list is enforced (only forbid applies).
  * forbiddenClasses: Resource classes that are strictly forbidden at this path.
+ *
+ * Declared as a class (not interface) so componentsjs-generator emits a
+ * concrete Class descriptor that Components.js can instantiate. The
+ * ShapeValidationStore.pathConstraints parameter accepts these as an
+ * AbstractClass via ParameterRangeWildcard — they arrive as plain objects
+ * with the three member fields populated.
  */
-export interface PathConstraintConfig {
-  pathPrefix: string;
-  allowedClasses: string[];
-  forbiddenClasses: string[];
+export class PathConstraintConfig {
+  public pathPrefix: string;
+  public allowedClasses: string[];
+  public forbiddenClasses: string[];
+
+  public constructor(
+    pathPrefix: string,
+    allowedClasses: string[],
+    forbiddenClasses: string[],
+  ) {
+    this.pathPrefix = pathPrefix;
+    this.allowedClasses = allowedClasses;
+    this.forbiddenClasses = forbiddenClasses;
+  }
 }
 
 /**

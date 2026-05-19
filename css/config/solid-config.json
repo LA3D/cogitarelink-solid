@@ -65,7 +65,7 @@
       }
     },
     {
-      "comment": "Validates resources when parent container has ldp:constrainedBy in its metadata.",
+      "comment": "Validates resources when parent container has ldp:constrainedBy in its metadata. Also enforces D99 Layer 2 path-based class disjointness via pathConstraints.",
       "@id": "urn:shape-validation:default:ResourceStore_Shape",
       "@type": "ShapeValidationStore",
       "identifierStrategy": { "@id": "urn:solid-server:default:IdentifierStrategy" },
@@ -77,7 +77,36 @@
         "@type": "ShaclValidator",
         "converter": { "@id": "urn:solid-server:default:RepresentationConverter" },
         "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" }
-      }
+      },
+      "pathConstraints": [
+        {
+          "@type": "PathConstraintConfig",
+          "pathPrefix": "/vault/wiki/.events/",
+          "allowedClasses": ["https://pod.vardeman.me/vault/ontology/mem#Event"],
+          "forbiddenClasses": []
+        },
+        {
+          "@type": "PathConstraintConfig",
+          "pathPrefix": "/vault/wiki/.operations/",
+          "allowedClasses": ["https://www.w3.org/ns/activitystreams#Activity"],
+          "forbiddenClasses": []
+        },
+        {
+          "@type": "PathConstraintConfig",
+          "pathPrefix": "/vault/wiki/events/",
+          "allowedClasses": [],
+          "forbiddenClasses": [
+            "https://pod.vardeman.me/vault/ontology/mem#Event",
+            "https://pod.vardeman.me/vault/ontology/mem#Action"
+          ]
+        },
+        {
+          "@type": "PathConstraintConfig",
+          "pathPrefix": "/vault/wiki/procedures/",
+          "allowedClasses": [],
+          "forbiddenClasses": ["https://pod.vardeman.me/vault/ontology/mem#Action"]
+        }
+      ]
     },
     {
       "comment": "ShaclErrorHandler intercepts ShaclValidationError (thrown by ShaclValidator on non-conformance) and returns 422 with Content-Type: text/turtle body containing the sh:ValidationReport. Inserted before ConvertingErrorHandler so agents can self-correct from parseable RDF instead of opaque JSON. Falls through (NotImplementedHttpError) for all other error types.",

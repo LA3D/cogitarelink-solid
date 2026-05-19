@@ -1,8 +1,8 @@
 """
 End-to-end test: shape-validator rejects mem:Event PUT to /wiki/events/ (D99 Layer 2).
 
-Skipped until Phase H Task 30 rebuilds the reference Pod via apply.py with the
-new pathConstraints config in shape-validation/resource-store.json.
+Bug B fix (Task 31 acceptance sweep): wired pathConstraints into ShapeValidationStore
+via solid-config.json inline declaration + PathConstraintConfig class (not interface).
 """
 import os
 import pytest
@@ -11,13 +11,6 @@ import httpx
 POD = os.environ.get("POD_URL", "https://pod.vardeman.me/vault")
 
 
-@pytest.mark.skip(
-    reason=(
-        "Requires Pod rebuild via apply.py (Phase H Task 30 / shape-validator "
-        "pathConstraints config). Re-activate once the live Pod is rebuilt with "
-        "the new resource-store.json that includes pathConstraints."
-    )
-)
 def test_mem_event_rejected_at_content_events_path():
     """mem:Event PUT to /vault/wiki/events/ returns 422 with sh:ValidationReport body."""
     body = """
@@ -40,9 +33,6 @@ def test_mem_event_rejected_at_content_events_path():
     assert "disjoint" in body_lower or "mem" in body_lower
 
 
-@pytest.mark.skip(
-    reason="Requires Pod rebuild via apply.py (Phase H Task 30). Re-activate then."
-)
 def test_schema_event_accepted_at_content_events_path():
     """schema:Event (not in forbiddenClasses) PUT to /vault/wiki/events/ passes path check."""
     body = """
@@ -62,9 +52,6 @@ def test_schema_event_accepted_at_content_events_path():
     assert resp.status_code != 422 or "path-constraint" not in resp.text.lower()
 
 
-@pytest.mark.skip(
-    reason="Requires Pod rebuild via apply.py (Phase H Task 30). Re-activate then."
-)
 def test_mem_event_accepted_at_events_ephemeral_path():
     """mem:Event PUT to /vault/wiki/.events/ is allowed (ephemeral layer)."""
     body = """
