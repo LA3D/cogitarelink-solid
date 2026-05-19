@@ -1,0 +1,67 @@
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+wiki:OrganizationShape
+    a sh:NodeShape ;
+    rdfs:label "Wiki Organization Shape" ;
+    rdfs:comment "SHACL shape governing wiki pages about organizations. Targets schema:Organization. Inherits common Thing predicates from wiki:ThingShape." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+
+    sh:targetClass schema:Organization ;
+    sh:closed false ;
+
+    sh:agentInstruction """
+Substrate governs: schema:legalName, schema:parentOrganization, schema:subOrganization, schema:member, schema:foundingDate, schema:dissolutionDate. Agent owns everything else.
+
+Identifier discipline: ROR IRI as literal in schema:identifier; dereferenceable URI in schema:sameAs.
+
+Wikilink hints: {.parent} → schema:parentOrganization (context-sensitive — falls back to skos:broader for non-Organization Things), {.member} → schema:member, {.affiliation} for incoming edges from Persons.
+
+To extend (e.g., schema:EducationalOrganization, biz:Department), subclass schema:Organization and add your shape. See </vault/meta/extending-l3.md>.
+""" ;
+
+    sh:property [
+        sh:path schema:legalName ;
+        sh:datatype xsd:string ;
+        rdfs:label "Legal name"
+    ] ;
+
+    sh:property [
+        sh:path schema:parentOrganization ;
+        sh:nodeKind sh:IRI ;
+        rdfs:label "Parent organization"
+    ] ;
+
+    sh:property [
+        sh:path schema:subOrganization ;
+        sh:nodeKind sh:IRI ;
+        rdfs:label "Sub-organization"
+    ] ;
+
+    sh:property [
+        sh:path schema:member ;
+        sh:nodeKind sh:IRI ;
+        rdfs:label "Member"
+    ] ;
+
+    sh:property [
+        sh:path schema:foundingDate ;
+        sh:datatype xsd:date ;
+        rdfs:label "Founding date"
+    ] ;
+
+    sh:property [
+        sh:path schema:dissolutionDate ;
+        sh:datatype xsd:date ;
+        rdfs:label "Dissolution date"
+    ] .
