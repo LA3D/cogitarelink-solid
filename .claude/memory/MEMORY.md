@@ -5,9 +5,19 @@ recaps live in git history and the vault decisions log
 (`~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`).
 For decision IDs, invoke the `decision-lookup` skill.
 
+## Project state (as of 2026-05-19)
+
+- **Task 27 — L4 extension overlay integration test (stub biz overlay)** SHIPPED.
+  Fixture demonstrates D100 extension contract: L4 overlay declares 
+  `biz:Equipment rdfs:subClassOf schema:Product, schema:Thing`; apply.py 
+  installs on top of wiki-memory L3; integration test verifies a 
+  `biz:Equipment` page validates against both L3 (ThingShape) and L4 
+  (EquipmentShape). Commit 03c580b. Test skipped pending Phase H Task 30 Pod rebuild.
+  (Fixture triples: biz.ttl 7, equipment.shacl.ttl 13, manifest.ttl 18.)
+
 ## Project state (as of 2026-05-18, end of Memory Structuring Sprint)
 
-- **Branch**: sprint worktree `worktree-sprint+memory-structuring-2026-05-18` (in `.claude/worktrees/sprint+memory-structuring-2026-05-18`). Ready to merge to main when reviewed.
+- **Branch**: main. Memory Structuring Sprint worktree merged 2026-05-18 (commits c87c6b2 → e990299, including post-merge apply.py fixes and D93/D94/K4 ratification at bcce5bf).
 - **Shipped**: Phase 1 + 2 + 2b + Rung 1.4 + Phase 5j + AddressBook + owner-identity
   + Phase 7a wiki-search + Phase 7a closeout + **Memory Structuring Sprint** (2026-05-18).
   Read-only Memento, tombstone semantics, wiki-memory L3 reference profile (D78–D81),
