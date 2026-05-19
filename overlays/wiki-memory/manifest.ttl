@@ -107,8 +107,6 @@
     ] ;
 
     overlay:installsTypeRegistration
-        [ solid:forClass wiki:Page       ; solid:instanceContainer </vault/wiki/> ] ,
-        [ solid:forClass schema:Thing    ; solid:instanceContainer </vault/wiki/> ] ,
         [ solid:forClass skos:Concept   ; solid:instanceContainer </vault/wiki/concepts/> ] ,
         [ solid:forClass schema:Person   ; solid:instanceContainer </vault/wiki/people/> ] ,
         [ solid:forClass schema:Place    ; solid:instanceContainer </vault/wiki/places/> ] ,
