@@ -1,0 +1,36 @@
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+wiki:PlaceShape
+    a sh:NodeShape ;
+    rdfs:label "Wiki Place Shape" ;
+    rdfs:comment "SHACL shape governing wiki pages about places. Targets schema:Place. Inherits common Thing predicates from wiki:ThingShape." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-19"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+
+    sh:targetClass schema:Place ;
+    sh:closed false ;
+
+    sh:agentInstruction """
+Substrate governs: schema:address, schema:geo, schema:latitude, schema:longitude, schema:containedInPlace, schema:containsPlace. Agent owns everything else.
+
+Wikilink hints: {.location} → schema:location (used by Event-shape pages pointing here), {.about} for memory objects about a place.
+
+To extend (e.g., schema:City, schema:Building, biz:WarehouseLocation), subclass schema:Place and add your shape. See </vault/meta/extending-l3.md>.
+""" ;
+
+    sh:property [ sh:path schema:address ; rdfs:label "Address" ] ;
+    sh:property [ sh:path schema:geo ; sh:nodeKind sh:IRI ; rdfs:label "Geo coordinates" ] ;
+    sh:property [ sh:path schema:latitude ; sh:datatype xsd:decimal ; rdfs:label "Latitude" ] ;
+    sh:property [ sh:path schema:longitude ; sh:datatype xsd:decimal ; rdfs:label "Longitude" ] ;
+    sh:property [ sh:path schema:containedInPlace ; sh:nodeKind sh:IRI ; rdfs:label "Parent place" ] ;
+    sh:property [ sh:path schema:containsPlace ; sh:nodeKind sh:IRI ; rdfs:label "Child place" ] .
