@@ -1,6 +1,6 @@
 # SOLID Pod Decisions Index
 
-Always loaded. Concise index of all architectural decisions (D1-D94, K1-K4). Vault is canonical source:
+Always loaded. Concise index of all architectural decisions (D1-D100, K1-K4). Vault is canonical source:
 `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
 ## Skill cross-reference
@@ -30,6 +30,8 @@ CSS-builder skills (no D-cluster but referenced by many decisions): `css-extensi
 **D92 (wiki-search walker — DataAccessor end-to-end)** — Phase 7a closeout decision. Supersedes provisional/retracted D91-walker-architecture (HTTP self-request rewrite). Design + findings doc: `docs/plans/2026-05-18-wiki-search-walker-redesign.md`.
 
 **D93 (synthesis page as primary agent entry point) + D94 (mem: Action/Event vocabulary) + K4 (JSON-LD script tag is not RDFa)** — Memory Structuring Sprint. Design + plan: `docs/superpowers/specs/2026-05-18-memory-structuring-sprint-design.md` + `docs/superpowers/plans/2026-05-18-memory-structuring-sprint.md`. See "Memory Structuring Sprint" section below + the substrate-behavior findings recorded in the same section.
+
+**D95 (Thing-as-top-class) + D96 (Page+Thing governance split) + D97 (FAIR vocabulary metadata invariant) + D98 (8-shape catalog, supersedes D77) + D99 (belt-and-braces disjointness) + D100 (L4 extension contract + URI-independent substrate)** — Wiki-Memory L3 Shape Completion Sprint (2026-05-19). Design + plan: `docs/superpowers/specs/2026-05-19-l3-shape-completion-design.md` + `docs/superpowers/plans/2026-05-19-l3-shape-completion-plan.md`. See "Wiki-Memory L3 Shape Completion Sprint" section below. Vault-D91 = repo-D95 … vault-D96 = repo-D100.
 
 ## Phase 1 foundation (D1–D28)
 
@@ -601,6 +603,130 @@ Discovered while running the Phase B + Phase C integration tests against live CS
 4. **Memento version URIs are available immediately** after first PUT — the TimeMap at `{resource}?ext=timemap` returns a `memento:Memento` entry with a `?version=YYYYMMDDHHMMSS` URI usable for `prov:wasRevisionOf` from the next PUT.
 5. **Storage description PATCH returns HTTP 405** ("Only GET requests can target the storage description"). The storage description is fully static via Components.js `void-description.json`; runtime PATCH is not supported. `apply.py` logs a warning and continues — overlay data remains discoverable via the static config + per-resource `.meta` patches.
 6. **Components.js Override enforcement**: only ONE Override per instance is allowed at preprocess time. Multiple Overrides targeting the same `urn:solid-server:default:<Instance>` raise `ErrorResourcesContext: Found multiple Overrides targeting...`. Last-imported does NOT win; pre-flight rejection. Workaround: consolidate. Per K1 (pre-existing), some Override variants (`OverrideListInsertAt` vs empty list) have separate edge cases.
+
+## Wiki-Memory L3 Shape Completion Sprint (D95–D100, 2026-05-19)
+
+Vault sync: vault-D91 = repo-D95 … vault-D96 = repo-D100.
+
+Design + plan: `docs/superpowers/specs/2026-05-19-l3-shape-completion-design.md` +
+`docs/superpowers/plans/2026-05-19-l3-shape-completion-plan.md`.
+
+Sprint tag: `wiki-l3-shape-completion-complete` (Phase H Task 30).
+
+Test counts at close: ~94 TypeScript unit tests + ~53 Python local tests + 19–20 Phase G live-Pod integration tests green. Pre-existing test failures (`test_synthesis_page`, `test_mem_operations` DemoteAction) are Memory Structuring Sprint domain — out of scope for this sprint.
+
+### D95 — Thing-as-top-class architecture (2026-05-19)
+
+**Status**: Ratified 2026-05-19 (Wiki-Memory L3 Shape Completion Sprint).
+
+`schema:Thing` is the L3 top class for the wiki-memory substrate. Every Thing has an IRI at the page's `<#this>` hash fragment; pages are 1-to-1 with Things; the two are bridged by `schema:mainEntity` (page → Thing) and `schema:mainEntityOfPage` (Thing → page). Wikilinks project as Thing-to-Thing edges via `#this` resolution. Body markdown wikilinks `[[Target]]{.class}` produce `<#this> <predicate> <target.md#this>`. Codifies the Wikidata-style identifier-vs-page separation precedent applied to all L3 Things (not just People as in D89/D90).
+
+**Why `schema:Thing` not `wiki:Thing`**: schema.org `Thing` is saturated in LLM training data; minting `wiki:Thing` as a parallel root would add OOD surface with no benefit. `schema:Thing`'s `schema:name` / `schema:identifier` / `schema:sameAs` predicates are exactly the predicates needed for the Thing side of the two-subject model. Codifying the Wikidata pattern makes the model legible to agents that know neither this codebase nor wiki-memory L3.
+
+**Implications**: Every typed wiki resource now has two subjects: `<>` (the page resource, `wiki:Page`) and `<#this>` (the Thing, `schema:Thing`). The `MarkdownProjectionListener` projects wikilinks to `<#this>` edges; the `PageShape` governs `<>` edges; per-type Thing-shapes govern `<#this>` edges.
+
+**See also**: D89/D90 (owner-identity: first instance of `#this` pattern for people), D96 (Page+Thing governance split), D98 (shape catalog with PageShape + ThingShape).
+
+### D96 — Page+Thing predicate-level governance split (2026-05-19)
+
+**Status**: Ratified 2026-05-19.
+
+Extends D81 Model A: the page resource `<>` and the Thing `<#this>` have disjoint governed-predicate sets. `PageShape` governs `<>` predicates (`dct:title`, `schema:mainEntity`, `wiki:maturity`, `dct:created/modified`, `prov:wasGeneratedBy`, `wiki:embeds`); Thing-shapes (per type) govern `<#this>` predicates (`schema:name`, `schema:mainEntityOfPage`, `schema:identifier`, `schema:sameAs`, type-specific edges, etc.). The `MarkdownProjectionListener`'s N3 Patch delete clause scopes wildcard patterns per subject; agent-owned predicates outside the governed set are preserved across body rewrites.
+
+**Why disjoint sets are necessary**: without subject-scoped governance, a body rewrite that clears all `<>` predicates would also clear `<#this>` predicates (or vice versa), destroying whichever subject the listener does not own. Subject-scoped DELETE patterns make the governance contract explicit and testable.
+
+**Implementation note**: the listener emits two N3 Patch envelopes per write (one `DELETE` + `INSERT` pair per subject). If the body declares no typed wikilinks, the `<#this>` envelope degenerates to a no-op `DELETE { } INSERT { }`.
+
+**See also**: D81 (Model A, governed-predicate invariant), D95 (Thing-as-top-class — the architectural reason two subjects exist), D98 (shape catalog — PageShape and ThingShape both reference the governed sets in `sh:agentInstruction`).
+
+### D97 — FAIR vocabulary metadata invariant (2026-05-19)
+
+**Status**: Ratified 2026-05-19.
+
+Every minted class, property, and shape carries: `rdfs:label`, `rdfs:comment`, `rdfs:isDefinedBy`, `dct:conformsTo`, `dct:created`, `dct:creator`. Ontology resources additionally carry `vann:preferredNamespacePrefix` and `vann:preferredNamespaceUri`. `sh:agentInstruction` is reserved for procedural prompt content (substrate-governance lists, wikilink hints, model-collapse defenses, extension pointers) — never for descriptive prose.
+
+Reference precedent: `mem.ttl` from D94 (the Memory Structuring Sprint). Cross-batch test `test_fair_metadata_present.py` enforces the invariant.
+
+**Exception**: `resource.shacl.ttl` (the D38 LDP RDFS/NR guard shape) is exempted as a pre-D97 artifact; retrofit pending — see FOLLOWUPS.md.
+
+**Why this matters for agents**: `rdfs:label` + `rdfs:comment` are the first two triples an LLM agent sees when it dereferences a class or property IRI. Without them, the agent must infer semantics from the local name only — prone to hallucination at the vocabulary boundary. FAIR metadata converts the vocabulary from a namespace directory into a self-describing ontology.
+
+**See also**: D84 (Pod-hosted vocabulary IRIs), D49 (dereferenceable vocabulary constraint), D94 (mem.ttl as the reference implementation), `test_fair_metadata_present.py` in `tests/`.
+
+### D98 — L3 shape catalog: 8 SHACL NodeShapes (2026-05-19)
+
+**Status**: Ratified 2026-05-19. **Supersedes D77.**
+
+The wiki-memory L3 shape catalog comprises 8 SHACL NodeShapes (11 shape files total):
+
+- `wiki:PageShape` (targets `wiki:Page`, subject `<>`) — page metadata: title, maturity, created/modified, mainEntity, embeds, wasGeneratedBy
+- `wiki:ThingShape` (targets `schema:Thing`, abstract parent on `<#this>`) — common Thing predicates: name, identifier, sameAs, mainEntityOfPage, description
+- `wiki:ConceptShape` (targets `skos:Concept`) — adds skos:prefLabel, skos:definition, skos:broader, skos:related, skos:inScheme
+- `wiki:PersonShape` (targets `schema:Person`) — adds schema:givenName, schema:familyName, schema:email, owl:sameAs anchors, org:hasMembership
+- `wiki:PlaceShape` (targets `schema:Place`) — adds schema:geo, schema:containedInPlace, schema:address
+- `wiki:EventShape` (targets `schema:Event`; `sh:not [ sh:class mem:Event ]`) — adds schema:startDate, schema:endDate, schema:location, schema:organizer; disjoint from mem:Event
+- `wiki:OrganizationShape` (targets `schema:Organization`) — adds schema:legalName, schema:address, org:hasMember, owl:sameAs
+- `wiki:HowToShape` (targets `schema:HowTo`; `sh:not [ sh:class mem:Action ]`) — adds schema:step, sh:agentInstruction procedure body, wiki:precondition, wiki:postcondition; disjoint from mem:Action
+
+Plus preserved `wiki:WorkingNoteShape` (D73 permissive, targets `wiki:WorkingNote`), preserved `resource.shacl.ttl` (D38 LDP guard, pre-D97 artifact), and new `template.shacl.ttl` (L4 exemplar per D100).
+
+**Container layout updated**: `/wiki/{concepts,people,places,events,organizations,procedures,working}/` replaces D76's `/wiki/{pages,sources,people,procedures,working}/`. The Type Index maps each `schema:*` + `skos:Concept` class to its container.
+
+**Supersedes D77**: D77's five-shape catalog (Page, Source, Person, Procedure, WorkingNote) is retired. `SourceShape` → `wiki:ConceptShape` (concept-first) — the scholarly source use case is served by `dct:identifier` on any Thing shape. `ProcedureShape` → `wiki:HowToShape` (schema.org grounded).
+
+**See also**: D77 (superseded), D78 (class-based shape targeting — unchanged), D95 (Thing-as-top-class — architectural reason for PageShape + ThingShape split), D96 (governance split), D99 (belt-and-braces disjointness — enforced by EventShape + HowToShape `sh:not` clauses).
+
+### D99 — Belt-and-braces disjointness enforcement (2026-05-19)
+
+**Status**: Ratified 2026-05-19.
+
+Cross-stratum disjointness between content shapes (e.g., `schema:Event`) and substrate signals (e.g., `mem:Event`) is enforced at three layers:
+
+- **Layer 1 — OWL declaration** in `wiki.ttl`: `schema:Event owl:disjointWith mem:Event` and `schema:HowTo owl:disjointWith mem:Action`. Documentation; reasoners enforce.
+- **Layer 2 — Shape-validator path constraint** (CSS extension config): `pathBasedClassConstraint` rejects `mem:*` PUTs to content paths (`/wiki/events/`, `/wiki/procedures/`) and `schema:*` PUTs to the operations inbox (`/wiki/.operations/`), returning a named-disjointness `sh:ValidationReport` body on HTTP 422. **Skips `.meta` resources** — the substrate-internal/agent-content distinction means `.meta` files may legitimately carry both `mem:*` and `schema:*` triples (e.g., `prov:wasGeneratedBy mem:CrystallizeAction` alongside `schema:mainEntity`).
+- **Layer 3 — SHACL `sh:not` constraints** in `wiki:EventShape` and `wiki:HowToShape`: `sh:not [ sh:class mem:Event ]` and `sh:not [ sh:class mem:Action ]` respectively. Catches mixed-typing in the request body before it reaches the store.
+
+Substrate-side symmetric constraints on `mem:Event` / `mem:Action` shapes (disallowing `schema:*` type co-occurrence on operations) deferred to the MemTriggerListener detector wiring sprint (next-plan #2).
+
+**Why belt-and-braces**: the three layers catch disjointness violations at different points in the request lifecycle and for different failure modes (incorrect container target, mixed body typing, ontology reasoner queries). No single layer alone is sufficient for production; all three together are cheap and compositional.
+
+**Path constraints skip `.meta` resources**: `.meta` files are substrate-internal and routinely carry mixed vocabularies (content provenance, substrate governance, PROF conformsTo, Memento timestamps). Applying content-stratum constraints to `.meta` would reject legitimate substrate writes. This distinction is a durable substrate-behavior finding (see substrate-behavior findings below).
+
+**See also**: D74 (mem:* triggers — the substrate signals being kept separate), D94 (mem: vocabulary — the exact classes being guarded), D98 (EventShape + HowToShape carry the Layer 3 `sh:not` clauses), D38 (D38 LDP guard — structural companion).
+
+### D100 — L4 extension contract (URI-independent substrate) (2026-05-19)
+
+**Status**: Ratified 2026-05-19.
+
+**Five-step extension procedure** for any L4 application built on the wiki-memory L3:
+
+1. **Pick a schema.org parent class** (or `schema:Thing` as fallback).
+2. **Mint a domain prefix** and declare it at a Pod-hosted ontology resource (per D84).
+3. **Write a SHACL shape** — clone from `template.shacl.ttl`; set `sh:targetClass`; add governed predicates + `sh:agentInstruction`.
+4. **Register class in Type Index** — `<class-IRI> → <container-URL>`.
+5. **Package as an overlay** — manifest declares `overlay:requiresCapability wiki-l3` + all `overlay:installsShape`, `overlay:installsTemplate`, `overlay:installsContainerMetaPatch` entries.
+
+**Substrate is URI-independent**: any container an overlay registers in the Type Index gets full substrate treatment — two-subject `.meta` projection (D95/D96), wikilink projection (D58), FAIR governance (D97), disjointness enforcement (D99) — without a `/wiki/` prefix requirement. The `MarkdownProjectionListener` resolves Thing class via the live Type Index (refresh-on-miss + `DEFAULT_WIKI_TYPE_INDEX` fallback). D78's class-based dispatch is the canonical "do I govern this?" oracle. The substrate is agnostic to container naming; it follows the Type Index, not path patterns.
+
+**Artifacts shipped**:
+- `template.shacl.ttl` — L4 exemplar shape with inline comments at every required field
+- `/vault/meta/extending-l3.md` — worked example manual (typed `wiki:ExtensionGuide`) walkthrough using a fictional `biz:Equipment rdfs:subClassOf schema:Product` class
+- Extension boilerplate in every L3 shape's `sh:agentInstruction` (pointer to the extension guide + 5-step summary)
+- `overlay:installsHintMapping` manifest predicate — overlays register new class-hint → predicate mappings (e.g., `{.equipment}` → `biz:hasEquipment`) without patching the listener's hardcoded table
+
+**Validation**: integration test `test_l4_extension_stub.py` with `biz:Equipment` fixture validates (a) L4 shape validates against L3 ThingShape `sh:node` chain; (b) apply.py installs and verify.py confirms; (c) a `biz:Equipment` page passes SHACL and produces correct `<#this>` `.meta` projection. Cold-agent interpretation of the extension contract is a **Rung 1.5 empirical eval task** (RQ-Discovery-1 family) — not a pre-merge gate for this sprint.
+
+**See also**: D78 (class-based dispatch via Type Index), D83 (Pod-as-toolkit), D87 (capability-level overlay deps), D88 (tmpl: vocabulary), D95–D99 (the L3 invariants the extension inherits).
+
+## Shape Completion Sprint — substrate-behavior findings (2026-05-19)
+
+Durable substrate constraints surfaced during the Phase G integration tests. Complement the Memory Structuring Sprint findings recorded above.
+
+1. **Path constraints skip `.meta` resources** — the shape-validator's `pathBasedClassConstraint` must be configured with a `.meta` exclusion pattern. `.meta` files are CSS-internal substrate artifacts that legitimately carry cross-stratum vocabulary (content PROV-O, Memento timestamps, PROF conformsTo). Any path-based content-class constraint that hits `.meta` will spuriously reject routine substrate writes. See D99 (Layer 2) for the canonical treatment.
+
+2. **Live Type Index is the canonical dispatch oracle** — the `MarkdownProjectionListener` resolves the Thing class via the live Type Index at `/vault/settings/publicTypeIndex` (refresh-on-miss + hardcoded fallback). This means: (a) L4 overlays get full substrate treatment immediately upon Type Index registration without restarting CSS; (b) container rename without Type Index update silently breaks projection (no error, just no `<#this>` triples). D78 class-based dispatch is the governing decision; this finding is an implementation alignment note.
+
+3. **FAIR metadata invariant — D38 `resource.shacl.ttl` exempted** — the cross-batch `test_fair_metadata_present.py` test explicitly exempts `resource.shacl.ttl` as a pre-D97 artifact. Future sessions: do not use `resource.shacl.ttl` as a style reference for new shape files; use any of the 8 D98 shapes instead. Retrofit is pending — see FOLLOWUPS.md.
 
 ## Open research questions
 

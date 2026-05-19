@@ -5,7 +5,33 @@ recaps live in git history and the vault decisions log
 (`~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`).
 For decision IDs, invoke the `decision-lookup` skill.
 
-## Project state (as of 2026-05-19)
+## Wiki-Memory L3 Shape Completion Sprint — Shipped (2026-05-19)
+
+8-shape L3 catalog + URI-independent substrate + L4 extension contract. Sprint tag: `wiki-l3-shape-completion-complete`.
+
+- **8-shape catalog** (D98 / supersedes D77): PageShape + ThingShape + ConceptShape + PersonShape + PlaceShape + EventShape + OrganizationShape + HowToShape. Container layout updated to `/wiki/{concepts,people,places,events,organizations,procedures,working}/`.
+- **Thing-as-top-class** (D95): `schema:Thing` as L3 root. Every resource is 1-to-1 with a Thing at `<#this>`. `schema:mainEntity` / `schema:mainEntityOfPage` bridge. Wikilink projection targets `<#this>`.
+- **Page+Thing governance split** (D96): extends D81 Model A. `PageShape` governs `<>` predicates; Thing-shapes govern `<#this>` predicates. Listener emits two N3 Patch envelopes per write.
+- **FAIR vocabulary metadata invariant** (D97): every minted term carries `rdfs:label`, `rdfs:comment`, `rdfs:isDefinedBy`, `dct:conformsTo`, `dct:created`, `dct:creator`. `sh:agentInstruction` reserved for procedural content only. `test_fair_metadata_present.py` enforces. `resource.shacl.ttl` exempted (pre-D97 artifact; retrofit pending).
+- **Belt-and-braces disjointness** (D99): 3-layer enforcement — OWL declaration in `wiki.ttl`, shape-validator path constraint (skips `.meta` resources), SHACL `sh:not` in EventShape + HowToShape.
+- **L4 extension contract** (D100): 5-step procedure. Substrate is URI-independent — Type Index registration triggers full substrate treatment at any container path. `template.shacl.ttl` exemplar + `/vault/meta/extending-l3.md` guide. `overlay:installsHintMapping` manifest predicate for new class-hint mappings.
+- **Test counts**: ~94 TS unit + ~53 Python local + 19–20 Phase G live-Pod integration tests green.
+- **Pre-existing failures**: `test_synthesis_page` + `test_mem_operations` DemoteAction — Memory Structuring Sprint domain, out of scope.
+
+**Decisions ratified** (repo → vault numbering):
+- D95 → vault-D91 — Thing-as-top-class
+- D96 → vault-D92 — Page+Thing governance split
+- D97 → vault-D93 — FAIR vocabulary metadata invariant
+- D98 → vault-D94 — L3 shape catalog (8 shapes, supersedes D77)
+- D99 → vault-D95 — Belt-and-braces disjointness
+- D100 → vault-D96 — L4 extension contract + URI-independent substrate
+
+**Bug-fix sprint substrate-behavior findings** (durable):
+- Path constraints skip `.meta` resources (substrate-internal vs agent-content distinction).
+- Live Type Index is the canonical dispatch oracle (D78 alignment); container rename without Type Index update silently breaks `<#this>` projection.
+- FAIR metadata invariant: D38 `resource.shacl.ttl` exempted; do not use as style reference.
+
+## Project state (as of 2026-05-19, Task 27 pre-sprint)
 
 - **Task 27 — L4 extension overlay integration test (stub biz overlay)** SHIPPED.
   Fixture demonstrates D100 extension contract: L4 overlay declares 
@@ -15,21 +41,26 @@ For decision IDs, invoke the `decision-lookup` skill.
   (EquipmentShape). Commit 03c580b. Test skipped pending Phase H Task 30 Pod rebuild.
   (Fixture triples: biz.ttl 7, equipment.shacl.ttl 13, manifest.ttl 18.)
 
-## Project state (as of 2026-05-18, end of Memory Structuring Sprint)
+## Project state (as of 2026-05-19, end of Wiki-Memory L3 Shape Completion Sprint)
 
-- **Branch**: main. Memory Structuring Sprint worktree merged 2026-05-18 (commits c87c6b2 → e990299, including post-merge apply.py fixes and D93/D94/K4 ratification at bcce5bf).
+- **Branch**: main. Shape Completion Sprint shipped 2026-05-19 (D95–D100 / vault-D91–D96). Memory Structuring Sprint merged 2026-05-18 (commits c87c6b2 → e990299, D93/D94/K4 at bcce5bf).
 - **Shipped**: Phase 1 + 2 + 2b + Rung 1.4 + Phase 5j + AddressBook + owner-identity
-  + Phase 7a wiki-search + Phase 7a closeout + **Memory Structuring Sprint** (2026-05-18).
+  + Phase 7a wiki-search + Phase 7a closeout + Memory Structuring Sprint (2026-05-18)
+  + **Wiki-Memory L3 Shape Completion Sprint** (2026-05-19).
   Read-only Memento, tombstone semantics, wiki-memory L3 reference profile (D78–D81),
   Pod-as-toolkit capability catalog (D83), PROF profile descriptors + wikirole (D84–D86),
   AddressBook substrate (D87/D88), owner-identity overlay (D89/D90 repo-numbered as
   D89/D90 in vault; vault skipped D78–D86), wiki-search OSLC Query 3.0 surface
   (repo D91 / vault D87; dual-numbering legacy), Phase 7a closeout DataAccessor walker
-  (repo D92 / vault D88), and **Memory Structuring Sprint shipped** (repo D93/D94/K4
-  / vault D89/D90/K-note). 17 integration tests passing on the live Pod across Phase A
-  (synthesis), Phase B (six action E2E), and Phase C (announcement log + Solid
-  Notifications subscription smoke); 4 documented `pytest.skip` for substrate
-  emission tests pending MemTriggerListener detector hook integration.
+  (repo D92 / vault D88), Memory Structuring Sprint (repo D93/D94/K4 / vault D89/D90/K-note),
+  and **Shape Completion Sprint** (repo D95–D100 / vault D91–D96): 8-shape L3 catalog +
+  Thing-as-top-class + Page+Thing governance split + FAIR metadata invariant +
+  belt-and-braces disjointness + L4 extension contract + URI-independent substrate.
+  17 integration tests passing on the live Pod across Phase A (synthesis), Phase B
+  (six action E2E), and Phase C (announcement log + Solid Notifications subscription
+  smoke); 4 documented `pytest.skip` for substrate emission tests pending MemTriggerListener
+  detector hook integration. ~94 TS unit + ~53 Python local + 19–20 Phase G live-Pod
+  integration tests added by Shape Completion Sprint.
 - **Direction pivot (2026-05-15)**: project reframed from "vault-to-Pod as MVP" to
   **wiki-memory L3 as canonical reference profile, vault as one application**
   (D70–D74).
@@ -233,18 +264,11 @@ Companion docs:
 - Implementation plan: `docs/superpowers/plans/2026-05-18-wiki-search-implementation.md`
 - Original design: `docs/plans/2026-05-17-wiki-search-design.md`
 
-## Next plans (post-Memory-Structuring-Sprint)
+## Next plans (post-Shape-Completion-Sprint)
 
 In dependency order:
 
-1. **Shape Completion follow-on sprint** (deferred from Memory Structuring Sprint
-   scope decision). Adds full predicate sets + cardinalities + templates +
-   per-shape affordances + agent instructions for Concept/Source/Procedure/
-   WorkingMemory/Page shapes. Substrate infrastructure (synthesis page, mem:
-   vocabulary, operations layer, notifications layer) shipped in the Memory
-   Structuring Sprint; this completes the content-shape side.
-
-2. **MemTriggerListener detector wiring** (substrate hook integration).
+1. **MemTriggerListener detector wiring** (substrate hook integration).
    Detectors (UnprocessableWrite, BoundExceeded, ContradictionDetected,
    ReflectionDue) are unit-tested but not invoked from the listener's
    `changed` handler in v1. Each needs a specific substrate hook (shape-
@@ -253,7 +277,7 @@ In dependency order:
    + deferrals". Un-skip the 4 mem_events integration tests as each detector
    gets wired.
 
-3. **Rung 1.5 eval** (after #1 + #2). Skill-creator harness, with-skill vs
+2. **Rung 1.5 eval** (after #1). Skill-creator harness, with-skill vs
    without-skill. First measurable claim from the active plan. Tests
    solid-addressbook + solid-wiki-memory-l3 + solid-owner-identity +
    wiki-search + the 6 new action skills + the 3 new inbox skills against
@@ -264,16 +288,23 @@ In dependency order:
 
 Phase 7b/c/d (engine swap, hybrid RRF, in-pod index) are deferred until
 Rung 1.5 evidence justifies. Wiki URI scheme rethink (per FOLLOWUPS) slots
-between #1 and #3 if picked up.
+between #1 and #2 if picked up.
 
-### Closed (2026-05-18)
+### Closed (2026-05-19)
 
-- ~~**Memory Structuring Sprint**~~ — shipped this session. Ratified
+- ~~**Wiki-Memory L3 Shape Completion Sprint**~~ — shipped 2026-05-19. Ratified
+  D95–D100 (repo) / vault-D91–D96. 8-shape L3 catalog (supersedes D77) + Thing-as-top-class
+  (D95) + Page+Thing governance split (D96) + FAIR metadata invariant (D97) +
+  belt-and-braces disjointness (D99) + L4 extension contract + URI-independent substrate
+  (D100). ~94 TS unit + ~53 Python local + 19–20 Phase G live-Pod tests green.
+  Sprint tag: `wiki-l3-shape-completion-complete`.
+
+- ~~**Memory Structuring Sprint**~~ — shipped 2026-05-18. Ratified
   D93 (synthesis page) + D94 (mem: vocabulary, Action/Event taxonomy
   with proto-grounded parents) + K4 (JSON-LD <script> compatible with
   D75) in repo decisions; vault D89/D90/K-note. 17 integration tests
   passing across Phase A/B/C, 4 documented skips for substrate emission
-  pending detector hook integration (see Next plan #2). Sprint tag:
+  pending detector hook integration (see Next plan #1). Sprint tag:
   `memory-structuring-sprint-complete`. Substantive deviations from
   original spec: vocabulary renamed Operation→Action (proto-knowledge
   with schema.org), Announcement category collapsed into multi-typed
