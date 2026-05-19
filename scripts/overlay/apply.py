@@ -23,6 +23,7 @@ from rdflib import Graph
 from .common import (
     Manifest, parse_manifest, fetch_capability_catalog, put_file,
     ensure_container, n3_patch_inserts, version_at_least, ContainerMetaPatch,
+    ExtensionGuide,
 )
 
 
@@ -237,6 +238,27 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
                 print(f"  [warn] storage description PATCH failed ({e}); "
                       f"deferred — overlay data still discoverable via /vault/.meta",
                       file=sys.stderr)
+
+        # 13. Deploy extension guides (D100)
+        # Source file may not exist yet (created in a later task); skip with warning.
+        for guide in manifest.extension_guides:
+            source_path = manifest.overlay_dir / guide.document
+            if not source_path.exists():
+                print(f"  [warn] extension guide source missing: {source_path} — skipping",
+                      file=sys.stderr)
+                continue
+            target_url = absolutize(pod_url, guide.hosted_at)
+            r = client.put(
+                target_url,
+                content=source_path.read_bytes(),
+                headers={"Content-Type": "text/markdown"},
+                timeout=15,
+            )
+            if r.status_code not in (200, 201, 204, 205):
+                raise RuntimeError(
+                    f"PUT extension guide {target_url} failed: HTTP {r.status_code}: {r.text[:300]}"
+                )
+            print(f"  guide → {target_url}")
 
     print(f"Applied overlay {manifest.name} successfully.")
 

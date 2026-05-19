@@ -13,7 +13,7 @@ in cap:requires — those are types, not implementations.
 """
 from __future__ import annotations
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import httpx
@@ -95,6 +95,25 @@ class PageInstall:
 
 
 @dataclass(frozen=True)
+class HintMapping:
+    """A wikilink class-hint → RDF predicate mapping declared by an overlay (D98).
+
+    Runtime consumers: MarkdownProjectionListener reads these at startup to extend
+    the built-in hint table. No deploy step — pure data for the listener.
+    """
+    class_hint: str    # e.g., "affiliation"
+    predicate: str     # full IRI e.g., "https://schema.org/affiliation"
+    subject: str       # "PAGE" or "THING" — which resource becomes the subject
+
+
+@dataclass(frozen=True)
+class ExtensionGuide:
+    """An L4 extension manual to be deployed to the Pod (D100)."""
+    document: str    # local filename within overlay_dir (e.g., "extending-l3.md")
+    hosted_at: str   # Pod-side path (e.g., "/vault/meta/extending-l3.md")
+
+
+@dataclass(frozen=True)
 class Manifest:
     """Parsed view of an overlay's manifest.ttl."""
     name: str
@@ -116,6 +135,8 @@ class Manifest:
     page_installs: list[PageInstall]
     container_meta_patches: list[ContainerMetaPatch]
     resource_meta_patches: list[ResourceMetaPatch]
+    hint_mappings: list[HintMapping]          # overlay:installsHintMapping (D98)
+    extension_guides: list[ExtensionGuide]    # overlay:installsExtensionGuide (D100)
     overlay_dir: Path                 # local directory holding manifest + artifacts
 
 
@@ -264,6 +285,31 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
                 meta_path=overlay_dir / meta_rel,
             ))
 
+    # overlay:installsHintMapping — listener hint-table extensions (D98)
+    # No deploy step: pure data for MarkdownProjectionListener at runtime.
+    hint_mappings = []
+    for hint_node in g.objects(overlay_iri, OVERLAY.installsHintMapping):
+        hint_class = g.value(hint_node, OVERLAY.classHint)
+        predicate = g.value(hint_node, OVERLAY.projectsToPredicate)
+        subject_scope = g.value(hint_node, OVERLAY.projectsToSubject)
+        if hint_class and predicate and subject_scope:
+            hint_mappings.append(HintMapping(
+                class_hint=str(hint_class),
+                predicate=str(predicate),
+                subject=str(subject_scope),
+            ))
+
+    # overlay:installsExtensionGuide — L4 extension manual installs (D100)
+    extension_guides = []
+    for guide_node in g.objects(overlay_iri, OVERLAY.installsExtensionGuide):
+        document = g.value(guide_node, OVERLAY.document)
+        hosted_at = g.value(guide_node, OVERLAY.hostedAt)
+        if document and hosted_at:
+            extension_guides.append(ExtensionGuide(
+                document=str(document),
+                hosted_at=str(hosted_at),
+            ))
+
     return Manifest(
         name=name, version=version, overlay_iri=overlay_iri, profile_iri=profile_iri,
         required_capabilities=req_caps, optional_capabilities=opt_caps,
@@ -277,6 +323,8 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         page_installs=page_installs,
         container_meta_patches=meta_patches,
         resource_meta_patches=res_meta_patches,
+        hint_mappings=hint_mappings,
+        extension_guides=extension_guides,
         overlay_dir=overlay_dir,
     )
 
