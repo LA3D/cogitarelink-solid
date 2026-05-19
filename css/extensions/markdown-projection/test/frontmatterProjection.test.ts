@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { projectFrontmatter } from "../src/frontmatterProjection.js";
+import { projectFrontmatter, resolveCURIE } from "../src/frontmatterProjection.js";
 
 describe("projectFrontmatter", () => {
     it("projects type to rdf:type with class IRI", () => {
@@ -51,5 +51,79 @@ describe("projectFrontmatter", () => {
         });
         const up = triples.find(t => t.predicate.value.endsWith("up"));
         expect(up).toBeUndefined();
+    });
+});
+
+// A.1: CURIE resolution tests
+describe("resolveCURIE", () => {
+    it("resolves skos: CURIE to full IRI", () => {
+        expect(resolveCURIE("skos:Concept"))
+            .toBe("http://www.w3.org/2004/02/skos/core#Concept");
+    });
+
+    it("resolves schema: CURIE to full IRI", () => {
+        expect(resolveCURIE("schema:Person")).toBe("https://schema.org/Person");
+        expect(resolveCURIE("schema:Place")).toBe("https://schema.org/Place");
+        expect(resolveCURIE("schema:Event")).toBe("https://schema.org/Event");
+        expect(resolveCURIE("schema:Organization")).toBe("https://schema.org/Organization");
+        expect(resolveCURIE("schema:HowTo")).toBe("https://schema.org/HowTo");
+    });
+
+    it("resolves foaf: CURIE to full IRI", () => {
+        expect(resolveCURIE("foaf:Person")).toBe("http://xmlns.com/foaf/0.1/Person");
+    });
+
+    it("resolves wiki: CURIE to full IRI", () => {
+        expect(resolveCURIE("wiki:Concept"))
+            .toBe("https://pod.vardeman.me/vault/ontology/wiki#Concept");
+    });
+
+    it("passes absolute IRIs through unchanged", () => {
+        expect(resolveCURIE("https://chuck.example/biz/Equipment"))
+            .toBe("https://chuck.example/biz/Equipment");
+        expect(resolveCURIE("http://www.w3.org/2004/02/skos/core#Concept"))
+            .toBe("http://www.w3.org/2004/02/skos/core#Concept");
+    });
+
+    it("returns undefined for unknown short-form vault types", () => {
+        expect(resolveCURIE("concept")).toBeUndefined();
+        expect(resolveCURIE("person")).toBeUndefined();
+        expect(resolveCURIE("source")).toBeUndefined();
+    });
+});
+
+describe("projectFrontmatter — CURIE type support (A.1)", () => {
+    it("projects CURIE type skos:Concept to full IRI rdf:type triple", () => {
+        const triples = projectFrontmatter({ type: "skos:Concept" });
+        const typeT = triples.find(t =>
+            t.predicate.value === "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        );
+        expect(typeT?.object.value)
+            .toBe("http://www.w3.org/2004/02/skos/core#Concept");
+    });
+
+    it("projects CURIE type schema:Person to full IRI rdf:type triple", () => {
+        const triples = projectFrontmatter({ type: "schema:Person" });
+        const typeT = triples.find(t =>
+            t.predicate.value === "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        );
+        expect(typeT?.object.value).toBe("https://schema.org/Person");
+    });
+
+    it("still resolves legacy short-form 'concept' via TYPE_MAP", () => {
+        const triples = projectFrontmatter({ type: "concept" });
+        const typeT = triples.find(t =>
+            t.predicate.value === "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        );
+        expect(typeT?.object.value)
+            .toBe("https://pod.vardeman.me/vault/ontology/wiki#Concept");
+    });
+
+    it("still resolves absolute IRI type as-is", () => {
+        const triples = projectFrontmatter({ type: "https://chuck.example/biz/Equipment" });
+        const typeT = triples.find(t =>
+            t.predicate.value === "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        );
+        expect(typeT?.object.value).toBe("https://chuck.example/biz/Equipment");
     });
 });

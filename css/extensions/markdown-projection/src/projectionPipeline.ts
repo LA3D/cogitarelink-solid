@@ -11,9 +11,9 @@
 
 import { DataFactory, NamedNode, Quad } from "n3";
 import * as YAML from "yaml";
-import { projectFrontmatter, Frontmatter } from "./frontmatterProjection.js";
+import { projectFrontmatter, Frontmatter, resolveCURIE } from "./frontmatterProjection.js";
 import { projectWikilinks } from "./wikilinkProjection.js";
-import { resolveThingClass, TypeIndex } from "./typeIndexLookup.js";
+import { resolveThingClass, TypeIndex, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
 
 const { namedNode, literal, quad } = DataFactory;
 
@@ -138,7 +138,7 @@ export const projectionPipeline = {
     async run(
         resourceUri: string,
         body: string,
-        typeIndex: TypeIndex = {},
+        typeIndex: TypeIndex = DEFAULT_WIKI_TYPE_INDEX,
     ): Promise<Quad[]> {
         const { fm, rest } = splitFrontmatter(body);
 
@@ -176,13 +176,13 @@ export const projectionPipeline = {
         // Substrate invariants (D98 Page+Thing bridge) — emitted when Type Index
         // can resolve a Thing class. frontmatterType (fm.type) wins over container.
         const invariants: Quad[] = [];
-        // Only pass fm.type as a class IRI if it's an absolute IRI.
-        // Short vault type strings like "concept" or "person" are not class IRIs;
-        // they require mapping through the Type Index (task for the listener layer).
+        // Resolve fm.type to a full IRI: CURIE form (skos:Concept), absolute IRI,
+        // or short vault form (concept → wiki:Concept via TYPE_MAP already handled
+        // by projectFrontmatter; here we need the IRI for resolveThingClass).
+        // resolveCURIE returns undefined for short vault strings like "concept" — in
+        // that case we fall through to container-based resolution in typeIndex.
         const fmTypeIRI =
-            typeof fm.type === "string" && fm.type.startsWith("http")
-                ? fm.type
-                : undefined;
+            typeof fm.type === "string" ? resolveCURIE(fm.type) : undefined;
         const thingClass = resolveThingClass(
             new URL(resourceUri).pathname,
             typeIndex,

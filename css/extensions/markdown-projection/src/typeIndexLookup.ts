@@ -11,6 +11,22 @@ export type TypeIndex = Record<string, string>;
 // Map of container path prefix (with trailing slash) → Thing class IRI
 
 /**
+ * Hardcoded Type Index for the wiki-memory L3 canonical container layout.
+ * Used as the projection pipeline's fallback when no external typeIndex is
+ * provided (A.2 fix). Writes without explicit frontmatter type still emit
+ * D98 substrate invariants by container path.
+ */
+export const DEFAULT_WIKI_TYPE_INDEX: TypeIndex = {
+    "/vault/wiki/concepts/":      "http://www.w3.org/2004/02/skos/core#Concept",
+    "/vault/wiki/people/":        "https://schema.org/Person",
+    "/vault/wiki/places/":        "https://schema.org/Place",
+    "/vault/wiki/events/":        "https://schema.org/Event",
+    "/vault/wiki/organizations/": "https://schema.org/Organization",
+    "/vault/wiki/procedures/":    "https://schema.org/HowTo",
+    "/vault/wiki/working/":       "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote",
+};
+
+/**
  * Resolve the canonical Thing class IRI for a resource.
  *
  * @param resourcePath  Path of the resource, e.g. "/vault/wiki/concepts/foo.md"
