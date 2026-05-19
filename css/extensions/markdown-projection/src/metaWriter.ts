@@ -12,6 +12,11 @@
 //
 // This lets agents annotate resources without their edits being wiped by
 // the next body-projection pass (D50/D71/D72).
+//
+// Also exports buildTwoSubjectPatch — generates an N3 Patch string with
+// per-subject wildcard delete clauses for the D98 Page+Thing two-subject
+// pattern. Each subject's governed predicates are deleted by wildcard so
+// agent-owned predicates outside the governed set are preserved (D81 Model A).
 
 import {
     openSync,
@@ -24,6 +29,7 @@ import {
     constants,
 } from "fs";
 import { Parser, Quad, Store, Writer } from "n3";
+import type { NamedNode } from "n3";
 
 const STALE_LOCK_MS = 30_000;
 
@@ -121,4 +127,87 @@ export class MetaWriter {
             try { unlinkSync(lockPath); } catch {}
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// buildTwoSubjectPatch — N3 Patch with per-subject delete clauses (D81/D98)
+// ---------------------------------------------------------------------------
+
+export interface TwoSubjectPatchArgs {
+    pageIRI:                 NamedNode;
+    thingIRI:                NamedNode;
+    pageGovernedPredicates:  NamedNode[];
+    thingGovernedPredicates: NamedNode[];
+    insertQuads:             Quad[];
+}
+
+/**
+ * Build an N3 Patch string with a two-subject delete clause per the D98
+ * Page+Thing pattern.
+ *
+ * Each governed predicate gets its own wildcard binding (?old1, ?old2, ...)
+ * scoped to the correct subject, so that:
+ *   - page-level predicates on <> are deleted only for <>
+ *   - thing-level predicates on <#this> are deleted only for <#this>
+ *   - agent-owned predicates on either subject are not touched
+ *
+ * This satisfies D81 Model A: the substrate governs a declared set; the
+ * agent owns the rest.
+ */
+export function buildTwoSubjectPatch(args: TwoSubjectPatchArgs): string {
+    let counter = 0;
+    const nextVar = () => `?old${++counter}`;
+
+    const pageLines = args.pageGovernedPredicates.map(
+        pred => `  <${args.pageIRI.value}> <${pred.value}> ${nextVar()} .`,
+    );
+
+    const thingLines = args.thingGovernedPredicates.map(
+        pred => `  <${args.thingIRI.value}> <${pred.value}> ${nextVar()} .`,
+    );
+
+    const deleteBlock = [...pageLines, ...thingLines].join("\n");
+    const insertBlock = args.insertQuads.map(serializeQuad).join("\n");
+
+    return `@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+
+<> a solid:InsertDeletePatch ;
+  solid:deletes {
+${deleteBlock}
+  } ;
+  solid:inserts {
+${insertBlock}
+  } .
+`;
+}
+
+// ---------------------------------------------------------------------------
+// Quad serialization helpers (N-Triples-style)
+// ---------------------------------------------------------------------------
+
+function serializeQuad(q: Quad): string {
+    return `  ${serializeNode(q.subject)} <${q.predicate.value}> ${serializeObject(q.object)} .`;
+}
+
+function serializeNode(node: { termType: string; value: string }): string {
+    return `<${node.value}>`;
+}
+
+function serializeObject(node: { termType: string; value: string; datatype?: { value: string }; language?: string }): string {
+    if (node.termType === "NamedNode") return `<${node.value}>`;
+    if (node.termType === "Literal") {
+        const escaped = node.value
+            .replace(/\\/g, "\\\\")
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, "\\n")
+            .replace(/\r/g, "\\r");
+        if (node.language) return `"${escaped}"@${node.language}`;
+        const dt = (node as any).datatype?.value;
+        if (dt && dt !== "http://www.w3.org/2001/XMLSchema#string") {
+            return `"${escaped}"^^<${dt}>`;
+        }
+        return `"${escaped}"`;
+    }
+    // Blank nodes — should not appear in governed patches, but handle gracefully
+    return `_:${node.value}`;
 }

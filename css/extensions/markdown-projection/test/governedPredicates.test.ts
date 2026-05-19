@@ -1,31 +1,50 @@
 import { describe, it, expect } from "vitest";
-import { governedPredicates, GOVERNED_FOR } from "../src/governedPredicates.js";
 import {
     PAGE_GOVERNED_PREDICATES,
     THING_GOVERNED_PREDICATES,
     getThingGovernedPredicates,
+    resolveGovernedForWikiClass,
 } from "../src/governedPredicates.js";
 
-describe("governedPredicates (legacy API — backward compat)", () => {
-    it("returns ConceptShape governed set for wiki:Concept", () => {
-        const set = governedPredicates("https://pod.vardeman.me/vault/ontology/wiki#Concept");
-        expect(set).toContain("http://purl.org/dc/terms/title");
-        expect(set).toContain("http://www.w3.org/2004/02/skos/core#broader");
-        expect(set).toContain("http://purl.org/spar/cito/extends");
-        expect(set).toContain("http://www.w3.org/ns/prov#wasGeneratedBy");
-        expect(set).not.toContain("http://example.com/notgoverned");
+describe("resolveGovernedForWikiClass (D81 Model A + D98 two-subject)", () => {
+    it("returns page predicates including dct:title for wiki:Concept", () => {
+        const { page } = resolveGovernedForWikiClass(
+            "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+        );
+        expect(page).toContain("http://purl.org/dc/terms/title");
+        expect(page).toContain("http://www.w3.org/ns/prov#wasGeneratedBy");
     });
 
-    it("returns PersonShape governed set for wiki:Person", () => {
-        const set = governedPredicates("https://pod.vardeman.me/vault/ontology/wiki#Person");
-        expect(set).toContain("http://xmlns.com/foaf/0.1/nick");
-        expect(set).not.toContain("http://www.w3.org/2004/02/skos/core#broader");
+    it("returns thing predicates including SKOS terms for wiki:Concept", () => {
+        const { thing } = resolveGovernedForWikiClass(
+            "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+        );
+        expect(thing).toContain("http://www.w3.org/2004/02/skos/core#broader");
+        expect(thing).toContain("http://purl.org/spar/cito/extends");
     });
 
-    it("returns SourceShape governed set for wiki:Source", () => {
-        const set = governedPredicates("https://pod.vardeman.me/vault/ontology/wiki#Source");
-        expect(set).toContain("http://purl.org/dc/terms/creator");
-        expect(set).toContain("http://purl.org/dc/terms/identifier");
+    it("returns person-specific thing predicates for wiki:Person", () => {
+        const { thing } = resolveGovernedForWikiClass(
+            "https://pod.vardeman.me/vault/ontology/wiki#Person",
+        );
+        expect(thing).toContain("http://xmlns.com/foaf/0.1/nick");
+        expect(thing).not.toContain("http://www.w3.org/2004/02/skos/core#broader");
+    });
+
+    it("page predicates do NOT include Thing-level predicates", () => {
+        const { page } = resolveGovernedForWikiClass(
+            "https://pod.vardeman.me/vault/ontology/wiki#Concept",
+        );
+        expect(page).not.toContain("http://www.w3.org/2004/02/skos/core#prefLabel");
+        expect(page).not.toContain("https://schema.org/name");
+    });
+
+    it("falls back to common thing predicates for unknown wiki: class", () => {
+        const { thing } = resolveGovernedForWikiClass(
+            "https://pod.vardeman.me/vault/ontology/wiki#Unknown",
+        );
+        expect(thing).toContain("https://schema.org/name");
+        expect(thing).toContain("https://schema.org/mainEntityOfPage");
     });
 });
 

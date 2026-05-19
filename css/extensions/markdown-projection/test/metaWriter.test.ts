@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { DataFactory, Parser, Store } from "n3";
-import { MetaWriter } from "../src/metaWriter.js";
+import { MetaWriter, buildTwoSubjectPatch } from "../src/metaWriter.js";
 
 const { namedNode, literal, quad } = DataFactory;
 
@@ -55,5 +55,133 @@ describe("MetaWriter", () => {
         const titles = out.getQuads(null, namedNode("urn:title"), null, null);
         expect(titles).toHaveLength(1);
         expect(titles[0].object.value).toBe("new title");
+    });
+});
+
+describe("buildTwoSubjectPatch (D98)", () => {
+    const PAGE  = namedNode("https://pod.example/wiki/concepts/foo.md");
+    const THING = namedNode("https://pod.example/wiki/concepts/foo.md#this");
+    const DCT_TITLE = namedNode("http://purl.org/dc/terms/title");
+    const SCHEMA_MAIN_ENTITY = namedNode("https://schema.org/mainEntity");
+    const SCHEMA_NAME = namedNode("https://schema.org/name");
+    const SKOS_PREF_LABEL = namedNode("http://www.w3.org/2004/02/skos/core#prefLabel");
+
+    it("delete clause contains per-subject scoped wildcard patterns", () => {
+        const patch = buildTwoSubjectPatch({
+            pageIRI: PAGE,
+            thingIRI: THING,
+            pageGovernedPredicates: [DCT_TITLE, SCHEMA_MAIN_ENTITY],
+            thingGovernedPredicates: [SCHEMA_NAME, SKOS_PREF_LABEL],
+            insertQuads: [],
+        });
+
+        // page-subject delete patterns
+        expect(patch).toContain(
+            "<https://pod.example/wiki/concepts/foo.md> <http://purl.org/dc/terms/title>",
+        );
+        expect(patch).toContain(
+            "<https://pod.example/wiki/concepts/foo.md> <https://schema.org/mainEntity>",
+        );
+        // thing-subject delete patterns
+        expect(patch).toContain(
+            "<https://pod.example/wiki/concepts/foo.md#this> <https://schema.org/name>",
+        );
+        expect(patch).toContain(
+            "<https://pod.example/wiki/concepts/foo.md#this> <http://www.w3.org/2004/02/skos/core#prefLabel>",
+        );
+    });
+
+    it("only deletes governed predicates — does not reference agent-owned predicates", () => {
+        const patch = buildTwoSubjectPatch({
+            pageIRI: PAGE,
+            thingIRI: THING,
+            pageGovernedPredicates: [DCT_TITLE],
+            thingGovernedPredicates: [SCHEMA_NAME],
+            insertQuads: [],
+        });
+
+        // Agent-owned predicates must not appear in the delete block
+        expect(patch).not.toContain("biz:serialNumber");
+        expect(patch).not.toContain("http://www.w3.org/2004/02/skos/core#prefLabel");
+    });
+
+    it("each wildcard variable is distinct (no variable reuse across subjects)", () => {
+        const patch = buildTwoSubjectPatch({
+            pageIRI: PAGE,
+            thingIRI: THING,
+            pageGovernedPredicates: [DCT_TITLE],
+            thingGovernedPredicates: [SCHEMA_NAME],
+            insertQuads: [],
+        });
+
+        // Variables are ?old1, ?old2, ... — should have at least two distinct names
+        const vars = [...patch.matchAll(/\?old(\d+)/g)].map(m => m[0]);
+        const unique = new Set(vars);
+        expect(unique.size).toBeGreaterThanOrEqual(2);
+    });
+
+    it("includes insert quads in solid:inserts block", () => {
+        const insertQuad = quad(
+            PAGE,
+            DCT_TITLE,
+            DataFactory.literal("Foo Title"),
+        );
+        const patch = buildTwoSubjectPatch({
+            pageIRI: PAGE,
+            thingIRI: THING,
+            pageGovernedPredicates: [DCT_TITLE],
+            thingGovernedPredicates: [],
+            insertQuads: [insertQuad],
+        });
+
+        expect(patch).toContain('"Foo Title"');
+        expect(patch).toContain("solid:inserts");
+    });
+
+    it("produces valid solid:InsertDeletePatch header", () => {
+        const patch = buildTwoSubjectPatch({
+            pageIRI: PAGE,
+            thingIRI: THING,
+            pageGovernedPredicates: [DCT_TITLE],
+            thingGovernedPredicates: [SCHEMA_NAME],
+            insertQuads: [],
+        });
+
+        expect(patch).toContain("solid:InsertDeletePatch");
+        expect(patch).toContain("solid:deletes");
+    });
+
+    it("works with empty thing predicates (page-only patch)", () => {
+        const patch = buildTwoSubjectPatch({
+            pageIRI: PAGE,
+            thingIRI: THING,
+            pageGovernedPredicates: [DCT_TITLE],
+            thingGovernedPredicates: [],
+            insertQuads: [],
+        });
+
+        expect(patch).toContain(
+            "<https://pod.example/wiki/concepts/foo.md> <http://purl.org/dc/terms/title>",
+        );
+        expect(patch).not.toContain(
+            "<https://pod.example/wiki/concepts/foo.md#this>",
+        );
+    });
+
+    it("works with empty page predicates (thing-only patch)", () => {
+        const patch = buildTwoSubjectPatch({
+            pageIRI: PAGE,
+            thingIRI: THING,
+            pageGovernedPredicates: [],
+            thingGovernedPredicates: [SCHEMA_NAME],
+            insertQuads: [],
+        });
+
+        expect(patch).toContain(
+            "<https://pod.example/wiki/concepts/foo.md#this> <https://schema.org/name>",
+        );
+        expect(patch).not.toContain(
+            "<https://pod.example/wiki/concepts/foo.md> <",
+        );
     });
 });

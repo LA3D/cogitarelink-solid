@@ -2,7 +2,7 @@
 //
 // CSS's Components.js v6 uses ConstructionStrategyCommonJs which calls Node's
 // require() directly — the class file MUST be CommonJS-loadable. The projection
-// pipeline (projectionPipeline, governedPredicates, detectClass, MetaWriter)
+// pipeline (projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter)
 // lives in the ESM dist/ tree; we load it lazily via a runtime dynamic import.
 //
 // Why eval-wrapped import():
@@ -38,7 +38,7 @@ const runtimeImport = new Function("specifier", "return import(specifier)") as (
 
 interface ProjectionModule {
     projectionPipeline: { run(uri: string, body: string): Promise<import("n3").Quad[]> };
-    governedPredicates: (cls: string) => string[];
+    resolveGovernedForWikiClass: (cls: string) => { page: string[]; thing: string[] };
     detectClass: (triples: import("n3").Quad[]) => string | undefined;
     MetaWriter: new() => { replaceGoverned(target: string, projected: import("n3").Quad[], governed: string[], resourceUrl?: string): Promise<void> };
 }
@@ -171,7 +171,7 @@ export class MarkdownProjectionListener extends Initializer {
         }
 
         // Load ESM projection pipeline lazily
-        const { projectionPipeline, governedPredicates, detectClass, MetaWriter } =
+        const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter } =
             await getPipeline();
 
         const triples = await projectionPipeline.run(target.path, body);
@@ -182,16 +182,18 @@ export class MarkdownProjectionListener extends Initializer {
             return;
         }
 
-        let governed: string[];
-        try {
-            governed = governedPredicates(cls);
-        } catch (err) {
-            debug(`unknown class ${cls}: ${(err as Error).message}`);
-            return;
-        }
+        // Resolve per-subject governed predicates (D81 Model A + D98 two-subject).
+        // resolveGovernedForWikiClass falls back to COMMON_THING_PREDICATES for
+        // unknown classes, so non-wiki: type IRIs are handled safely.
+        const { page: pageGoverned, thing: thingGoverned } =
+            resolveGovernedForWikiClass(cls);
+
+        // Flatten page + thing for MetaWriter.replaceGoverned, which works
+        // across all subjects uniformly (D81 Model A: governed set per resource).
+        const governed = [...new Set([...pageGoverned, ...thingGoverned])];
 
         const writer = new MetaWriter();
         await writer.replaceGoverned(fsPath, triples, governed, target.path);
-        debug(`wrote .meta for ${target.path} (class=${cls}, ${triples.length} triples)`);
+        debug(`wrote .meta for ${target.path} (class=${cls}, ${triples.length} triples, ${governed.length} governed predicates)`);
     }
 }
