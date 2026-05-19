@@ -23,6 +23,7 @@
         dct:created ,
         dct:modified ,
         dct:references ,
+        dct:source ,
         dct:subject ,
         dct:contributor ,
         dct:creator ,

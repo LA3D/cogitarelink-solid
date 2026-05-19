@@ -9,6 +9,7 @@
     "title":      "dct:title",
     "subject":    "dct:subject",
     "references": "dct:references",
+    "source":     "dct:source",
     "broader":    "skos:broader",
     "related":    "skos:related",
     "contributor":"dct:contributor",

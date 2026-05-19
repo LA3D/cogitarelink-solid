@@ -10,6 +10,6 @@ PREFIX pod:  <https://pod.vardeman.me/wiki/pages/>
 
 SELECT DISTINCT ?source ?title WHERE {
     ?concept skos:broader <https://pod.vardeman.me/wiki/pages/agentic-memory-systems-moc.md> .
-    ?concept dct:references ?source .
+    ?concept dct:source ?source .
     ?source dct:title ?title .
 }

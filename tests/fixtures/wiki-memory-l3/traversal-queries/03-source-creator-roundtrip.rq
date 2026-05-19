@@ -9,7 +9,7 @@
 PREFIX dct:  <http://purl.org/dc/terms/>
 
 SELECT ?concept ?conceptTitle ?creatorName WHERE {
-    ?concept dct:references <https://pod.vardeman.me/wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md> .
+    ?concept dct:source <https://pod.vardeman.me/wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md> .
     ?concept dct:title ?conceptTitle .
     <https://pod.vardeman.me/wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md> dct:contributor ?creator .
     ?creator dct:title ?creatorName .
