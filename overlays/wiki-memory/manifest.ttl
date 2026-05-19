@@ -6,6 +6,7 @@
 @prefix solid:   <http://www.w3.org/ns/solid/terms#> .
 @prefix schema:  <https://schema.org/> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix cito:    <http://purl.org/spar/cito/> .
 
 <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory>
     a overlay:Overlay ;
@@ -134,4 +135,42 @@
 
     overlay:installsExtensionGuide
         [ overlay:document "extending-l3.md" ;
-          overlay:hostedAt "/vault/meta/extending-l3.md" ] .
+          overlay:hostedAt "/vault/meta/extending-l3.md" ] ;
+
+    overlay:installsHintMapping
+        [ overlay:classHint "broader" ;
+          overlay:projectsToPredicate skos:broader ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "narrower" ;
+          overlay:projectsToPredicate skos:narrower ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "cites" ;
+          overlay:projectsToPredicate cito:cites ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "affiliation" ;
+          overlay:projectsToPredicate schema:affiliation ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "location" ;
+          overlay:projectsToPredicate schema:location ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "attendee" ;
+          overlay:projectsToPredicate schema:attendee ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "organizer" ;
+          overlay:projectsToPredicate schema:organizer ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "about" ;
+          overlay:projectsToPredicate schema:about ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "member" ;
+          overlay:projectsToPredicate schema:member ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "tool" ;
+          overlay:projectsToPredicate schema:tool ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "supply" ;
+          overlay:projectsToPredicate schema:supply ;
+          overlay:projectsToSubject "THING" ] ,
+        [ overlay:classHint "step" ;
+          overlay:projectsToPredicate schema:step ;
+          overlay:projectsToSubject "THING" ] .
