@@ -241,6 +241,12 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
 
         # 13. Deploy extension guides (D100)
         # Source file may not exist yet (created in a later task); skip with warning.
+        # After PUT, patch .meta with D98 substrate invariants (wiki:ExtensionGuide type on
+        # <#this> + schema:mainEntity bridge). The markdown-projection listener filters on
+        # /vault/wiki/* paths only, so /meta/*.md resources never get listener-emitted triples;
+        # we emit them here instead.
+        WIKI_NS = "https://pod.vardeman.me/vault/ontology/wiki#"
+        SCHEMA_NS = "https://schema.org/"
         for guide in manifest.extension_guides:
             source_path = manifest.overlay_dir / guide.document
             if not source_path.exists():
@@ -259,6 +265,17 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
                     f"PUT extension guide {target_url} failed: HTTP {r.status_code}: {r.text[:300]}"
                 )
             print(f"  guide → {target_url}")
+            # Patch .meta with substrate invariants the listener would have emitted
+            # for /wiki/* resources but won't for /meta/* resources.
+            thing_iri = target_url + "#this"
+            meta_url = target_url + ".meta"
+            ntriples = "\n".join([
+                f"<{thing_iri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{WIKI_NS}ExtensionGuide> .",
+                f"<{thing_iri}> <{SCHEMA_NS}mainEntityOfPage> <{target_url}> .",
+                f"<{target_url}> <{SCHEMA_NS}mainEntity> <{thing_iri}> .",
+            ])
+            n3_patch_inserts(client, meta_url, ntriples)
+            print(f"  guide.meta → wiki:ExtensionGuide typed")
 
     print(f"Applied overlay {manifest.name} successfully.")
 
