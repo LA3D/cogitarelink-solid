@@ -5,6 +5,7 @@ import {
   type ResourceIdentifier,
   type ResourceStore,
 } from "@solid/community-server";
+import { Parser } from "n3";
 
 import { UnprocessableWriteDetector } from "./detectors/UnprocessableWriteDetector";
 import { BoundExceededDetector } from "./detectors/BoundExceededDetector";
@@ -97,17 +98,80 @@ export class MemTriggerListener extends Initializer {
   }
 
   /**
-   * v1 stub: counts ldp:contains in the parent container, fires BoundExceeded
+   * Counts ldp:contains in the parent container, fires BoundExceeded
    * if the count crosses threshold (default 12 per Fano bound, D77).
    *
-   * Real ldp:contains counting via this.store.getRepresentation on the parent
-   * container is deferred — would require Turtle parsing + container-path
-   * resolution. The chain serialization + filter + listener attachment are
-   * production-ready; the count itself is currently a no-op so this method
-   * never emits in v1. See FOLLOWUPS.md ("Phase C.10 — MemTrigger v1 wiring").
+   * Reads the parent container via store.getRepresentation (post-commit,
+   * so no re-entrant lock concern — the parent is a different resource from
+   * the write target). Parses Turtle with N3.js, counts ldp:contains quads,
+   * then delegates to BoundExceededDetector.maybeEmit with flapping guard.
    */
-  private async checkBound(_target: ResourceIdentifier): Promise<void> {
-    // Intentional no-op for v1. Hook-point for future ldp:contains counting.
-    return;
+  private async checkBound(target: ResourceIdentifier): Promise<void> {
+    // Derive parent container URI: strip last segment, ensure trailing /.
+    const parentUri = deriveParentContainer(target.path);
+    if (parentUri === null) return;
+    // Defense-in-depth filter (also filtered in onChange).
+    if (parentUri.includes("/.events/") || parentUri.includes("/.operations/")) return;
+
+    let containerTurtle: string;
+    try {
+      const representation = await this.store.getRepresentation(
+        { path: parentUri },
+        { type: { "text/turtle": 1 } },
+      );
+      containerTurtle = await streamToString(representation.data);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`checkBound: could not read parent container ${parentUri}: ${msg}`);
+      return;
+    }
+
+    let childCount = 0;
+    try {
+      const parser = new Parser({ baseIRI: parentUri });
+      const quads = parser.parse(containerTurtle);
+      childCount = quads.filter(
+        (q) => q.predicate.value === "http://www.w3.org/ns/ldp#contains",
+      ).length;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`checkBound: parse error for ${parentUri}: ${msg}`);
+      return;
+    }
+
+    const now = new Date();
+    const lastEmitted = this.lastBoundEmit.get(parentUri) ?? null;
+    const turtle = this.bound.maybeEmit({
+      containerUri: parentUri,
+      childCount,
+      lastEmittedForContainer: lastEmitted,
+      now,
+    });
+    if (turtle !== null) {
+      await this.emitter.emit(turtle);
+      this.lastBoundEmit.set(parentUri, now);
+    }
   }
+}
+
+function deriveParentContainer(path: string): string | null {
+  try {
+    const url = new URL(path);
+    if (url.pathname === "/" || url.pathname === "") return null;
+    const trimmed = url.pathname.endsWith("/") ? url.pathname.slice(0, -1) : url.pathname;
+    const idx = trimmed.lastIndexOf("/");
+    if (idx < 0) return null;
+    url.pathname = trimmed.slice(0, idx + 1);
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+async function streamToString(stream: NodeJS.ReadableStream): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks).toString("utf8");
 }
