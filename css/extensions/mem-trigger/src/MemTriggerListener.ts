@@ -47,6 +47,8 @@ export class MemTriggerListener extends Initializer {
   private readonly lastReflection = new Map<string, Date>();
   private durableContainers: Set<string> = new Set();
   private readonly typeIndexUri: string;
+  private readonly reflectionTickRateMs: number;
+  private reflectionTimer: NodeJS.Timeout | null = null;
   private chain: Promise<void> = Promise.resolve();
 
   public constructor(
@@ -56,6 +58,7 @@ export class MemTriggerListener extends Initializer {
     baseUrl: string,
     boundThreshold: number,
     reflectionIntervalMs: number,
+    reflectionTickRateMs: number,
     contradictoryPairs: Array<[string, string]>,
     typeIndexUri: string,
   ) {
@@ -67,6 +70,7 @@ export class MemTriggerListener extends Initializer {
       : `${eventsContainer}/`;
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.typeIndexUri = typeIndexUri;
+    this.reflectionTickRateMs = reflectionTickRateMs;
 
     this.emitter = new EventEmitter({ store, eventsContainer: this.eventsContainer });
     this.unprocessable = new UnprocessableWriteDetector();
@@ -87,9 +91,39 @@ export class MemTriggerListener extends Initializer {
       this.onChange(target, activity, metadata);
     });
 
+    this.reflectionTimer = setInterval(() => {
+      this.tickReflection().catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.error(`tickReflection error: ${msg}`);
+      });
+    }, this.reflectionTickRateMs);
+
     this.logger.info(
       `MemTriggerListener attached (eventsContainer=${this.eventsContainer}, baseUrl=${this.baseUrl}, durableContainers=${this.durableContainers.size})`,
     );
+  }
+
+  public finalize(): void {
+    if (this.reflectionTimer !== null) {
+      clearInterval(this.reflectionTimer);
+      this.reflectionTimer = null;
+    }
+  }
+
+  private async tickReflection(): Promise<void> {
+    const now = new Date();
+    for (const [subjectUri, lastActivity] of this.lastActivity) {
+      const lastEmitted = this.lastReflection.get(subjectUri) ?? null;
+      const turtle = this.reflection.maybeEmit({
+        lastEmitted,
+        lastActivity,
+        now,
+      });
+      if (turtle !== null) {
+        await this.emitter.emit(turtle);
+        this.lastReflection.set(subjectUri, now);
+      }
+    }
   }
 
   private onChange(target: ResourceIdentifier, _activity: unknown, _metadata: unknown): void {

@@ -52,6 +52,7 @@ describe('MemTriggerListener.checkBound', () => {
       'https://pod.vardeman.me/vault',
       12,         // boundThreshold
       86400000,   // reflectionIntervalMs (unused this test)
+      3600000,    // reflectionTickRateMs
       [],         // contradictoryPairs
       'https://pod.vardeman.me/vault/settings/publicTypeIndex',  // typeIndexUri
     );
@@ -93,7 +94,7 @@ describe('MemTriggerListener.checkBound', () => {
       mockMonitoring, mockStore,
       'https://pod.vardeman.me/vault/wiki/.events/',
       'https://pod.vardeman.me/vault',
-      12, 86400000, [],
+      12, 86400000, 3600000, [],
       'https://pod.vardeman.me/vault/settings/publicTypeIndex',
     );
     (listener as unknown as { emitter: { emit: typeof emitSpy } }).emitter = { emit: emitSpy };
@@ -124,7 +125,7 @@ describe('MemTriggerListener.checkBound', () => {
       mockMonitoring, mockStore,
       'https://pod.vardeman.me/vault/wiki/.events/',
       'https://pod.vardeman.me/vault',
-      12, 86400000, [],
+      12, 86400000, 3600000, [],
       'https://pod.vardeman.me/vault/settings/publicTypeIndex',
     );
     (listener as unknown as { emitter: { emit: typeof emitSpy } }).emitter = { emit: emitSpy };
@@ -160,7 +161,7 @@ describe('MemTriggerListener.handle: durable-container loading and activity trac
       monitoring, store,
       'https://pod.vardeman.me/vault/wiki/.events/',
       'https://pod.vardeman.me/vault',
-      12, 86400000, [],
+      12, 86400000, 3600000, [],
       'https://pod.vardeman.me/vault/settings/publicTypeIndex',
     );
     await listener.handle();
@@ -198,7 +199,7 @@ describe('MemTriggerListener.handle: durable-container loading and activity trac
       monitoring, store,
       'https://pod.vardeman.me/vault/wiki/.events/',
       'https://pod.vardeman.me/vault',
-      12, 86400000, [],
+      12, 86400000, 3600000, [],
       'https://pod.vardeman.me/vault/settings/publicTypeIndex',
     );
     await listener.handle();
@@ -232,7 +233,7 @@ describe('MemTriggerListener.handle: durable-container loading and activity trac
       monitoring, store,
       'https://pod.vardeman.me/vault/wiki/.events/',
       'https://pod.vardeman.me/vault',
-      12, 86400000, [],
+      12, 86400000, 3600000, [],
       'https://pod.vardeman.me/vault/settings/publicTypeIndex',
     );
     await listener.handle();
