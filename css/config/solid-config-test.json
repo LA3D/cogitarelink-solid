@@ -1,0 +1,16 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/markdown-render/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/memento/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/markdown-projection/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/wiki-search/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/mem-trigger/^0.1.0/components/context.jsonld"
+  ],
+  "import": [
+    "./solid-config.json",
+    "./mem-trigger-test.json"
+  ],
+  "@graph": []
+}

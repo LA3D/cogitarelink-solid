@@ -1,0 +1,18 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/mem-trigger/^0.1.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "comment": "Test-mode override: short ReflectionDue intervals so test_reflection_due_emits_event completes in <1s. Production defaults (mem-trigger.json) are 24h interval / 1h tick. Activated by loading solid-config-test.json instead of solid-config.json.",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:cogitarelink:MemTriggerListener" },
+      "overrideParameters": {
+        "@type": "MemTriggerListener",
+        "reflectionIntervalMs": 200,
+        "reflectionTickRateMs": 100
+      }
+    }
+  ]
+}
