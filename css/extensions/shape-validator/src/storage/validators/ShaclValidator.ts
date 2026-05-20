@@ -19,19 +19,38 @@ import type { Store } from 'n3';
 import { Writer } from 'n3';
 import SHACLValidator from 'rdf-validate-shacl';
 import { ShaclValidationError } from '../../error/ShaclValidationError';
+import { NoOpUnprocessableWriteHook } from '../../NoOpUnprocessableWriteHook';
 import { LDP, SH } from '../../util/Vocabularies';
 import type { ShapeValidatorInput } from './ShapeValidator';
 import { ShapeValidator } from './ShapeValidator';
+
+// Inline interface — matches NoOpUnprocessableWriteHook and mem-trigger impl
+// via TypeScript structural typing. Interface erases at compile time; no
+// cross-package import needed.
+interface IUnprocessableWriteHook {
+  onShaclRejection(input: {
+    targetUri: string;
+    validationReport: string;
+    writerWebId?: string;
+    timestamp: Date;
+  }): Promise<void>;
+}
 
 export class ShaclValidator extends ShapeValidator {
   private readonly converter: RepresentationConverter;
   protected readonly logger = getLoggerFor(this);
   private readonly auxiliaryStrategy: AuxiliaryStrategy;
+  private readonly unprocessableHook: IUnprocessableWriteHook;
 
-  public constructor(converter: RepresentationConverter, auxiliaryStrategy: AuxiliaryStrategy) {
+  public constructor(
+    converter: RepresentationConverter,
+    auxiliaryStrategy: AuxiliaryStrategy,
+    unprocessableHook?: IUnprocessableWriteHook,
+  ) {
     super();
     this.converter = converter;
     this.auxiliaryStrategy = auxiliaryStrategy;
+    this.unprocessableHook = unprocessableHook ?? new NoOpUnprocessableWriteHook();
   }
 
   public async canHandle({ parentRepresentation, representation }: ShapeValidatorInput): Promise<void> {
@@ -83,8 +102,34 @@ export class ShaclValidator extends ShapeValidator {
     this.logger.debug(`Validation: ${report.conforms ? 'success' : 'failure'}`);
     if (!report.conforms) {
       const reportTurtle = await this.serializeReport(report.dataset);
-      throw new ShaclValidationError(shapeURL, reportTurtle);
+      await this.invokeHookAndThrow(representation.metadata.identifier.value, reportTurtle, shapeURL);
     }
+  }
+
+  /**
+   * Invokes IUnprocessableWriteHook (substrate archival) and then throws
+   * ShaclValidationError. Hook errors are swallowed — the 422 must always
+   * be returned to the agent regardless of substrate archival outcome.
+   *
+   * Exposed as a public method (rather than inline) so the hook contract is
+   * unit-testable without driving the full SHACL pipeline.
+   */
+  public async invokeHookAndThrow(
+    targetUri: string,
+    reportTurtle: string,
+    shapeURL: string = 'urn:test:no-shape-url',
+  ): Promise<void> {
+    try {
+      await this.unprocessableHook.onShaclRejection({
+        targetUri,
+        validationReport: reportTurtle,
+        timestamp: new Date(),
+      });
+    } catch (hookErr: unknown) {
+      const msg = hookErr instanceof Error ? hookErr.message : String(hookErr);
+      this.logger.warn(`UnprocessableWrite hook error (substrate event archival failed; 422 still returned to agent): ${msg}`);
+    }
+    throw new ShaclValidationError(shapeURL, reportTurtle);
   }
 
   private serializeReport(dataset: Iterable<Quad>): Promise<string> {
