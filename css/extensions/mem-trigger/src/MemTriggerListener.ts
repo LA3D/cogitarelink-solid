@@ -12,6 +12,7 @@ import { BoundExceededDetector } from "./detectors/BoundExceededDetector";
 import { ReflectionDueDetector } from "./detectors/ReflectionDueDetector";
 import { ContradictionDetector } from "./detectors/ContradictionDetector";
 import { EventEmitter } from "./EventEmitter";
+import { loadDurableContainers } from "./loadDurableContainers";
 
 /**
  * MemTriggerListener — MonitoringStore CDC subscriber for wiki-memory L3.
@@ -42,6 +43,10 @@ export class MemTriggerListener extends Initializer {
   private readonly contradiction: ContradictionDetector;
 
   private readonly lastBoundEmit = new Map<string, Date>();
+  private readonly lastActivity = new Map<string, Date>();
+  private readonly lastReflection = new Map<string, Date>();
+  private durableContainers: Set<string> = new Set();
+  private readonly typeIndexUri: string;
   private chain: Promise<void> = Promise.resolve();
 
   public constructor(
@@ -52,6 +57,7 @@ export class MemTriggerListener extends Initializer {
     boundThreshold: number,
     reflectionIntervalMs: number,
     contradictoryPairs: Array<[string, string]>,
+    typeIndexUri: string,
   ) {
     super();
     this.monitoringStore = monitoringStore;
@@ -60,6 +66,7 @@ export class MemTriggerListener extends Initializer {
       ? eventsContainer
       : `${eventsContainer}/`;
     this.baseUrl = baseUrl.replace(/\/$/, "");
+    this.typeIndexUri = typeIndexUri;
 
     this.emitter = new EventEmitter({ store, eventsContainer: this.eventsContainer });
     this.unprocessable = new UnprocessableWriteDetector();
@@ -69,11 +76,19 @@ export class MemTriggerListener extends Initializer {
   }
 
   public async handle(): Promise<void> {
+    this.durableContainers = await loadDurableContainers(this.store, this.typeIndexUri);
+    if (this.durableContainers.size === 0) {
+      this.logger.warn(
+        `MemTriggerListener: durable-container set is empty (Type Index at ${this.typeIndexUri} may not exist yet); ReflectionDue path filter will admit nothing until a write triggers a retry.`,
+      );
+    }
+
     this.monitoringStore.on("changed", (target, activity, metadata) => {
       this.onChange(target, activity, metadata);
     });
+
     this.logger.info(
-      `MemTriggerListener attached (eventsContainer=${this.eventsContainer}, baseUrl=${this.baseUrl})`,
+      `MemTriggerListener attached (eventsContainer=${this.eventsContainer}, baseUrl=${this.baseUrl}, durableContainers=${this.durableContainers.size})`,
     );
   }
 
@@ -86,6 +101,12 @@ export class MemTriggerListener extends Initializer {
     if (!target.path.startsWith(this.baseUrl)) {
       return;
     }
+
+    // Activity tracking for ReflectionDue path filter.
+    if (this.isDurableTarget(target.path)) {
+      this.lastActivity.set(target.path, new Date());
+    }
+
     // Serialize work via chain Promise (same pattern as MementoCommitListener).
     this.chain = this.chain
       .then(async () => {
@@ -95,6 +116,18 @@ export class MemTriggerListener extends Initializer {
         const msg = err instanceof Error ? err.message : String(err);
         this.logger.error(`MemTrigger onChange handler error: ${msg}`);
       });
+  }
+
+  private isDurableTarget(targetUri: string): boolean {
+    try {
+      const url = new URL(targetUri);
+      for (const container of this.durableContainers) {
+        if (url.pathname.startsWith(container)) return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
   }
 
   /**
