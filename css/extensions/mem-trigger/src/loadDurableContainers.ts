@@ -1,27 +1,37 @@
 import { getLoggerFor } from 'global-logger-factory';
-import type { ResourceStore } from '@solid/community-server';
 import { Parser } from 'n3';
 
 const logger = getLoggerFor('mem-trigger:loadDurableContainers');
 
 const SOLID_INSTANCE_CONTAINER = 'http://www.w3.org/ns/solid/terms#instanceContainer';
 
+/**
+ * Loads durable container paths from the Solid Type Index via HTTP fetch().
+ *
+ * Uses fetch() rather than store.getRepresentation() to avoid re-entering
+ * CSS's LockingResourceStore. store.getRepresentation() on the Type Index
+ * from inside a MonitoringStore 'changed' handler triggers a lock conflict
+ * (CSS holds the parent-container write lock during the event; the read lock
+ * on publicTypeIndex blocks for 6s then crashes with an uncatchable stream
+ * error). HTTP self-requests use a separate network path and bypass the lock.
+ */
 export async function loadDurableContainers(
-  store: ResourceStore,
   typeIndexUri: string,
 ): Promise<Set<string>> {
   let turtle: string;
   try {
-    const representation = await store.getRepresentation(
-      { path: typeIndexUri },
-      { type: { 'text/turtle': 1 } },
-    );
-    turtle = await streamToString(representation.data);
+    const resp = await fetch(typeIndexUri, { headers: { Accept: 'text/turtle' } });
+    if (!resp.ok) {
+      logger.warn(`Could not load Type Index at ${typeIndexUri}: HTTP ${resp.status}`);
+      return new Set();
+    }
+    turtle = await resp.text();
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    logger.warn(`Could not load Type Index at ${typeIndexUri}: ${msg}`);
+    logger.warn(`Could not load Type Index at ${typeIndexUri} (will retry on next write): ${msg}`);
     return new Set();
   }
+  if (!turtle) return new Set();
 
   const parser = new Parser({ baseIRI: typeIndexUri });
   const result = new Set<string>();
@@ -46,12 +56,4 @@ export async function loadDurableContainers(
   }
 
   return result;
-}
-
-async function streamToString(stream: NodeJS.ReadableStream): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-  }
-  return Buffer.concat(chunks).toString('utf8');
 }

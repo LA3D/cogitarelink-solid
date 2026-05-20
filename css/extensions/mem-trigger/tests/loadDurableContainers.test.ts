@@ -1,7 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { loadDurableContainers } from '../src/loadDurableContainers';
-import type { ResourceStore } from '@solid/community-server';
-import { Readable } from 'node:stream';
 
 const TYPE_INDEX_TURTLE = `
 @prefix solid: <http://www.w3.org/ns/solid/terms#> .
@@ -20,16 +18,23 @@ const TYPE_INDEX_TURTLE = `
   solid:instanceContainer </vault/wiki/people/> .
 `;
 
+function mockFetch(turtle: string, status = 200): void {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: status >= 200 && status < 300,
+    status,
+    text: async () => turtle,
+  }));
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe('loadDurableContainers', () => {
   it('parses solid:instanceContainer values from a Type Index Turtle document', async () => {
-    const store = {
-      getRepresentation: vi.fn().mockResolvedValue({
-        data: Readable.from([TYPE_INDEX_TURTLE]),
-        metadata: { contentType: 'text/turtle' },
-      }),
-    } as unknown as ResourceStore;
+    mockFetch(TYPE_INDEX_TURTLE);
 
-    const set = await loadDurableContainers(store, 'https://pod.vardeman.me/vault/settings/publicTypeIndex');
+    const set = await loadDurableContainers('https://pod.vardeman.me/vault/settings/publicTypeIndex');
 
     expect(set.size).toBe(3);
     expect(set.has('/vault/wiki/concepts/')).toBe(true);
@@ -37,12 +42,18 @@ describe('loadDurableContainers', () => {
     expect(set.has('/vault/wiki/people/')).toBe(true);
   });
 
-  it('returns empty set when Type Index read fails', async () => {
-    const store = {
-      getRepresentation: vi.fn().mockRejectedValue(new Error('Not found')),
-    } as unknown as ResourceStore;
+  it('returns empty set when Type Index fetch fails with network error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
 
-    const set = await loadDurableContainers(store, 'https://pod.vardeman.me/vault/settings/publicTypeIndex');
+    const set = await loadDurableContainers('https://pod.vardeman.me/vault/settings/publicTypeIndex');
+
+    expect(set.size).toBe(0);
+  });
+
+  it('returns empty set when Type Index returns non-OK HTTP status', async () => {
+    mockFetch('', 404);
+
+    const set = await loadDurableContainers('https://pod.vardeman.me/vault/settings/publicTypeIndex');
 
     expect(set.size).toBe(0);
   });
@@ -53,14 +64,9 @@ describe('loadDurableContainers', () => {
       <#x> a solid:TypeRegistration ;
         solid:instanceContainer </vault/wiki/concepts> .
     `;
-    const store = {
-      getRepresentation: vi.fn().mockResolvedValue({
-        data: Readable.from([turtleNoSlash]),
-        metadata: { contentType: 'text/turtle' },
-      }),
-    } as unknown as ResourceStore;
+    mockFetch(turtleNoSlash);
 
-    const set = await loadDurableContainers(store, 'https://pod.vardeman.me/vault/settings/publicTypeIndex');
+    const set = await loadDurableContainers('https://pod.vardeman.me/vault/settings/publicTypeIndex');
     expect(set.has('/vault/wiki/concepts/')).toBe(true);
   });
 });

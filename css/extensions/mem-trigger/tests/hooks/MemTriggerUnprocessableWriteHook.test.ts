@@ -1,13 +1,17 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { MemTriggerUnprocessableWriteHook } from '../../src/hooks/MemTriggerUnprocessableWriteHook';
 import { UnprocessableWriteDetector } from '../../src/detectors/UnprocessableWriteDetector';
-import type { EventEmitter } from '../../src/EventEmitter';
+import { pendingEventsBuffer } from '../../src/PendingEventsBuffer';
 
 describe('MemTriggerUnprocessableWriteHook', () => {
-  it('emits a mem:UnprocessableWrite event on rejection', async () => {
-    const emitter = { emit: vi.fn().mockResolvedValue(undefined) } as unknown as EventEmitter;
+  beforeEach(() => {
+    // Clear the module-level buffer before each test
+    pendingEventsBuffer.length = 0;
+  });
+
+  it('enqueues a mem:UnprocessableWrite event to pendingEventsBuffer on rejection', async () => {
     const detector = new UnprocessableWriteDetector();
-    const hook = new MemTriggerUnprocessableWriteHook(detector, emitter);
+    const hook = new MemTriggerUnprocessableWriteHook(detector);
 
     await hook.onShaclRejection({
       targetUri: 'https://pod.vardeman.me/vault/wiki/concepts/x.md',
@@ -16,16 +20,15 @@ describe('MemTriggerUnprocessableWriteHook', () => {
       timestamp: new Date('2026-05-20T12:00:00Z'),
     });
 
-    expect(emitter.emit).toHaveBeenCalledOnce();
-    const turtle = (emitter.emit as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(pendingEventsBuffer).toHaveLength(1);
+    const turtle = pendingEventsBuffer[0];
     expect(turtle).toContain('mem:UnprocessableWrite');
     expect(turtle).toContain('https://pod.vardeman.me/vault/wiki/concepts/x.md');
   });
 
-  it('does not emit when validationReport is empty', async () => {
-    const emitter = { emit: vi.fn().mockResolvedValue(undefined) } as unknown as EventEmitter;
+  it('does not enqueue when validationReport is empty', async () => {
     const detector = new UnprocessableWriteDetector();
-    const hook = new MemTriggerUnprocessableWriteHook(detector, emitter);
+    const hook = new MemTriggerUnprocessableWriteHook(detector);
 
     await hook.onShaclRejection({
       targetUri: 'https://pod.vardeman.me/vault/wiki/concepts/x.md',
@@ -33,6 +36,6 @@ describe('MemTriggerUnprocessableWriteHook', () => {
       timestamp: new Date(),
     });
 
-    expect(emitter.emit).not.toHaveBeenCalled();
+    expect(pendingEventsBuffer).toHaveLength(0);
   });
 });

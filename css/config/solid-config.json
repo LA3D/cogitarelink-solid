@@ -65,6 +65,11 @@
       }
     },
     {
+      "comment": "Default no-op hook for ShaclValidator. Swapped for MemTriggerUnprocessableWriteHook by mem-trigger.json Override when mem-trigger is installed.",
+      "@id": "urn:cogitarelink:NoOpUnprocessableWriteHook",
+      "@type": "NoOpUnprocessableWriteHook"
+    },
+    {
       "comment": "Validates resources when parent container has ldp:constrainedBy in its metadata. Also enforces D99 Layer 2 path-based class disjointness via pathConstraints.",
       "@id": "urn:shape-validation:default:ResourceStore_Shape",
       "@type": "ShapeValidationStore",
@@ -76,7 +81,8 @@
         "@id": "urn:shape-validation:default:ShaclValidator",
         "@type": "ShaclValidator",
         "converter": { "@id": "urn:solid-server:default:RepresentationConverter" },
-        "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" }
+        "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" },
+        "unprocessableHook": { "@id": "urn:cogitarelink:NoOpUnprocessableWriteHook" }
       },
       "pathConstraints": [
         {

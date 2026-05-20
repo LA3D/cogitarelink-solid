@@ -1,14 +1,27 @@
-import type { IUnprocessableWriteHook } from './IUnprocessableWriteHook';
+import { getLoggerFor } from 'global-logger-factory';
+import { IUnprocessableWriteHook } from './IUnprocessableWriteHook';
 import { UnprocessableWriteDetector } from '../detectors/UnprocessableWriteDetector';
-import type { EventEmitter } from '../EventEmitter';
+import { pendingEventsBuffer } from '../PendingEventsBuffer';
 
-export class MemTriggerUnprocessableWriteHook implements IUnprocessableWriteHook {
+/**
+ * Hook fired by ShaclValidator on SHACL-rejected writes. Builds a
+ * mem:UnprocessableWrite Turtle event and pushes it to the module-level
+ * pending-events buffer. MemTriggerListener (an Initializer — runs after
+ * ResourceStore is finalized) drains the buffer to the Pod.
+ *
+ * The buffer design breaks the Components.js circular dependency that would
+ * arise if this class held a direct ResourceStore reference (ShaclValidator
+ * is instantiated before ResourceStore is fully constructed).
+ *
+ * T11: buffer-enqueue wired. T12: MemTriggerListener buffer-drain wired.
+ */
+export class MemTriggerUnprocessableWriteHook extends IUnprocessableWriteHook {
+  private readonly logger = getLoggerFor(this);
   private readonly detector: UnprocessableWriteDetector;
-  private readonly emitter: EventEmitter;
 
-  public constructor(detector: UnprocessableWriteDetector, emitter: EventEmitter) {
+  public constructor(detector: UnprocessableWriteDetector) {
+    super();
     this.detector = detector;
-    this.emitter = emitter;
   }
 
   public async onShaclRejection(input: {
@@ -24,7 +37,10 @@ export class MemTriggerUnprocessableWriteHook implements IUnprocessableWriteHook
       timestamp: input.timestamp,
     });
     if (turtle !== null) {
-      await this.emitter.emit(turtle);
+      pendingEventsBuffer.push(turtle);
+      this.logger.info(
+        `MemTriggerUnprocessableWriteHook: queued UnprocessableWrite event for ${input.targetUri} (buffer size=${pendingEventsBuffer.length})`,
+      );
     }
   }
 }

@@ -4,6 +4,7 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/asynchronous-handlers/^1.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/memento/^0.1.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/markdown-projection/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/mem-trigger/^0.1.0/components/context.jsonld"
   ],
   "@graph": [
@@ -17,7 +18,29 @@
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
       "boundThreshold": 12,
       "reflectionIntervalMs": 86400000,
-      "contradictoryPairs": []
+      "reflectionTickRateMs": 3600000,
+      "contradictoryPairs": [],
+      "typeIndexUri": "https://pod.vardeman.me/vault/settings/publicTypeIndex"
+    },
+    {
+      "comment": "Standalone UnprocessableWriteDetector for MemTriggerUnprocessableWriteHook. Stateless — no concurrency concern with MemTriggerListener's internal instance.",
+      "@id": "urn:cogitarelink:UnprocessableWriteDetectorStandalone",
+      "@type": "UnprocessableWriteDetector"
+    },
+    {
+      "comment": "MemTriggerUnprocessableWriteHook — fired by ShaclValidator on 422 rejections. Builds a mem:UnprocessableWrite Turtle event and enqueues it in the module-level pendingEventsBuffer (breaks the ResourceStore circular-dep that would arise from direct store injection). MemTriggerListener drains the buffer to the Pod in its handle() phase (T12). Only detector injected — no EventEmitter at construction time.",
+      "@id": "urn:cogitarelink:MemTriggerUnprocessableWriteHook",
+      "@type": "MemTriggerUnprocessableWriteHook",
+      "detector": { "@id": "urn:cogitarelink:UnprocessableWriteDetectorStandalone" }
+    },
+    {
+      "comment": "Bind ShaclValidator's unprocessableHook to MemTrigger impl when mem-trigger is installed. Overrides the NoOpUnprocessableWriteHook default declared in solid-config.json.",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:shape-validation:default:ShaclValidator" },
+      "overrideParameters": {
+        "@type": "ShaclValidator",
+        "unprocessableHook": { "@id": "urn:cogitarelink:MemTriggerUnprocessableWriteHook" }
+      }
     },
     {
       "comment": "Replace WorkerParallelInitializer handlers with all three listeners. This Override is imported AFTER markdown-projection.json (which sets [Memento, MarkdownProjection]) so its overrideParameters wins. K1: only one Override per instance, hence the consolidation pattern (same as memento.json ↔ markdown-projection.json relationship). All three listeners MUST be listed here because Override semantics replace rather than append.",

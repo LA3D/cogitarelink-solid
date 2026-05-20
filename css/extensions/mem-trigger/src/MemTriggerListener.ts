@@ -46,6 +46,8 @@ export class MemTriggerListener extends Initializer {
   private readonly lastActivity = new Map<string, Date>();
   private readonly lastReflection = new Map<string, Date>();
   private durableContainers: Set<string> = new Set();
+  private durableContainersLoaded = false;
+  private startupTime = Date.now();
   private readonly typeIndexUri: string;
   private readonly reflectionTickRateMs: number;
   private reflectionTimer: NodeJS.Timeout | null = null;
@@ -80,13 +82,11 @@ export class MemTriggerListener extends Initializer {
   }
 
   public async handle(): Promise<void> {
-    this.durableContainers = await loadDurableContainers(this.store, this.typeIndexUri);
-    if (this.durableContainers.size === 0) {
-      this.logger.warn(
-        `MemTriggerListener: durable-container set is empty (Type Index at ${this.typeIndexUri} may not exist yet); ReflectionDue path filter will admit nothing until a write triggers a retry.`,
-      );
-    }
-
+    // Defer loadDurableContainers to the first onChange event to avoid the
+    // 6-second CSS write-lock timeout that occurs when calling getRepresentation
+    // during parallel Initializer execution (the Type Index may be under a
+    // write lock from pod-setup at startup time). durableContainers starts empty;
+    // the first write event triggers a lazy load.
     this.monitoringStore.on("changed", (target, activity, metadata) => {
       this.onChange(target, activity, metadata);
     });
@@ -99,7 +99,7 @@ export class MemTriggerListener extends Initializer {
     }, this.reflectionTickRateMs);
 
     this.logger.info(
-      `MemTriggerListener attached (eventsContainer=${this.eventsContainer}, baseUrl=${this.baseUrl}, durableContainers=${this.durableContainers.size})`,
+      `MemTriggerListener attached (eventsContainer=${this.eventsContainer}, baseUrl=${this.baseUrl}); durable containers load deferred to first write`,
     );
   }
 
@@ -144,6 +144,34 @@ export class MemTriggerListener extends Initializer {
     // Serialize work via chain Promise (same pattern as MementoCommitListener).
     this.chain = this.chain
       .then(async () => {
+        // Lazy-load durable containers on first write after startup (deferred
+        // from handle() to avoid CSS write-lock timeout during parallel init).
+        // Re-tried on every change until it succeeds (e.g., pod-setup may hold
+        // the Type Index write lock for 6+ seconds during bulk initialization).
+        if (!this.durableContainersLoaded) {
+          // Wait at least 15s after startup before reading Type Index.
+          // Pod-setup writes many resources within the first ~10s; calling
+          // store.getRepresentation() during that window risks the 6s CSS
+          // write-lock expiry that causes an uncatchable Node.js stream crash.
+          const msSinceStart = Date.now() - this.startupTime;
+          const STARTUP_GRACE_MS = 15_000;
+          if (msSinceStart < STARTUP_GRACE_MS) {
+            return; // skip until grace period expires
+          }
+          try {
+            const containers = await loadDurableContainers(this.typeIndexUri);
+            this.durableContainers = containers;
+            this.durableContainersLoaded = true;
+            this.logger.info(
+              `MemTriggerListener: loaded durable containers (count=${this.durableContainers.size})`,
+            );
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            this.logger.warn(
+              `MemTriggerListener: deferred Type Index load failed, will retry on next change: ${msg}`,
+            );
+          }
+        }
         await this.checkBound(target);
       })
       .catch((err: unknown) => {
@@ -168,10 +196,13 @@ export class MemTriggerListener extends Initializer {
    * Counts ldp:contains in the parent container, fires BoundExceeded
    * if the count crosses threshold (default 12 per Fano bound, D77).
    *
-   * Reads the parent container via store.getRepresentation (post-commit,
-   * so no re-entrant lock concern — the parent is a different resource from
-   * the write target). Parses Turtle with N3.js, counts ldp:contains quads,
-   * then delegates to BoundExceededDetector.maybeEmit with flapping guard.
+   * Reads the parent container via HTTP fetch() (not store.getRepresentation)
+   * to avoid re-entering CSS's LockingResourceStore. The 'changed' event fires
+   * while CSS may still hold a write lock on the parent container (it updates
+   * ldp:contains as part of the same write transaction). Using fetch() avoids
+   * the per-resource lock contention that causes the WrappedExpiringReadWriteLocker
+   * 6s crash. Parses Turtle with N3.js, counts ldp:contains quads, then
+   * delegates to BoundExceededDetector.maybeEmit with flapping guard.
    */
   private async checkBound(target: ResourceIdentifier): Promise<void> {
     // Derive parent container URI: strip last segment, ensure trailing /.
@@ -182,11 +213,12 @@ export class MemTriggerListener extends Initializer {
 
     let containerTurtle: string;
     try {
-      const representation = await this.store.getRepresentation(
-        { path: parentUri },
-        { type: { "text/turtle": 1 } },
-      );
-      containerTurtle = await streamToString(representation.data);
+      const resp = await fetch(parentUri, { headers: { Accept: "text/turtle" } });
+      if (!resp.ok) {
+        this.logger.warn(`checkBound: HTTP ${resp.status} reading parent container ${parentUri}`);
+        return;
+      }
+      containerTurtle = await resp.text();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.warn(`checkBound: could not read parent container ${parentUri}: ${msg}`);
@@ -235,10 +267,3 @@ function deriveParentContainer(path: string): string | null {
   }
 }
 
-async function streamToString(stream: NodeJS.ReadableStream): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-  }
-  return Buffer.concat(chunks).toString("utf8");
-}

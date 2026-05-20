@@ -1,12 +1,13 @@
-import type { IPostProjectionHook } from './IPostProjectionHook';
+import { IPostProjectionHook } from './IPostProjectionHook';
 import { ContradictionDetector } from '../detectors/ContradictionDetector';
-import type { EventEmitter } from '../EventEmitter';
+import { EventEmitter } from '../EventEmitter';
 
-export class MemTriggerPostProjectionHook implements IPostProjectionHook {
+export class MemTriggerPostProjectionHook extends IPostProjectionHook {
   private readonly detector: ContradictionDetector;
   private readonly emitter: EventEmitter;
 
   public constructor(detector: ContradictionDetector, emitter: EventEmitter) {
+    super();
     this.detector = detector;
     this.emitter = emitter;
   }

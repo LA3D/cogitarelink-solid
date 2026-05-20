@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { NoOpPostProjectionHook } from '../src-cjs/NoOpPostProjectionHook';
+import { NoOpPostProjectionHook } from '../src-cjs/NoOpPostProjectionHook.js';
 
 describe('NoOpPostProjectionHook', () => {
   it('resolves without side effects', async () => {

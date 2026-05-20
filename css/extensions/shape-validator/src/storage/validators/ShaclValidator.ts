@@ -24,33 +24,43 @@ import { LDP, SH } from '../../util/Vocabularies';
 import type { ShapeValidatorInput } from './ShapeValidator';
 import { ShapeValidator } from './ShapeValidator';
 
-// Inline interface — matches NoOpUnprocessableWriteHook and mem-trigger impl
-// via TypeScript structural typing. Interface erases at compile time; no
-// cross-package import needed.
-interface IUnprocessableWriteHook {
+// Hook interface for SHACL rejection callbacks.
+// Declared as a local type alias for structural typing — NOT exported as a
+// class so componentsjs-generator doesn't generate a nominal type that would
+// block cross-package Override injection. The constructor parameter is typed
+// as `unknown` so componentsjs-generator emits ParameterRangeWildcard, which
+// accepts any component (including mem-trigger's MemTriggerUnprocessableWriteHook).
+// Internal usage narrows via duck-type cast.
+type IUnprocessableWriteHookLike = {
   onShaclRejection(input: {
     targetUri: string;
     validationReport: string;
     writerWebId?: string;
     timestamp: Date;
   }): Promise<void>;
-}
+};
 
 export class ShaclValidator extends ShapeValidator {
   private readonly converter: RepresentationConverter;
   protected readonly logger = getLoggerFor(this);
   private readonly auxiliaryStrategy: AuxiliaryStrategy;
-  private readonly unprocessableHook: IUnprocessableWriteHook;
+  private readonly unprocessableHook: IUnprocessableWriteHookLike;
 
   public constructor(
     converter: RepresentationConverter,
     auxiliaryStrategy: AuxiliaryStrategy,
-    unprocessableHook?: IUnprocessableWriteHook,
+    unprocessableHook?: unknown,
   ) {
     super();
     this.converter = converter;
     this.auxiliaryStrategy = auxiliaryStrategy;
-    this.unprocessableHook = unprocessableHook ?? new NoOpUnprocessableWriteHook();
+    // Cast to duck type — structural compatibility enforced at runtime.
+    // Both NoOpUnprocessableWriteHook and MemTriggerUnprocessableWriteHook
+    // satisfy this interface via structural typing. Nullish coalescing handles
+    // the case where Components.js does not inject a hook (undefined).
+    this.unprocessableHook = unprocessableHook != null
+      ? (unprocessableHook as IUnprocessableWriteHookLike)
+      : new NoOpUnprocessableWriteHook();
   }
 
   public async canHandle({ parentRepresentation, representation }: ShapeValidatorInput): Promise<void> {
@@ -119,6 +129,7 @@ export class ShaclValidator extends ShapeValidator {
     reportTurtle: string,
     shapeURL: string = 'urn:test:no-shape-url',
   ): Promise<void> {
+    this.logger.info(`[ShaclValidator] invokeHookAndThrow: hook=${this.unprocessableHook?.constructor?.name ?? 'unknown'}`);
     try {
       await this.unprocessableHook.onShaclRejection({
         targetUri,
