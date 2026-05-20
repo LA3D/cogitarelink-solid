@@ -20,6 +20,24 @@ import type { RepresentationMetadata } from "@solid/community-server/dist/http/r
 import type { VocabularyTerm } from "rdf-vocabulary";
 import * as path from "path";
 import { readFileSync, existsSync } from "fs";
+import { NoOpPostProjectionHook } from "./NoOpPostProjectionHook";
+
+// Re-export NoOpPostProjectionHook so Components.js can construct it via the
+// `@type: "NoOpPostProjectionHook"` declaration in markdown-projection.json.
+// Components.js requires the class to be reachable through the package's main
+// entry point (dist-cjs/listener.js).
+export { NoOpPostProjectionHook };
+
+// Hook contract — structurally compatible with mem-trigger's IPostProjectionHook.
+// Inline type avoids cross-package import (mem-trigger's dist may not be present
+// when markdown-projection compiles).
+interface IPostProjectionHook {
+    onEdgesWritten(input: {
+        subject: string;
+        edges: Array<{ predicate: string; object: string }>;
+        timestamp: Date;
+    }): Promise<void>;
+}
 
 // ------------------------------------------------------------------
 // Simple stderr logger (same approach as markdown-render/converter.ts)
@@ -124,6 +142,7 @@ export class MarkdownProjectionListener extends Initializer {
     private readonly store: MonitoringStore;
     private readonly baseUrl: string;
     private readonly dataDir: string;
+    private readonly postProjectionHook: IPostProjectionHook;
     // Serialise concurrent writes per the D68 chain pattern
     private chain: Promise<void> = Promise.resolve();
     // Live Type Index loader — instanced on first project() call once pipeline is loaded.
@@ -131,11 +150,17 @@ export class MarkdownProjectionListener extends Initializer {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private typeIndexLoader: any = null;
 
-    public constructor(store: MonitoringStore, baseUrl: string, dataDir: string) {
+    public constructor(
+        store: MonitoringStore,
+        baseUrl: string,
+        dataDir: string,
+        postProjectionHook?: IPostProjectionHook,
+    ) {
         super();
         this.store = store;
         this.baseUrl = baseUrl.replace(/\/$/, "");
         this.dataDir = dataDir;
+        this.postProjectionHook = postProjectionHook ?? new NoOpPostProjectionHook();
     }
 
     // Initializer.handle() — called once by CSS WorkerParallelInitializer
@@ -272,5 +297,23 @@ export class MarkdownProjectionListener extends Initializer {
         const writer = new MetaWriter();
         await writer.replaceGoverned(fsPath, triples, governed, target.path);
         debug(`wrote .meta for ${target.path} (class=${cls}, ${triples.length} triples, ${governed.length} governed predicates)`);
+
+        // After .meta is written, surface <#this>-subject edges to the
+        // post-projection hook (consumed by mem-trigger's ContradictionDetector).
+        // No-op default when mem-trigger absent. Hook errors are swallowed —
+        // substrate event archival must not block .meta writes.
+        const thisIri = `${target.path}#this`;
+        const thingEdges = triples
+            .filter((q) => q.subject.value === thisIri)
+            .map((q) => ({ predicate: q.predicate.value, object: q.object.value }));
+        try {
+            await this.postProjectionHook.onEdgesWritten({
+                subject: thisIri,
+                edges: thingEdges,
+                timestamp: new Date(),
+            });
+        } catch (hookErr) {
+            debug(`postProjectionHook error (substrate event archival failed; .meta still written): ${(hookErr as Error).message}`);
+        }
     }
 }

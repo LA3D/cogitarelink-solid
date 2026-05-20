@@ -16,8 +16,14 @@
           },
           "dataDir": {
             "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_dataDir"
+          },
+          "postProjectionHook": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_postProjectionHook"
           }
         }
+      },
+      "NoOpPostProjectionHook": {
+        "@id": "mpl:dist-cjs/listener.jsonld#NoOpPostProjectionHook"
       }
     }
   ]

@@ -21,8 +21,8 @@
       "reflectionTickRateMs": 3600000,
       "contradictoryPairs": [
         [
-          "https://pod.vardeman.me/vault/ontology/wiki#supports",
-          "https://pod.vardeman.me/vault/ontology/wiki#criticizes"
+          "http://purl.org/spar/cito/agreesWith",
+          "http://purl.org/spar/cito/disagreesWith"
         ]
       ],
       "typeIndexUri": "https://pod.vardeman.me/vault/settings/publicTypeIndex"
@@ -45,6 +45,32 @@
       "overrideParameters": {
         "@type": "ShaclValidator",
         "unprocessableHook": { "@id": "urn:cogitarelink:MemTriggerUnprocessableWriteHook" }
+      }
+    },
+    {
+      "comment": "Standalone ContradictionDetector for MemTriggerPostProjectionHook. v1 pair list is wikilink-projected cito:agreesWith vs cito:disagreesWith (from [[X]]{.supports} / {.criticizes}). The generator emits the constructor opts.contradictoryPairs param as opts_contradictoryPairs in Components.js context.",
+      "@id": "urn:cogitarelink:ContradictionDetectorStandalone",
+      "@type": "ContradictionDetector",
+      "opts_contradictoryPairs": [
+        [
+          "http://purl.org/spar/cito/agreesWith",
+          "http://purl.org/spar/cito/disagreesWith"
+        ]
+      ]
+    },
+    {
+      "comment": "MemTriggerPostProjectionHook — fired by MarkdownProjectionListener after .meta projection completes. Runs ContradictionDetector over <#this>-subject edges; enqueues any mem:ContradictionDetected Turtle in pendingEventsBuffer. Same buffer pattern as MemTriggerUnprocessableWriteHook — no ResourceStore reference at construction time.",
+      "@id": "urn:cogitarelink:MemTriggerPostProjectionHook",
+      "@type": "MemTriggerPostProjectionHook",
+      "detector": { "@id": "urn:cogitarelink:ContradictionDetectorStandalone" }
+    },
+    {
+      "comment": "Bind MarkdownProjectionListener's postProjectionHook to MemTrigger impl when mem-trigger is installed. Overrides the NoOpPostProjectionHook default declared in markdown-projection.json.",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:cogitarelink:MarkdownProjectionListener" },
+      "overrideParameters": {
+        "@type": "MarkdownProjectionListener",
+        "postProjectionHook": { "@id": "urn:cogitarelink:MemTriggerPostProjectionHook" }
       }
     },
     {

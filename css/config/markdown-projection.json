@@ -7,12 +7,18 @@
   ],
   "@graph": [
     {
+      "comment": "Default no-op hook for MarkdownProjectionListener. Swapped for MemTriggerPostProjectionHook by mem-trigger.json Override when mem-trigger is installed.",
+      "@id": "urn:cogitarelink:NoOpPostProjectionHook",
+      "@type": "NoOpPostProjectionHook"
+    },
+    {
       "comment": "MarkdownProjectionListener — subscribes to MonitoringStore 'changed' events, projects body wikilinks + frontmatter to .meta Turtle for every /wiki/*.md write (D58/D71/D72). Mirrors the MementoCommitListener wiring pattern. K1: the WorkerParallelInitializer Override that registers this listener lives in mem-trigger.json (single Override per instance — all three listeners enumerated there).",
       "@id": "urn:cogitarelink:MarkdownProjectionListener",
       "@type": "MarkdownProjectionListener",
       "store": { "@id": "urn:solid-server:default:ResourceStore" },
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
-      "dataDir": { "@id": "urn:solid-server:default:variable:rootFilePath" }
+      "dataDir": { "@id": "urn:solid-server:default:variable:rootFilePath" },
+      "postProjectionHook": { "@id": "urn:cogitarelink:NoOpPostProjectionHook" }
     }
   ]
 }

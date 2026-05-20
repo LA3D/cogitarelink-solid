@@ -24,13 +24,23 @@
         {
           "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_dataDir",
           "range": "xsd:string"
+        },
+        {
+          "comment": "IPostProjectionHook — optional, wildcard range to accept any structurally-compatible class from any extension (NoOpPostProjectionHook by default, MemTriggerPostProjectionHook when mem-trigger overrides).",
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_postProjectionHook"
         }
       ],
       "constructorArguments": [
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_store" },
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_baseUrl" },
-        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_dataDir" }
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_dataDir" },
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_postProjectionHook" }
       ]
+    },
+    {
+      "@id": "mpl:dist-cjs/listener.jsonld#NoOpPostProjectionHook",
+      "@type": "Class",
+      "requireElement": "NoOpPostProjectionHook"
     }
   ]
 }

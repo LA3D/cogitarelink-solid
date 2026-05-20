@@ -1,15 +1,22 @@
 import { IPostProjectionHook } from './IPostProjectionHook';
 import { ContradictionDetector } from '../detectors/ContradictionDetector';
-import { EventEmitter } from '../EventEmitter';
+import { pendingEventsBuffer } from '../PendingEventsBuffer';
 
+/**
+ * Hook fired by MarkdownProjectionListener after .meta projection completes.
+ * Runs ContradictionDetector over the projected <#this>-subject edges; pushes
+ * any emitted Turtle to the module-level pendingEventsBuffer. MemTriggerListener
+ * (an Initializer, runs after ResourceStore is finalized) drains the buffer.
+ *
+ * Uses the same buffer pattern as MemTriggerUnprocessableWriteHook to keep
+ * substrate event emission centralized and avoid Components.js circular DI.
+ */
 export class MemTriggerPostProjectionHook extends IPostProjectionHook {
   private readonly detector: ContradictionDetector;
-  private readonly emitter: EventEmitter;
 
-  public constructor(detector: ContradictionDetector, emitter: EventEmitter) {
+  public constructor(detector: ContradictionDetector) {
     super();
     this.detector = detector;
-    this.emitter = emitter;
   }
 
   public async onEdgesWritten(input: {
@@ -23,7 +30,7 @@ export class MemTriggerPostProjectionHook extends IPostProjectionHook {
       now: input.timestamp,
     });
     if (turtle !== null) {
-      await this.emitter.emit(turtle);
+      pendingEventsBuffer.push(turtle);
     }
   }
 }
