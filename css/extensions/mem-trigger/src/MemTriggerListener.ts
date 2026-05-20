@@ -148,7 +148,8 @@ export class MemTriggerListener extends Initializer {
         await this.emitter.emit(turtle);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        this.logger.warn(`drainPendingEvents: emit failed (event dropped): ${msg}`);
+        // Surface via console.error since getLoggerFor is silenced in extension packages.
+        console.error(`[MemTriggerListener] drainPendingEvents: emit failed (event dropped): ${msg}`);
       }
     }
   }

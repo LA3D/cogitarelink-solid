@@ -129,7 +129,6 @@ export class ShaclValidator extends ShapeValidator {
     reportTurtle: string,
     shapeURL: string = 'urn:test:no-shape-url',
   ): Promise<void> {
-    this.logger.info(`[ShaclValidator] invokeHookAndThrow: hook=${this.unprocessableHook?.constructor?.name ?? 'unknown'}`);
     try {
       await this.unprocessableHook.onShaclRejection({
         targetUri,

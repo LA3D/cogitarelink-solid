@@ -1,4 +1,3 @@
-import { getLoggerFor } from 'global-logger-factory';
 import { IUnprocessableWriteHook } from './IUnprocessableWriteHook';
 import { UnprocessableWriteDetector } from '../detectors/UnprocessableWriteDetector';
 import { pendingEventsBuffer } from '../PendingEventsBuffer';
@@ -16,7 +15,6 @@ import { pendingEventsBuffer } from '../PendingEventsBuffer';
  * T11: buffer-enqueue wired. T12: MemTriggerListener buffer-drain wired.
  */
 export class MemTriggerUnprocessableWriteHook extends IUnprocessableWriteHook {
-  private readonly logger = getLoggerFor(this);
   private readonly detector: UnprocessableWriteDetector;
 
   public constructor(detector: UnprocessableWriteDetector) {
@@ -38,9 +36,6 @@ export class MemTriggerUnprocessableWriteHook extends IUnprocessableWriteHook {
     });
     if (turtle !== null) {
       pendingEventsBuffer.push(turtle);
-      this.logger.info(
-        `MemTriggerUnprocessableWriteHook: queued UnprocessableWrite event for ${input.targetUri} (buffer size=${pendingEventsBuffer.length})`,
-      );
     }
   }
 }

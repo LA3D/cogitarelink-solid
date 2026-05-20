@@ -45,6 +45,7 @@ export class UnprocessableWriteDetector {
     const activity = namedNode(activityIri);
     writer.addQuad(quad(activity, namedNode(RDF_TYPE), namedNode(`${AS_NS}Activity`)));
     writer.addQuad(quad(activity, namedNode(RDF_TYPE), namedNode(`${AS_NS}Reject`)));
+    writer.addQuad(quad(activity, namedNode(RDF_TYPE), namedNode(`${MEM}Event`)));
     writer.addQuad(quad(activity, namedNode(RDF_TYPE), namedNode(`${MEM}UnprocessableWrite`)));
     writer.addQuad(quad(activity, namedNode(`${AS_NS}actor`), namedNode(SUBSTRATE_ACTOR)));
     writer.addQuad(

@@ -62,6 +62,7 @@ export class BoundExceededDetector {
 
     const activity = namedNode(activityIri);
     writer.addQuad(quad(activity, namedNode(RDF_TYPE), namedNode(`${AS_NS}Activity`)));
+    writer.addQuad(quad(activity, namedNode(RDF_TYPE), namedNode(`${MEM}Event`)));
     writer.addQuad(quad(activity, namedNode(RDF_TYPE), namedNode(`${MEM}BoundExceeded`)));
     writer.addQuad(quad(activity, namedNode(`${AS_NS}actor`), namedNode(SUBSTRATE_ACTOR)));
     writer.addQuad(

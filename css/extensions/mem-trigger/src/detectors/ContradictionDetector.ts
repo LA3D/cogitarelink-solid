@@ -92,6 +92,7 @@ export class ContradictionDetector {
 
     const activity = namedNode(activityIri);
     writer.addQuad(quad(activity, namedNode(RDF_TYPE), namedNode(`${AS_NS}Activity`)));
+    writer.addQuad(quad(activity, namedNode(RDF_TYPE), namedNode(`${MEM}Event`)));
     writer.addQuad(
       quad(activity, namedNode(RDF_TYPE), namedNode(`${MEM}ContradictionDetected`)),
     );
