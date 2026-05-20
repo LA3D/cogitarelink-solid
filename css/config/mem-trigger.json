@@ -19,7 +19,12 @@
       "boundThreshold": 12,
       "reflectionIntervalMs": 86400000,
       "reflectionTickRateMs": 3600000,
-      "contradictoryPairs": [],
+      "contradictoryPairs": [
+        [
+          "https://pod.vardeman.me/vault/ontology/wiki#supports",
+          "https://pod.vardeman.me/vault/ontology/wiki#criticizes"
+        ]
+      ],
       "typeIndexUri": "https://pod.vardeman.me/vault/settings/publicTypeIndex"
     },
     {

@@ -13,6 +13,7 @@ import { ReflectionDueDetector } from "./detectors/ReflectionDueDetector";
 import { ContradictionDetector } from "./detectors/ContradictionDetector";
 import { EventEmitter } from "./EventEmitter";
 import { loadDurableContainers } from "./loadDurableContainers";
+import { pendingEventsBuffer } from "./PendingEventsBuffer";
 
 /**
  * MemTriggerListener — MonitoringStore CDC subscriber for wiki-memory L3.
@@ -91,6 +92,12 @@ export class MemTriggerListener extends Initializer {
       this.onChange(target, activity, metadata);
     });
 
+    // Drain any events queued before handle() ran (e.g., during pod-setup).
+    void this.drainPendingEvents().catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`startup drain error: ${msg}`);
+    });
+
     this.reflectionTimer = setInterval(() => {
       this.tickReflection().catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
@@ -126,6 +133,26 @@ export class MemTriggerListener extends Initializer {
     }
   }
 
+  /**
+   * Drains pendingEventsBuffer by emitting each accumulated Turtle event
+   * to /.events/. Called on startup (handle()) and on each non-events
+   * 'changed' event. Buffer entries are enqueued by cross-extension hooks
+   * (e.g., MemTriggerUnprocessableWriteHook) that can't hold an EventEmitter
+   * directly due to Components.js circular DI.
+   */
+  private async drainPendingEvents(): Promise<void> {
+    while (pendingEventsBuffer.length > 0) {
+      const turtle = pendingEventsBuffer.shift();
+      if (turtle === undefined) break;
+      try {
+        await this.emitter.emit(turtle);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`drainPendingEvents: emit failed (event dropped): ${msg}`);
+      }
+    }
+  }
+
   private onChange(target: ResourceIdentifier, _activity: unknown, _metadata: unknown): void {
     // Filter: ignore writes to .events/ and .operations/ themselves (prevents recursion).
     if (target.path.includes("/.events/") || target.path.includes("/.operations/")) {
@@ -144,6 +171,11 @@ export class MemTriggerListener extends Initializer {
     // Serialize work via chain Promise (same pattern as MementoCommitListener).
     this.chain = this.chain
       .then(async () => {
+        // Always drain the pending-events buffer first — this runs regardless of
+        // the startup grace period so that UnprocessableWrite events queued by
+        // MemTriggerUnprocessableWriteHook reach /.events/ even during pod-setup.
+        await this.drainPendingEvents();
+
         // Lazy-load durable containers on first write after startup (deferred
         // from handle() to avoid CSS write-lock timeout during parallel init).
         // Re-tried on every change until it succeeds (e.g., pod-setup may hold
@@ -156,7 +188,7 @@ export class MemTriggerListener extends Initializer {
           const msSinceStart = Date.now() - this.startupTime;
           const STARTUP_GRACE_MS = 15_000;
           if (msSinceStart < STARTUP_GRACE_MS) {
-            return; // skip until grace period expires
+            return; // skip checkBound until grace period expires
           }
           try {
             const containers = await loadDurableContainers(this.typeIndexUri);
