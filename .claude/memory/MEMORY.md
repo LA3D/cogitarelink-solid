@@ -414,6 +414,7 @@ container. Python httpx needs `SSL_CERT_FILE` likewise.
   on cold Pods? Eval question for Rung 1.5.
 - **RQ-Memento-1/2, RQ-Federation-1, RQ-Eval-1/2/3**: Round 4 and Rung 1.5 territory.
 - **RQ-Harness-1**: fabric namespace minting at `https://cogitarelink.org/ns/fabric#` — blocks `fabric:*` past prototype.
+- **RQ-Atomic-Feedback-1**: For write-triggered substrate signals (`mem:BoundExceeded`, `mem:ContradictionDetected`), does **atomic in-response delivery** (Option B — synchronous detector firing pre-response + Link header augmentation) improve agent behavior over **deferred delivery** (Option A — client-side post-write `/.events/` query, or Option C — Solid Notifications subscription)? MemTrigger wiring sprint (2026-05-20) ships A+C; B is deferred pending eval evidence that atomic feedback is worth the architectural cost (restructuring detectors away from MonitoringStore's `'changed'` event). Rung 1.5 must include a task class that exercises this — measure outcome quality between agents that get atomic feedback vs deferred. Connects to the in-context feedback design question for the agentic harness.
 
 H-D82 (inline JSON-LD blocks as level-4 affordance) is hypothesis, not decision —
 test in Rung 1.5 eval before any listener-extension code lands.
