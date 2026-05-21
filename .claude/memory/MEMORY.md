@@ -34,7 +34,7 @@ For decision IDs, invoke the `decision-lookup` skill.
 - **apply.py shape-deploy convention**: the local file lookup uses `basename(overlay:hostedAt)`. If an overlay manifest declares `installsShape` with mismatched `overlay:document` local name vs `overlay:hostedAt` hosted basename, the deploy step fails. Match the basenames or extend `common.py` to parse `overlay:document` explicitly.
 - **Listener path filter is vestigial** — the original `isWikiResource()` `/wiki/` substring filter was replaced by Type-Index-based dispatch (D78 oracle). Any L4 overlay's Type Index registration triggers full substrate treatment without `/wiki/` prefix.
 
-## Project state (as of 2026-05-19, end of Wiki-Memory L3 Shape Completion Sprint)
+## Project state (as of 2026-05-21, end of MemTrigger detector wiring sprint)
 
 - **Branch**: main. Shape Completion Sprint shipped 2026-05-19 (D95–D100 / vault-D91–D96). Memory Structuring Sprint merged 2026-05-18 (commits c87c6b2 → e990299, D93/D94/K4 at bcce5bf).
 - **Shipped**: Phase 1 + 2 + 2b + Rung 1.4 + Phase 5j + AddressBook + owner-identity
@@ -261,14 +261,7 @@ Companion docs:
 
 In dependency order:
 
-1. **MemTriggerListener detector wiring** (substrate hook integration).
-   Detectors (UnprocessableWrite, BoundExceeded, ContradictionDetected,
-   ReflectionDue) are unit-tested but not invoked from the listener's
-   `changed` handler in v1. Each needs a specific substrate hook (shape-
-   validator failure pathway, ldp:contains counter, edge-conflict analysis,
-   timer integration). Documented in FOLLOWUPS.md "Phase C.10 wiring scope
-   + deferrals". Un-skip the 4 mem_events integration tests as each detector
-   gets wired.
+1. ~~**MemTriggerListener detector wiring**~~ — closed 2026-05-21 (D101). See Closed section below.
 
 2. **Rung 1.5 eval** (after #1). Skill-creator harness, with-skill vs
    without-skill. First measurable claim from the active plan. Tests
@@ -282,6 +275,44 @@ In dependency order:
 Phase 7b/c/d (engine swap, hybrid RRF, in-pod index) are deferred until
 Rung 1.5 evidence justifies. Wiki URI scheme rethink (per FOLLOWUPS) slots
 between #1 and #2 if picked up.
+
+### Closed (2026-05-21)
+
+- ~~**MemTrigger detector wiring sprint**~~ — shipped 2026-05-20 (implementation) /
+  2026-05-21 (close). Ratified **D101** (MemTrigger detector wiring and substrate-signal
+  delivery model). Sprint tag: `mem-trigger-detector-wiring-complete`.
+  - D101: A+C combined delivery (post-write LDN GET + Solid Notifications subscription);
+    Pattern B (atomic in-response Link headers) deferred to RQ-Atomic-Feedback-1.
+    Two-hook DI pattern (IUnprocessableWriteHook + IPostProjectionHook) with no-op
+    defaults in producer extensions. PendingEventsBuffer singleton for circular-DI
+    workaround.
+  - **Test counts**: 44 mem-trigger TS unit + 31 shape-validator TS unit + 75
+    markdown-projection TS unit; 3/4 live-Pod integration tests passing
+    (test_reflection_due_emits_event remains pytest.skip pending test-mode config).
+  - **Substrate-behavior findings** (durable):
+    - **PendingEventsBuffer pattern** — hooks that fire before `ResourceStore` is
+      ready (e.g., `IUnprocessableWriteHook` inside `ShaclValidator`) cannot hold
+      an `EventEmitter`. Module-level singleton buffer; `MemTriggerListener` drains
+      on startup + on every `'changed'` event. Drain runs regardless of startup grace.
+    - **`fetch()` not `store.getRepresentation()` for lock re-entrancy** — `'changed'`
+      fires while CSS may still hold a write lock on the parent container.
+      `store.getRepresentation` on parent during that window triggers the 6s
+      `WrappedExpiringReadWriteLocker` crash. `fetch()` sidesteps the in-process lock.
+    - **`mem:Event` multi-typing required** — events in `/.events/` must be typed as
+      both `mem:BoundExceeded` (etc.) and `as:Activity` (or `as:*` parent) to satisfy
+      the shape-validator's operations-path constraint. Single `mem:*` typing alone
+      is rejected as unrecognized-class in the operations container.
+    - **`cito:` URIs for `{.supports}` wikilink projection** — `wikilinkProjection`
+      emits `cito:cites` / `cito:citesAsEvidence` for `{.supports}` class-hint
+      wikilinks, not `wiki:supports`. Contradiction pairs must match actual emitted
+      IRIs. v1 ships with `contradictoryPairs: []` pending a reconciliation pass.
+    - **15s startup grace + lazy Type Index load** — `handle()` defers Type Index
+      read to first write after a 15s startup grace, avoiding the write-lock crash
+      during pod-setup bulk initialization. `checkBound` is gated by this grace;
+      `drainPendingEvents` is not.
+    - **`getLoggerFor` silenced in extension packages** — CSS's global-logger-factory
+      suppresses info/warn from extension packages at default log level. Debug-critical
+      messages use `console.error` directly for visibility.
 
 ### Closed (2026-05-19)
 

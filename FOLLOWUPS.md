@@ -32,45 +32,23 @@ procedure, working) and add a Concept-specific shape, then rebaseline
 fixtures to match. Once fixtures pass, remove the `@pytest.mark.xfail`
 decorator and `strict=True` will catch any subsequent regression.
 
-## Phase C.10 — MemTrigger v1 wiring (Memory Structuring Sprint, 2026-05-18)
+## ~~Phase C.10 — MemTrigger v1 wiring (Memory Structuring Sprint, 2026-05-18)~~
 
-Phase C.10 + C.11 shipped MemTriggerListener as a MonitoringStore CDC
-subscriber and wired it into the WorkerParallelInitializer alongside
-MementoCommitListener and MarkdownProjectionListener. Listener attaches,
-onChange runs the filter pipeline (skip .events/.operations/ + restrict
-to baseUrl), serializes work via chain Promise.
+**Closed 2026-05-21** by MemTrigger detector wiring sprint (D101).
+See `docs/superpowers/specs/2026-05-20-mem-trigger-detector-wiring-design.md`
+and `docs/superpowers/plans/2026-05-20-mem-trigger-detector-wiring.md`.
 
-v1 stubs and deferred wiring:
+All four detectors wired:
+- BoundExceeded — real checkBound implementation via fetch() (D92 lock pattern)
+- UnprocessableWrite — IUnprocessableWriteHook injected into ShaclValidator
+- ContradictionDetected — IPostProjectionHook invoked by MarkdownProjectionListener
+- ReflectionDue — setInterval timer in handle(); integration test deferred
 
-- **BoundExceededDetector**: `checkBound()` is a documented no-op stub.
-  Real implementation needs to read the parent container via
-  `store.getRepresentation`, parse Turtle, count `ldp:contains`, then
-  invoke `bound.maybeEmit` with childCount + lastEmittedForContainer.
-  Then call `emitter.emit(turtle)` if non-null.
-- **UnprocessableWriteDetector**: never invoked. Needs a substrate-side
-  hook on shape-validator's `ShaclValidationError` path; not exposed via
-  MonitoringStore's `'changed'` event (only successful writes fire it).
-  Hook-point candidate: shape-validator extension's
-  `ShaclValidator.handle()` could emit a side-channel event.
-- **ReflectionDueDetector**: never invoked. Needs a setInterval timer in
-  `handle()` plus per-subject activity tracking (last-write timestamps
-  per `/wiki/{class}/<resource>`). Should also coordinate with the
-  durable-promotion path (mem:Crystallize) so reflections fire only on
-  durable subjects.
-- **ContradictionDetector**: never invoked. Needs body-projection edge
-  harvesting (the .meta triples MarkdownProjectionListener just wrote
-  for the target resource); pass `edges` to `contradiction.maybeEmit`.
-  Coordinate ordering: contradiction must run AFTER markdown-projection
-  on the same write so the .meta is fresh.
-
-Listener attachment is verified via the `[markdown-projection]` log line
-on each PUT — the WorkerParallelInitializer is running all three handlers
-in parallel and all three subscribe to MonitoringStore. MemTriggerListener's
-attach-time log uses `getLoggerFor(this).info(...)` which doesn't appear
-in container output (same as MementoCommitListener — `global-logger-factory`
-output at info level is silent under the current logging config). Behavior
-is confirmed by smoke writes producing no errors + memento `.git/COMMIT_EDITMSG`
-updating + markdown-projection firing.
+Three of four mem_events integration tests passing on live Pod;
+test_reflection_due_emits_event remains pytest.skip pending test-mode
+config activation (artifact exists at `css/config/mem-trigger-test.json`
++ `css/config/solid-config-test.json`; activation pattern documented in
+mem-trigger README).
 
 ### K1 consolidation note
 

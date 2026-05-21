@@ -1,6 +1,6 @@
 # SOLID Pod Decisions Index
 
-Always loaded. Concise index of all architectural decisions (D1-D100, K1-K4). Vault is canonical source:
+Always loaded. Concise index of all architectural decisions (D1-D101, K1-K4). Vault is canonical source:
 `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
 ## Skill cross-reference
@@ -32,6 +32,8 @@ CSS-builder skills (no D-cluster but referenced by many decisions): `css-extensi
 **D93 (synthesis page as primary agent entry point) + D94 (mem: Action/Event vocabulary) + K4 (JSON-LD script tag is not RDFa)** — Memory Structuring Sprint. Design + plan: `docs/superpowers/specs/2026-05-18-memory-structuring-sprint-design.md` + `docs/superpowers/plans/2026-05-18-memory-structuring-sprint.md`. See "Memory Structuring Sprint" section below + the substrate-behavior findings recorded in the same section.
 
 **D95 (Thing-as-top-class) + D96 (Page+Thing governance split) + D97 (FAIR vocabulary metadata invariant) + D98 (8-shape catalog, supersedes D77) + D99 (belt-and-braces disjointness) + D100 (L4 extension contract + URI-independent substrate)** — Wiki-Memory L3 Shape Completion Sprint (2026-05-19). Design + plan: `docs/superpowers/specs/2026-05-19-l3-shape-completion-design.md` + `docs/superpowers/plans/2026-05-19-l3-shape-completion-plan.md`. See "Wiki-Memory L3 Shape Completion Sprint" section below. Vault-D91 = repo-D95 … vault-D96 = repo-D100.
+
+**D101 (MemTrigger detector wiring and substrate-signal delivery model)** — MemTrigger detector wiring sprint (2026-05-21). Closes D74 implementation gap. Design + plan: `docs/superpowers/specs/2026-05-20-mem-trigger-detector-wiring-design.md` + `docs/superpowers/plans/2026-05-20-mem-trigger-detector-wiring.md`. See "MemTrigger detector wiring sprint" section below.
 
 ## Phase 1 foundation (D1–D28)
 
@@ -717,6 +719,109 @@ Substrate-side symmetric constraints on `mem:Event` / `mem:Action` shapes (disal
 **Validation**: integration test `test_l4_extension_stub.py` with `biz:Equipment` fixture validates (a) L4 shape validates against L3 ThingShape `sh:node` chain; (b) apply.py installs and verify.py confirms; (c) a `biz:Equipment` page passes SHACL and produces correct `<#this>` `.meta` projection. Cold-agent interpretation of the extension contract is a **Rung 1.5 empirical eval task** (RQ-Discovery-1 family) — not a pre-merge gate for this sprint.
 
 **See also**: D78 (class-based dispatch via Type Index), D83 (Pod-as-toolkit), D87 (capability-level overlay deps), D88 (tmpl: vocabulary), D95–D99 (the L3 invariants the extension inherits).
+
+## MemTrigger detector wiring sprint (D101, 2026-05-21)
+
+### D101 — MemTrigger detector wiring and substrate-signal delivery model (2026-05-21)
+
+**Status**: Ratified 2026-05-21.
+
+**Closes D74**: wires all four `mem:*` event detectors into the substrate, closing the
+implementation gap left by the Memory Structuring Sprint (D93/D94). All four detectors
+(`BoundExceededDetector`, `UnprocessableWriteDetector`, `ContradictionDetector`,
+`ReflectionDueDetector`) produce `mem:*` AS2 activities archived to `/.events/`.
+
+**Delivery model (A + C combined)**: Pattern A — agent harness queries `/.events/` after
+each write for events targeting the just-written URI. Pattern C — harness (or external
+follower agent) holds a Solid Notifications subscription against `/.events/` for streaming
+delivery (the only natural channel for `mem:ReflectionDue`, which is timer-driven).
+Pattern B (atomic in-response `Link` headers — synchronous detector firing pre-response +
+MetadataWriter) is deferred to RQ-Atomic-Feedback-1.
+
+**Two-hook DI pattern**: two abstract-class hook interfaces cross extension boundaries.
+`IUnprocessableWriteHook` is injected into `ShaclValidator`; `IPostProjectionHook` is
+injected into `MarkdownProjectionListener`. No-op defaults ship in the producer extensions
+(`NoOpUnprocessableWriteHook` in shape-validator; `NoOpPostProjectionHook` in
+markdown-projection). When mem-trigger is installed, `css/config/mem-trigger.json`
+Overrides swap the real implementations in. Extension behavior in mem-trigger-free
+environments is byte-identical to pre-D101.
+
+**PendingEventsBuffer** (module-level singleton): `MemTriggerUnprocessableWriteHook`
+fires inside `ShaclValidator.handle()` before `ResourceStore` is finalized (Components.js
+construction order). The hook cannot hold a live `EventEmitter`. Workaround: it enqueues
+Turtle strings into a module-level array; `MemTriggerListener.drainPendingEvents()` flushes
+the buffer on startup and on every `'changed'` event. Drain is not gated by the startup
+grace period — `mem:UnprocessableWrite` events reach `/.events/` even during pod-setup.
+
+**Architectural deviations from spec** (all accepted):
+
+1. **`fetch()` not `store.getRepresentation()` in `checkBound`** — spec called for in-process
+   `ResourceStore` read. Integration exposed the 6s write-lock crash when `'changed'` fires
+   while CSS holds a lock on the parent container. `fetch()` sidesteps the in-process lock.
+   Same rationale as the D92 walker (HTTP self-request) applied to a single resource.
+
+2. **`abstract class` for hook interfaces, not TypeScript `interface`** — componentsjs-generator
+   emits an `AbstractClass` descriptor for TypeScript `interface` types; CSS DI refuses to
+   instantiate `AbstractClass`. Declaring as `abstract class` yields a proper `Class` descriptor.
+   No behavioral change; same pattern used by D95–D100 shape-completion sprint for
+   `PathConstraintConfig`.
+
+3. **`cito:` URIs for contradictory pairs, not `wiki#` URIs** — `wikilinkProjection` emits
+   `cito:cites` / `cito:citesAsEvidence` for `{.supports}` wikilinks, not `wiki:supports`.
+   Production v1 ships `contradictoryPairs: []` pending a reconciliation pass that enumerates
+   actual projection-emitted IRIs. Contradiction logic is fully unit-tested with injected pairs.
+
+4. **`mem:Event` multi-typing** — events must carry `a mem:BoundExceeded, as:Activity` (or
+   `as:*` parent) to pass the shape-validator's operations-path constraint. Single `mem:*`
+   typing is rejected. All detectors emit with dual typing.
+
+**Test counts**: 44 mem-trigger Vitest unit + 31 shape-validator Vitest unit + 75
+markdown-projection Vitest unit; 3/4 live-Pod integration tests passing.
+`test_reflection_due_emits_event` remains `pytest.skip` pending test-mode config
+activation (`css/config/mem-trigger-test.json` + `css/config/solid-config-test.json`).
+
+**K1 alignment**: the two new hook Overrides in `mem-trigger.json` target `ShaclValidator`
+and `MarkdownProjectionListener` — different instances from the `WorkerParallelInitializer`
+Override that K1 governs. No conflict.
+
+**See also**: D74 (memory-substrate triggers — the `mem:*` vocabulary and invariant list
+this closes), D93/D94/K4 (Memory Structuring Sprint — detectors first appeared here as stubs),
+D92 (wiki-search walker — same `fetch()` lock-avoidance rationale), RQ-Atomic-Feedback-1
+(Pattern B deferred here), K1 (WorkerParallelInitializer Override ownership),
+FOLLOWUPS.md Phase C.10 (closed 2026-05-21).
+
+### MemTrigger sprint — substrate-behavior findings (2026-05-21)
+
+1. **PendingEventsBuffer pattern** — hooks invoked before `ResourceStore` is ready must
+   enqueue Turtle into a module-level buffer rather than calling `EventEmitter` directly.
+   `MemTriggerListener` (an `Initializer`) drains the buffer on startup and on every
+   `'changed'` event. Drain is unconditional — not gated by startup grace.
+
+2. **`fetch()` not `store.getRepresentation()` for lock re-entrancy** — `'changed'` fires
+   while CSS may still hold a write lock on the parent container (parent `ldp:contains`
+   is updated as part of the same write transaction). `store.getRepresentation` on parent
+   during that window hits the per-resource lock and causes the 6s
+   `WrappedExpiringReadWriteLocker` crash. `fetch()` on the self-URL sidesteps the
+   in-process lock.
+
+3. **`mem:Event` multi-typing for path-constraint bypass** — `/.events/` resources need
+   an `as:*` parent type alongside `mem:*` to satisfy the shape-validator operations-path
+   constraint. Detectors that emit without `as:Activity` (or equivalent) produce events
+   that are rejected by the path guard. Dual-typing is the fix.
+
+4. **`cito:` URIs for `{.supports}` wikilink projection** — `wikilinkProjection`'s
+   class-hint table maps `{.supports}` to `cito:cites`, not `wiki:supports`. Any
+   detector or test that inspects contradiction pairs must use the IRI that the listener
+   actually writes into `.meta`, not the design-time shorthand.
+
+5. **15s startup grace + lazy Type Index load** — `handle()` defers Type Index read to
+   first write after a 15s startup window, avoiding write-lock crashes during pod-setup
+   bulk initialization. `checkBound` is gated; `drainPendingEvents` is not.
+
+6. **`getLoggerFor` silenced in extension packages** — CSS `global-logger-factory` does
+   not surface `info`/`warn` from extension packages at the default log level. Use
+   `console.error` for debug-critical messages (emit failures, drain errors) to guarantee
+   visibility in container output.
 
 ## Shape Completion Sprint — substrate-behavior findings (2026-05-19)
 

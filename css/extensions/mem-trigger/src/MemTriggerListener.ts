@@ -172,9 +172,10 @@ export class MemTriggerListener extends Initializer {
     // Serialize work via chain Promise (same pattern as MementoCommitListener).
     this.chain = this.chain
       .then(async () => {
-        // Always drain the pending-events buffer first — this runs regardless of
-        // the startup grace period so that UnprocessableWrite events queued by
-        // MemTriggerUnprocessableWriteHook reach /.events/ even during pod-setup.
+        // Always drain the pending-events buffer first. Drain runs on every real
+        // write, including writes that arrive during the startup grace period.
+        // Only checkBound is gated by the grace period (to avoid the CSS
+        // write-lock timeout when reading the Type Index at startup).
         await this.drainPendingEvents();
 
         // Lazy-load durable containers on first write after startup (deferred
