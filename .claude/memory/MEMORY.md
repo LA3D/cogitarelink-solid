@@ -298,14 +298,19 @@ between #1 and #2 if picked up.
       fires while CSS may still hold a write lock on the parent container.
       `store.getRepresentation` on parent during that window triggers the 6s
       `WrappedExpiringReadWriteLocker` crash. `fetch()` sidesteps the in-process lock.
-    - **`mem:Event` multi-typing required** — events in `/.events/` must be typed as
-      both `mem:BoundExceeded` (etc.) and `as:Activity` (or `as:*` parent) to satisfy
-      the shape-validator's operations-path constraint. Single `mem:*` typing alone
-      is rejected as unrecognized-class in the operations container.
-    - **`cito:` URIs for `{.supports}` wikilink projection** — `wikilinkProjection`
-      emits `cito:cites` / `cito:citesAsEvidence` for `{.supports}` class-hint
-      wikilinks, not `wiki:supports`. Contradiction pairs must match actual emitted
-      IRIs. v1 ships with `contradictoryPairs: []` pending a reconciliation pass.
+    - **`mem:Event` multi-typing required** — events in `/vault/wiki/.events/` must
+      carry `a mem:Event` in addition to their specific subclass (`mem:BoundExceeded`,
+      `mem:UnprocessableWrite`, etc.). The path constraint on `/vault/wiki/.events/`
+      does literal-IRI matching (no subclass inference), so a subclass-only emission
+      gets rejected as a path-constraint violation. All four detectors now emit both.
+    - **`cito:` URIs for `{.supports}` / `{.criticizes}` wikilink projection** —
+      `wikilinkProjection.ts` (HINT_TO_PROJECTION map) emits `cito:agreesWith` for
+      `[[X]]{.supports}` and `cito:disagreesWith` for `[[X]]{.criticizes}`, NOT the
+      naive `wiki:supports`/`wiki:criticizes`. `mem-trigger.json` `contradictoryPairs`
+      ships with `[[cito:agreesWith, cito:disagreesWith]]` (T13 fix); unit tests
+      mirror this (T27 fix). Future contradictoryPairs additions must match the
+      actual emitted predicate IRIs in `wikilinkProjection.ts`, not the class hint
+      names.
     - **15s startup grace + lazy Type Index load** — `handle()` defers Type Index
       read to first write after a 15s startup grace, avoiding the write-lock crash
       during pod-setup bulk initialization. `checkBound` is gated by this grace;
