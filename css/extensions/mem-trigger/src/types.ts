@@ -3,6 +3,7 @@
 
 export const MEM = "https://pod.vardeman.me/vault/ontology/mem#";
 export const WIKI = "https://pod.vardeman.me/vault/ontology/wiki#";
+export const CITO = "http://purl.org/spar/cito/";
 export const AS_NS = "https://www.w3.org/ns/activitystreams#";
 export const PROV = "http://www.w3.org/ns/prov#";
 export const SH = "http://www.w3.org/ns/shacl#";
