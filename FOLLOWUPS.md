@@ -2,6 +2,32 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## Pod-hosted memory-structure UI for transparency (2026-05-22)
+
+The Pod runs on `localhost` (127.0.0.1 via `/etc/hosts`), so externally-hosted Solid apps (Penny, SolidOS at solidcommunity.net) only browse it via the user's own browser. Workable for read-only inspection, but not robust for end-users who need to see the substrate's memory structure (wikilinks, shapes, events, affordances, type-index, Memento history) at a glance.
+
+**The actual need**: a substrate-aware UI served BY the Pod, same-origin, no CORS / OIDC redirect dance. Not just a generic LDP file browser — a transparency surface for:
+
+- Dual-layer linking (wikilinks in body, projected predicates in `.meta`) rendered together
+- Shape conformance per resource (which shape governs, current SHACL state)
+- `/vault/wiki/.events/` substrate-signal stream (live via Solid Notifications subscription)
+- Affordance catalog at `/vault/meta/affordances/` (what agents can do here)
+- Type Index browsing (class → container routing)
+- Memento history (time-travel queries with TimeMap rendering)
+
+**Architectural sketch** (not yet a design):
+
+- New CSS extension `memory-browser` serving static assets + a JSON API at `/vault/_ui/`
+- Probably React/Preact + solid-client + N3.js (same stack as Penny)
+- Or simpler: vanilla HTML + the existing JSON-LD context (`/vault/meta/context.jsonld`) for self-description
+- Same-origin → no CORS, no OIDC popup, works with any browser without `mkcert -install`
+
+**Why this matters beyond UX**: Rung 1.5 eval will need to observe agent behavior. A transparency surface that shows "what the agent saw, what it changed, what the substrate signalled" is useful for eval analysis even if not used by end-users.
+
+**Trigger to start this**: post-Rung-1.5, OR when an end-user / demo needs human-readable Pod browsing as a primary affordance. Until then, the CLI (`solid-pod` in solid-agent-skills) and curl-based debugging cover developer needs.
+
+Cross-refs: D75 (we explicitly traded the default container-browser HTML for clean markdown rendering — this would be the deliberate re-introduction of UI, scoped to substrate concerns).
+
 ## resource.shacl.ttl FAIR metadata retrofit (post-D97, 2026-05-19)
 
 The D38 LDP RDFS/NRSource guard shape at `overlays/wiki-memory/shapes/resource.shacl.ttl` predates D97 and lacks the FAIR metadata properties (`rdfs:label`, `rdfs:comment`, `rdfs:isDefinedBy`, `dct:conformsTo`, `dct:created`, `dct:creator`) the rest of the L3 catalog now carries.
