@@ -257,6 +257,86 @@ Companion docs:
 - Implementation plan: `docs/superpowers/plans/2026-05-18-wiki-search-implementation.md`
 - Original design: `docs/plans/2026-05-17-wiki-search-design.md`
 
+## Cross-machine rebuild reproducibility debug (2026-05-22)
+
+Triggered on Mac Studio after pulling main (work was done on MacBook Pro). Fresh
+`docker compose down -v && build && up` failed at the `pod-setup` step; live Pod
+on MacBook had been working. Investigation surfaced two latent bugs that were
+masked by stale state on MacBook.
+
+### Finding 1: `.operations/` SHACL 422 — 29-minute commit-order race
+
+Symptom: `ensure_container` PUT to `https://pod.vardeman.me/vault/wiki/.operations/`
+returns 422 with `sh:resultMessage "Resources at /vault/wiki/.operations/* must
+declare one of: as:Activity. Got: ."`.
+
+Root cause: `evaluatePathConstraint` (`css/extensions/shape-validator/src/pathConstraint.ts`)
+uses `resourcePath.startsWith(c.pathPrefix)`. For the literal container PUT the
+path equals the prefix → match → empty body has no `rdf:type` → fails the
+`allowedClasses: [as:Activity]` check. The constraint targets *children* at
+`<pathPrefix>*`, but the matcher can't distinguish the container itself from
+its children.
+
+Why MacBook worked:
+- `665e9c8` "Task 30: hard rebuild + apply fixes for shape-completion sprint" —
+  2026-05-19 **15:17:32** — message: "Pod rebuilt from scratch. All 3 overlays
+  applied successfully."
+- `c9c3077` "config fix: wire pathConstraints into ShapeValidationStore (Bug B)" —
+  2026-05-19 **15:46:45** — moved pathConstraints from inactive
+  `shape-validation/resource-store.json` into the active `solid-config.json`.
+  29 minutes later.
+
+The "successful rebuild" test ran *before* the regression-causing change. After
+c9c3077, MacBook never re-ran `down -v`. `ensure_container` does
+`HEAD → 200 → return` (idempotent), so the existing-from-15:17 container was
+reused on every subsequent restart and the bug stayed latent. Mac Studio's
+`down -v` removed that container and the bug surfaced.
+
+Fix shipped: skip path constraint when `resourcePath === c.pathPrefix` (container
+itself). `ShapeValidationStore.ts:200-207`. Mirrors the existing `.meta` skip
+pattern. Integration test covers container-bootstrap case alongside Bug E
+regression guard.
+
+### Finding 2: AddressBook + owner-identity not applied on rebuild
+
+Symptom: `docker-compose.yml` pod-setup invoked `overlay.apply /overlays/wiki-memory`
+only. Both newer overlays (`addressbook` 273e314 + `owner-identity` 1757215 —
+both 2026-05-17) shipped with passing E2E integration tests on the live Pod,
+but their `apply` invocations were never added to docker-compose.
+
+Hypothesis: on MacBook these were applied by hand after the wiki-memory
+pod-setup completed (manual `python -m scripts.overlay.apply` invocations from
+the host). The manual step was never folded back into compose.
+
+Fix shipped: chain all three applies in `docker-compose.yml` pod-setup, in
+dependency order (wiki-memory provides capabilities → addressbook consumes
+them and provides its own → owner-identity consumes addressbook's
+tmpl-vocabulary v1.1).
+
+### Durable rules
+
+- **Never declare a rebuild "verified" without `down -v`.** `make up` /
+  `compose up` alone exercises the existing volume; the substrate-bootstrap
+  path that creates containers + applies overlays only runs on a fresh
+  `css-data`. Use `make reset` for verification.
+- **`ensure_container` HEAD-skip masks constraint regressions.** Any change
+  that adds or modifies a path constraint, ldp:constrainedBy shape, or
+  container-creation-time validation MUST be tested via a fresh-volume rebuild,
+  not an in-place restart.
+- **Path constraints govern children at `<pathPrefix>*`, not the container
+  itself.** When adding a new path constraint, the test suite must include
+  both a container-bootstrap case (PUT to the constraint path → must pass) and
+  a child-resource case (PUT to a path under the constraint → enforced as
+  designed).
+- **Every overlay in `overlays/` must be wired into `docker-compose.yml`'s
+  pod-setup command** in dependency order. If an overlay has integration tests
+  but isn't in the compose pod-setup command, that's a reproducibility hole —
+  any cross-machine rebuild will be missing it.
+- **Cross-machine handoffs** — after `down -v && build && up` succeeds, the
+  reproducibility envelope is captured by `docker-compose.yml` + the in-repo
+  overlay/config tree. Anything done by hand to the live Pod that isn't
+  represented there will be lost on the next machine.
+
 ## Next plans (post-Shape-Completion-Sprint)
 
 In dependency order:
