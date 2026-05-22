@@ -289,4 +289,30 @@ describe("ShapeValidationStore.checkPathConstraint (D99 Layer 2)", () => {
     await expect(store.testCheckPathConstraint(identifier, turtleRep(identifier.path, body)))
       .rejects.toThrow(ShaclValidationError);
   });
+
+  // Constrained-container bootstrap: overlay-apply's ensure_container PUTs an
+  // empty/title-only Turtle body to <pathPrefix> to create the LDP container
+  // itself. Path constraints declare requirements for resources AT pathPrefix*
+  // (children) — they must not block creation of the container that holds the
+  // children. Without this skip, every fresh `compose down -v` + rebuild fails
+  // on the first .operations/ / .events/ container PUT.
+  it("skips path constraint when resource path equals a constraint pathPrefix (container bootstrap)", async () => {
+    const constraintsWithAllowList: PathConstraintConfig[] = [
+      {
+        pathPrefix: "/vault/wiki/.operations/",
+        allowedClasses: ["https://www.w3.org/ns/activitystreams#Activity"],
+        forbiddenClasses: [],
+      },
+    ];
+    const store = makeStore(constraintsWithAllowList);
+    // The container itself — same path as the constraint's pathPrefix
+    const identifier = { path: "https://pod.example.org/vault/wiki/.operations/" };
+    const body = `
+      @prefix dct: <http://purl.org/dc/terms/> .
+      <> dct:title "Container" .
+    `;
+    // No rdf:type at all, but this is the container creation PUT — must not throw
+    await expect(store.testCheckPathConstraint(identifier, turtleRep(identifier.path, body)))
+      .resolves.toBeUndefined();
+  });
 });

@@ -197,6 +197,16 @@ export class ShapeValidationStore extends PassthroughStore {
       return;
     }
 
+    // Path constraints declare requirements for children at <pathPrefix>*, not
+    // for the container resource itself. Creating the container via PUT submits
+    // an empty/title-only Turtle body with no rdf:type — applying the child
+    // allow-list to the container blocks substrate bootstrap (overlay-apply's
+    // ensure_container) on every fresh Pod rebuild. Skip when the write target
+    // IS one of the constrained containers.
+    if (this.pathConstraints.some((c) => resourcePath === c.pathPrefix)) {
+      return;
+    }
+
     const result = evaluatePathConstraint(resourcePath, resourceClasses, this.pathConstraints);
     if (!result.ok && result.violation) {
       const violatingClass = result.violation.forbiddenClass ?? result.violation.notInAllowList ?? '';
