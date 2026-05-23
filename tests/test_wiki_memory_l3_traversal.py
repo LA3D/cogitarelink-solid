@@ -50,9 +50,9 @@ def test_query_1_moc_to_source_titles() -> None:
     """Query 1: concepts linked to the MOC should reference a source with a title."""
     q = (QUERIES / "01-moc-to-source-titles.rq").read_text()
     meta_paths = [
-        f"{POD}/wiki/pages/agentic-memory-systems-moc.md.meta",
-        f"{POD}/wiki/pages/wiki-memory-l3-profile.md.meta",
-        f"{POD}/wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md.meta",
+        f"{POD}/wiki/concepts/agentic-memory-systems-moc.md.meta",
+        f"{POD}/wiki/concepts/wiki-memory-l3-profile.md.meta",
+        f"{POD}/wiki/concepts/ghumare---llm-wiki-v2-extending-karpathy.md.meta",
     ]
     try:
         result = _query(q, meta_paths)
@@ -70,7 +70,7 @@ def test_query_2_concept_to_author_affiliation() -> None:
     """Query 2: wiki-memory L3 profile should have a contributor with a name."""
     q = (QUERIES / "02-concept-to-author-affiliation.rq").read_text()
     meta_paths = [
-        f"{POD}/wiki/pages/wiki-memory-l3-profile.md.meta",
+        f"{POD}/wiki/concepts/wiki-memory-l3-profile.md.meta",
         f"{POD}/wiki/people/karpathy-andrej.md.meta",
     ]
     try:
@@ -93,8 +93,8 @@ def test_query_3_source_contributor_roundtrip() -> None:
     """
     q = (QUERIES / "03-source-creator-roundtrip.rq").read_text()
     meta_paths = [
-        f"{POD}/wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md.meta",
-        f"{POD}/wiki/pages/wiki-memory-l3-profile.md.meta",
+        f"{POD}/wiki/concepts/ghumare---llm-wiki-v2-extending-karpathy.md.meta",
+        f"{POD}/wiki/concepts/wiki-memory-l3-profile.md.meta",
         f"{POD}/wiki/people/karpathy-andrej.md.meta",
     ]
     try:

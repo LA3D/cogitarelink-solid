@@ -26,8 +26,8 @@ from rdflib.namespace import RDF
 
 POD       = "https://pod.vardeman.me/vault/"
 WORKING   = f"{POD}wiki/working/"
-PAGES     = f"{POD}wiki/pages/"
-SOURCES   = f"{POD}wiki/sources/"
+PAGES     = f"{POD}wiki/concepts/"
+SOURCES   = f"{POD}wiki/concepts/"
 
 WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
 MEM  = Namespace("https://pod.vardeman.me/vault/ontology/mem#")

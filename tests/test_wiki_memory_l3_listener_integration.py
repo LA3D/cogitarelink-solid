@@ -43,7 +43,7 @@ CSS_PREDICATES = {
 
 def _ensure_wiki_containers() -> None:
     """Create /wiki/{pages,sources,people,procedures,working}/ if absent."""
-    for seg in ("wiki", "wiki/pages", "wiki/sources", "wiki/people", "wiki/procedures", "wiki/working"):
+    for seg in ("wiki", "wiki/concepts", "wiki/people", "wiki/procedures", "wiki/working"):
         url = f"{POD}/{seg}/"
         r = httpx.get(url, headers={"Accept": "text/turtle"}, follow_redirects=True)
         if r.status_code == 404:
@@ -158,7 +158,7 @@ def test_round_trip(body_file: str, container: str, expected_meta: str) -> None:
 def test_agent_enrichment_survives_body_rewrite() -> None:
     """Model A: PUT body → PATCH adds non-governed triple → PUT body again → enrichment persists."""
     body = (FIX / "bodies" / "wiki-memory-l3-profile.md").read_text()
-    target = f"{POD}/wiki/pages/wiki-memory-l3-profile.md"
+    target = f"{POD}/wiki/concepts/wiki-memory-l3-profile.md"
 
     # Initial write
     r = httpx.put(target, content=body, headers={"Content-Type": "text/markdown"})
@@ -227,7 +227,7 @@ def test_concurrent_writes_serialize_via_file_lock() -> None:
     """Two simultaneous PUTs to same resource → exactly one rdf:type triple, no torn state."""
     body_v1 = (FIX / "bodies" / "wiki-memory-l3-profile.md").read_text()
     body_v2 = body_v1.replace("Wiki-Memory L3 Profile", "Wiki-Memory L3 Profile v2")
-    target = f"{POD}/wiki/pages/wiki-memory-l3-profile.md"
+    target = f"{POD}/wiki/concepts/wiki-memory-l3-profile.md"
 
     async def run() -> None:
         async with httpx.AsyncClient() as client:

@@ -9,7 +9,7 @@
 <https://pod.vardeman.me/vault/meta/profiles/page>
   a prof:Profile ;
   rdfs:label "Wiki-Memory L3 — Page profile" ;
-  rdfs:comment "Root profile for all wiki-memory pages on this Pod. The wiki:Concept, wiki:Source, wiki:Person, wiki:Procedure, and wiki:WorkingNote profiles all profile this one." ;
+  rdfs:comment "Root profile for all wiki-memory pages on this Pod. The wiki:Concept, wiki:Person, schema:HowTo, wiki:WorkingNote, and place/event/organization profiles all profile this one." ;
   dct:publisher <https://orcid.org/0000-0003-4091-6059> ;
   dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
   prof:hasToken "wiki-page"^^xsd:token ;

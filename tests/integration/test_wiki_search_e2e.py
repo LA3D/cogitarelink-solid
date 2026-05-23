@@ -34,9 +34,9 @@ def client():
 def seeded_pages(client: httpx.Client):
     """PUT a small known set of markdown pages and tear down afterward."""
     pages = {
-        "pages/wsearch-alpha.md": "# alpha\n\nthis page discusses progressive disclosure deeply.\n",
-        "pages/wsearch-beta.md": "# beta\n\nESPRESSO is the access-control system.\nProgressive disclosure is also mentioned.\n",
-        "pages/wsearch-gamma.md": "# gamma\n\nnothing relevant here at all.\n",
+        "concepts/wsearch-alpha.md": "# alpha\n\nthis page discusses progressive disclosure deeply.\n",
+        "concepts/wsearch-beta.md": "# beta\n\nESPRESSO is the access-control system.\nProgressive disclosure is also mentioned.\n",
+        "concepts/wsearch-gamma.md": "# gamma\n\nnothing relevant here at all.\n",
         "working/wsearch-delta.md": "# delta\n\nworking note about progressive disclosure and ESPRESSO together.\n",
     }
     headers = {"Content-Type": "text/markdown"}
@@ -178,7 +178,7 @@ class TestWacScenarios:
         pytest.skip("auth fixture pending — implement after smoke green")
 
     def test_b_partial_access(self):
-        """WebID B has read on /vault/wiki/pages/public/ only → search returns
+        """WebID B has read on /vault/wiki/concepts/public/ only → search returns
         only that subtree; totalCount reflects post-filter count."""
         pytest.skip("auth fixture pending — implement after smoke green")
 
@@ -192,7 +192,7 @@ class TestWacScenarios:
         pytest.skip("auth fixture pending — implement after smoke green")
 
     def test_e_subtree_omission(self):
-        """Deny WebID E read on /vault/wiki/pages/private/. Place a matching
+        """Deny WebID E read on /vault/wiki/concepts/private/. Place a matching
         markdown under it. Confirm: results don't include private/* AND
         totalCount excludes the private resource."""
         pytest.skip("auth fixture pending — implement after smoke green")

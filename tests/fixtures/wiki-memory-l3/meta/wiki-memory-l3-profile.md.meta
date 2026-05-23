@@ -14,6 +14,6 @@
     prov:wasGeneratedBy </meta/affordances/markdown-projection> .
 
 <#this>
-    skos:broader </wiki/pages/agentic-memory-systems-moc.md#this> ;
-    dct:source </wiki/sources/ghumare---llm-wiki-v2-extending-karpathy.md#this> ;
+    skos:broader </wiki/concepts/agentic-memory-systems-moc.md#this> ;
+    dct:source </wiki/concepts/ghumare---llm-wiki-v2-extending-karpathy.md#this> ;
     dct:contributor </wiki/people/karpathy-andrej.md#this> .

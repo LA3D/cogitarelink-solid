@@ -14,7 +14,7 @@
     prov:wasGeneratedBy </meta/affordances/markdown-projection> .
 
 <#this>
-    skos:related </wiki/pages/wiki-memory-l3-profile.md#this> ;
-    skos:related </wiki/pages/memory-substrate-vs-memory-profile.md#this> ;
-    skos:related </wiki/pages/procedural-memory.md#this> ;
-    skos:related </wiki/pages/compile-once-principle.md#this> .
+    skos:related </wiki/concepts/wiki-memory-l3-profile.md#this> ;
+    skos:related </wiki/concepts/memory-substrate-vs-memory-profile.md#this> ;
+    skos:related </wiki/concepts/procedural-memory.md#this> ;
+    skos:related </wiki/concepts/compile-once-principle.md#this> .
