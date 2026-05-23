@@ -1,0 +1,15 @@
+@prefix as:   <https://www.w3.org/ns/activitystreams#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Minimal AS2 subclass axioms loaded by the shape-validator so path
+# constraints honour the activity-type hierarchy without pulling the full
+# AS2 vocabulary. Every announcement/event verb the substrate uses IS-A
+# as:Activity. Source: https://www.w3.org/ns/activitystreams#dfn-activity
+as:Announce rdfs:subClassOf as:Activity .
+as:Flag     rdfs:subClassOf as:Activity .
+as:Offer    rdfs:subClassOf as:Activity .
+as:Reject   rdfs:subClassOf as:Activity .
+as:Move     rdfs:subClassOf as:Activity .
+as:Add      rdfs:subClassOf as:Activity .
+as:Delete   rdfs:subClassOf as:Activity .
+as:Undo     rdfs:subClassOf as:Activity .
