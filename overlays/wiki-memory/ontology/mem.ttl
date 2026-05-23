@@ -277,3 +277,96 @@ mem:OODQuerySignal
            as:published "2026-05-18T18:00:00Z"^^xsd:dateTime .
     """ ;
     rdfs:seeAlso </vault/wiki/.events/> .
+
+# ============================================================
+# Staleness detection + realignment (added 2026-05-23)
+# ============================================================
+# The substrate's own self-description (storage description, affordance
+# descriptors, skill bodies, prose summaries) is wiki-memory L3 content and
+# drifts as the design evolves: a pointer keeps its old target after the
+# target moved, renamed, or was superseded. Detection is a mem:Event;
+# realignment is a mem:Action. The two accumulate in /vault/wiki/.events/
+# and /vault/wiki/.operations/ — the start of a memory-evolution context
+# graph queryable over time, with Memento as the version axis.
+# Reference trace: the 2026-05-23 D77→D98 cleanup (the worked example in
+# the "Stale-Memory Discovery and Realignment" method-note).
+
+mem:StalenessDetected
+    a owl:Class ;
+    rdfs:subClassOf mem:Event , as:Flag ;
+    rdfs:label "Staleness detected" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "A reference no longer resolves against current truth: a path/IRI 404s (dangling), a target moved or was renamed, a superseding decision retired the referent, or a scalar/prose claim diverged from the deployed substrate. Carries the stale reference as as:object and a mem:stalenessClass classification. Subclass of as:Flag (the substrate flags content as needing attention) — same pattern as mem:ContradictionDetected." ;
+    skos:scopeNote "Emitted by the substrate audit/walker pass over its own self-description and over content .meta. An agent receiving this responds with a curative mem:RealignAction (when current truth is recoverable) or, when the conflict is irreconcilable, leaves it for mem:ContradictionDetected → human escalation. Do NOT emit from agent code; the auditor owns detection. CAUTION: before flagging a scalar/count claim, dereference the canonical decision — the reconciliation may already be written there (the 8-vs-11 false positive of 2026-05-23)." ;
+    skos:example """
+        # In an inbox notification body served from /vault/wiki/.events/<id>:
+        <> a mem:StalenessDetected , as:Flag , as:Activity ;
+           as:object <https://pod.vardeman.me/vault/.well-known/solid> ;
+           mem:stalenessClass mem:DanglingReference ;
+           as:summary "rdfs:seeAlso </vault/wiki/pages/> returns 404; container renamed to concepts/ (D98)." ;
+           as:published "2026-05-23T10:00:00Z"^^xsd:dateTime .
+    """ ;
+    rdfs:seeAlso </vault/wiki/.events/> .
+
+mem:RealignAction
+    a owl:Class ;
+    rdfs:subClassOf mem:Action , schema:ReplaceAction ;
+    rdfs:label "Realign" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Replace a stale reference with the current one, resolving prose/pointer drift toward the authoritative source. The corrected resource is the as:object; the source resolved against is prov:used (encoding the ground-truth precedence: deployed Pod > decisions log > prose summaries); the stale prior is prov:wasDerivedFrom; the classification is mem:stalenessClass; and the agentic reasoning is carried as mem:rationale (required — a realignment without recorded reasoning is not auditable). Subclass of schema:ReplaceAction, like mem:SupersedeAction." ;
+    skos:scopeNote "Use when current truth is recoverable and one side is authoritative (prose lags reality → realign the prose; reality lags a decision → repair toward the decision). Do NOT use for irreconcilable conflicts between two equally-authoritative sources — those go to a human via mem:ContradictionDetected + LDN. Two-stage commit (D73): curator proposals land in /vault/wiki/working/curator-proposals/ first; crystallization to the affected resource needs human or higher-trust review." ;
+    skos:example """
+        # In <https://pod.vardeman.me/vault/wiki/.operations/<id>>:
+        <> prov:wasGeneratedBy [
+            a mem:RealignAction , prov:Activity ;
+            prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059> ;
+            prov:used <https://pod.vardeman.me/vault/ontology/mem#> ;
+            mem:stalenessClass mem:SupersededConcept ;
+            mem:rationale "skill descriptions asserted '5-shape catalog (D77)'; D98 supersedes D77 with 8 NodeShapes / 11 files. Realigned three skill descriptions to D98." ;
+            prov:startedAtTime "2026-05-23T10:05:00Z"^^xsd:dateTime
+        ] ;
+            prov:wasDerivedFrom <https://pod.vardeman.me/vault/meta/affordances/> .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/> .
+
+mem:rationale
+    a owl:DatatypeProperty ;
+    rdfs:label "rationale" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:domain prov:Activity ;
+    rdfs:comment "The agent's reasoning for a memory mutation, in natural language: what was observed, what it was resolved against, why this repair (or withdrawal). Required on mem:RealignAction activities so a human or later agent can reconstruct why a memory changed. This is the provenance-of-reasoning that complements PROV's provenance-of-data." .
+
+# Staleness classification — a controlled set of detection outcomes.
+# Maps to who handles each: dangling is mechanical (auditor / HTTP HEAD);
+# the rest need the agentic curator. FalsePositive records a withdrawn flag
+# (resolved against the canonical source, found correct) — kept so the
+# context graph captures non-repairs too, not only repairs.
+
+mem:StalenessClass
+    a owl:Class ;
+    rdfs:label "Staleness class" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "The kind of staleness a reference exhibits. Range of mem:stalenessClass." .
+
+mem:stalenessClass
+    a owl:ObjectProperty ;
+    rdfs:label "staleness class" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:domain [ owl:unionOf ( mem:StalenessDetected mem:RealignAction ) ] ;
+    rdfs:range mem:StalenessClass ;
+    rdfs:comment "Classifies a detected or repaired staleness. Drives the repair playbook: mem:DanglingReference is mechanically detectable (auditor); the rest need agentic resolution." .
+
+mem:DanglingReference   a mem:StalenessClass , skos:Concept ; rdfs:label "Dangling reference" ;
+    rdfs:comment "A path/IRI that no longer resolves (404 / file absent). Mechanically detectable by HTTP HEAD or path-exists." .
+mem:MovedTarget         a mem:StalenessClass , skos:Concept ; rdfs:label "Moved target" ;
+    rdfs:comment "The referent still exists but at a new location; resolution fails until the reference is located by content." .
+mem:SupersededConcept   a mem:StalenessClass , skos:Concept ; rdfs:label "Superseded concept" ;
+    rdfs:comment "A decision/concept the reference names was retired by a superseding decision (e.g. D77 → D98)." .
+mem:ScalarDrift         a mem:StalenessClass , skos:Concept ; rdfs:label "Scalar drift" ;
+    rdfs:comment "A count/number claim diverged from ground truth (e.g. '5-shape' vs the deployed catalog). Verify the referent before flagging — granularity differences masquerade as drift." .
+mem:ProseDrift          a mem:StalenessClass , skos:Concept ; rdfs:label "Prose drift" ;
+    rdfs:comment "A description still reads as current but narrates an earlier design. No broken link; detected only by semantic comparison against current truth." .
+mem:CodeDrift           a mem:StalenessClass , skos:Concept ; rdfs:label "Code drift" ;
+    rdfs:comment "Executable code (test, script, config) references substrate that a decision renamed/removed (e.g. a test loading source.shacl.ttl post-D98). Repair direction is code → decision, not prose → reality." .
+mem:FalsePositive       a mem:StalenessClass , skos:Concept ; rdfs:label "False positive" ;
+    rdfs:comment "A flagged reference resolved as correct against the canonical source; the flag is withdrawn. Recorded so the context graph captures non-repairs, and so the false-positive guard is itself auditable." .
