@@ -21,9 +21,9 @@ def _load_shapes() -> Graph:
     for f in [
         "resource.shacl.ttl",
         "page.shacl.ttl",
-        "source.shacl.ttl",
+        "concept.shacl.ttl",
         "person.shacl.ttl",
-        "procedure.shacl.ttl",
+        "howto.shacl.ttl",
         # working.shacl.ttl uses a separate relaxed validator — see test below
     ]:
         g.parse(SHAPE_ROOT / f, format="turtle")
@@ -48,18 +48,6 @@ def _validate(data: Graph, shapes: Graph) -> tuple[bool, str]:
     return conforms, text
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Fixtures are Rung-1.4-vintage (May 2026); the canonical shape catalog "
-        "at overlays/wiki-memory/shapes/ has tightened constraints since the "
-        "substrate-cleanup sprint moved + renamed shapes. E.g., canonical "
-        "PersonShape now requires foaf:name (minCount 1), but karpathy-andrej "
-        "fixture only carries dct:title + foaf:nick. Re-baselining fixtures "
-        "against current shape constraints is part of the upcoming Shape "
-        "Completion sprint, not this reconciliation."
-    ),
-    strict=True,
-)
 @pytest.mark.parametrize("fixture", BUNDLE_FIXTURES)
 def test_bundle_fixture_validates(fixture: str) -> None:
     """Each fixture validates against the combined shape graph.
