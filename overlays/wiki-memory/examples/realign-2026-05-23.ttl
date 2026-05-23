@@ -1,0 +1,65 @@
+@prefix as:   <https://www.w3.org/ns/activitystreams#> .
+@prefix mem:  <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# Worked example — the 2026-05-23 D77→D98 staleness cleanup encoded as
+# mem:RealignAction announcements, the form posted to /vault/wiki/.operations/.
+# This is the seed of the memory-evolution context graph: each entry records
+# what was stale, what it was resolved against (prov:used = the authoritative
+# source, per the ground-truth precedence deployed-Pod > decisions-log >
+# prose-summaries), what was corrected (prov:wasDerivedFrom), the classification
+# (mem:stalenessClass), and the agentic reasoning (mem:rationale).
+# Companion to the "Stale-Memory Discovery and Realignment" method-note.
+
+# 1. Superseded-concept: skill descriptions + CLAUDE.md asserted the old catalog.
+<urn:uuid:a1f0c7e2-1d3a-4b6c-9e21-5f0a3c7d9001>
+    a as:Announce, mem:RealignAction, prov:Activity ;
+    as:actor <urn:agent:claude-code> ;
+    as:target </vault/wiki/.operations/> ;
+    as:object </vault/.claude/skills/solid-wiki-memory-l3/SKILL.md> ;
+    prov:wasAssociatedWith <urn:agent:claude-code> ;
+    prov:used </vault/ontology/mem> ;
+    prov:wasDerivedFrom </vault/meta/affordances/> ;
+    mem:stalenessClass mem:SupersededConcept ;
+    mem:rationale "Skill descriptions + CLAUDE.md asserted '5-shape / 6-shape catalog (D77)'. D98 supersedes D77 with 8 NodeShapes / 11 shape files. Realigned current-state claims to D98; preserved D77 as history with supersession pointers." ;
+    as:published "2026-05-23T10:05:00Z"^^xsd:dateTime .
+
+# 2. Dangling reference: storage-description seeAlso pointed at retired containers.
+<urn:uuid:a1f0c7e2-1d3a-4b6c-9e21-5f0a3c7d9002>
+    a as:Announce, mem:RealignAction, prov:Activity ;
+    as:actor <urn:agent:claude-code> ;
+    as:target </vault/wiki/.operations/> ;
+    as:object </vault/.well-known/solid> ;
+    prov:wasAssociatedWith <urn:agent:claude-code> ;
+    prov:used </vault/wiki/concepts/> ;
+    prov:wasDerivedFrom </vault/.well-known/solid> ;
+    mem:stalenessClass mem:DanglingReference ;
+    mem:rationale "storage-description rdfs:seeAlso listed </wiki/pages/> and </wiki/sources/> (both 404 after D98). Realigned to the live D98 container set: concepts/, people/, places/, events/, organizations/, procedures/, working/." ;
+    as:published "2026-05-23T10:08:00Z"^^xsd:dateTime .
+
+# 3. Code drift: a test loaded shape files D98 renamed (repair direction: code→decision).
+<urn:uuid:a1f0c7e2-1d3a-4b6c-9e21-5f0a3c7d9003>
+    a as:Announce, mem:RealignAction, prov:Activity ;
+    as:actor <urn:agent:claude-code> ;
+    as:target </vault/wiki/.operations/> ;
+    as:object </vault/tests/test_wiki_memory_l3_shapes.py> ;
+    prov:wasAssociatedWith <urn:agent:claude-code> ;
+    prov:used </vault/meta/shapes/> ;
+    prov:wasDerivedFrom </vault/tests/test_wiki_memory_l3_shapes.py> ;
+    mem:stalenessClass mem:CodeDrift ;
+    mem:rationale "test loaded source.shacl.ttl + procedure.shacl.ttl which D98 renamed (source→concept, procedure→howto); it failed with FileNotFoundError. Repaired the loader toward the decision (code lagged D98), not prose toward reality." ;
+    as:published "2026-05-23T10:12:00Z"^^xsd:dateTime .
+
+# 4. False positive: the discipline of resolving before flagging — withdrawn, recorded.
+<urn:uuid:a1f0c7e2-1d3a-4b6c-9e21-5f0a3c7d9004>
+    a as:Announce, mem:RealignAction, prov:Activity ;
+    as:actor <urn:agent:claude-code> ;
+    as:target </vault/wiki/.operations/> ;
+    as:object </vault/.claude/memory/MEMORY.md> ;
+    prov:wasAssociatedWith <urn:agent:claude-code> ;
+    prov:used </vault/decisions/D98> ;
+    prov:wasDerivedFrom </vault/.claude/memory/MEMORY.md> ;
+    mem:stalenessClass mem:FalsePositive ;
+    mem:rationale "MEMORY.md '8-shape catalog' looked like it conflicted with the 11 shape files. Dereferenced D98, which itself reconciles: '8 SHACL NodeShapes (11 shape files total)'. The claim was correct; flag withdrawn. Recorded so the context graph captures non-repairs and the false-positive guard is itself auditable." ;
+    as:published "2026-05-23T10:15:00Z"^^xsd:dateTime .
