@@ -880,6 +880,49 @@ Durable substrate constraints surfaced during the Phase G integration tests. Com
 
 **See also**: D55 (three-tier access), D70 (L1/L2/L3 stratification), D73 (two-stage commit), D74 (mem:* triggers), D78 (class-based dispatch), D83 (Pod-as-toolkit), D87 (wiki-search), D98 (8-shape catalog), D101 (MemTrigger detector wiring), RQ-Substrate-1..4, RQ-Atomic-Feedback-1, RQ-Discovery-1, RQ-Hub-1.
 
+## Skills bootstrap, affordance descriptors are the manual (D103, 2026-05-23)
+
+### D103 — Skills bootstrap the navigation tool; affordance descriptors are the manual (2026-05-23)
+
+**Status**: Ratified 2026-05-23. Vault cross-reference: **vault-D98**.
+
+**The commitment**: skills under `solid-agent-skills/skills/` are minimal bootstrappers (~15-25 lines). They route the agent (when to reach for this affordance), name the tool to invoke, and **point at the canonical specification on the Pod itself** — the affordance descriptor at `/vault/meta/affordances/<name>.ttl`, whose `sh:agentInstruction` is the source of truth. Skills do not duplicate substrate content (response shapes, score formulas, WAC semantics, limitations) — those live in the descriptor.
+
+The skill is the **map** that says "the manual is over there"; the affordance descriptor is the **manual**.
+
+**Why** (Phase A pilot evidence, 2026-05-23):
+
+- Cold-discovery worked — agents without the skill successfully navigated storage description → affordance catalog → `wiki-search-grep.ttl` → invocation, using only standard Solid/LDP/OSLC conventions and `sh:agentInstruction` on the descriptor. Positive datapoint for RQ-Discovery-1.
+- Skill bloat created friction without saving cost — the original 70-line `wiki-search/SKILL.md` told agents to invoke `solid-pod wiki-search ...`. The CLI wasn't on subagent PATH (`npm link` had never been run); the skill provided no fallback. With-skill agents burned 2-3 tool calls discovering this. The skill's value was *negative* for that path because the skill diverged from the substrate's reality.
+- Future skills compound the risk — with N skills, baking everything into each is N× context cost and N× drift surface.
+
+**Substrate obligation** (the interface contract for the decision to hold):
+
+- Every published affordance under `/vault/meta/affordances/` must carry an `sh:agentInstruction` with a concrete, copy-pasteable invocation example. If incomplete, the skill can't bootstrap.
+- Capability descriptors at `/vault/meta/capabilities/` carry the broader framing (what L2 invariants the affordance serves).
+- Substrate self-description must be HATEOAS-correct per D55 — every response carries Link headers pointing at the next thing the agent needs.
+
+**Skill shape** (what the bootstrapper does include):
+
+1. **Routing** — when to use; when to escalate
+2. **Tool name + invocation summary** — CLI command, or curl + URL pattern
+3. **Pointer** to the canonical descriptor at `/vault/meta/affordances/<name>.ttl`
+4. **Environmental pre-flight** the substrate cannot communicate — TLS dev certs, CLI install requirements, local PATH gotchas
+
+**Out of skill**: response schemas, score formulas, WAC semantics, limitations, decision IDs, history. Those live on the substrate or in design docs.
+
+**First application**: `wiki-search/SKILL.md` refactored from ~70 lines to ~36 (commit `09acfd9` in solid-agent-skills). Phase A pilot iteration-2 will validate whether the bootstrapper form changes agent behavior.
+
+**Scope**:
+
+- Applies to all skills under `solid-agent-skills/skills/`. Existing skills (solid-addressbook, solid-wiki-memory-l3, solid-owner-identity, action skills, inbox skills) need audit and refactor before Phase B kickoff.
+- Applies to future skills as Phase B+ surfaces ship.
+- Does **not** apply to: substrate-side documentation (which should be richer), project design docs (which capture rationale), CLAUDE.md / README files (human-facing).
+
+**Related fix shipped same day** (`a308d80` in solid-agent-skills): CLI installability — README documents the install (npm install + npm run build + npm link), and the `build` script now sets the exec bit on `dist/cli.js`. Without this, the bootstrapper-form skill's CLI pointer would fail in subagent environments. With it, `solid-pod` resolves on the standard `/opt/homebrew/bin` PATH which subagents inherit.
+
+**See also**: D55 (HATEOAS three-tier access — Tier 1 spec, Tier 2 descriptors, Tier 3 skills), D70 (L1/L2/L3 stratification), D52 (affordance descriptor architecture), D83 (Pod-as-toolkit capability catalog), D87 (wiki-search Phase 7a), D102 (Rung 1.5 redesign — eval framing that surfaced this).
+
 ## Open research questions
 
 RQ-Affordance-1: descriptor format (declarative SHACL vs custom RDF vs hybrid)
