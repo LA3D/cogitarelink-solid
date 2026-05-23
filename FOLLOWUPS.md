@@ -46,9 +46,13 @@ explicitly set `inference="none"` for this shape.
 
 ---
 
-## Substrate audit + curator — option-B unified build (next session after 2026-05-23)
+## Substrate audit + curator — option-B unified build (partially shipped 2026-05-23)
 
-**Status**: deferred to next session. Decision ratified as **D104 / vault-D99**. Phase A pilot report at `docs/plans/2026-05-23-phase-a-pilot-report.md` §5 has the full task breakdown.
+**Status (updated 2026-05-23, commit `5ce2b27` on main)**: the *architecture* shipped — `wiki:ClassExtensionShape` meta-shape (SHACL-as-meta-structure proven), subclass-aware path-constraint validation (substrate honors its own ontology), `mem:StalenessDetected`/`mem:RealignAction`/`mem:rationale` vocabulary, the realignment trace exemplar in `.operations/`, and the D98 migration completed. **Remaining**: (1) `pod-audit.py` walker (validate `ClassExtensionShape` with `inference="none"`); (2) `pod-curator` skill body (consumes audit report + `mem:StalenessDetected`); (3) StorageDescription + AffordanceDescriptor substrate shapes; (4) failure-mode sweep (catalog labels, entry-point agentInstruction, OSLC param map); (5) pilot iter-3. The curator's staleness loop is specified in the vault method-note `Stale-Memory Discovery and Realignment` + auto-mem `stale_memory_realignment`. Decision ratified as **D104 / vault-D99**. Pilot report §5 has the original task breakdown.
+
+## Pre-existing test_phase5j_close drift (surfaced 2026-05-23, NOT this sprint)
+
+5 failures in `tests/test_phase5j_close.py`, all older count-drift (themselves stale-test instances): `test_wikirole_scheme_has_five_role_concepts` (wikirole now has 9 `prof:ResourceRole`, test expects 5 — Memory Structuring Sprint expanded it); `test_overlay_helpers_extract_role_scheme_and_profiles` + `test_manifest_declares_role_scheme_and_six_profiles` (manifest declares 10 profiles, tests expect 6); `test_wiki_vocab_declares_conformsTo_rdfs` (`wiki.ttl` missing `dct:conformsTo rdfs`). These predate this sprint and are out of its scope; fix by realigning the test expectations to current counts (a small realignment task in the same spirit as the D77→D98 cleanup). Also: `scripts/backfill_conformsTo.py` still references `/vault/wiki/pages/` + `/sources/` (one-off utility, low priority).
 
 **Architecture** (per D104): the Pod's self-description IS wiki-memory L3 content. SHACL shapes provide guardrails; an agentic curator provides construction. They feed each other through a violation-report → reasoning → patched-substrate loop. **One unified toolkit** (audit + curator + review) works on both content-side (vault pages) and substrate-side (descriptors). The Phase B2 lint skill collapses into the substrate-curator; build once.
 

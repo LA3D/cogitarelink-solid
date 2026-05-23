@@ -36,8 +36,19 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | MemTrigger detector wiring | `mem-trigger-detector-wiring-complete` | D101 |
 | Rung 1.5 redesign (design only) | — | D102 |
 | Phase A pilot + skills-bootstrap + self-validating substrate | `phase-a-complete` | D103, D104 |
+| Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
 
 Other tags: `substrate-cleanup-complete`, `phase-b-complete`, `phase-c-complete`.
+
+**Shipped 2026-05-23 (merged to main, commit `5ce2b27`):** subclass-aware path-constraint
+validation (fixes `.operations/`/`.events/` 422; the validator expands `rdf:type` by the
+vocab's `rdfs:subClassOf` closure — `ShapeValidationStore` + `subClassClosure.ts`);
+`wiki:ClassExtensionShape` meta-shape (agent class-extension contract, generalizes D100 to
+classes); D98 source→concept migration **completed** across overlay + test suite (overlay was
+half-migrated; `make reset` now reproduces the deployed Pod); `wiki:Source` re-introduced
+*via the contract* (not baked-in); `mem:StalenessDetected`/`mem:RealignAction`/`mem:rationale`
++ `mem:StalenessClass` scheme in `mem.ttl`; realignment trace exemplar deployed to
+`.operations/`. See auto-mem `conceptual_structure_as_extensible_data` + `stale_memory_realignment`.
 
 ## Active focus — Rung 1.5 (redesigned 2026-05-23, D102 / vault-D97)
 
@@ -61,15 +72,23 @@ Pod design that demonstrably works. Original B1/B2/T framing dropped.
 - Design doc: `docs/plans/2026-05-23-rung-1.5-redesign-design.md`. Pilot report:
   `docs/plans/2026-05-23-phase-a-pilot-report.md` (18 substrate failure modes in §4).
 
-### Next-session candidate — option-B unified build (~3–4h)
+### Next-session candidate — finish option-B (pod-audit walker + pod-curator skill)
 
-SHACL shapes for substrate resources (2 exemplars: StorageDescription + AffordanceDescriptor),
-`pod-audit.py` walker, `pod-curator` skill body, sweep the 4 highest-priority failure modes
-(stale `rdfs:seeAlso`, missing catalog-entry labels, missing storage-description entry-point
-agentInstruction, OSLC parameter-compliance map), then re-run pilot iter-3 with per-condition
-assertions. Full breakdown in `FOLLOWUPS.md` "Substrate audit + curator" + pilot report §5.
-Architecture rationale: auto-memory `shacl_plus_agent.md` (D104 — substrate is
-self-validating wiki-memory L3 content; one unified curator/audit/review toolkit).
+The option-B **architecture is now established** (2026-05-23): SHACL-as-meta-structure proven
+via `ClassExtensionShape`; subclass-aware validation lets the substrate honor its own ontology;
+`mem:RealignAction` + `.operations/` give the curator a recorded work-output channel. What
+**remains** of option-B: (1) the `pod-audit.py` walker (Python + pyshacl + HTTP cross-checks —
+MUST validate `ClassExtensionShape` with `inference="none"`, see FOLLOWUPS); (2) the
+`pod-curator` skill body (bootstrapper per D103, consuming the audit report + `mem:StalenessDetected`
+events); (3) substrate-resource shapes for StorageDescription + AffordanceDescriptor; (4) sweep
+the remaining failure modes (missing catalog labels, storage-description entry-point
+agentInstruction, OSLC param map); (5) pilot iter-3. The staleness taxonomy + realignment loop
+the curator implements is captured in auto-mem `stale_memory_realignment` + the vault method-note
+`Stale-Memory Discovery and Realignment`. Full breakdown in `FOLLOWUPS.md` + pilot report §5.
+
+Also open: the **real** RQ-Listener-1 fix (projection preserving agent-asserted
+`prov:wasGeneratedBy`) — mem-op e2e tests currently use the `.operations/`-announcement
+workaround. And 5 pre-existing `test_phase5j_close` failures (older count-drift) — FOLLOWUPS.
 
 ## Key architecture patterns (quick-ref; full text via decision-lookup)
 
