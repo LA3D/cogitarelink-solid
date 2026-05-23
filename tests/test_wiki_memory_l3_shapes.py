@@ -61,6 +61,15 @@ def test_bundle_fixture_validates(fixture: str) -> None:
     Architectural note: per-resource isolation is enforced at write time by
     the MarkdownProjectionListener (Rung 1.4); at query / validation time the
     full Pod state is the relevant data graph.
+
+    Note: _load_shapes() loads class-targeted shapes (ConceptShape targets
+    skos:Concept, PersonShape targets schema:Person) but the fixtures type
+    nodes as wiki:Concept/wiki:Person. The subclass bridge
+    (wiki:Concept rdfs:subClassOf skos:Concept) lives in
+    overlays/wiki-memory/vocabulary/wiki.ttl which is NOT loaded here, so
+    class-targeted shapes don't fire against these fixtures. This test
+    exercises ResourceShape-level invariants only. Class-targeted shape firing
+    is verified by test_concept_shape_fires_and_catches_missing_preflabel.
     """
     shapes = _load_shapes()
     # Load all fixtures together so sh:class constraints on cross-references
@@ -92,3 +101,38 @@ def test_working_note_stub_validates_against_only_working_shape() -> None:
     data.parse(FIXTURE_ROOT / "shape-stubs" / "working-note-stub.ttl", format="turtle")
     conforms, report = _validate(data, shapes)
     assert conforms, f"working-note-stub failed:\n{report}"
+
+
+def test_concept_shape_fires_and_catches_missing_preflabel() -> None:
+    """ConceptShape (sh:targetClass skos:Concept) fires and enforces sh:minCount 1 on skos:prefLabel.
+
+    Data graph types the node directly as skos:Concept (no wiki: subclass bridge needed),
+    so ConceptShape's sh:targetClass matches without wiki.ttl being loaded.
+    Validates that concept.shacl.ttl's structural constraint is actually exercised,
+    complementing test_bundle_fixture_validates which covers ResourceShape invariants only.
+    """
+    from rdflib.namespace import SKOS
+
+    shapes = Graph()
+    shapes.parse(SHAPE_ROOT / "concept.shacl.ttl", format="turtle")
+
+    # Minimal node typed skos:Concept but missing the required skos:prefLabel
+    data = Graph()
+    data.parse(
+        data="""
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+<https://example.org/concepts/test-concept> a skos:Concept .
+""",
+        format="turtle",
+    )
+
+    conforms, _, report = validate(
+        data_graph=data,
+        shacl_graph=shapes,
+        inference="rdfs",
+        advanced=True,
+    )
+    assert not conforms, (
+        "ConceptShape should have flagged missing skos:prefLabel (sh:minCount 1) "
+        "but reported conformance — the shape is not firing"
+    )
