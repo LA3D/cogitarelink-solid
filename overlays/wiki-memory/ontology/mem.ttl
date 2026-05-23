@@ -75,7 +75,7 @@ mem:CrystallizeAction
     rdfs:comment "Promote a working note from /vault/wiki/working/ to its class-appropriate durable container, per Type Index class→container routing. Validates against the destination class's SHACL shape at PUT time. Subclass of as:Move (move object from origin to target)." ;
     skos:scopeNote "Used (a) on the prov:Activity blank node in the new durable resource's .meta (`prov:wasGeneratedBy [ a mem:CrystallizeAction, prov:Activity ; ... ]`), and (b) as one of the rdf:type values on the as:Announce activity posted to /vault/wiki/.operations/. NOT used as a top-level rdf:type on the durable resource itself — the durable resource is a wiki:Concept (or other wiki:Resource subclass), not the action that produced it." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/pages/foo.md.meta>:
+        # In <https://pod.vardeman.me/vault/wiki/concepts/foo.md.meta>:
         <> prov:wasGeneratedBy [
             a mem:CrystallizeAction , prov:Activity ;
             prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059> ;
@@ -93,13 +93,13 @@ mem:SupersedeAction
     rdfs:comment "Replace an existing durable resource with a refined version. Prior version captured by Memento; supersession recorded via prov:wasRevisionOf in the updated resource's .meta. Subclass of schema:ReplaceAction (replace one thing with another)." ;
     skos:scopeNote "Use when a durable resource's content is being substantively rewritten while keeping the same identity (URL). For full delete-and-replace at a new URL, use mem:ArchiveAction on the old + mem:CrystallizeAction for the new. Do NOT use SupersedeAction for small edits — those are PATCH operations that don't change identity and don't need a memory action." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/pages/foo.md.meta>:
+        # In <https://pod.vardeman.me/vault/wiki/concepts/foo.md.meta>:
         <> prov:wasGeneratedBy [
             a mem:SupersedeAction , prov:Activity ;
             prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059> ;
             prov:startedAtTime "2026-05-18T11:00:00Z"^^xsd:dateTime
         ] ;
-            prov:wasRevisionOf <https://pod.vardeman.me/vault/wiki/pages/foo.md?version=2026-05-17T10:00:00Z> .
+            prov:wasRevisionOf <https://pod.vardeman.me/vault/wiki/concepts/foo.md?version=2026-05-17T10:00:00Z> .
     """ ;
     rdfs:seeAlso </vault/meta/affordances/supersede> .
 
@@ -133,7 +133,7 @@ mem:DemoteAction
         <> prov:wasGeneratedBy [
             a mem:DemoteAction , prov:Activity ;
             prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059> ;
-            prov:used <https://pod.vardeman.me/vault/wiki/pages/foo.md>
+            prov:used <https://pod.vardeman.me/vault/wiki/concepts/foo.md>
         ] .
     """ ;
     rdfs:seeAlso </vault/meta/affordances/demote> .
@@ -146,7 +146,7 @@ mem:ArchiveAction
     rdfs:comment "Soft-delete a durable resource via tombstone (per D64). The resource is retained at its URL but marked archived; the archived resource declares 'a as:Tombstone' in its .meta. Subclass of as:Delete (AS2's standard delete verb that produces a Tombstone)." ;
     skos:scopeNote "Use when a resource is no longer canonical (superseded by a merge target, content invalidated, content moved to a new identity). Memento captures the pre-archive state. Do NOT hard-DELETE durable resources — archive preserves audit trail and lets backlinks resolve to a tombstone rather than 404." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/pages/old.md.meta>:
+        # In <https://pod.vardeman.me/vault/wiki/concepts/old.md.meta>:
         <> a as:Tombstone ;
            prov:wasGeneratedBy [
                a mem:ArchiveAction , prov:Activity ;
@@ -164,8 +164,8 @@ mem:LinkAction
     rdfs:comment "Add a typed cross-reference edge to a resource's .meta. The predicate must be one of the substrate-governed edges per the relevant shape's wiki:governs list (D81 predicate-level governance), or an agent-extensible predicate outside that list. Subclass of as:Add (add object to a collection of references)." ;
     skos:scopeNote "Use when introducing a typed edge (skos:broader, wiki:extends, cito:cites, etc.) between two resources. For substrate-governed predicates, prefer editing the body markdown wikilink and letting MarkdownProjectionListener project it into .meta; explicit PATCH is for edges outside the body-projection scope. NOT used for whole-resource creation (mem:CrystallizeAction) or whole-resource replacement (mem:SupersedeAction)." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/pages/foo.md.meta> (added via N3 Patch):
-        <> skos:broader <https://pod.vardeman.me/vault/wiki/pages/bar.md> ;
+        # In <https://pod.vardeman.me/vault/wiki/concepts/foo.md.meta> (added via N3 Patch):
+        <> skos:broader <https://pod.vardeman.me/vault/wiki/concepts/bar.md> ;
            prov:wasGeneratedBy [
                a mem:LinkAction , prov:Activity ;
                prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059>
@@ -187,7 +187,7 @@ mem:UnprocessableWrite
     skos:example """
         # In an inbox notification body served from /vault/wiki/.events/<id>:
         <> a mem:UnprocessableWrite , as:Reject , as:Activity ;
-           as:object <https://pod.vardeman.me/vault/wiki/pages/foo.md> ;
+           as:object <https://pod.vardeman.me/vault/wiki/concepts/foo.md> ;
            as:to <https://orcid.org/0000-0003-4091-6059> ;
            as:context [ a sh:ValidationReport ;
                         sh:conforms false ;
@@ -207,8 +207,8 @@ mem:ContradictionDetected
     skos:example """
         # In an inbox notification body served from /vault/wiki/.events/<id>:
         <> a mem:ContradictionDetected , as:Flag , as:Activity ;
-           as:object <https://pod.vardeman.me/vault/wiki/pages/a.md> ,
-                     <https://pod.vardeman.me/vault/wiki/pages/b.md> ;
+           as:object <https://pod.vardeman.me/vault/wiki/concepts/a.md> ,
+                     <https://pod.vardeman.me/vault/wiki/concepts/b.md> ;
            as:summary "Both wiki:supports and wiki:criticizes assert A vs B." ;
            as:published "2026-05-18T14:00:00Z"^^xsd:dateTime .
     """ ;
@@ -224,9 +224,9 @@ mem:ConsolidationSuggested
     skos:example """
         # In an inbox notification body served from /vault/wiki/.events/<id>:
         <> a mem:ConsolidationSuggested , as:Offer , as:Activity ;
-           as:object <https://pod.vardeman.me/vault/wiki/pages/topic-a.md> ,
-                     <https://pod.vardeman.me/vault/wiki/pages/topic-a-variant.md> ,
-                     <https://pod.vardeman.me/vault/wiki/pages/topic-a-related.md> ;
+           as:object <https://pod.vardeman.me/vault/wiki/concepts/topic-a.md> ,
+                     <https://pod.vardeman.me/vault/wiki/concepts/topic-a-variant.md> ,
+                     <https://pod.vardeman.me/vault/wiki/concepts/topic-a-related.md> ;
            as:summary "Three pages cluster on topic; consider hub or merge." ;
            as:published "2026-05-18T15:00:00Z"^^xsd:dateTime .
     """ ;
@@ -242,7 +242,7 @@ mem:BoundExceeded
     skos:example """
         # In an inbox notification body served from /vault/wiki/.events/<id>:
         <> a mem:BoundExceeded , as:Activity ;
-           as:object <https://pod.vardeman.me/vault/wiki/pages/> ;
+           as:object <https://pod.vardeman.me/vault/wiki/concepts/> ;
            as:summary "ldp:contains count = 18 exceeds bound of 12." ;
            as:published "2026-05-18T16:00:00Z"^^xsd:dateTime .
     """ ;
