@@ -1,0 +1,99 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix prof:  <http://www.w3.org/ns/dx/prof/> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+# AffordanceDescriptorShape — the contract every published affordance
+# descriptor must satisfy (D52/D103). The descriptor is the machine-actionable
+# spec for one substrate capability; per D103 its intent-bearing prose is the
+# canonical wire form that bootstrapper skills point at. This base shape
+# governs the predicates ALL descriptor kinds share; kind-specific predicates
+# (dispatch patterns, query bodies) live on the targeted sub-shapes below.
+#
+# Targets prof:ResourceDescriptor — the type every descriptor carries
+# alongside its wiki:*Affordance type. Validated with inference="none".
+#
+# Note (ground-truth precedence, 2026-05-23): the FOLLOWUPS spec proposed
+# requiring wiki:dispatchPattern + a 100-char sh:agentInstruction on the base
+# shape. The live catalog shows that would wrongly fail the 6 write
+# affordances (procedure + dct:description, no dispatchPattern) and the
+# derived-view affordances. Dispatch constraints are scoped to the
+# SearchAffordance sub-shape instead; prose is required as a disjunction.
+wiki:AffordanceDescriptorShape
+    a sh:NodeShape ;
+    rdfs:label "Affordance descriptor contract" ;
+    rdfs:comment "Governs every affordance descriptor in the catalog. Requires a role, a human label, a conformance declaration, an installer provenance edge, and at least one intent-bearing prose predicate (sh:agentInstruction or dct:description). Targets prof:ResourceDescriptor." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-23"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+    sh:targetClass prof:ResourceDescriptor ;
+    sh:agentInstruction """An affordance descriptor declares one substrate capability. To publish a new affordance: type it prof:ResourceDescriptor plus a wiki:*Affordance subtype; give it a prof:hasRole from the wikirole scheme, an rdfs:label, a dct:conformsTo, and a wiki:installedBy pointing at the installing overlay; and write the intent — either an sh:agentInstruction with copy-pasteable invocation (for invocable affordances) or a dct:description + wiki:procedure (for write actions). The descriptor IS the contract a bootstrapper skill points at, so the prose must stand alone.""" ;
+    sh:property [
+        sh:path prof:hasRole ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "An affordance descriptor must declare a prof:hasRole (a wikirole concept)."
+    ] ;
+    sh:property [
+        sh:path rdfs:label ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:minLength 3 ;
+        sh:message "An affordance descriptor must carry an rdfs:label (>=3 chars)."
+    ] ;
+    sh:property [
+        sh:path dct:conformsTo ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "An affordance descriptor must declare at least one dct:conformsTo (e.g. the PROF spec)."
+    ] ;
+    sh:property [
+        sh:path wiki:installedBy ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "An affordance descriptor must record wiki:installedBy (the installing overlay) for provenance."
+    ] ;
+    # Intent-bearing prose: invocable affordances use sh:agentInstruction;
+    # write actions use dct:description (+ wiki:procedure). Require at least one.
+    sh:or (
+        [ sh:path sh:agentInstruction ; sh:minCount 1 ; sh:datatype xsd:string ]
+        [ sh:path dct:description ; sh:minCount 1 ; sh:datatype xsd:string ]
+    ) ;
+    sh:message "An affordance descriptor must carry intent-bearing prose: sh:agentInstruction (invocable affordances) or dct:description (write actions)." .
+
+# SearchAffordanceShape — invocable HTTP-dispatch affordances. Independently
+# targets wiki:SearchAffordance (a descriptor carries both types, so both
+# shapes fire). Adds the dispatch contract a consumer needs to build the URL.
+wiki:SearchAffordanceShape
+    a sh:NodeShape ;
+    rdfs:label "Search affordance dispatch contract" ;
+    rdfs:comment "Extends the affordance descriptor contract for query-string-dispatched affordances: requires a wiki:dispatchPattern, a wiki:targetContainer, and a substantive sh:agentInstruction. Targets wiki:SearchAffordance." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-23"^^xsd:date ;
+    sh:targetClass wiki:SearchAffordance ;
+    sh:property [
+        sh:path wiki:dispatchPattern ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^\\?ext=[a-z][a-z-]*$" ;
+        sh:message "A search affordance must declare a wiki:dispatchPattern of the form ?ext=<handler-name>."
+    ] ;
+    sh:property [
+        sh:path wiki:targetContainer ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "A search affordance must declare the wiki:targetContainer it operates over."
+    ] ;
+    sh:property [
+        sh:path sh:agentInstruction ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:minLength 100 ;
+        sh:message "A search affordance's sh:agentInstruction must give a substantive (>=100 char) wire-form spec."
+    ] .

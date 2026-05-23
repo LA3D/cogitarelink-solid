@@ -1,6 +1,8 @@
 PYTHON := ~/uvws/.venv/bin/python
+POD_URL ?= https://pod.vardeman.me/vault/
+CA_FILE := $(shell mkcert -CAROOT 2>/dev/null)/rootCA.pem
 
-.PHONY: up down reset status logs import test install clean sync-validator-tbox check-validator-tbox
+.PHONY: up down reset status logs import test install clean sync-validator-tbox check-validator-tbox audit
 
 up:  ## Start everything (idempotent)
 	docker compose up -d
@@ -44,6 +46,9 @@ check-validator-tbox:  ## Fail if the bundled validator TBox copies have drifted
 	@diff -q overlays/wiki-memory/ontology/mem.ttl css/extensions/shape-validator/data/mem.ttl >/dev/null \
 	  && diff -q overlays/wiki-memory/ontology/as-subclass-axioms.ttl css/extensions/shape-validator/data/as-subclass-axioms.ttl >/dev/null \
 	  || (echo "ERROR: shape-validator data/ TBox drifted from overlays/wiki-memory/ontology/ — run 'make sync-validator-tbox'"; exit 1)
+
+audit:  ## Validate the Pod's substrate self-description (D104); ERROR findings fail
+	SSL_CERT_FILE="$(CA_FILE)" $(PYTHON) scripts/pod_audit.py $(POD_URL) --shapes-dir shapes/substrate/
 
 clean:  ## Stop and destroy all data
 	docker compose down -v

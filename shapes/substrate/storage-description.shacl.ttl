@@ -1,0 +1,74 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix pim:   <http://www.w3.org/ns/pim/space#> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+# StorageDescriptionShape — the contract the Pod's own .well-known/solid must
+# satisfy. The storage description is the L1 discovery entry point (D44): an
+# agent dereferences it first, then follows the catalog pointers to learn the
+# substrate's capabilities. This shape makes those pointers a checkable
+# obligation. Validated by pod-audit with inference="none" (see FOLLOWUPS:
+# RDFS entailment would mask a missing pointer by satisfying nodeKind via
+# inferred triples). Cross-checks (do the pointed-at IRIs resolve?) are the
+# walker's job, not SHACL's — this shape only asserts the pointers are present.
+wiki:StorageDescriptionShape
+    a sh:NodeShape ;
+    rdfs:label "Storage description contract" ;
+    rdfs:comment "Governs the Pod's .well-known/solid storage description. Requires the five catalog pointers an arriving agent follows (affordance, type index, JSON-LD context, shape catalog, profile document) plus a conformance declaration. Targets pim:Storage." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-23"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+    sh:targetClass pim:Storage ;
+    sh:agentInstruction """This Pod's storage description is its front door. An agent arriving cold should GET <.well-known/solid> (Accept: text/turtle), then follow wiki:affordanceCatalog to enumerate capabilities, wiki:typeIndex for class -> container routing, wiki:contextDocument for prefix -> IRI resolution, wiki:shapeCatalog for the SHACL governing content, and wiki:profileDocument for the wiki-memory L3 profile narrative. Each pointer must resolve (pod-audit HEAD-checks them). If you are extending the substrate with a new catalog, add its pointer here so agents can discover it.""" ;
+    sh:property [
+        sh:path wiki:affordanceCatalog ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Storage description must point at the affordance catalog via wiki:affordanceCatalog (D52)."
+    ] ;
+    sh:property [
+        sh:path wiki:typeIndex ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Storage description must point at the Type Index via wiki:typeIndex (D8) for class -> container routing."
+    ] ;
+    sh:property [
+        sh:path wiki:contextDocument ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Storage description must point at the JSON-LD context via wiki:contextDocument (D76/D79)."
+    ] ;
+    sh:property [
+        sh:path wiki:shapeCatalog ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Storage description must point at the SHACL shape catalog via wiki:shapeCatalog (D77/D98)."
+    ] ;
+    sh:property [
+        sh:path wiki:profileDocument ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Storage description must point at the wiki-memory L3 profile document via wiki:profileDocument (D71/D93)."
+    ] ;
+    sh:property [
+        sh:path dct:conformsTo ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Storage description must declare at least one dct:conformsTo profile."
+    ] ;
+    # Entry-point guidance is a substrate-quality obligation, not yet shipped:
+    # the storage description currently carries no sh:agentInstruction of its
+    # own (the seed prose is in FOLLOWUPS / D104 sweep). WARN, not ERROR, so
+    # the audit surfaces it as a curator work item without failing the reset.
+    sh:property [
+        sh:path sh:agentInstruction ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:severity sh:Warning ;
+        sh:message "Storage description should carry an entry-point sh:agentInstruction telling arriving agents how to use the catalog pointers (D104 sweep item)."
+    ] .
