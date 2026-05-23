@@ -39,9 +39,7 @@
     "Page":       "wiki:Page",
     "Concept":    "wiki:Concept",
     "MOC":        "wiki:MOC",
-    "Source":     "wiki:Source",
     "Person":     "wiki:Person",
-    "Procedure":  "wiki:Procedure",
     "WorkingNote":"wiki:WorkingNote",
     "Hub":        "wiki:Hub",
     "maturity":   "wiki:maturity"

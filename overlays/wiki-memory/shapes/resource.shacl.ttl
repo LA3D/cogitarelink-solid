@@ -7,9 +7,7 @@
 # Class hierarchy — required for rdfs:subClassOf inference so that
 # ResourceShape applies automatically to all entity sub-classes.
 wiki:Concept      a rdfs:Class ; rdfs:subClassOf wiki:Resource .
-wiki:Source       a rdfs:Class ; rdfs:subClassOf wiki:Resource .
 wiki:Person       a rdfs:Class ; rdfs:subClassOf wiki:Resource .
-wiki:Procedure    a rdfs:Class ; rdfs:subClassOf wiki:Resource .
 
 wiki:ResourceShape
     a sh:NodeShape ;
