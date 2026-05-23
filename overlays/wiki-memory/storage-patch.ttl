@@ -14,9 +14,11 @@
            void:vocabulary <https://pod.vardeman.me/vault/ontology/wiki#> ,
                           <http://purl.org/spar/cito/> ,
                           <http://xmlns.com/foaf/0.1/> ;
-           rdfs:seeAlso <../wiki/pages/> ,
-                       <../wiki/sources/> ,
+           rdfs:seeAlso <../wiki/concepts/> ,
                        <../wiki/people/> ,
+                       <../wiki/places/> ,
+                       <../wiki/events/> ,
+                       <../wiki/organizations/> ,
                        <../wiki/procedures/> ,
                        <../wiki/working/> .
    } .
