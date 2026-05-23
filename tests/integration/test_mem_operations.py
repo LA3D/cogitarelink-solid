@@ -1,13 +1,16 @@
-"""Phase B — mem:*Action integration tests against the live Pod.
+"""Phase B/C — mem:*Action integration tests against the live Pod.
 
 Each test exercises one action affordance's full LDP procedure (per the
-descriptor at /vault/meta/affordances/<name>) and verifies the substrate
-postcondition: resource state, PROV-O record with the correct mem:*Action
-type, Memento captures (where relevant).
+descriptor at /vault/meta/affordances/<name>) and verifies:
+  1. Resource state / typed-edge postcondition (substrate write).
+  2. Operation provenance via the .operations/ announcement log (mem.ttl §5).
 
-The announcement-POST step (final step of each procedure) is deferred to
-Phase C tests once /vault/wiki/.operations/ exists. Where this affects an
-assertion, it's marked `pytest.skip` with reference to the Phase C task.
+Provenance is asserted from the .operations/ announcement, NOT the content
+resource's .meta — because the MarkdownProjectionListener overwrites
+<subject> prov:wasGeneratedBy with its own activity on every write
+(RQ-Listener-1). The activity node <subject#action> a mem:*Action persists
+but the prov:wasGeneratedBy pointer is clobbered. The prescribed pattern per
+mem.ttl is a [as:Announce, mem:*Action] POST to .operations/.
 
 Substrate behaviour discovered during probe sessions (2026-05-18):
 - CSS N3 Patch rejects blank nodes in solid:inserts formulas (HTTP 422).
@@ -24,10 +27,11 @@ import pytest
 from rdflib import Graph, URIRef, Namespace
 from rdflib.namespace import RDF
 
-POD       = "https://pod.vardeman.me/vault/"
-WORKING   = f"{POD}wiki/working/"
-PAGES     = f"{POD}wiki/concepts/"
-SOURCES   = f"{POD}wiki/concepts/"
+POD        = "https://pod.vardeman.me/vault/"
+WORKING    = f"{POD}wiki/working/"
+PAGES      = f"{POD}wiki/concepts/"
+SOURCES    = f"{POD}wiki/concepts/"
+OPERATIONS = f"{POD}wiki/.operations/"
 
 WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
 MEM  = Namespace("https://pod.vardeman.me/vault/ontology/mem#")
@@ -119,18 +123,58 @@ def _discover_memento_uri(url):
     return str(mementos[0]) if mementos else None
 
 
+def _announce(action_class_iri, subject_url):
+    """PUT an [as:Announce, mem:*Action] announcement to OPERATIONS; return its URL."""
+    ann_id = f"urn:uuid:{uuid.uuid4()}"
+    iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    body = (
+        "@prefix as:   <https://www.w3.org/ns/activitystreams#> .\n"
+        "@prefix mem:  <https://pod.vardeman.me/vault/ontology/mem#> .\n"
+        "@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .\n\n"
+        f"<{ann_id}> a as:Announce, <{action_class_iri}> ;\n"
+        f"    as:actor <https://pod.vardeman.me/profile/card#me> ;\n"
+        f"    as:object <{subject_url}> ;\n"
+        f"    as:target <{OPERATIONS}> ;\n"
+        f'    as:published "{iso_now}"^^xsd:dateTime .\n'
+    )
+    ann_url = f"{OPERATIONS}{uuid.uuid4().hex}.ttl"
+    r = httpx.put(ann_url, content=body,
+                  headers={"Content-Type": "text/turtle"}, verify=False)
+    assert r.status_code in (201, 204, 205), (
+        f"PUT announcement {ann_url}: {r.status_code} {r.text[:200]}"
+    )
+    return ann_url, ann_id
+
+
+def _assert_announced(ann_url, ann_id, action_class_iri, subject_url):
+    """GET the announcement resource, parse, assert action type + object."""
+    r = httpx.get(ann_url, headers={"Accept": "text/turtle"}, verify=False)
+    assert r.status_code == 200, f"GET announcement {ann_url}: {r.status_code}"
+    g = Graph().parse(data=r.text, format="turtle", publicID=ann_url)
+    ann = URIRef(ann_id)
+    types = set(g.objects(ann, RDF.type))
+    assert AS.Announce in types, f"as:Announce missing from announcement; got {types}"
+    assert URIRef(action_class_iri) in types, (
+        f"{action_class_iri} missing from announcement types; got {types}"
+    )
+    objects = list(g.objects(ann, AS.object))
+    assert URIRef(subject_url) in objects, (
+        f"as:object {subject_url} missing from announcement; got {objects}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Test 1 — Crystallize
 # ---------------------------------------------------------------------------
 
 def test_crystallize_e2e(slug):
-    """Crystallize: working note → durable page; PROV-O records mem:CrystallizeAction.
+    """Crystallize: working note → durable page; provenance via .operations/ announcement.
 
     Procedure from /vault/meta/affordances/crystallize.ttl:
       1. GET working note
       2. PUT durable + PATCH .meta with PROV-O
       3. DELETE working note
-      4. [Phase C] POST announcement to /vault/wiki/.operations/
+      4. POST [as:Announce, mem:CrystallizeAction] to /vault/wiki/.operations/
     """
     working_url = f"{WORKING}{slug}.md"
     durable_url = f"{PAGES}{slug}.md"
@@ -167,9 +211,8 @@ def test_crystallize_e2e(slug):
     # Step 3: DELETE working note
     _delete(working_url)
 
-    # Phase C deferred: POST announcement to /vault/wiki/.operations/
-    pytest.skip.__doc__ = ""  # suppress attr warning
-    # (announcement assertion will go in Phase C test suite)
+    # Step 4: POST operation announcement to .operations/
+    ann_url, ann_id = _announce(str(MEM.CrystallizeAction), durable_url)
 
     try:
         # Verify 1: durable exists
@@ -184,25 +227,22 @@ def test_crystallize_e2e(slug):
             f"Working note should be deleted (404) or tombstoned (410); got {r.status_code}"
         )
 
-        # Verify 3: PROV-O on durable .meta has mem:CrystallizeAction
+        # Verify 3: prov:wasDerivedFrom links back to working source (in content .meta)
         g = _meta_graph(durable_url)
-        activities = list(g.objects(URIRef(durable_url), PROV.wasGeneratedBy))
-        assert len(activities) >= 1, "No prov:wasGeneratedBy on durable resource"
-        act_types = []
-        for a in activities:
-            act_types.extend(g.objects(a, RDF.type))
-        assert MEM.CrystallizeAction in act_types, (
-            f"prov:wasGeneratedBy missing mem:CrystallizeAction; got {act_types}"
-        )
-
-        # Verify 4: prov:wasDerivedFrom links back to working source
         derived = list(g.objects(URIRef(durable_url), PROV.wasDerivedFrom))
         assert URIRef(working_url) in derived, (
             f"prov:wasDerivedFrom missing working source; got {derived}"
         )
+
+        # Verify 4: operation provenance recorded in .operations/ announcement
+        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed;
+        #  authoritative provenance is the .operations/ announcement per mem.ttl)
+        _assert_announced(ann_url, ann_id, str(MEM.CrystallizeAction), durable_url)
+
     finally:
         _delete(durable_url)
         _delete(working_url)  # no-op if already gone
+        _delete(ann_url)
 
 
 # ---------------------------------------------------------------------------
@@ -210,12 +250,12 @@ def test_crystallize_e2e(slug):
 # ---------------------------------------------------------------------------
 
 def test_supersede_e2e(slug):
-    """Supersede: refined version replaces existing page; PROV-O records mem:SupersedeAction.
+    """Supersede: refined version replaces existing page; provenance via .operations/.
 
     Procedure from /vault/meta/affordances/supersede.ttl:
       1. GET existing + discover prior Memento URI from TimeMap
       2. PUT refined body + PATCH .meta with prov:wasRevisionOf → prior Memento
-      3. [Phase C] POST announcement to /vault/wiki/.operations/
+      3. POST [as:Announce, mem:SupersedeAction] to /vault/wiki/.operations/
 
     Note: Memento URI discovery is validated here. If no version URI is found in
     the TimeMap (e.g., the resource was just created and Memento hasn't snapshotted
@@ -235,6 +275,7 @@ def test_supersede_e2e(slug):
 
     # If no Memento URI found yet, use timemap as sentinel
     memento_sentinel = prior_memento or (page_url + "?ext=timemap")
+    ann_url = None
 
     # Perform: PUT refined body + PATCH .meta
     try:
@@ -255,26 +296,16 @@ def test_supersede_e2e(slug):
         )
         _patch_meta(page_url, refined_triples)
 
-        # Phase C deferred: POST announcement
-        # (annotation: Phase C Task C.2 un-stubs this assertion)
+        # Step 3: POST operation announcement to .operations/
+        ann_url, ann_id = _announce(str(MEM.SupersedeAction), page_url)
 
         # Verify 1: page returns the refined body
         r = httpx.get(page_url, headers={"Accept": "text/markdown"}, verify=False)
         assert r.status_code == 200
         assert "v2" in r.text or slug in r.text
 
-        # Verify 2: PROV-O has mem:SupersedeAction
+        # Verify 2: prov:wasRevisionOf is present in content .meta
         g = _meta_graph(page_url)
-        activities = list(g.objects(URIRef(page_url), PROV.wasGeneratedBy))
-        assert len(activities) >= 1, "No prov:wasGeneratedBy on superseded resource"
-        act_types = []
-        for a in activities:
-            act_types.extend(g.objects(a, RDF.type))
-        assert MEM.SupersedeAction in act_types, (
-            f"prov:wasGeneratedBy missing mem:SupersedeAction; got {act_types}"
-        )
-
-        # Verify 3: prov:wasRevisionOf is present
         rev_of = list(g.objects(URIRef(page_url), PROV.wasRevisionOf))
         assert len(rev_of) >= 1, "prov:wasRevisionOf missing on superseded resource"
 
@@ -288,8 +319,14 @@ def test_supersede_e2e(slug):
             # Assertion deferred — see Phase B/Memento integration follow-up.
             pass
 
+        # Verify 3: operation provenance recorded in .operations/ announcement
+        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
+        _assert_announced(ann_url, ann_id, str(MEM.SupersedeAction), page_url)
+
     finally:
         _delete(page_url)
+        if ann_url:
+            _delete(ann_url)
 
 
 # ---------------------------------------------------------------------------
@@ -297,13 +334,13 @@ def test_supersede_e2e(slug):
 # ---------------------------------------------------------------------------
 
 def test_merge_e2e(slug):
-    """Merge: 3 inputs → single merged page; PROV-O records mem:MergeAction.
+    """Merge: 3 inputs → single merged page; provenance via .operations/ announcement.
 
     Procedure from /vault/meta/affordances/merge.ttl:
       1. GET each input; compose merged body
       2. PUT merged + PATCH .meta with prov:wasDerivedFrom × 3
       3. DELETE each input
-      4. [Phase C] POST announcement enumerating all inputs + merged resource
+      4. POST [as:Announce, mem:MergeAction] to /vault/wiki/.operations/
     """
     input_urls = [f"{PAGES}{slug}-in{i}.md" for i in range(1, 4)]
     merged_url = f"{PAGES}{slug}-merged.md"
@@ -314,6 +351,7 @@ def test_merge_e2e(slug):
 
     act = _act_uri(merged_url, "merge")
     iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    ann_url = None
 
     try:
         # Perform: PUT merged resource
@@ -344,8 +382,8 @@ def test_merge_e2e(slug):
         for inp in input_urls:
             _delete(inp)
 
-        # Phase C deferred: POST announcement
-        # (annotation: Phase C Task C.2 un-stubs this assertion)
+        # Step 4: POST operation announcement to .operations/
+        ann_url, ann_id = _announce(str(MEM.MergeAction), merged_url)
 
         # Verify 1: merged resource exists
         r = httpx.get(merged_url, headers={"Accept": "text/markdown"}, verify=False)
@@ -359,28 +397,24 @@ def test_merge_e2e(slug):
                 f"Input {inp} should be gone (404) or tombstoned (410); got {r.status_code}"
             )
 
-        # Verify 3: mem:MergeAction in merged .meta
+        # Verify 3: prov:wasDerivedFrom enumerates all 3 inputs in content .meta
         g = _meta_graph(merged_url)
-        activities = list(g.objects(URIRef(merged_url), PROV.wasGeneratedBy))
-        assert len(activities) >= 1
-        act_types = []
-        for a in activities:
-            act_types.extend(g.objects(a, RDF.type))
-        assert MEM.MergeAction in act_types, (
-            f"prov:wasGeneratedBy missing mem:MergeAction; got {act_types}"
-        )
-
-        # Verify 4: prov:wasDerivedFrom enumerates all 3 inputs
         derived = set(g.objects(URIRef(merged_url), PROV.wasDerivedFrom))
         for inp in input_urls:
             assert URIRef(inp) in derived, (
                 f"prov:wasDerivedFrom missing input {inp}; got {derived}"
             )
 
+        # Verify 4: operation provenance recorded in .operations/ announcement
+        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
+        _assert_announced(ann_url, ann_id, str(MEM.MergeAction), merged_url)
+
     finally:
         _delete(merged_url)
         for inp in input_urls:
             _delete(inp)  # no-op if already deleted
+        if ann_url:
+            _delete(ann_url)
 
 
 # ---------------------------------------------------------------------------
@@ -388,13 +422,13 @@ def test_merge_e2e(slug):
 # ---------------------------------------------------------------------------
 
 def test_demote_e2e(slug):
-    """Demote: durable page → working memory; PROV-O records mem:DemoteAction.
+    """Demote: durable page → working memory; provenance via .operations/ announcement.
 
     Procedure from /vault/meta/affordances/demote.ttl:
       1. GET durable + discover prior Memento URI
       2. PUT to working + PATCH .meta with PROV-O
       3. DELETE durable
-      4. [Phase C] POST announcement to /vault/wiki/.operations/
+      4. POST [as:Announce, mem:DemoteAction] to /vault/wiki/.operations/
     """
     durable_url = f"{PAGES}{slug}.md"
     working_url = f"{WORKING}{slug}.md"
@@ -408,6 +442,7 @@ def test_demote_e2e(slug):
 
     act = _act_uri(working_url, "demote")
     iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    ann_url = None
 
     try:
         # Perform: PUT to working
@@ -431,8 +466,8 @@ def test_demote_e2e(slug):
         # DELETE durable
         _delete(durable_url)
 
-        # Phase C deferred: POST announcement
-        # (annotation: Phase C Task C.2 un-stubs this assertion)
+        # Step 4: POST operation announcement to .operations/
+        ann_url, ann_id = _announce(str(MEM.DemoteAction), working_url)
 
         # Verify 1: working note exists
         r = httpx.get(working_url, headers={"Accept": "text/markdown"}, verify=False)
@@ -445,20 +480,20 @@ def test_demote_e2e(slug):
             f"Durable should be gone (404) or tombstoned (410); got {r.status_code}"
         )
 
-        # Verify 3: mem:DemoteAction in working .meta
+        # Verify 3: prov:wasDerivedFrom in working .meta links to prior durable snapshot
         g = _meta_graph(working_url)
-        activities = list(g.objects(URIRef(working_url), PROV.wasGeneratedBy))
-        assert len(activities) >= 1
-        act_types = []
-        for a in activities:
-            act_types.extend(g.objects(a, RDF.type))
-        assert MEM.DemoteAction in act_types, (
-            f"prov:wasGeneratedBy missing mem:DemoteAction; got {act_types}"
-        )
+        derived = list(g.objects(URIRef(working_url), PROV.wasDerivedFrom))
+        assert len(derived) >= 1, "prov:wasDerivedFrom missing on demoted working resource"
+
+        # Verify 4: operation provenance recorded in .operations/ announcement
+        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
+        _assert_announced(ann_url, ann_id, str(MEM.DemoteAction), working_url)
 
     finally:
         _delete(working_url)
         _delete(durable_url)  # no-op if already deleted
+        if ann_url:
+            _delete(ann_url)
 
 
 # ---------------------------------------------------------------------------
@@ -466,16 +501,16 @@ def test_demote_e2e(slug):
 # ---------------------------------------------------------------------------
 
 def test_archive_e2e(slug):
-    """Archive: soft-delete via tombstone; PROV-O records mem:ArchiveAction.
+    """Archive: soft-delete via tombstone; provenance via .operations/ announcement.
 
     Procedure from /vault/meta/affordances/archive.ttl:
       1. PATCH .meta inserting as:Tombstone + mem:ArchiveAction activity
-      2. [Phase C] POST announcement to /vault/wiki/.operations/
+      2. POST [as:Announce, mem:ArchiveAction] to /vault/wiki/.operations/
 
     The body remains accessible (soft delete). Verifies:
     - Resource still returns 200 after archive
-    - .meta carries as:Tombstone rdf:type
-    - .meta carries mem:ArchiveAction activity
+    - .meta carries as:Tombstone rdf:type (projection-safe — no body write triggers listener)
+    - Provenance in .operations/ announcement (RQ-Listener-1 workaround)
     """
     page_url = f"{PAGES}{slug}.md"
 
@@ -484,6 +519,7 @@ def test_archive_e2e(slug):
 
     act = _act_uri(page_url, "archive")
     iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    ann_url = None
 
     try:
         # Perform: PATCH .meta with tombstone + PROV-O
@@ -500,32 +536,28 @@ def test_archive_e2e(slug):
         )
         _patch_meta(page_url, tombstone_triples)
 
-        # Phase C deferred: POST announcement
-        # (annotation: Phase C Task C.2 un-stubs this assertion)
+        # Step 2: POST operation announcement to .operations/
+        ann_url, ann_id = _announce(str(MEM.ArchiveAction), page_url)
 
         # Verify 1: body still accessible (soft delete)
         r = httpx.get(page_url, headers={"Accept": "text/markdown"}, verify=False)
         assert r.status_code == 200, f"Archived resource should still return 200; got {r.status_code}"
 
-        # Verify 2: .meta carries as:Tombstone
+        # Verify 2: .meta carries as:Tombstone (substrate preserves this via PATCH — no projection overwrite)
         g = _meta_graph(page_url)
         types = list(g.objects(URIRef(page_url), RDF.type))
         assert AS.Tombstone in types, (
             f"as:Tombstone missing from archived resource .meta; got {types}"
         )
 
-        # Verify 3: mem:ArchiveAction in .meta
-        activities = list(g.objects(URIRef(page_url), PROV.wasGeneratedBy))
-        assert len(activities) >= 1
-        act_types = []
-        for a in activities:
-            act_types.extend(g.objects(a, RDF.type))
-        assert MEM.ArchiveAction in act_types, (
-            f"prov:wasGeneratedBy missing mem:ArchiveAction; got {act_types}"
-        )
+        # Verify 3: operation provenance recorded in .operations/ announcement
+        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
+        _assert_announced(ann_url, ann_id, str(MEM.ArchiveAction), page_url)
 
     finally:
         _delete(page_url)
+        if ann_url:
+            _delete(ann_url)
 
 
 # ---------------------------------------------------------------------------
@@ -533,12 +565,12 @@ def test_archive_e2e(slug):
 # ---------------------------------------------------------------------------
 
 def test_link_e2e(slug):
-    """Link: add typed edge in subject's .meta; PROV-O records mem:LinkAction.
+    """Link: add typed edge in subject's .meta; provenance via .operations/ announcement.
 
     Procedure from /vault/meta/affordances/link.ttl:
       1. Inspect subject's class shape wiki:governs list for permitted predicates
       2. PATCH subject's .meta inserting the typed edge + mem:LinkAction activity
-      3. [Phase C] POST announcement
+      3. POST [as:Announce, mem:LinkAction] to /vault/wiki/.operations/
 
     The page shape (page.shacl.ttl) governs: dct:title, dct:identifier, dct:created,
     dct:modified, skos:broader, skos:related, cito:*. We use skos:related as a safe
@@ -558,6 +590,7 @@ def test_link_e2e(slug):
 
     act = _act_uri(subject_url, "link")
     iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    ann_url = None
 
     try:
         # Perform: PATCH subject's .meta with typed edge + PROV-O
@@ -565,7 +598,8 @@ def test_link_e2e(slug):
             # Typed edge: skos:related (substrate-listed lateral predicate)
             f'<{subject_url}> <http://www.w3.org/2004/02/skos/core#related>'
             f' <{object_url}> .',
-            # PROV-O activity
+            # PROV-O activity node (projection will overwrite prov:wasGeneratedBy pointer,
+            # but the activity node itself persists — provenance goes in .operations/)
             f'<{subject_url}> <http://www.w3.org/ns/prov#wasGeneratedBy> <{act}> .',
             f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
             f' <https://pod.vardeman.me/vault/ontology/mem#LinkAction> .',
@@ -576,8 +610,8 @@ def test_link_e2e(slug):
         )
         _patch_meta(subject_url, link_triples)
 
-        # Phase C deferred: POST announcement
-        # (annotation: Phase C Task C.2 un-stubs this assertion)
+        # Step 3: POST operation announcement to .operations/
+        ann_url, ann_id = _announce(str(MEM.LinkAction), subject_url)
 
         # Verify 1: typed edge in subject's .meta
         g = _meta_graph(subject_url)
@@ -586,16 +620,12 @@ def test_link_e2e(slug):
             f"skos:related edge missing from subject .meta; got {related}"
         )
 
-        # Verify 2: mem:LinkAction in subject's .meta
-        activities = list(g.objects(URIRef(subject_url), PROV.wasGeneratedBy))
-        assert len(activities) >= 1
-        act_types = []
-        for a in activities:
-            act_types.extend(g.objects(a, RDF.type))
-        assert MEM.LinkAction in act_types, (
-            f"prov:wasGeneratedBy missing mem:LinkAction; got {act_types}"
-        )
+        # Verify 2: operation provenance recorded in .operations/ announcement
+        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
+        _assert_announced(ann_url, ann_id, str(MEM.LinkAction), subject_url)
 
     finally:
         _delete(subject_url)
         _delete(object_url)
+        if ann_url:
+            _delete(ann_url)
