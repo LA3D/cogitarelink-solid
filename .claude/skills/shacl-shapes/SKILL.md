@@ -1,6 +1,6 @@
 ---
 name: shacl-shapes
-description: SHACL shape design for Pod content on this stack. sh:agentInstruction conventions (D7, D50). LDP RDFS/NR split for validation targeting (D38). Class-based targeting vs container-path targeting (D78). 5-shape catalog for wiki-memory L3 (D77).
+description: SHACL shape design for Pod content on this stack. sh:agentInstruction conventions (D7, D50). LDP RDFS/NR split for validation targeting (D38). Class-based targeting vs container-path targeting (D78). 8-shape catalog for wiki-memory L3 (D98, supersedes D77).
 when_to_use: When designing a new SHACL shape for a content type, picking sh:targetClass vs sh:targetNode, deciding sh:closed vs sh:closed false, writing sh:agentInstruction text, or contributing shapes upstream (D46).
 ---
 

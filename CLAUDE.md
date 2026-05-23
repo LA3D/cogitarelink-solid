@@ -74,11 +74,10 @@ css/extensions/
   memento/                  — RFC 7089 Memento support (MementoCommitListener + TimeGate + TimeMap)
   shared/markdown-parsing/  — wikilinks, predicates, resolver modules (reused by renderer + projection)
 shapes/
-  wiki-memory-l3/           — 6 SHACL shapes: resource + concept + source + person + procedure + working (D77/D78)
-  *.ttl                     — legacy shapes (concept-note, project-note, daily-note)
+  concept-note.ttl          — legacy standalone shape (pre-overlay; superseded by overlay catalog)
 ontology/        — PROF SolidPodProfile + cached ontology stubs (SKOS, DC, PROV-O)
 overlays/
-  wiki-memory/              — Phase 5d-5g wiki-memory L3 overlay
+  wiki-memory/              — wiki-memory L3 overlay; SHACL catalog at shapes/ (8 NodeShapes / 11 files, D98 supersedes D77/D78)
   addressbook/              — AddressBook substrate (D87 candidate, shipped 2026-05-17)
 scripts/         — Python CLI tools (vault importer, SPARQL query)
 tests/           — pytest conformance + integration tests

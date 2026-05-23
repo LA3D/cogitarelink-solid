@@ -14,7 +14,7 @@ D46: Shapes contributed upstream to `solid/shapes` — domain-neutral shapes go 
 
 **Authoritative artifact**: Domain-neutral shapes get proposed upstream to `solid/shapes`; vault-specific shapes stay in `shapes/`.
 
-## D77 — Wiki-memory L3 SHACL shape catalog (5 shapes)
+## D77 — Wiki-memory L3 SHACL shape catalog (5 shapes) — SUPERSEDED by D98 (8-shape catalog; `source`→`concept`, `procedure`→`howto`)
 
 D77: Wiki-memory L3 SHACL shape catalog — five shapes, one per D76 container: `wiki:PageShape` (general wiki content, permissive), `wiki:SourceShape` (citation records with `dct:identifier` required), `wiki:PersonShape` (FOAF-based with `foaf:nick` aliases for cross-system linking), `wiki:ProcedureShape` (procedural memory with `sh:agentInstruction` carrying the procedure body), `wiki:WorkingNoteShape` (permissive per D73). Each carries `sh:agentInstruction` per D50. Flavor-within-shape pattern: 12+ vault L4 note types collapse into 5 L3 shapes distinguished by `.meta` predicates (`vault:kind`, `vault:isMOC`, `vault:isOrganization`) rather than separate containers. The vault L4 specialization extends via shape subclassing without modifying the L3 baseline. Shape files at `overlays/wiki-memory/shapes/{page,source,person,procedure,working}.shacl.ttl`.
 

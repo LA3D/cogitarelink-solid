@@ -7,7 +7,7 @@ Full design at `docs/superpowers/specs/2026-05-15-rung-1-4-wiki-memory-l3-implem
 - `css/extensions/markdown-projection/` — `MarkdownProjectionListener` materializes wikilinks → `.meta` triples on body write (D58/D71/D81)
 - `css/extensions/markdown-render/` — rehype-based markdown → HTML (renamed from `markdown-rdfa`; RDFa step dropped per D75); `wikilinks.css` for semantic CSS classes
 - `css/extensions/shared/markdown-parsing/` — wikilinks/predicates/resolver modules reused by renderer + projection listener
-- `overlays/wiki-memory/shapes/` — 6 SHACL shape files (ResourceShape + 5 entity shapes per D77, with D78 class-based targeting). Note: the substrate-cleanup sprint (2026-05-16) moved shapes from the original `shapes/wiki-memory-l3/` to this overlay location and renamed `concept.shacl.ttl` → `page.shacl.ttl` to reflect the subclass model (D77).
+- `overlays/wiki-memory/shapes/` — at Rung 1.4: 6 shape files (ResourceShape + 5 entity shapes per D77, D78 class-based targeting). Note: the substrate-cleanup sprint (2026-05-16) moved shapes from the original `shapes/wiki-memory-l3/` to this overlay location and renamed `concept.shacl.ttl` → `page.shacl.ttl` (D77). **Superseded by D98** (2026-05-19): catalog is now 8 NodeShapes / 11 shape files; `source`→`concept`, `procedure`→`howto`.
 - `/meta/context.jsonld` — JSON-LD context document (D79 hybrid vocabulary registry)
 - `/meta/affordances/` — affordance catalog with 4 descriptors (markdown-projection, hub-view, breadcrumb-view, memento)
 

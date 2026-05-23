@@ -1,6 +1,6 @@
 ---
 name: solid-data-modelling
-description: Vocabularies (SKOS, FOAF, DCT, PROV, CITO), SHACL conventions, Type Index, FAIR data principles. References upstream content with project-specific deltas — SKOS for end-user content (D34, novel for Solid), shapes contributed upstream when domain-neutral (D46), 5-shape catalog for wiki-memory L3 (D77), class-based targeting (D78).
+description: Vocabularies (SKOS, FOAF, DCT, PROV, CITO), SHACL conventions, Type Index, FAIR data principles. References upstream content with project-specific deltas — SKOS for end-user content (D34, novel for Solid), shapes contributed upstream when domain-neutral (D46), 8-shape catalog for wiki-memory L3 (D98, supersedes D77), class-based targeting (D78).
 when_to_use: When designing a SHACL shape for this Pod, picking a vocabulary, registering a class in Type Index, or deciding which shapes belong upstream vs local.
 license: MIT OR Apache-2.0
 upstream:
@@ -28,6 +28,6 @@ Project-specific deltas — D34, D46, D77, D78: [`references/deltas.md`](referen
 
 - `solid-uri-conformance` — URI structure for vocabulary IRIs (hash, no port, no extension)
 - `solid-profiles-and-conneg` — PROF + RFC 6906 resource-kind hints; SHACL shapes as profile artifacts
-- `solid-wiki-memory-l3` — 5-shape SHACL catalog (D77, D78)
+- `solid-wiki-memory-l3` — 8-shape SHACL catalog (D98; class-based targeting D78)
 - `shacl-shapes` — shape design conventions in this repo
 - `solid-spec` — Type Index registration and discovery patterns
