@@ -4,7 +4,8 @@
  * All imports from @solid/community-server use the v8 ESM exports.
  */
 import type { Store } from 'n3';
-import { DataFactory } from 'n3';
+import { DataFactory, Parser, Writer } from 'n3';
+import { readFileSync } from 'fs';
 import type { Term } from 'rdf-js';
 import type { AuxiliaryStrategy, IdentifierStrategy, Representation, ResourceIdentifier, Conditions, RepresentationConverter, ResourceStore, ChangeMap } from '@solid/community-server';
 import {
@@ -20,11 +21,11 @@ import {
   PassthroughStore,
 } from '@solid/community-server';
 import { getLoggerFor } from 'global-logger-factory';
-import { Writer } from 'n3';
 import { LDP } from '../util/Vocabularies';
 import type { ShapeValidator } from './validators/ShapeValidator';
 import type { PathConstraintConfig } from '../pathConstraint';
 import { evaluatePathConstraint } from '../pathConstraint';
+import { buildSubClassClosure, expandSuperClasses } from '../subClassClosure';
 import { ShaclValidationError } from '../error/ShaclValidationError';
 
 const { namedNode } = DataFactory;
@@ -37,6 +38,8 @@ export class ShapeValidationStore extends PassthroughStore {
   private readonly converter: RepresentationConverter;
   private readonly validator: ShapeValidator;
   private readonly pathConstraints: PathConstraintConfig[];
+  private readonly tboxPaths: string[];
+  private subClassClosure?: Map<string, string[]>;
   protected readonly logger = getLoggerFor(this);
 
   public constructor(
@@ -46,6 +49,7 @@ export class ShapeValidationStore extends PassthroughStore {
     converter: RepresentationConverter,
     validator: ShapeValidator,
     pathConstraints: PathConstraintConfig[] = [],
+    tboxPaths: string[] = [],
   ) {
     super(source);
     this.metadataStrategy = metadataStrategy;
@@ -53,6 +57,19 @@ export class ShapeValidationStore extends PassthroughStore {
     this.converter = converter;
     this.validator = validator;
     this.pathConstraints = pathConstraints;
+    this.tboxPaths = tboxPaths;
+  }
+
+  private getClosure(): Map<string, string[]> {
+    if (!this.subClassClosure) {
+      const quads = [];
+      for (const p of this.tboxPaths) {
+        try { quads.push(...new Parser().parse(readFileSync(p, 'utf8'))); }
+        catch (e) { this.logger.warn(`TBox load failed for ${p}: ${String(e)}`); }
+      }
+      this.subClassClosure = buildSubClassClosure(quads);
+    }
+    return this.subClassClosure;
   }
 
   public async addResource(identifier: ResourceIdentifier, representation: Representation, conditions?: Conditions): Promise<ChangeMap> {
@@ -207,7 +224,8 @@ export class ShapeValidationStore extends PassthroughStore {
       return;
     }
 
-    const result = evaluatePathConstraint(resourcePath, resourceClasses, this.pathConstraints);
+    const expanded = expandSuperClasses(resourceClasses, this.getClosure());
+    const result = evaluatePathConstraint(resourcePath, expanded, this.pathConstraints);
     if (!result.ok && result.violation) {
       const violatingClass = result.violation.forbiddenClass ?? result.violation.notInAllowList ?? '';
       const reportTurtle = await this.buildPathViolationReport(result.violation.message, violatingClass);

@@ -112,6 +112,10 @@
           "allowedClasses": [],
           "forbiddenClasses": ["https://pod.vardeman.me/vault/ontology/mem#Action"]
         }
+      ],
+      "tboxPaths": [
+        "/community-server/extensions/shape-validator/data/as-subclass-axioms.ttl",
+        "/community-server/extensions/shape-validator/data/mem.ttl"
       ]
     },
     {

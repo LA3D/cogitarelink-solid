@@ -36,4 +36,14 @@ describe('subClassClosure', () => {
     const closure = buildSubClassClosure([]);
     expect(expandSuperClasses(['urn:x'], closure)).toEqual(['urn:x']);
   });
+
+  it('root class that only appears as object of rdfs:subClassOf passes through unchanged', () => {
+    // as:Activity appears only as object (superclass), never as subject.
+    // expandSuperClasses must return it unchanged, not lose it.
+    const quads = new Parser().parse(AXIOMS);
+    const closure = buildSubClassClosure(quads);
+    const declared = ['https://www.w3.org/ns/activitystreams#Activity'];
+    const expanded = expandSuperClasses(declared, closure);
+    expect(expanded).toEqual(['https://www.w3.org/ns/activitystreams#Activity']);
+  });
 });

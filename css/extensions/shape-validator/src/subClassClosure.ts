@@ -2,7 +2,11 @@ import type { Quad } from '@rdfjs/types';
 
 const SUBCLASS = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
 
-/** Build class -> all transitive superclasses from rdfs:subClassOf quads. */
+/**
+ * Build class -> all transitive superclasses from rdfs:subClassOf quads.
+ * Assumes acyclic input; cycles are handled safely (a class may appear in
+ * its own ancestor set) but are not filtered.
+ */
 export function buildSubClassClosure(quads: Quad[]): Map<string, string[]> {
   const direct = new Map<string, Set<string>>();
   for (const q of quads) {
