@@ -1,6 +1,6 @@
 PYTHON := ~/uvws/.venv/bin/python
 
-.PHONY: up down reset status logs import test install clean
+.PHONY: up down reset status logs import test install clean sync-validator-tbox check-validator-tbox
 
 up:  ## Start everything (idempotent)
 	docker compose up -d
@@ -30,11 +30,20 @@ logs:  ## Tail all logs
 import:  ## Re-run pod-setup init service
 	docker compose run --rm pod-setup
 
-test:  ## Run Python tests
+test: check-validator-tbox  ## Run Python tests (also checks validator TBox bundle for drift)
 	$(PYTHON) -m pytest tests/ -v
 
 install:  ## Install Python project in dev mode
 	uv pip install -e ".[test]"
+
+sync-validator-tbox:  ## Copy canonical mem.ttl into the shape-validator extension data dir
+	cp overlays/wiki-memory/ontology/mem.ttl css/extensions/shape-validator/data/mem.ttl
+	cp overlays/wiki-memory/ontology/as-subclass-axioms.ttl css/extensions/shape-validator/data/as-subclass-axioms.ttl
+
+check-validator-tbox:  ## Fail if the bundled validator TBox copies have drifted from canonical
+	@diff -q overlays/wiki-memory/ontology/mem.ttl css/extensions/shape-validator/data/mem.ttl >/dev/null \
+	  && diff -q overlays/wiki-memory/ontology/as-subclass-axioms.ttl css/extensions/shape-validator/data/as-subclass-axioms.ttl >/dev/null \
+	  || (echo "ERROR: shape-validator data/ TBox drifted from overlays/wiki-memory/ontology/ — run 'make sync-validator-tbox'"; exit 1)
 
 clean:  ## Stop and destroy all data
 	docker compose down -v

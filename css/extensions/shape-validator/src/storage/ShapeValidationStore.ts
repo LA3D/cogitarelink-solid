@@ -6,7 +6,7 @@
 import type { Store } from 'n3';
 import { DataFactory, Parser, Writer } from 'n3';
 import { readFileSync } from 'fs';
-import type { Term } from 'rdf-js';
+import type { Quad, Term } from '@rdfjs/types';
 import type { AuxiliaryStrategy, IdentifierStrategy, Representation, ResourceIdentifier, Conditions, RepresentationConverter, ResourceStore, ChangeMap } from '@solid/community-server';
 import {
   BasicRepresentation,
@@ -62,7 +62,7 @@ export class ShapeValidationStore extends PassthroughStore {
 
   private getClosure(): Map<string, string[]> {
     if (!this.subClassClosure) {
-      const quads = [];
+      const quads: Quad[] = [];
       for (const p of this.tboxPaths) {
         try { quads.push(...new Parser().parse(readFileSync(p, 'utf8'))); }
         catch (e) { this.logger.warn(`TBox load failed for ${p}: ${String(e)}`); }

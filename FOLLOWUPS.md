@@ -2,6 +2,32 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## Shape-validator TBox bundle sync pattern (added 2026-05-23)
+
+`css/extensions/shape-validator/data/{mem,as-subclass-axioms}.ttl` are bundled copies
+of the canonical files at `overlays/wiki-memory/ontology/`. Bundling is structurally
+required: the Dockerfile COPYs only `extensions/shape-validator` into the image;
+`overlays/` is applied at runtime over HTTP and is never present inside the container.
+
+- **Sync**: `make sync-validator-tbox` copies canonical → bundle.
+- **Guard**: `make check-validator-tbox` fails if bundle has drifted. Wired as a
+  prerequisite of `make test` so drift is caught in every local test run. Run `make
+  sync-validator-tbox` before committing any change to the canonical ontology files.
+
+### getClosure() TOCTOU note
+
+`ShapeValidationStore.getClosure()` uses a lazy-init pattern (`if (!this.subClassClosure)`).
+Under concurrent first-writes — two requests hitting the store before the cache is warm —
+both will build an identical Map in parallel and the second assignment will overwrite the
+first with an equivalent value. This is benign under CSS's default single-threaded async
+model: Node.js event-loop interleaving cannot split between the `if (!this.subClassClosure)`
+check and the `this.subClassClosure = ...` assignment (no `await` in between). It would
+become a real TOCTOU only if CSS ever moves to Worker threads with shared state. If that
+ever applies, fix by caching a `Promise<Map<string, string[]>>` instead of the Map itself
+so concurrent callers await the same in-flight build.
+
+---
+
 ## Substrate audit + curator — option-B unified build (next session after 2026-05-23)
 
 **Status**: deferred to next session. Decision ratified as **D104 / vault-D99**. Phase A pilot report at `docs/plans/2026-05-23-phase-a-pilot-report.md` §5 has the full task breakdown.
