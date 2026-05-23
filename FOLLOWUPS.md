@@ -28,6 +28,17 @@ so concurrent callers await the same in-flight build.
 
 ---
 
+## Pod-audit: ClassExtensionShape inference caveat (2026-05-23)
+
+ClassExtensionShape must be validated with `inference="none"`. RDFS entailment adds
+`rdfs:subClassOf rdfs:Resource` to every `rdfs:Class`, which trivially satisfies the
+`sh:minCount 1` rooting check and makes rootless classes like `wiki:Bad` appear
+conforming. The test harness and the `sh:agentInstruction` both document this
+requirement. If pod-audit ever runs shape validation with inference enabled, it MUST
+explicitly set `inference="none"` for this shape.
+
+---
+
 ## Substrate audit + curator — option-B unified build (next session after 2026-05-23)
 
 **Status**: deferred to next session. Decision ratified as **D104 / vault-D99**. Phase A pilot report at `docs/plans/2026-05-23-phase-a-pilot-report.md` §5 has the full task breakdown.

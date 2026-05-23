@@ -110,7 +110,7 @@ SHACL_SPEC = URIRef("https://www.w3.org/TR/shacl/")
 
 
 @pytest.mark.parametrize("filename", [
-    "page.shacl.ttl", "concept.shacl.ttl", "person.shacl.ttl",
+    "page.shacl.ttl", "concept.shacl.ttl", "source.shacl.ttl", "person.shacl.ttl",
     "howto.shacl.ttl", "working.shacl.ttl",
 ])
 def test_shape_declares_conformsTo_shacl(filename):

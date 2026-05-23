@@ -1,8 +1,10 @@
 @prefix sh:    <http://www.w3.org/ns/shacl#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 @prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
 
 # ClassExtensionShape — the contract an agent-added content class must satisfy
 # to be admissible. Generalizes D100 (L4 extension) from containers to classes:
@@ -11,7 +13,13 @@
 wiki:ClassExtensionShape
     a sh:NodeShape ;
     rdfs:label "Class extension contract" ;
-    sh:agentInstruction """To add a new content kind: (1) declare it rdfs:subClassOf an existing class that reaches skos:Concept, schema:Thing, or wiki:Resource (rooting keeps the graph navigable); (2) author a SHACL NodeShape with sh:targetClass = your class that sh:node-s its parent's shape (constraint inheritance); (3) register the class -> container in the Type Index; (4) give it rdfs:label + rdfs:comment; (5) prefer a parent in a vocabulary the LLM already knows (skos/schema/AS2). Land the proposal in /vault/wiki/working/ first; it crystallizes after this shape validates and a higher-trust reviewer approves. The act is recorded as a mem: action with mem:rationale. See </vault/meta/extending-l3.md>.""" ;
+    rdfs:comment "SHACL meta-shape governing the class-extension contract (D100). A proposed class must rdfs:subClassOf an existing class, carry rdfs:label + rdfs:comment, and be registered in the Type Index. wiki:Source is the first worked example." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/extending-l3.md> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-23"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+    sh:agentInstruction """To add a new content kind: (1) declare it rdfs:subClassOf an existing class that reaches skos:Concept, schema:Thing, or wiki:Resource (rooting keeps the graph navigable); (2) author a SHACL NodeShape with sh:targetClass = your class that sh:node-s its parent's shape (constraint inheritance); (3) register the class -> container in the Type Index; (4) give it rdfs:label + rdfs:comment; (5) prefer a parent in a vocabulary the LLM already knows (skos/schema/AS2). Land the proposal in /vault/wiki/working/ first; it crystallizes after this shape validates and a higher-trust reviewer approves. The act is recorded as a mem: action with mem:rationale. See </vault/meta/extending-l3.md>. NOTE: validate with inference="none" — RDFS entailment trivially satisfies the rdfs:subClassOf rooting check by adding rdfs:Resource as superclass to every class.""" ;
     sh:property [
         sh:path rdfs:subClassOf ;
         sh:minCount 1 ;

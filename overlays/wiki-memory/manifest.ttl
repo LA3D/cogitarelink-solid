@@ -57,6 +57,8 @@
           overlay:hostedAt "/vault/meta/shapes/thing.shacl.ttl" ] ,
         [ overlay:document "shapes/concept.shacl.ttl" ;
           overlay:hostedAt "/vault/meta/shapes/concept.shacl.ttl" ] ,
+        [ overlay:document "shapes/source.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/source.shacl.ttl" ] ,
         [ overlay:document "shapes/person.shacl.ttl" ;
           overlay:hostedAt "/vault/meta/shapes/person.shacl.ttl" ] ,
         [ overlay:document "shapes/place.shacl.ttl" ;
@@ -109,6 +111,7 @@
 
     overlay:installsTypeRegistration
         [ solid:forClass skos:Concept   ; solid:instanceContainer </vault/wiki/concepts/> ] ,
+        [ solid:forClass wiki:Source     ; solid:instanceContainer </vault/wiki/concepts/> ] ,
         [ solid:forClass schema:Person   ; solid:instanceContainer </vault/wiki/people/> ] ,
         [ solid:forClass schema:Place    ; solid:instanceContainer </vault/wiki/places/> ] ,
         [ solid:forClass schema:Event    ; solid:instanceContainer </vault/wiki/events/> ] ,

@@ -38,6 +38,7 @@
     "tool":       { "@id": "schema:tool", "@container": "@set" },
     "Page":       "wiki:Page",
     "Concept":    "wiki:Concept",
+    "Source":     "wiki:Source",
     "MOC":        "wiki:MOC",
     "Person":     "wiki:Person",
     "WorkingNote":"wiki:WorkingNote",

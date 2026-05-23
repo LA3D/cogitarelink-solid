@@ -1,0 +1,30 @@
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix cito:   <http://purl.org/spar/cito/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+wiki:SourceShape
+    a sh:NodeShape ;
+    sh:targetClass wiki:Source ;
+    sh:node wiki:ConceptShape ;
+    rdfs:label "SHACL shape for wiki:Source" ;
+    rdfs:comment "Citation record / literature note. Inherits ConceptShape (skos + cito citation edges). Adds dct:identifier (DOI / arXiv ID / citekey). wiki:Source is the worked example of the class-extension contract: a skos:Concept subclass + this shape + a Type Index entry." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:seeAlso </vault/meta/shapes/class-extension.shacl.ttl> , </vault/meta/extending-l3.md> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-05-23"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+
+    sh:agentInstruction """Citation record / literature note. Inherits ConceptShape (skos + cito citation edges). Adds dct:identifier (DOI / arXiv ID / citekey). wiki:Source is the worked example of the class-extension contract: a skos:Concept subclass + this shape + a Type Index entry. See </vault/meta/shapes/class-extension.shacl.ttl>. Sources live in /vault/wiki/concepts/ alongside wiki:Concept resources (D98: sources-merged-into-concepts).""" ;
+
+    sh:property [
+        sh:path dct:identifier ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        rdfs:label "External identifier (DOI, arXiv ID, or citekey)"
+    ] .

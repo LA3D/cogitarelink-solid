@@ -54,19 +54,19 @@ wiki:Page
 
 wiki:Source
     a rdfs:Class ;
-    rdfs:subClassOf wiki:Resource ;
+    rdfs:subClassOf skos:Concept ;
     rdfs:label "Source" ;
     rdfs:isDefinedBy <> ;
-    rdfs:comment "Citation record. Default container is /vault/wiki/sources/. Represents an external work (paper, book, blog post, dataset) referenced by wiki content via dct:source or cito:cites." ;
-    skos:scopeNote "Use as rdf:type on resources in /vault/wiki/sources/ that record bibliographic metadata for external works. NOT used for internal cross-references between wiki resources — those are skos:related / wiki:extends / wiki:supports edges, not separate Source records." ;
+    rdfs:comment "Citation record / literature note. A skos:Concept subclass adding a required external identifier (DOI, arXiv ID, or citekey). Default container is /vault/wiki/concepts/. Represents an external work (paper, book, blog post, dataset) referenced by wiki content via dct:source or cito:cites. First worked example of the class-extension contract (D98)." ;
+    skos:scopeNote "Use as rdf:type on resources in /vault/wiki/concepts/ that record bibliographic metadata for external works. Inherits ConceptShape (skos + cito citation edges). NOT used for internal cross-references between wiki resources — those are skos:related / cito:extends / cito:agreesWith edges on the resource itself." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/sources/hu-2026-beyond-rag.md.meta>:
+        # In <https://pod.vardeman.me/vault/wiki/concepts/hu-2026-beyond-rag.md.meta>:
         <> a wiki:Source ;
-           dct:title "Beyond RAG: ..." ;
-           dct:creator <https://pod.vardeman.me/vault/wiki/people/hu-jian.md> ;
-           dct:date "2026"^^xsd:gYear .
+           skos:prefLabel "Beyond RAG: ..." ;
+           dct:identifier "arXiv:2601.00000" ;
+           dct:contributor <https://pod.vardeman.me/vault/wiki/people/hu-jian.md> .
     """ ;
-    rdfs:seeAlso </vault/wiki/sources/> , </vault/meta/shapes/source.ttl> .
+    rdfs:seeAlso </vault/wiki/concepts/> , </vault/meta/shapes/source.shacl.ttl> .
 
 wiki:Person
     a rdfs:Class ;
