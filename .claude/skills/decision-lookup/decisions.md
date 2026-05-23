@@ -923,6 +923,54 @@ The skill is the **map** that says "the manual is over there"; the affordance de
 
 **See also**: D55 (HATEOAS three-tier access — Tier 1 spec, Tier 2 descriptors, Tier 3 skills), D70 (L1/L2/L3 stratification), D52 (affordance descriptor architecture), D83 (Pod-as-toolkit capability catalog), D87 (wiki-search Phase 7a), D102 (Rung 1.5 redesign — eval framing that surfaced this).
 
+## Substrate is self-validating wiki-memory L3 content (D104, 2026-05-23)
+
+### D104 — Substrate self-description IS wiki-memory L3 content; SHACL guardrails + agent construction (2026-05-23)
+
+**Status**: Ratified 2026-05-23. Vault cross-reference: **vault-D99**.
+
+**The commitment**: the Pod's self-description (storage description, affordance descriptors, capability descriptors, JSON-LD context, Type Index, shape catalog) IS wiki-memory L3 content. Same patterns that govern vault concept/source/person pages apply to substrate-side resources. There is no separate "substrate" data model — it is wiki-memory L3 applied to its own self-description.
+
+**Two-layer architecture for substrate consistency**:
+
+1. **SHACL = guardrails**. Substrate-resource shapes declare required predicates, cardinality, dereferenceability, vocabulary membership. Pure rules, deterministic, fast. Produce structured violation reports. Cannot construct content, cannot judge intent.
+
+2. **Agent = construction**. The pod-curator agent reads violation reports and reasons about intent: composes prose, generates labels, decides between alternatives, fills in missing predicates. LLM reasoning. Expensive but intentful.
+
+**Feedback loop**: agent constructs → SHACL validates → violation report → curator agent reasons → patched substrate (via D73 two-stage commit) → re-validate.
+
+**One unified toolkit**: audit + curator + review work on both content-side (vault pages) and substrate-side (descriptors). The Phase B2 lint skill (task #10) collapses into the same build — it is all "agent reads SHACL violations and acts." Same skill body, different shape inputs.
+
+**Substrate-shape additions** (extend D77/D98 shape catalog):
+
+- `StorageDescriptionShape` — declares the catalogs, `rdfs:seeAlso` resolves, has entry-point `sh:agentInstruction`
+- `AffordanceDescriptorShape` — requires label, comment, agentInstruction, prof:hasRole, dispatchPattern, conformsTo
+- `AffordanceCatalogEntryShape` — labels + comments for narrowable discovery
+- `CapabilityDescriptorShape` — parallel to AffordanceDescriptorShape
+- `VocabularyDeclarationShape` — every `void:vocabulary` IRI must dereference
+
+**Decision cascade**:
+
+- D81 predicate-level governance applies to substrate predicates (the substrate-governed set extends)
+- D73 two-stage commit applies to substrate edits (curator-proposed fixes go through `working/`)
+- D74 `mem:*` triggers emit on substrate violations
+- D98 (skill bootstrapper) closes the loop — skills point at substrate descriptors as canonical; this decision ensures the descriptors ARE canonical
+- D87 wiki-search descriptor is the exemplary AffordanceDescriptor (all required fields present)
+
+**Phase A pilot evidence**: the 2026-05-23 pilot (iter-1 + iter-2) surfaced 18 substrate failure modes documented in `docs/plans/2026-05-23-phase-a-pilot-report.md`. They partition cleanly across SHACL-catchable (e.g., stale `rdfs:seeAlso`, missing labels), agent-required (e.g., writing entry-point agentInstruction prose), and hybrid (SHACL detects, agent fills). The partition is structural, not accidental — SHACL alone is insufficient (no intent reasoning), agent alone is insufficient (no clean completeness check).
+
+**Scope**:
+
+- Applies to all advertised substrate IRIs in the Pod
+- Future L4 overlays must publish corresponding substrate-resource shapes when adding new substrate types
+- Does not apply to: agent-runtime content traversal (same mechanism, different shape inputs), build-time SW CI
+
+**Next-session build** (option B per session-handoff doc, deferred):
+
+SHACL shapes (start with 2 exemplary: StorageDescription + AffordanceDescriptor); `pod-audit.py` walker (Python + pyshacl + cross-resource checks); `pod-curator` skill body (proof-of-concept agentic resolver against the 2 shapes); immediate sweep of 4 highest-priority failure modes (stale `rdfs:seeAlso`, missing affordance catalog labels, missing storage-description entry-point agentInstruction, OSLC parameter compliance map). ~3-4 hours focused work.
+
+**See also**: D55 (HATEOAS three-tier), D70 (L1/L2/L3 stratification), D73 (two-stage commit), D74 (`mem:*` triggers), D77 + D98 (shape catalog), D81 (predicate-level governance), D87 (wiki-search exemplary descriptor), D103 (skills bootstrap; substrate is the manual — this decision closes that loop), D102 (Rung 1.5 redesign — empirical grounding).
+
 ## Open research questions
 
 RQ-Affordance-1: descriptor format (declarative SHACL vs custom RDF vs hybrid)

@@ -2,6 +2,128 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## Substrate audit + curator — option-B unified build (next session after 2026-05-23)
+
+**Status**: deferred to next session. Decision ratified as **D104 / vault-D99**. Phase A pilot report at `docs/plans/2026-05-23-phase-a-pilot-report.md` §5 has the full task breakdown.
+
+**Architecture** (per D104): the Pod's self-description IS wiki-memory L3 content. SHACL shapes provide guardrails; an agentic curator provides construction. They feed each other through a violation-report → reasoning → patched-substrate loop. **One unified toolkit** (audit + curator + review) works on both content-side (vault pages) and substrate-side (descriptors). The Phase B2 lint skill collapses into the substrate-curator; build once.
+
+**Estimated**: ~3-4 hours focused next-session work.
+
+### Component 1 — Substrate-resource SHACL shapes
+
+Start with two exemplars:
+
+**`shapes/substrate/storage-description.shacl.ttl`** (StorageDescriptionShape):
+
+- Targets: `wiki:L3StorageDescription` (mint this class if not present) or `pim:Storage` via filter
+- Required predicates: `wiki:affordanceCatalog`, `wiki:typeIndex`, `wiki:contextDocument`, `wiki:shapeCatalog`, `wiki:profileDocument` (cardinality 1 each); `dct:conformsTo` (≥1)
+- `rdfs:seeAlso` constraint: targets must resolve. Either custom pyshacl extension (HTTP HEAD per target) OR post-validation cross-check in the walker
+- `sh:agentInstruction` required (cardinality 1, non-empty, ≥100 chars)
+- All `void:vocabulary` IRIs must be dereferenceable (cross-check)
+
+**`shapes/substrate/affordance-descriptor.shacl.ttl`** (AffordanceDescriptorShape):
+
+- Targets: `wiki:SearchAffordance`, `wiki:DerivedClassAffordance`, etc., via `sh:targetClass`. Or use `prof:ResourceDescriptor` as a parent and rely on `rdfs:subClassOf` inference
+- Required predicates: `rdfs:label` (xsd:string, cardinality 1, min length 3); `rdfs:comment` (cardinality 1, min length 20); `sh:agentInstruction` (cardinality 1, min length 100); `prof:hasRole` (cardinality 1, must be in wikirole concept scheme); `wiki:dispatchPattern` (cardinality 1, regex `^\?ext=[a-z-]+$`); `wiki:targetContainer` (IRI); `dct:conformsTo` (≥1)
+- `prof:hasRole` membership: cross-check against `/vault/ontology/wikirole`
+
+Defer (write when Phase B+ surfaces need):
+
+- `CapabilityDescriptorShape` (similar structure; targets `cap:Capability` subclasses)
+- `AffordanceCatalogEntryShape` (per-LDP-entry label/comment requirements)
+- `VocabularyDeclarationShape` (per `void:vocabulary` IRI)
+- `JSONLDContextShape` (the `/meta/context.jsonld`)
+- `TypeIndexShape` (the `/settings/publicTypeIndex`)
+
+### Component 2 — `pod-audit` walker
+
+`scripts/pod_audit.py`. Python + pyshacl + httpx. CLI usage:
+
+```bash
+~/uvws/.venv/bin/python scripts/pod_audit.py [POD_URL] [--shapes-dir shapes/substrate/] [--out-format json|markdown]
+```
+
+Behavior:
+
+1. GET `<POD>/vault/.well-known/solid` (Accept: text/turtle)
+2. Parse as RDF graph; locate the `pim:Storage` subject
+3. Validate against `StorageDescriptionShape` via pyshacl
+4. Cross-check: HEAD each declared catalog IRI (affordance/capability/context/type-index/shape); report 4xx/5xx
+5. HEAD each `rdfs:seeAlso` target; report 404s as ERROR
+6. GET affordance catalog; for each `ldp:contains` entry:
+   - GET the entry
+   - Validate against `AffordanceDescriptorShape`
+   - Cross-check: dispatch pattern matches a CSS extension handler (parse `css/config/*.json` to confirm)
+7. Emit structured findings (severity: ERROR / WARN / INFO; location: IRI; constraint: shape predicate or cross-check name; remediation: short hint)
+
+Output: JSON (machine-consumable, for the curator agent) + Markdown (human-readable). Non-zero exit on any ERROR.
+
+Hooks:
+
+- `Makefile`: `make audit` target invokes pod_audit.py against the running Pod
+- `make reset` chains `make audit` after `pod-setup`; ERROR findings fail the reset
+- CI (GitHub Actions or equivalent) runs `make reset` + `make audit` on every PR
+
+### Component 3 — `pod-curator` skill (proof-of-concept)
+
+Location: `solid-agent-skills/skills/pod-curator/SKILL.md`. Bootstrapper-form per D103 (~25-40 lines):
+
+- **When to use**: after `pod-audit` produces ≥1 ERROR or WARN; or in response to a `mem:*` substrate event
+- **Tool**: `solid-pod` CLI for substrate edits via N3 Patch; `pod-audit` for re-validation
+- **Pointer**: the substrate's SHACL shapes at `<pod>/meta/shapes/substrate/` are the canonical contract; the audit report (JSON) is the work queue
+- **Two-stage commit (D73)**: all curator proposals go to `/vault/working/curator-proposals/<timestamp>/`, NOT directly to the affected resource. Crystallize step requires human or higher-trust agent review
+- **Per-violation playbook**: 
+  - "Missing required predicate" + reconstructible from context → auto-propose
+  - "Stale reference (rdfs:seeAlso 404)" → propose update (read overlay manifests for new path) or removal
+  - "Missing intent-bearing prose" → compose by reading descriptor purpose + sibling examples
+  - Anything else → flag for review with diagnostic context
+
+Skill body refers to a long-form playbook at `solid-agent-skills/skills/pod-curator/playbook.md` (similar to how vault skills have references/ subdirs).
+
+### Component 4 — Immediate sweep (post-audit)
+
+After Components 1-3 land, run `pod-audit` against the live Pod and fix the highest-priority findings:
+
+- **Fix stale `rdfs:seeAlso`**: storage description currently lists `<../wiki/pages/>, <../wiki/sources/>, <../wiki/people/>, <../wiki/procedures/>, <../wiki/working/>`. After D98 8-shape, only `people/`, `procedures/`, `working/` exist; `pages/` → `concepts/`; `sources/` merged into `concepts/`. **Fix path**: either remove `rdfs:seeAlso` entirely (Type Index already lists containers — preferred), or update to the 8-shape list (`concepts/, people/, places/, organizations/, events/, procedures/, working/`).
+- **Add labels + comments to affordance catalog entries**: each `.ttl` file in `/vault/meta/affordances/` needs `.meta` predicates `rdfs:label` + `rdfs:comment`. Patch via N3 Patch to each entry's `.meta`. Curator agent can generate from descriptor content; first pass can be hand-curated.
+- **Add entry-point `sh:agentInstruction` to storage description**: compose prose. Suggested seed: *"Agents arriving at this Pod should first dereference `wiki:affordanceCatalog` to enumerate capabilities. Each capability lives at the named affordance descriptor; the descriptor's `sh:agentInstruction` is the canonical wire form. For taxonomic navigation (class → container routing), see `wiki:typeIndex`. For prefix → IRI resolution, see `wiki:contextDocument`. For SHACL shapes governing content, see `wiki:shapeCatalog`. The wiki-memory L3 profile this Pod conforms to is at `wiki:profileDocument`."*
+- **Document OSLC parameter compliance map**: for each affordance accepting OSLC parameters (currently just `wiki-search-grep.ttl`), declare `wiki:supportedParameters` (or similar predicate; design during this build) listing supported + 501-returning parameters. Generate from CSS handler code introspection.
+
+### Component 5 — Re-run Phase A pilot iter-3
+
+After Components 1-4 land, run iter-3 with **per-condition assertions**:
+
+- **With-skill** assertions: tests skill-usage efficiency. "Agent invoked `solid-pod wiki-search` without burning tool calls on bootstrap"; "agent did NOT redundantly fetch the affordance catalog (skill provided enough info)"; "outcome correct."
+- **Without-skill** assertions: tests cold-discovery. Same as iter-1/iter-2 (followed storage description → catalog → descriptor → invocation; used OSLC quoting; outcome correct).
+- **Both**: outcome correctness (count + URLs).
+
+Compare iter-3 against iter-1 + iter-2 via `generate_review.py --previous-workspace iteration-2`. The substrate sweep should ALSO improve without-skill efficiency (no 404s on stale `rdfs:seeAlso`, better narrowable catalog labels).
+
+### Component 6 (optional, time-permitting) — Skill audit pass
+
+If Components 1-5 finish with time to spare, audit the other skills in `solid-agent-skills/skills/` for D103 conformance:
+
+- `pod-discover/SKILL.md` (most relevant — cold-start orientation)
+- `solid-addressbook/SKILL.md`, `solid-wiki-memory-l3/SKILL.md`, `solid-owner-identity/SKILL.md`
+- Action skills (crystallize, demote, archive, supersede, merge, link)
+- Inbox skills (inbox-list, inbox-read, inbox-subscribe)
+
+For each: is the skill ≤25 lines? Does it point at the canonical substrate descriptor? Does it duplicate substrate content? Refactor as needed.
+
+### Dependencies + risks
+
+- **pyshacl HTTP-resolve constraint**: pyshacl doesn't natively dereference IRIs as part of validation. Either subclass the validator OR post-process with a separate walker that does the cross-checks. Latter is simpler.
+- **wikirole concept scheme**: shape constraint `prof:hasRole` membership requires the wikirole scheme at `/vault/ontology/wikirole` to be loadable + complete. Verify before relying on the constraint.
+- **Two-stage commit for substrate**: the `/vault/working/curator-proposals/` container doesn't exist yet. Create it during Component 3 work, with permissive shape per D73 working/ semantics.
+- **N3 Patch on `.meta`**: confirmed working from prior sprints (e.g., AddressBook overlay's `installsResourceMetaPatch`). Use the same pattern.
+
+### Subsumes earlier task #10 (Pod-side lint/audit/curator skill)
+
+Task #10 from the Rung 1.5 redesign session (filed as a Phase B2 prerequisite) collapses into this unified build. The pod-curator skill body (Component 3) IS the Phase B2 lint skill — same shape inputs, same reasoning loop, different work-queue source (audit report vs runtime `mem:*` event). Build once, apply to both.
+
+---
+
 ## Pod-hosted memory-structure UI for transparency (2026-05-22)
 
 The Pod runs on `localhost` (127.0.0.1 via `/etc/hosts`), so externally-hosted Solid apps (Penny, SolidOS at solidcommunity.net) only browse it via the user's own browser. Workable for read-only inspection, but not robust for end-users who need to see the substrate's memory structure (wikilinks, shapes, events, affordances, type-index, Memento history) at a glance.

@@ -337,6 +337,34 @@ tmpl-vocabulary v1.1).
   overlay/config tree. Anything done by hand to the live Pod that isn't
   represented there will be lost on the next machine.
 
+## Phase A pilot shipped + D98/D103, D99/D104 ratified (2026-05-23, later same day)
+
+After the Rung 1.5 design landed earlier this session, executed the full Phase A pilot end-to-end across two iterations, surfaced 18 substrate failure modes, and ratified two follow-on architectural decisions.
+
+**Phase A pilot results (iter-1 → iter-2)**:
+
+- Fixtures: 10-page wiki-memory L3 corpus seeded via `scripts/load_pilot_fixtures.py`, spanning agentic-memory + agentic-engineering + harness-engineering themes with hub structure (wiki-memory + karpathy-andrej as 3+ incoming edge hubs)
+- Iter-1: 4 subagents (2 prompts × 2 conditions) + 4 judges; with-skill 67% pass, without-skill 100% pass, with-skill saved 10.2s + 5148 tokens; pass-rate gap was assertion-design (with-skill correctly skipped cold-discovery)
+- Iter-2: same prompts after refactoring wiki-search SKILL.md to bootstrapper form (commit `09acfd9`) + fixing CLI installability (commit `a308d80`, `npm link` + chmod build script); with-skill wall-clock dropped 22% (32.1s → 25.0s); 4-tool-call clean trajectory on eval-1 with-skill
+- All artifacts committed to `solid-agent-skills/eval-workspace/pilot-wiki-search/{iteration-1,iteration-2}/`
+- **Positive datapoint for RQ-Discovery-1**: cold-start agents successfully navigated storage description → affordance catalog → wiki-search-grep descriptor → invocation, using only standard Solid/LDP/OSLC conventions
+
+**Decisions ratified this session**:
+
+- **D97 / vault-D99 (actually D98 in vault)** — wait, let me clarify the numbering. Decision sequence ratified today: D102 (Rung 1.5 redesign, repo) → D103 (skills bootstrap, repo) → D104 (substrate is self-validating, repo). Vault counterparts: D97 (Rung 1.5) → D98 (skills bootstrap) → D99 (substrate self-validating).
+- **D98 / vault-D98 (skills bootstrap)** — skills under `solid-agent-skills/skills/` are minimal bootstrappers (~15-25 lines) that route the agent, name the tool, and point at the canonical specification on the Pod (the affordance descriptor at `/vault/meta/affordances/<name>.ttl` with `sh:agentInstruction` as source of truth). Skills do not duplicate substrate content. Validated by iter-2 (22% efficiency gain).
+- **D104 / vault-D99 (substrate is self-validating wiki-memory L3 content)** — the Pod's self-description IS wiki-memory L3 content. SHACL provides guardrails (machine-checkable: missing predicates, stale references, vocabulary membership). Agent provides construction (intent: composing prose, generating labels, deciding between valid alternatives). Feedback loop: agent constructs → SHACL validates → violation report → curator agent reasons → patched substrate. **One unified curator/audit/review toolkit** works on both content-side and substrate-side concerns. Phase B2 lint skill collapses into the substrate-curator (build once).
+
+**18 substrate failure modes surfaced** (full breakdown in `docs/plans/2026-05-23-phase-a-pilot-report.md` §4). Partition: SHACL-catchable (missing labels, stale rdfs:seeAlso, undereferenceable vocabs), agent-required (writing entry-point agentInstruction prose, multi-affordance discrimination at scale, synthesis-page bypass), hybrid (most cases — SHACL detects, agent fills).
+
+**The CLI installability gap** (root cause of iter-1 with-skill friction): `solid-agent-skills/package.json` declared `bin: { "solid-pod": "./dist/cli.js" }` but `npm link` had never been run and `dist/cli.js` lacked the exec bit. Fixed: `chmod +x dist/cli.js && npm link` (one-time per machine) — the build script now sets the exec bit; README documents the install requirement; the symlink lands in `/opt/homebrew/bin/solid-pod` which subagents inherit on default PATH.
+
+**Trajectory capture pattern** (durable architectural finding): Claude Code persists full subagent JSONL trajectories automatically at `~/.claude/projects/<project-slug>/<parent-session-uuid>/subagents/agent-<hash>.jsonl`, discoverable by description-grep on .meta.json sidecars. Subsumes the originally-planned subagent self-logging design. **No `type: "thinking"` blocks** in subagent trajectories — by design, per the architectural reading that Claude Code subagents are workhorses; thinking lives in the parent orchestrator and in the post-hoc judge. RQ-Eval-4 filed.
+
+**Next session — option-B unified build** (~3-4 hours): SHACL shapes for substrate resources (start with 2 exemplars: StorageDescription + AffordanceDescriptor), `pod-audit.py` walker, `pod-curator` skill body (proof-of-concept), immediate sweep of 4 highest-priority failure modes (stale `rdfs:seeAlso`, missing catalog entry labels, missing storage-description entry-point agentInstruction, OSLC parameter compliance map), then re-run Phase A pilot iter-3 with per-condition assertions. Full task breakdown in `FOLLOWUPS.md` "Substrate audit + curator" section and in the pilot report §5.
+
+---
+
 ## Rung 1.5 redesign — Design Landed (2026-05-23)
 
 The Rung 1.5 evaluation framing was redesigned in a planning session. Original
