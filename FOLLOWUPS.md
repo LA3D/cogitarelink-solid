@@ -2,6 +2,13 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## mem-operation in-resource provenance collides with the projection listener (RQ-Listener-1; surfaced 2026-05-23)
+
+The 6 `tests/integration/test_mem_operations.py` e2e tests (crystallize/supersede/merge/demote/archive/link) FAIL after the D98 test-path migration (`pages/`→`concepts/`). Root cause is **not** a regression — it's RQ-Listener-1: the `MarkdownProjectionListener` regenerates `.meta` on write and **overwrites `<subject> prov:wasGeneratedBy`** with its own activity (`</meta/affordances/markdown-projection>`). The agent's manually-PATCHed `<subject> prov:wasGeneratedBy <#action>` edge is clobbered; the activity node itself (`<#action> a mem:LinkAction`) persists, but the subject no longer points at it. The tests passed against the old `pages/` container (different/no projection); `concepts/` gets full D71 projection, exposing the collision. Verified by direct probe (PUT concept + PATCH `.meta` → readback shows projection's wasGeneratedBy, not the agent's).
+
+**The real finding:** agent-asserted memory-operation provenance and the substrate's projection both claim the *same* governed predicate (`prov:wasGeneratedBy`) on the content resource. `mem.ttl` actually prescribes recording actions via an `as:Announce` to `/vault/wiki/.operations/` (which now works — the 422 is fixed) **in addition to** the in-resource `prov:wasGeneratedBy`. Options to resolve: (a) fix RQ-Listener-1 so the projection preserves agent-asserted `prov:wasGeneratedBy` (pre-write read/merge — see `docs/plans/2026-05-15-rq-listener-1-mitigation-design.md`); (b) rework the e2e tests to assert operation provenance from the `.operations/` announcement rather than the content resource's `.meta`; (c) use a non-governed predicate for agent operation provenance. Until then, these 6 tests should be xfailed with this reason rather than left silently red. Decision pending.
+
+
 ## Shape-validator TBox bundle sync pattern (added 2026-05-23)
 
 `css/extensions/shape-validator/data/{mem,as-subclass-axioms}.ttl` are bundled copies
