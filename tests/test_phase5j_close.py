@@ -110,8 +110,8 @@ SHACL_SPEC = URIRef("https://www.w3.org/TR/shacl/")
 
 
 @pytest.mark.parametrize("filename", [
-    "page.shacl.ttl", "source.shacl.ttl", "person.shacl.ttl",
-    "procedure.shacl.ttl", "working.shacl.ttl",
+    "page.shacl.ttl", "concept.shacl.ttl", "person.shacl.ttl",
+    "howto.shacl.ttl", "working.shacl.ttl",
 ])
 def test_shape_declares_conformsTo_shacl(filename):
     g = Graph()
@@ -134,7 +134,7 @@ def test_wiki_vocab_declares_conformsTo_rdfs():
     assert (vocab, DCT.conformsTo, RDFS_SPEC) in g
 
 
-@pytest.mark.parametrize("name", ["page", "concept", "source", "person", "procedure", "working"])
+@pytest.mark.parametrize("name", ["page", "concept", "howto", "person", "procedure", "working"])
 def test_profile_descriptor_declares_conformsTo_prof(name):
     g = Graph()
     g.parse(PROFILES_DIR / f"{name}.ttl", format="turtle")

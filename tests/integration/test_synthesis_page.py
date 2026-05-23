@@ -98,8 +98,8 @@ def test_all_wiki_memory_shape_agent_instructions_reference_synthesis():
     LDP_CONTAINS = URIRef("http://www.w3.org/ns/ldp#contains")
 
     WIKI_MEMORY_SHAPES = {
-        "page.shacl.ttl", "source.shacl.ttl", "person.shacl.ttl",
-        "procedure.shacl.ttl", "working.shacl.ttl", "resource.shacl.ttl",
+        "page.shacl.ttl", "concept.shacl.ttl", "person.shacl.ttl",
+        "howto.shacl.ttl", "working.shacl.ttl", "resource.shacl.ttl",
     }
 
     r = httpx.get(f"{POD}meta/shapes/",
