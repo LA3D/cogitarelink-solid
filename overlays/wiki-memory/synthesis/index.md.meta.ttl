@@ -23,9 +23,10 @@
                 <https://pod.vardeman.me/vault/meta/profiles/> ,
                 <https://pod.vardeman.me/vault/wiki/.operations/> ,
                 <https://pod.vardeman.me/vault/wiki/.events/> ,
-                <https://pod.vardeman.me/vault/wiki/working/> ,
                 <https://pod.vardeman.me/vault/wiki/concepts/> ,
-                <https://pod.vardeman.me/vault/wiki/sources/> ,
                 <https://pod.vardeman.me/vault/wiki/people/> ,
+                <https://pod.vardeman.me/vault/wiki/places/> ,
+                <https://pod.vardeman.me/vault/wiki/events/> ,
+                <https://pod.vardeman.me/vault/wiki/organizations/> ,
                 <https://pod.vardeman.me/vault/wiki/procedures/> ,
-                <https://pod.vardeman.me/vault/wiki/pages/> .
+                <https://pod.vardeman.me/vault/wiki/working/> .
