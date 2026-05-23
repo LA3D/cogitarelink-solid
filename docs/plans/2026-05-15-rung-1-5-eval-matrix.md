@@ -1,8 +1,10 @@
 # Rung 1.5 Eval Matrix — Prioritize the Unknown
 
+> **⚠ SUPERSEDED (2026-05-23)** — Replaced by `docs/plans/2026-05-23-rung-1.5-redesign-design.md` per **vault-D97 / repo-D102**. The four E-experiments (E1 affordance discovery / E2 schema interpretation / E3 round-trip consistency / E4 in-band class-hint value) were framed as narrow technical hypotheses; the redesign reframes Rung 1.5 as an engineering-feedback loop with L1/L2/L3 question axes. Some of the E-experiments' concerns (notably E3 round-trip consistency) survive into the new design as **measurement axes** rather than experiments. This doc is retained as historical input.
+
 **Surfaced**: 2026-05-15 evening
 **Revised**: 2026-05-15 evening (second revision — corrected cost framing + reprioritized around actual unknowns)
-**Status**: Plan — execution-ready via Claude Code skill-creator harness
+**Status**: Superseded by 2026-05-23 redesign. Originally: Plan — execution-ready via Claude Code skill-creator harness.
 **Relates to**: H-D82, D44, D52, D58, D71, D77, D78, D81, RQ-Listener-1, RQ-Affordance-2/3/4, RQ-Hub-1, RQ-Discovery-1
 **Sibling docs**: `2026-05-15-d82-listener-extension-plan.md`, `2026-05-15-akbp-to-w3c-mapping.md`; vault `[[Affordance Spectrum for Agentic Memory]]`
 

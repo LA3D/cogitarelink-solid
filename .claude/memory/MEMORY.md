@@ -337,24 +337,104 @@ tmpl-vocabulary v1.1).
   overlay/config tree. Anything done by hand to the live Pod that isn't
   represented there will be lost on the next machine.
 
+## Rung 1.5 redesign — Design Landed (2026-05-23)
+
+The Rung 1.5 evaluation framing was redesigned in a planning session. Original
+three-condition framing (B1 filesystem / B2 brute-force Pod / T Pod-harness)
+dropped; replaced with an engineering-feedback loop testing L1/L2/L3 axes +
+multi-Pod federation. **No code shipped this session — only design.**
+
+Ratified **D97** (vault) / **D102** (repo) — Rung 1.5 reframed as L1/L2/L3
+engineering evaluation.
+
+**Why the reframe**:
+- Pod-as-substrate is settled; filesystem-baseline is comparing to a non-option
+- Wiki-memory L3 is stipulated good (three-tradition convergence); the question
+  shifts from "is the L3 right?" to "do agents use it correctly?"
+- L2 invariants have been treated as axioms but never measured. The canonical
+  L2 doc (`Memory Substrate vs Memory Profile.md`) explicitly defers operational
+  details to "Rung 1.5+ evaluation" — this rung cashes that in
+- The original T condition was "one harness skill"; we now have a multi-skill
+  suite, so T = "agent equipped with skill X" — exactly what skill-creator's
+  harness measures
+- Karpathy's three operations (Ingest / Query-with-file-back / Lint) make the
+  *compounding* claim explicit. Retrieval-only or creation-only evals can't
+  observe compounding; the round-trip is the actual measurement
+- Multi-Pod federation has nowhere to land in the old design but is the obvious
+  next engineering question (matches RQ-Substrate-4)
+
+**Three measurement axes** (new):
+- Trajectory (self-logged `trajectory.jsonl` per subagent)
+- Outcome (skill-creator native grader — tokens, duration, output-assertion pass rate)
+- Round-trip consistency (paired create + retrieve — verifies compounding directly)
+
+**Phase sequence** (A pilot → A full → C → B1 → B2 → D):
+- A: wiki-search retrieval at current scale
+- C: scale extension *before* the B subdivision; informs B design
+- B1: Karpathy Ingest + Query-with-file-back, runnable now
+- B2: Karpathy Lint, gated on Pod-side lint skill (not yet built)
+- D: multi-Pod federation, gated on second Pod + federation skill
+
+**Build queue surfaced by the design**:
+- Pod-side lint/audit/curator skill (analogous to vault `/audit` + `/curator` +
+  `/review-note`) — gates Phase B2. Build trigger: Phase A or C surfacing
+  specific failure modes that lint catches. Not built prophylactically.
+- Federation skill — gates Phase D. Design after Phase C lands evidence on
+  what federation needs to support.
+
+**Design doc** (durable engineering artifact):
+`docs/plans/2026-05-23-rung-1.5-redesign-design.md`
+
+**Superseded docs**:
+- `docs/plans/2026-05-15-rung-1-5-eval-matrix.md` (v2 matrix; useful as
+  historical input but no longer canonical)
+- `docs/plans/2026-05-15-rung-1-5-session-handoff.md` (handoff doc; same)
+
+**Substrate-behavior input** (back-of-envelope evidence already gathered):
+`~/Obsidian/obsidian/retrieve-workspace/iteration-1/benchmark.json` — vault
+retrieval eval via skill-creator pattern. Confirms the harness works
+end-to-end at meaningful scale and produces measurable with-skill vs
+without-skill deltas on a non-trivial L3.
+
 ## Next plans (post-Shape-Completion-Sprint)
 
 In dependency order:
 
 1. ~~**MemTriggerListener detector wiring**~~ — closed 2026-05-21 (D101). See Closed section below.
 
-2. **Rung 1.5 eval** (after #1). Skill-creator harness, with-skill vs
-   without-skill. First measurable claim from the active plan. Tests
-   solid-addressbook + solid-wiki-memory-l3 + solid-owner-identity +
-   wiki-search + the 6 new action skills + the 3 new inbox skills against
-   cold-start agents. Eval surfaces which caps + affordances actually get
-   reused vs which are YAGNI, informing FOLLOWUPS trim list. **Also surfaces
-   evidence for the credential-model design** that gates un-stubbing the six
-   `TestWacScenarios` (see Phase 7a closeout).
+2. **Rung 1.5 — Phase A pilot** (entry point per D97 redesign, 2026-05-23).
+   skill-creator harness with-skill vs without-skill on wiki-search. Two task
+   prompts initially (literal-substring find + paged retrieval). Trajectory
+   capture via `trajectory.jsonl` self-logging + separate behavior judge
+   reading the trajectory. Decision criterion: if both agents complete both
+   tasks and the trajectory + behavior judge produce useful signal, Phase A
+   proceeds with the full task suite. Otherwise harness gets fixed first.
+   See `docs/plans/2026-05-23-rung-1.5-redesign-design.md` §9 for the pilot
+   specification.
+
+3. **Rung 1.5 — Phase C (scale extension)** runs *before* the B1/B2 split.
+   Vault import preferred (real semantic diversity, real hub/dead-end
+   distribution) over synthetic expansion. Phase C output informs B
+   subdivision.
+
+4. **Rung 1.5 — Phase B1 (Karpathy Ingest + Query-with-file-back)** —
+   round-trip paired tasks (create + retrieve) against existing skill suite
+   (solid-addressbook, solid-wiki-memory-l3 Person creation, wiki-search for
+   the retrieval half). Compounding observation: does fan-out happen, or do
+   agents dump everything into one page?
+
+5. **Rung 1.5 — Phase B2 (Karpathy Lint)** — gated on building a Pod-side
+   lint/audit/curator skill (analogous to vault `/audit` + `/curator` +
+   `/review-note`). Build trigger: A or C surfacing failure modes that lint
+   catches. Don't build prophylactically.
+
+6. **Rung 1.5 — Phase D (multi-Pod federation)** — second Pod fixture +
+   federation skill (likely new build). Cross-Pod discovery, queries,
+   identity, indexing. Operationalizes RQ-Substrate-4.
 
 Phase 7b/c/d (engine swap, hybrid RRF, in-pod index) are deferred until
 Rung 1.5 evidence justifies. Wiki URI scheme rethink (per FOLLOWUPS) slots
-between #1 and #2 if picked up.
+in if surfaced by Phase A or C.
 
 ### Closed (2026-05-21)
 
@@ -455,13 +535,46 @@ Worth remembering across sessions:
   Implementation triggers on Rung 1.5 evidence or a concrete VC-gated
   access use case.
 
-## Active focus — Rung 1.5 (next round)
+## Active focus — Rung 1.5 (redesigned 2026-05-23 per D97 / repo-D102)
 
-First measurable evaluation. Conditions: B1 filesystem baseline / B2 brute-force
-Pod / T Pod-harness. Task classes: typed-edge navigation, citation traversal,
-temporal navigation. Reuses cogitarelink-fabric eval harness + OpenProse
-navigator+judge pattern. See Active Plan (vault) for the full Rung 1.5
-design (when written).
+**Reframed as engineering feedback loop, not claim-proof experiment.** The artifact is a Pod
+design that demonstrably works, not a publication. Original B1/B2/T framing dropped.
+
+**Stipulated** (not under test): Pod-as-substrate (filesystem dropped — not a real option for
+multi-machine/multi-agent use); wiki-memory L3 as canonical profile (three-tradition
+convergence + D98 8-shape catalog); skills + structured memory both required.
+
+**Under test** (engineering questions by L-layer):
+- **L1**: do agents use Solid features (storage description, Link headers, Solid-OIDC, Memento, LDN)?
+- **L2**: are the seven invariants (bounded branching, tiered retrieval, lifecycle metadata,
+  explicit + implicit signals, hybrid storage, separable procedural memory, OOD honesty)
+  from `Memory Substrate vs Memory Profile.md` observable in agent behavior? (The L2 doc
+  explicitly defers operational details to "Rung 1.5+ evaluation"; this rung cashes that in.)
+- **L3 instance**: which specific wiki-memory L3 affordances earn their keep? Which are YAGNI?
+- **L3 Karpathy 3 ops**: do agents Ingest with fan-out, Query-with-file-back, and Lint
+  correctly? Does the wiki *compound*?
+- **Multi-Pod federation**: when 2+ Pods, does L2-shared / L3-differing federation work?
+
+**Three measurement axes**: trajectory (self-logged `trajectory.jsonl`), outcome
+(skill-creator native grader), round-trip consistency (paired create+retrieve verifies
+compounding). A creation task that passes outputs but fails round-trip retrieval is the
+diagnostic-most finding — substrate design failure, not agent failure.
+
+**Phase sequence** (committed; B subdivision provisional):
+- A pilot → A full (wiki-search retrieval)
+- C (scale extension, vault import preferred — informs B design)
+- B1 (Karpathy Ingest + Query-with-file-back, runnable now)
+- B2 (Karpathy Lint, gated on Pod-side lint skill not yet built)
+- D (multi-Pod federation, needs second Pod + federation skill)
+
+**Pilot-first**: single Phase A pilot shakes down the harness before scaling.
+
+**Reference docs**:
+- Design doc (durable engineering artifact): `docs/plans/2026-05-23-rung-1.5-redesign-design.md`
+- Decision: D102 (this repo) / vault-D97
+- Canonical L2 source: `Memory Substrate vs Memory Profile.md` (vault)
+- Karpathy framing: `Karpathy - Agentic Wiki Design Document.md` (vault)
+- Superseded: `docs/plans/2026-05-15-rung-1-5-eval-matrix.md`, `2026-05-15-rung-1-5-session-handoff.md`
 
 ## Standards-stack caveats (Phase 5j)
 

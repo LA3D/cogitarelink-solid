@@ -1,6 +1,10 @@
 # Rung 1.5 Eval — Session Handoff
 
-**Purpose**: hand off the Rung 1.5 eval work to a fresh session. Captures where we are, what was decided, and what to do next.
+> **⚠ SUPERSEDED (2026-05-23)** — The Rung 1.5 framing in this doc was redesigned per **vault-D97 / repo-D102**. The original three-condition matrix (B1 filesystem / B2 brute-force / T Pod-harness) and the Strategy A/B sequencing are no longer the design. See `docs/plans/2026-05-23-rung-1.5-redesign-design.md` for the current engineering-feedback-loop framing (L1/L2/L3 axes, three measurement axes including round-trip consistency, A → C → B1 → B2 → D phase sequence).
+>
+> The "spec corrections" findings (Penfield misattribution, ByteRover overreach, AKBP architecture) and the hypothesis-downgrade work (H-D82, D77, D78, D81 as v1 design choices) **remain valid** and continue to inform the current design. This doc is retained for that historical context — but do not use its eval-matrix sections as a plan.
+
+**Purpose** (original — superseded by D97): hand off the Rung 1.5 eval work to a fresh session. Captures where we are, what was decided, and what to do next.
 
 **Origin session**: 2026-05-15 evening — long working session covering primary-source audit + spec corrections + eval matrix design (twice).
 

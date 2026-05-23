@@ -188,17 +188,17 @@ H-D82 (HYPOTHESIS, not ratified decision): **Dual body affordance + W3C vocabula
 - Substitution candidates: `wiki:confidence` → `cred:credibility`; `wiki:supersedes` → `dct:isReplacedBy`; `wiki:contradicts` → `prov:wasInvalidatedBy` or `cito:disagreesWith`; lifecycle status → SKOS concept scheme; entity types → existing FOAF/schema.org/SKOS classes.
 - Direct N3 PATCH to `.meta` (level 6) as escape hatch.
 
-**Why hypothesis-not-decision**: AKBP (a primary source of the affordance framing) is itself unmeasured. The 0–6 affordance spectrum is useful *design vocabulary* but predicts no measurement outcome. Ratifying H-D82 without eval data would label speculation as commitment. **D77/D78/D81 are also v1 choices, not ratified decisions** — same epistemological status as H-D82; all tested in the Rung 1.5 eval matrix.
+**Why hypothesis-not-decision**: AKBP (a primary source of the affordance framing) is itself unmeasured. The 0–6 affordance spectrum is useful *design vocabulary* but predicts no measurement outcome. Ratifying H-D82 without eval data would label speculation as commitment. **D77/D78/D81 are also v1 choices, not ratified decisions** — same epistemological status as H-D82; the redesigned Rung 1.5 (D102, 2026-05-23) is the empirical test.
 
-**Implementation gates** (ALL must hold before listener extension code lands):
-1. **Rung 1.5 E1 must show affordances work** — if cold-start affordance discovery (E1: A1.1 vs A1.2 vs A1.3) shows the affordance architecture doesn't actually help agents navigate, the entire wiki-memory L3 direction is in doubt and H-D82.b is moot.
-2. **Rung 1.5 E4 must support H-D82.a** — if body class-hints `{.class}` don't add value over frontmatter typing, then inline JSON-LD blocks (which build on the same in-band typing thesis) won't either.
+**Implementation gates** (ALL must hold before listener extension code lands; gates updated per D102 redesign):
+1. **Rung 1.5 Phase A must show affordances work** — if cold-start affordance utilization (Phase A trajectory + behavior judge against `wiki-search` and the affordance catalog) shows the affordance architecture doesn't actually help agents navigate, the entire wiki-memory L3 direction is in doubt and H-D82.b is moot.
+2. **Rung 1.5 Phase B1 must support H-D82.a** — if body class-hints `{.class}` don't add value over frontmatter typing during Karpathy Ingest + Query-with-file-back round-trip tasks, then inline JSON-LD blocks (which build on the same in-band typing thesis) won't either.
 3. **RQ-Listener-1 mitigation chosen and shipped** — agent triples must survive body rewrites.
-4. **Rung 1.5 E5 (conditional) must show inline JSON-LD adds value** beyond class-hints. If not, ship class-hints as final, document the negative result.
+4. **Inline JSON-LD value (conditional, separate study)** — if H-D82 is ever revisited as a listener-extension proposal, a separate eval must show inline JSON-LD adds value beyond class-hints. If not, ship class-hints as final, document the negative result.
 
-See `docs/plans/2026-05-15-rung-1-5-eval-matrix.md` for the experiment-by-experiment specification, decision rules, and sequencing (Pilot → E3 gate → E1 → E2 → E4 → optionally E5). Total ~210 sub-agent runs via Claude Code skill-creator harness; no per-token billing (folded into existing subscription).
+The original four-E-experiment matrix (`docs/plans/2026-05-15-rung-1-5-eval-matrix.md`, superseded 2026-05-23) is retained for historical input. Current design: `docs/plans/2026-05-23-rung-1.5-redesign-design.md`.
 
-**See also**: [[Affordance Spectrum for Agentic Memory]] (foundational design vocabulary, also reframed as hypothesis-bearing); `docs/plans/2026-05-15-d82-listener-extension-plan.md` (implementation design, eval-gated); `docs/plans/2026-05-15-akbp-to-w3c-mapping.md` (vocabulary translation table, structurally correct; behavioral claims pending eval); `docs/plans/2026-05-15-rung-1-5-eval-matrix.md` (the eval matrix that tests this hypothesis along with D77/D78/D81 et al).
+**See also**: [[Affordance Spectrum for Agentic Memory]] (foundational design vocabulary, also reframed as hypothesis-bearing); `docs/plans/2026-05-15-d82-listener-extension-plan.md` (implementation design, eval-gated); `docs/plans/2026-05-15-akbp-to-w3c-mapping.md` (vocabulary translation table, structurally correct; behavioral claims pending eval); `docs/plans/2026-05-23-rung-1.5-redesign-design.md` (current Rung 1.5 design that tests this hypothesis along with D77/D78/D81 et al).
 
 ## Phase 5i — Substrate cleanup + Pod-as-toolkit framing (2026-05-15 / 2026-05-16)
 
@@ -832,6 +832,53 @@ Durable substrate constraints surfaced during the Phase G integration tests. Com
 2. **Live Type Index is the canonical dispatch oracle** — the `MarkdownProjectionListener` resolves the Thing class via the live Type Index at `/vault/settings/publicTypeIndex` (refresh-on-miss + hardcoded fallback). This means: (a) L4 overlays get full substrate treatment immediately upon Type Index registration without restarting CSS; (b) container rename without Type Index update silently breaks projection (no error, just no `<#this>` triples). D78 class-based dispatch is the governing decision; this finding is an implementation alignment note.
 
 3. **FAIR metadata invariant — D38 `resource.shacl.ttl` exempted** — the cross-batch `test_fair_metadata_present.py` test explicitly exempts `resource.shacl.ttl` as a pre-D97 artifact. Future sessions: do not use `resource.shacl.ttl` as a style reference for new shape files; use any of the 8 D98 shapes instead. Retrofit is pending — see FOLLOWUPS.md.
+
+## Rung 1.5 redesign (D102, 2026-05-23)
+
+### D102 — Rung 1.5 reframed as L1/L2/L3 engineering evaluation (2026-05-23)
+
+**Status**: Ratified 2026-05-23. Vault cross-reference: **vault-D97**.
+
+**The reframe**: Rung 1.5 is no longer a claim-proof experiment ("Tier-2 Pod beats brute-force"). It is an engineering feedback loop for designing a good agentic memory Pod. The artifact is not a publication; it is a Pod design that demonstrably works.
+
+**Stipulated (no longer under test)**:
+
+- **Pod-as-substrate**: settled. Filesystem-baseline (B1 in the prior v2 matrix) is dropped — filesystem can't share or carry multiple agentic harnesses; comparing the chosen substrate to a non-option doesn't inform engineering.
+- **Wiki-memory L3 as canonical memory profile**: stipulated good based on the three-tradition convergence (Karpathy/Ghumare/AKBP, ByteRover/xMemory/Hindsight, Hermes/Supermemory). The eight-shape catalog (D98) is settled.
+- **Skills + structured memory both required**: back-of-the-envelope evidence in the vault `retrieve-workspace/iteration-1/` runs shows meaningful with-skill vs without-skill deltas on a non-trivial L3.
+
+**Under test — the engineering questions, organized by L-layer**:
+
+| Axis | Engineering question |
+|---|---|
+| L1 — Solid Pod | Do agents use Solid features (storage description, Link headers, Solid-OIDC, Memento, LDN) when appropriate? Conformance is W3C-tested; agentic utilization is not. |
+| L2 — Memory substrate | Are the seven invariants (bounded branching, tiered retrieval, lifecycle, explicit + implicit signals, hybrid storage, separable procedural memory, OOD honesty) observable in agent behavior? The canonical L2 doc (`Memory Substrate vs Memory Profile.md`) explicitly defers operational details to "Rung 1.5+ evaluation." |
+| L3 — Wiki-memory instance | Which specific L3 affordances do agents use vs ignore? Which are YAGNI? |
+| L3 — Karpathy 3 ops | Do agents perform Ingest (with fan-out), Query-with-file-back, and Lint correctly? Does the wiki *compound*? |
+| Multi-Pod | When 2+ Pods, does federation across L2-shared / L3-differing Pods work? |
+
+**Methodology**:
+
+- **Three measurement axes**: trajectory (self-logged `trajectory.jsonl`), outcome (skill-creator's native grader), round-trip consistency (paired create + retrieve verifies the compounding claim).
+- **Behavior judge** separate from output grader — reads trajectories, emits assertions attributed to L-layer.
+- **Round-trip consistency as diagnostic axis**: a creation task that passes outputs but fails its round-trip retrieval is direct evidence of a create-side / read-side affordance mismatch (substrate design failure, not agent failure).
+- **B1/B2 split**: Phase B (creation) divides into B1 (Karpathy Ingest + Query-with-file-back, runnable now) and B2 (Karpathy Lint, gated on a Pod-side lint skill being built).
+- **A → C → B1 → B2 → D sequencing**: Phase C (scale extension) runs *before* the B1/B2 split, so scale data informs how to design creation tasks.
+- **Pilot first, then evolve**: B's subdivision is provisional; A and C will reshape it.
+
+**Supersessions**:
+
+- Supersedes the v2 eval matrix at `docs/plans/2026-05-15-rung-1-5-eval-matrix.md` and the session-handoff at `2026-05-15-rung-1-5-session-handoff.md`. Both retained as historical input.
+- Resolves the original Rung 1.5 section's three-condition framing (B1 filesystem / B2 brute-force / T Pod-harness) in the active vault plan.
+
+**Design doc** (the durable engineering artifact): `docs/plans/2026-05-23-rung-1.5-redesign-design.md`. This decision is the framing commitment; the design doc carries operational detail.
+
+**Dependencies**:
+
+- Phase B2 prerequisite: a Pod-side lint/audit/curator skill (analogous to vault `/audit` + `/curator` + `/review-note`). Not yet designed. Build trigger: A or C surfacing failure modes; not built prophylactically.
+- Phase D prerequisite: a second Pod and likely a federation skill. Separate design exercise.
+
+**See also**: D55 (three-tier access), D70 (L1/L2/L3 stratification), D73 (two-stage commit), D74 (mem:* triggers), D78 (class-based dispatch), D83 (Pod-as-toolkit), D87 (wiki-search), D98 (8-shape catalog), D101 (MemTrigger detector wiring), RQ-Substrate-1..4, RQ-Atomic-Feedback-1, RQ-Discovery-1, RQ-Hub-1.
 
 ## Open research questions
 
