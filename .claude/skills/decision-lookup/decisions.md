@@ -888,6 +888,7 @@ RQ-Memento-1: ACP fragmentation across time travel (when does D62 inheritance br
 RQ-Memento-2: federated time travel — does Comunica propagate `Accept-Datetime` to every source?
 RQ-Federation-1: cross-pod SPARQL federation works at all (untested; gate for RQ-Memento-2)
 RQ-Eval-1/2/3: task suite design, sub-agent config, GEPA convergence
+RQ-Eval-4 (2026-05-23, Phase A pilot): would extended-thinking blocks on eval subagents change any finding the behavior judge produces from trajectory text + tool calls alone? Subagents spawned via Claude Code's in-process Agent tool emit no `type: "thinking"` blocks (verified across 9 runs). The Phase A pilot judge attributed skill-shortcut vs cold-discovery behavior correctly from text-block content alone. Whether thinking-token visibility changes attributions on harder tasks (Phase B creation fan-out, B2 contradiction reconciliation, D cross-Pod identity) is unknown. Architectural reading: Claude Code's subagents are workhorse executors by design; the thinking layer sits in the parent orchestrator and in the post-hoc judge. Filed as research question, not build task. Revisit if Phase B/D produces behaviors the judge can't attribute from current signal.
 RQ-App-1/2: multi-application composition mechanics; cross-application agent routing
 RQ-View-1: algebraic flows as richer alternative to CONSTRUCT (Phase 3 territory)
 RQ-ACP-1: per-triple ACP via query-rewriting (meccano 2016 pattern)
