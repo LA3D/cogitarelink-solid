@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["httpx", "rdflib", "pyshacl"]
+# ///
 """pod-audit — validate a Pod's substrate self-description (D104 / vault-D99).
 
 Two complementary checks, per the SHACL-as-guardrails + agent-as-construction
