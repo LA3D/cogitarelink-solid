@@ -12,7 +12,7 @@ authoritative home:
 
 Repo decision IDs differ from vault IDs; both numberings are reconciled in `decisions.md`.
 
-## Project state (as of 2026-05-23)
+## Project state (as of 2026-05-24)
 
 - **Branch**: main, clean. Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
@@ -37,6 +37,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | Rung 1.5 redesign (design only) | — | D102 |
 | Phase A pilot + skills-bootstrap + self-validating substrate | `phase-a-complete` | D103, D104 |
 | Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
+| Option-B substrate audit + curator (pod-audit walker + pod-curator skill, 2026-05-24) | — | D104 / vault-D99 |
 
 Other tags: `substrate-cleanup-complete`, `phase-b-complete`, `phase-c-complete`.
 
@@ -49,6 +50,18 @@ half-migrated; `make reset` now reproduces the deployed Pod); `wiki:Source` re-i
 *via the contract* (not baked-in); `mem:StalenessDetected`/`mem:RealignAction`/`mem:rationale`
 + `mem:StalenessClass` scheme in `mem.ttl`; realignment trace exemplar deployed to
 `.operations/`. See auto-mem `conceptual_structure_as_extensible_data` + `stale_memory_realignment`.
+
+**Shipped 2026-05-24 (option-B substrate audit + curator, D104 / vault-D99):** `scripts/pod_audit.py`
+walker (PEP 723 self-contained; GET storage-description → SHACL-validate `inference="none"` →
+HEAD-check catalog pointers + `rdfs:seeAlso` + `prof:hasResource` → walk affordance catalog →
+validate each + `prof:hasRole` scheme-membership) + `StorageDescriptionShape`/`AffordanceDescriptorShape`/
+`SearchAffordanceShape` (`shapes/substrate/`) + `make audit`. `pod-curator` skill shipped as a Pattern B
+`context:fork` subagent-skill in `solid-agent-skills` (bundles `pod_audit.py` via `make sync-curator-skill`;
+proposes `mem:RealignAction`, never patches). Substrate sweep brought the live audit to **0 ERROR / 1 WARN**
+(lone WARN = StaticStorageDescriber can't emit the entry-point `sh:agentInstruction` literal); WoT-TD
+alignment (`wiki:Affordance ⊑ td:InteractionAffordance`). Concrete-bug sweep closed (`4b434b9`,
+`273b29a`): `pod_audit.py` cross-checks + `solid-pod invoke` port fix (D84). See auto-mems
+`shacl_plus_agent` + `claude_code_skill_subagent_mechanics`.
 
 ## Active focus — Rung 1.5 (redesigned 2026-05-23, D102 / vault-D97)
 
@@ -66,29 +79,33 @@ Pod design that demonstrably works. Original B1/B2/T framing dropped.
   round-trip consistency (paired create+retrieve verifies compounding). A task that passes
   outputs but fails round-trip retrieval is the diagnostic-most finding.
 - **Phase sequence**: A pilot ✅ → A full (wiki-search retrieval) → C (scale, vault import
-  preferred) → B1 (Ingest + Query-with-file-back, runnable now) → B2 (Lint, gated on a
-  Pod-side lint/curator skill not yet built) → D (multi-Pod federation, needs 2nd Pod +
+  preferred) → B1 (Ingest + Query-with-file-back, runnable now) → B2 (Lint — now unblocked;
+  pod-curator skill shipped 2026-05-24) → D (multi-Pod federation, needs 2nd Pod +
   federation skill).
 - Design doc: `docs/plans/2026-05-23-rung-1.5-redesign-design.md`. Pilot report:
   `docs/plans/2026-05-23-phase-a-pilot-report.md` (18 substrate failure modes in §4).
 
-### Next-session candidate — finish option-B (pod-audit walker + pod-curator skill)
+### Next-session candidates (option-B shipped 2026-05-24)
 
-The option-B **architecture is now established** (2026-05-23): SHACL-as-meta-structure proven
-via `ClassExtensionShape`; subclass-aware validation lets the substrate honor its own ontology;
-`mem:RealignAction` + `.operations/` give the curator a recorded work-output channel. What
-**remains** of option-B: (1) the `pod-audit.py` walker (Python + pyshacl + HTTP cross-checks —
-MUST validate `ClassExtensionShape` with `inference="none"`, see FOLLOWUPS); (2) the
-`pod-curator` skill body (bootstrapper per D103, consuming the audit report + `mem:StalenessDetected`
-events); (3) substrate-resource shapes for StorageDescription + AffordanceDescriptor; (4) sweep
-the remaining failure modes (missing catalog labels, storage-description entry-point
-agentInstruction, OSLC param map); (5) pilot iter-3. The staleness taxonomy + realignment loop
-the curator implements is captured in auto-mem `stale_memory_realignment` + the vault method-note
-`Stale-Memory Discovery and Realignment`. Full breakdown in `FOLLOWUPS.md` + pilot report §5.
+Option-B is done (pod-audit walker + pod-curator skill + substrate sweep + concrete-bug sweep).
+Open threads, roughly in priority order:
 
-Also open: the **real** RQ-Listener-1 fix (projection preserving agent-asserted
-`prov:wasGeneratedBy`) — mem-op e2e tests currently use the `.operations/`-announcement
-workaround. And 5 pre-existing `test_phase5j_close` failures (older count-drift) — FOLLOWUPS.
+1. **Get the suite green.** (a) RQ-Listener-1 decision — the 6 `test_mem_operations.py` e2e tests
+   are silently red because the projection listener clobbers agent-asserted `prov:wasGeneratedBy`;
+   decide between the real pre-write-merge fix (`docs/plans/2026-05-15-rq-listener-1-mitigation-design.md`)
+   vs. xfail-with-reason vs. asserting provenance from the `.operations/` announcement. (b) 5
+   pre-existing `test_phase5j_close` count-drift failures (wikirole 5→9 roles, manifest 6→10
+   profiles, missing `dct:conformsTo`) — pure test-expectation realignment. Both in FOLLOWUPS.
+2. **pod-curator trigger-eval re-run.** Now *valid* via the corrected mechanism (install under
+   `.claude/skills/`, `claude -p`, detect `Skill` tool_use + the subagent trajectory) — the old run
+   measured `.claude/commands/` (never auto-triggered). `skills/pod-curator/evals/trigger-eval.json` staged.
+3. **Phase A pilot iter-3** with per-condition assertions (Component 5 in FOLLOWUPS); compare against iter-1/2.
+4. **Remaining substrate shapes** (capability descriptors, per-catalog-entry label/comment, vocab
+   declarations, JSON-LD context, Type Index) + wire `make audit` into `make reset`/CI once iter-3 clears.
+5. The lone audit WARN — entry-point `sh:agentInstruction` needs a tiny custom StorageDescriber
+   (StaticStorageDescriber emits only IRIs, not literals).
+
+Rung 1.5 phase sequence (above) resumes once the suite is green: A full → C (scale) → B1 → B2 → D.
 
 ## Key architecture patterns (quick-ref; full text via decision-lookup)
 
