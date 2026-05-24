@@ -32,6 +32,13 @@ SH   = "http://www.w3.org/ns/shacl#"
 RDFS = "http://www.w3.org/2000/01/rdf-schema#"
 PIM  = "http://www.w3.org/ns/pim/space#"
 PROF = "http://www.w3.org/ns/dx/prof/"
+SKOS = "http://www.w3.org/2004/02/skos/core#"
+
+# The wikirole SKOS scheme — prof:hasRole targets under this namespace must be
+# defined here, else the role is dangling (e.g. the search-affordance role that
+# wiki-search-grep cited before it was minted). W3C-standard roles (a different
+# namespace) are out of scope for the membership check.
+ROLE_DOC = "ontology/wikirole"  # relative to pod_base
 
 # Storage-description pointers the walker HEAD-checks (label → predicate IRI).
 CATALOG_POINTERS = {
@@ -148,26 +155,45 @@ async def audit(pod_url, shapes_dir):
                 targets[str(o)] = f"catalog:{label}"
         for o in sd_g.objects(storage, URIRef(RDFS + "seeAlso")):
             targets[str(o)] = "seeAlso"
+        # prof:hasResource targets (PROF profile descriptors) must resolve too —
+        # the source→concept / procedure→howto drift left two stale pointers here
+        # that the walker previously didn't dereference.
+        for o in sd_g.objects(storage, URIRef(PROF + "hasResource")):
+            targets[str(o)] = "hasResource"
 
         codes = await asyncio.gather(*(
             head_ok(client, rewrite(t, canon_base, pod_base)) for t in targets))
         for (iri, kind), code in zip(targets.items(), codes):
             if code == 200:
                 continue
-            sev = "ERROR" if kind != "seeAlso" else "WARN"
+            sev = "WARN" if kind in ("seeAlso", "hasResource") else "ERROR"
             findings.append(finding(sev, iri, f"resolve:{kind}",
                 f"{kind} target does not resolve (got {code}).",
                 "Stale pointer — update or remove it (Type Index already routes containers)."))
 
         # 4. Affordance catalog walk
+        role_members = await load_role_members(client, pod_base)
         cat_iri = next(iter(o for o, k in targets.items() if k == "catalog:affordanceCatalog"), None)
         if cat_iri:
             await walk_affordances(client, rewrite(cat_iri, canon_base, pod_base),
-                                   canon_base, pod_base, shapes_g, findings)
+                                   canon_base, pod_base, shapes_g, role_members, findings)
     return findings
 
 
-async def walk_affordances(client, cat_url, canon_base, pod_base, shapes_g, findings):
+async def load_role_members(client, pod_base):
+    "IRIs defined in the wikirole SKOS scheme; None if unreachable (skip the check)."
+    url = pod_base + ROLE_DOC
+    try:
+        r = await client.get(url)
+        if r.status_code != 200:
+            return None
+        g = Graph().parse(data=r.text, format="turtle", publicID=url)
+        return {str(s) for s in g.subjects(URIRef(SKOS + "inScheme"), None)}
+    except (httpx.HTTPError, ValueError):
+        return None
+
+
+async def walk_affordances(client, cat_url, canon_base, pod_base, shapes_g, role_members, findings):
     r = await client.get(cat_url)
     if r.status_code != 200:
         findings.append(finding("ERROR", cat_url, "resolve:affordanceCatalog",
@@ -195,6 +221,17 @@ async def walk_affordances(client, cat_url, canon_base, pod_base, shapes_g, find
                 "the descriptor contract (no role/label/conformsTo/installedBy enforced).",
                 "Add 'a prof:ResourceDescriptor' plus prof:hasRole, rdfs:label, "
                 "dct:conformsTo, wiki:installedBy to bring it under governance."))
+        # prof:hasRole membership: a role under the wikirole namespace must be
+        # defined in the scheme. Catches dangling roles SHACL can't see (it only
+        # checks cardinality, not that the target concept exists).
+        if role_members is not None:
+            role_ns = pod_base + ROLE_DOC + "#"
+            for role in ent_g.objects(URIRef(entry), URIRef(PROF + "hasRole")):
+                if str(role).startswith(role_ns) and str(role) not in role_members:
+                    findings.append(finding("WARN", entry, "descriptor:dangling-role",
+                        f"prof:hasRole {role} is not skos:inScheme the wikirole scheme.",
+                        "Define the role concept in /vault/ontology/wikirole, or point "
+                        "prof:hasRole at an existing role."))
         findings += run_shacl(ent_g, shapes_g, f"AffordanceDescriptor<{entry.rsplit('/', 1)[-1]}>")
 
 
