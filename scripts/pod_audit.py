@@ -16,7 +16,7 @@ Inference is forced to "none": RDFS entailment masks missing-predicate and
 rooting violations (see FOLLOWUPS — ClassExtensionShape, and the storage
 catalog pointers).
 """
-import argparse, asyncio, json, os, sys
+import argparse, asyncio, json, os, subprocess, sys
 from pathlib import Path
 import httpx
 from rdflib import Graph, RDF, URIRef
@@ -91,10 +91,27 @@ async def head_ok(client, url):
         return f"error: {e.__class__.__name__}"
 
 
+def resolve_ca():
+    "TLS CA for the dev Pod. SSL_CERT_FILE wins; else auto-detect the mkcert CA "
+    "(so the caller never has to wrangle the spaces-in-path env var — D85). Else system CAs."
+    f = os.environ.get("SSL_CERT_FILE")
+    if f and os.path.exists(f):
+        return f
+    try:
+        root = subprocess.run(["mkcert", "-CAROOT"], capture_output=True,
+                              text=True, timeout=5).stdout.strip()
+        ca = os.path.join(root, "rootCA.pem")
+        if root and os.path.exists(ca):
+            return ca
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return True
+
+
 async def audit(pod_url, shapes_dir):
     findings = []
     shapes_g = load_shapes(shapes_dir)
-    verify = os.environ.get("SSL_CERT_FILE", True)
+    verify = resolve_ca()
     pod_base = pod_url if pod_url.endswith("/") else pod_url + "/"
     sd_url = pod_base + ".well-known/solid"
 
