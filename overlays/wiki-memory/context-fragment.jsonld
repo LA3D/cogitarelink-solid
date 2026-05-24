@@ -6,6 +6,7 @@
     "schema":     "https://schema.org/",
     "vann":       "http://purl.org/vocab/vann/",
     "xsd":        "http://www.w3.org/2001/XMLSchema#",
+    "td":         "https://www.w3.org/2019/wot/td#",
     "title":      "dct:title",
     "subject":    "dct:subject",
     "references": "dct:references",

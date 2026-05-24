@@ -208,57 +208,50 @@
             ]
           },
           {
-            "comment": "L3: wiki pages container (D76)",
+            "comment": "L3: wiki container rdfs:seeAlso — the D98 7-container set. Realigned 2026-05-24: was pages/+sources/ (pre-D98, 404). This static config is authoritative — storage-description PATCH is 405, so the overlay cannot set seeAlso here.",
             "@type": "StaticStorageDescriber",
             "terms": [
-              {
-                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/pages/"
-              }
+              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/concepts/" }
             ]
           },
           {
-            "comment": "L3: wiki sources container (D76)",
             "@type": "StaticStorageDescriber",
             "terms": [
-              {
-                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/sources/"
-              }
+              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/people/" }
             ]
           },
           {
-            "comment": "L3: wiki people container (D76)",
             "@type": "StaticStorageDescriber",
             "terms": [
-              {
-                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/people/"
-              }
+              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/places/" }
             ]
           },
           {
-            "comment": "L3: wiki procedures container (D76)",
             "@type": "StaticStorageDescriber",
             "terms": [
-              {
-                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/procedures/"
-              }
+              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/events/" }
             ]
           },
           {
-            "comment": "L3: wiki working-memory container (D76)",
             "@type": "StaticStorageDescriber",
             "terms": [
-              {
-                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/working/"
-              }
+              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/organizations/" }
             ]
           },
           {
-            "comment": "PROF: page profile descriptor (D86)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/procedures/" }
+            ]
+          },
+          {
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/working/" }
+            ]
+          },
+          {
+            "comment": "PROF: page profile descriptor (D86).",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
@@ -278,16 +271,6 @@
             ]
           },
           {
-            "comment": "PROF: source profile descriptor (D86)",
-            "@type": "StaticStorageDescriber",
-            "terms": [
-              {
-                "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/dx/prof/hasResource",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/source"
-              }
-            ]
-          },
-          {
             "comment": "PROF: person profile descriptor (D86)",
             "@type": "StaticStorageDescriber",
             "terms": [
@@ -298,12 +281,12 @@
             ]
           },
           {
-            "comment": "PROF: procedure profile descriptor (D86)",
+            "comment": "PROF: howto profile descriptor (D86; D98 renamed procedure -> howto)",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/dx/prof/hasResource",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/procedure"
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/howto"
               }
             ]
           },

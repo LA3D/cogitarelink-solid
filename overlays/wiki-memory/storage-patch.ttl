@@ -7,6 +7,13 @@
 @prefix foaf:    <http://xmlns.com/foaf/0.1/> .
 @prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
 
+# NOTE (2026-05-24): this patch targets the storage description, but CSS returns
+# 405 on storage-description PATCH (GET-only) — so these inserts do NOT reach
+# /vault/.well-known/solid. The static css/config/void-description.json is the
+# only source that surfaces there. This overlay's inserts land on /vault/.meta
+# (fallback) and are largely inert for storage-description discovery. Kept for
+# the .meta fallback; the authoritative storage-description content is static.
+
 <> a solid:InsertDeletePatch ;
    solid:inserts {
        <../>

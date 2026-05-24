@@ -10,6 +10,7 @@
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix td:     <https://www.w3.org/2019/wot/td#> .
 
 <https://pod.vardeman.me/vault/ontology/wiki>
     a owl:Ontology ;
@@ -215,10 +216,11 @@ wiki:core
 
 wiki:Affordance
     a rdfs:Class ;
+    rdfs:subClassOf td:InteractionAffordance ;
     rdfs:label "Affordance" ;
     rdfs:isDefinedBy <> ;
-    rdfs:comment "Abstract root class for substrate affordance descriptors served from /vault/meta/affordances/. An affordance is a substrate behavior an agent can discover and invoke (or rely on) — content projection, derived views, search, time-travel, memory actions." ;
-    skos:scopeNote "Use a concrete subclass (wiki:WriteAffordance, wiki:DerivedClassAffordance, wiki:DerivedNavigationAffordance, wiki:VersionAffordance, wiki:SearchAffordance). Every affordance descriptor declares wiki:installedBy, sh:agentInstruction (free-form guidance), and a subclass-specific payload (CONSTRUCT/SELECT query, governance lists, dispatch pattern)." ;
+    rdfs:comment "Abstract root class for substrate affordance descriptors served from /vault/meta/affordances/. An affordance is a substrate behavior an agent can discover and invoke (or rely on) — content projection, derived views, search, time-travel, memory actions. Aligned with the W3C Web of Things (WoT) Thing Description: every wiki:Affordance is a td:InteractionAffordance (https://www.w3.org/2019/wot/td#InteractionAffordance) — metadata that shows a Consumer how it may interact with this Pod, which plays the role of the WoT Thing. In WoT terms the affordance catalog at /vault/meta/affordances/ is this Pod's Thing Description." ;
+    skos:scopeNote "Use a concrete subclass (wiki:WriteAffordance, wiki:DerivedClassAffordance, wiki:DerivedNavigationAffordance, wiki:VersionAffordance, wiki:SearchAffordance, wiki:QueryAffordance). Every affordance descriptor declares wiki:installedBy, sh:agentInstruction (free-form guidance), and a subclass-specific payload (CONSTRUCT/SELECT query, governance lists, dispatch pattern). The WoT alignment is a hint, not an import: an agent that knows the WoT interaction model can reason about these affordances without dereferencing td:; one that doesn't can dereference https://www.w3.org/2019/wot/td." ;
     skos:example """
         # In <https://pod.vardeman.me/vault/meta/affordances/example>:
         <> a wiki:Affordance ;
@@ -307,6 +309,25 @@ wiki:SearchAffordance
            dct:conformsTo <https://docs.oasis-open-projects.org/oslc-op/query/v3.0/oslc-query.html> .
     """ ;
     rdfs:seeAlso </vault/meta/affordances/wiki-search-grep> .
+
+wiki:QueryAffordance
+    a rdfs:Class ;
+    rdfs:subClassOf wiki:Affordance , td:ActionAffordance ;
+    rdfs:label "Query affordance" ;
+    rdfs:isDefinedBy <> ;
+    rdfs:comment "Affordance descriptor for a parameterized, client-run SPARQL SELECT lookup over the Pod's .meta / contact graphs. Carries wiki:selectQuery (the SPARQL with named parameters), wiki:queryParameter blank nodes describing each binding, and an optional wiki:targetContainer naming the source graph. Aligned with WoT td:ActionAffordance (https://www.w3.org/2019/wot/td#ActionAffordance): invoking a query is calling a function with input that returns a result set — it is NOT addressable state read like a td:PropertyAffordance, and NOT server-side ?ext= HTTP dispatch like wiki:SearchAffordance. The query runs in the agent's own engine (Comunica), with the named source as data — the Pod hosts no SPARQL endpoint." ;
+    skos:scopeNote "Used as rdf:type on the addressbook lookup descriptors at /vault/meta/affordances/{contact,org}-find-by-* and bridge-card-to-wiki. Distinct from wiki:SearchAffordance (HTTP ?ext= dispatch, server-side) and wiki:DerivedNavigationAffordance (computes a view, not a keyed lookup). Introduced 2026-05-24 via the wiki:ClassExtensionShape contract (D100), as the first extension applied to a substrate-meta class rather than a content class." ;
+    skos:example """
+        <> a wiki:QueryAffordance , prof:ResourceDescriptor ;
+           prof:hasRole wikirole:query-affordance ;
+           rdfs:label "Find contact by name" ;
+           dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+           wiki:targetContainer </vault/contacts/people.ttl> ;
+           wiki:selectQuery \"\"\"SELECT ?person ?fn WHERE { ?person vcard:fn ?fn . FILTER(CONTAINS(LCASE(STR(?fn)), LCASE(STR($name)))) }\"\"\" ;
+           wiki:queryParameter [ wiki:parameter "name" ; wiki:required true ] ;
+           wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> .
+    """ ;
+    rdfs:seeAlso </vault/meta/affordances/> .
 
 # ============================================================
 # Affordance descriptor predicates (general)

@@ -52,6 +52,27 @@
     skos:prefLabel "Derived-navigation affordance" ;
     skos:definition "An affordance computing derived navigation structure — breadcrumb trails, link maps, traversal indices." .
 
+# Added 2026-05-24 — query/search role concepts. :search-affordance was
+# referenced by /vault/meta/affordances/wiki-search-grep (prof:hasRole) but
+# never defined (a dangling role); :query-affordance is the new role for the
+# WoT td:ActionAffordance-aligned SPARQL-SELECT lookups (wiki:QueryAffordance).
+
+:search-affordance
+    a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:broader :affordance ;
+    skos:prefLabel "Search affordance" ;
+    skos:definition "An affordance providing a server-side query surface invoked by HTTP dispatch (e.g. ?ext=search-grep) — recursive substring grep, type-filtered listing. WoT: a td:ActionAffordance whose Form carries a hctl:hasTarget + dispatch suffix." .
+
+:query-affordance
+    a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:broader :affordance ;
+    skos:prefLabel "Query affordance" ;
+    skos:definition "An affordance providing a parameterized, client-run SPARQL SELECT lookup over a named source graph (the Pod hosts no SPARQL endpoint). WoT: a td:ActionAffordance — a function invoked with input parameters returning a result set, not addressable state. Distinct from :search-affordance (server-side HTTP dispatch)." .
+
 # Added 2026-05-18 — Memory Structuring Sprint Phase A
 # Synthesis-layer role concepts referenced by /vault/meta/profiles/page
 # via prof:hasResource. See </vault/wiki/> for full L3 profile.

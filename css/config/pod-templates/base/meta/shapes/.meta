@@ -3,4 +3,4 @@
 
 <> a ldp:Container, ldp:BasicContainer ;
    dct:title "SHACL Shape Catalog" ;
-   dct:description "wiki-memory L3 SHACL shapes (D77). Five shapes: page, source, person, procedure, working." .
+   dct:description "wiki-memory L3 SHACL shapes (D98, supersedes D77): the Thing/Page-rooted NodeShapes (page, thing, concept, person, place, event, organization, howto) plus working, resource, template, and the class-extension contract. Overlays may add further shapes (addressbook, owner-identity). The catalog is the live set, not a fixed count." .

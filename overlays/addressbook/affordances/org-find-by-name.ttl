@@ -1,8 +1,16 @@
 @prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
 @prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
 
 </vault/meta/affordances/org-find-by-name.ttl>
-    a wiki:Affordance ;
+    a wiki:QueryAffordance , prof:ResourceDescriptor ;
+    prof:hasRole wikirole:query-affordance ;
+    rdfs:label "Find organizations by name" ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
     sh:agentInstruction """
       Case-insensitive organization name lookup across all Organization cards
       and the aggregated contacts index (where orgs are co-listed per SolidOS
