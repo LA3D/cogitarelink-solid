@@ -83,6 +83,20 @@ Full mechanics in auto-mem `claude_code_skill_subagent_mechanics`. Key points:
   trajectory written at `~/.claude/projects/<slug>/<session_id>/subagents/agent-*.jsonl`.
   (claude-code-guide + GitHub #17283 claimed otherwise — empirically wrong/stale.) stream-json
   does NOT expose the fork via `parent_tool_use_id`; **detect via the trajectory artifact**.
+- **Self-containment (2026-05-24, solid-agent-skills `d914f2f` + this repo `4bd6ff1`):** trajectory
+  analysis of forked curator runs found a sandbox-reachability wall — a fork is confined to the
+  invoking session's repo, so it could not run `pod_audit.py` in cogitarelink-solid (TLS friction
+  was a red herring; the real blocker was cross-repo exec being auto-denied headless). Fixed by
+  **bundling the tool into the skill**: `pod_audit.py` got PEP 723 inline deps
+  (`httpx`/`rdflib`/`pyshacl`) + mkcert-CA auto-detect (`resolve_ca()`), and is copied into
+  `skills/pod-curator/scripts/` (+ `shapes/substrate/`); the skill runs `uv run
+  ${CLAUDE_SKILL_DIR}/scripts/pod_audit.py`. No venv, no `SSL_CERT_FILE`, no sibling repo. Canonical
+  stays here; `make sync-curator-skill` pushes copies (drift-prone like the shape-validator TBox
+  bundle — re-sync after editing `pod_audit.py`/`shapes/substrate/`). VERIFIED: a no-`--add-dir`
+  fork ran the bundled tool, touched cogitarelink-solid zero times, completed audit→classify→
+  `mem:RealignAction` proposal→two-stage commit. (No Claude Code declared-dependency mechanism
+  exists; PEP 723 + `uv run` is the idiomatic answer.) Eventual clean option: extract pod-audit as
+  a pip/uv-installable package both repos depend on, instead of a synced copy.
 - **Still open:** the trigger-eval (`skills/pod-curator/evals/trigger-eval.json`) is now *valid
   to run* via the corrected mechanism (install under `.claude/skills/`, `claude -p`, detect
   Skill tool_use + the subagent trajectory). Not yet re-run. Also: the skill-creator harness
