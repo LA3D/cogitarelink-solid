@@ -65,6 +65,30 @@ The Component-4 sweep landed (this repo): stale `rdfs:seeAlso` (pages/sources) a
 - **Storage-description PATCH is 405 (GET-only) → the overlay `storage-patch.ttl` is inert for `.well-known/solid`.** `css/config/void-description.json` (static StaticStorageDescriber) is the *only* source that surfaces there. `seeAlso` must live in the static config, NOT the overlay (initially mis-moved to the overlay, which silently dropped seeAlso entirely; corrected). The overlay's seeAlso/conformsTo inserts have never reached the storage description — candidate to clean up or repurpose to a custom StorageDescriber.
 - **`StaticStorageDescriber` emits only NamedNodes (IRIs), not literals** (`Predicate needs to be a named node`; values become IRIs). So the entry-point `sh:agentInstruction` (a string literal) can't be added via the static config — this is the lone remaining audit WARN (Warning-severity by design). FIX: a tiny custom StorageDescriber that yields a literal `sh:agentInstruction` quad on the storage subject, or expose the prose via a different discoverable surface. Until then the agentInstruction lives in the `StorageDescriptionShape`'s own `sh:agentInstruction` (read by the curator), not on the live storage description.
 
+### pod-curator → Pattern B subagent-skill + triggering-eval correction (2026-05-24)
+
+pod-curator restructured to a Claude Code **`context: fork` subagent-skill** (solid-agent-skills
+`0b8168f`): a curation run generates large throwaway context (audit JSON, descriptor reads,
+SHACL, proposals) that belongs in an isolated fork, not the orchestrator's context. Made
+discoverable via `solid-agent-skills/.claude/skills/pod-curator -> ../../skills/pod-curator`.
+Full mechanics in auto-mem `claude_code_skill_subagent_mechanics`. Key points:
+
+- **The description-optimization eval was measuring the wrong surface.** skill-creator's
+  `run_eval` installs the description into `.claude/commands/` (a *user-invoked* slash command,
+  never auto-triggered), not `.claude/skills/` (auto-triggerable). So recall floored at 0 for
+  EVERY description — wording was never the variable. Don't re-run the optimizer against that
+  mechanism; the `description-opt/` artifacts were deleted as misleading. To measure triggering:
+  install under `.claude/skills/`, run `claude -p`, detect the `Skill` tool_use.
+- **`context: fork` IS honored in headless `claude -p`** (v2.1.150), confirmed by a subagent
+  trajectory written at `~/.claude/projects/<slug>/<session_id>/subagents/agent-*.jsonl`.
+  (claude-code-guide + GitHub #17283 claimed otherwise — empirically wrong/stale.) stream-json
+  does NOT expose the fork via `parent_tool_use_id`; **detect via the trajectory artifact**.
+- **Still open:** the trigger-eval (`skills/pod-curator/evals/trigger-eval.json`) is now *valid
+  to run* via the corrected mechanism (install under `.claude/skills/`, `claude -p`, detect
+  Skill tool_use + the subagent trajectory). Not yet re-run. Also: the skill-creator harness
+  bug (uses `.claude/commands/`) is worth reporting upstream; and its `run_loop` auto-improver
+  crashes on opus-4-7 (`thinking.type.enabled` unsupported — needs `thinking.type.adaptive`).
+
 ### Concrete bugs/gaps surfaced by the pod-curator eval (2026-05-24)
 
 The eval subagents (both with- and without-skill, against the live Pod) independently found these. None is fixed yet:
