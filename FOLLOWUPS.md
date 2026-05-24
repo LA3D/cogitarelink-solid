@@ -103,14 +103,14 @@ Full mechanics in auto-mem `claude_code_skill_subagent_mechanics`. Key points:
   bug (uses `.claude/commands/`) is worth reporting upstream; and its `run_loop` auto-improver
   crashes on opus-4-7 (`thinking.type.enabled` unsupported — needs `thinking.type.adaptive`).
 
-### Concrete bugs/gaps surfaced by the pod-curator eval (2026-05-24)
+### Concrete bugs/gaps surfaced by the pod-curator eval — CLOSED (2026-05-24)
 
-The eval subagents (both with- and without-skill, against the live Pod) independently found these. None is fixed yet:
+All four are resolved (see commit history):
 
-- **`pod_audit.py` cross-check gaps** (this repo). The walker only HEAD-checks `rdfs:seeAlso` + the catalog pointers. It does NOT (a) dereference `prof:hasResource` targets — so two stale PROF profile pointers (`meta/profiles/source` 404, `meta/profiles/procedure` should be `howto`) escaped it; (b) verify `prof:hasRole` targets are `skos:inScheme` the wikirole scheme — so a dangling role passes (see next). Add both checks. (a) caught only because the agents walked the full storage description by hand.
-- **Dangling `wikirole:search-affordance`** (this repo, overlay). `meta/affordances/wiki-search-grep.ttl` — the reference "good" descriptor — cites `prof:hasRole wikirole:search-affordance`, but that concept is **not defined** in the deployed `/vault/ontology/wikirole` scheme. Define it (and `wikirole:query-affordance` if the QueryAffordance extension lands).
-- **`solid-pod invoke` broken for ALL affordances** (sibling `solid-agent-skills`, `src/commands/invoke.ts:9`). `WIKI_NS` is hardcoded with a `:3000` port; the deployed Pod is port-less per D84, so the namespace never matches and every `wiki:selectQuery`/`wiki:constructQuery` lookup fails with "has no … query". Confirmed against `contact-find-by-name` and `hub-view`. Fix the constant to the port-less IRI.
-- **Stale D77 catalog `dc:description`** (live Pod / `void-description.json` or overlay catalog meta). `/vault/meta/shapes/` `.meta` still reads "wiki-memory L3 SHACL shapes (D77). Five shapes: page, source, person, procedure, working." — retired by D98 (procedure→howto, source merged into concept). `mem:ProseDrift`; realign toward D98, ideally without pinning a hard count so it can't re-drift. (This is part of the Component-4 sweep below.)
+- ~~**`pod_audit.py` cross-check gaps**~~ — FIXED (`cogitarelink-solid` `4b434b9`). The walker now HEAD-checks `prof:hasResource` targets (WARN on non-resolving) and verifies `prof:hasRole` targets under the wikirole namespace are `skos:inScheme` the scheme (WARN on dangling roles). Bundle re-synced.
+- ~~**Dangling `wikirole:search-affordance`**~~ — already fixed by the substrate sweep (`ec9921f`); `:search-affordance` + `:query-affordance` defined in `wikirole.ttl`, confirmed deployed (3 hits in `/vault/ontology/wikirole`).
+- ~~**`solid-pod invoke` broken for ALL affordances**~~ — FIXED (`solid-agent-skills` `273b29a`). Dropped the `:3000` from `WIKI_NS` (port-less per D84) and repointed default `.meta`-source discovery `wiki/pages/` → `wiki/concepts/` (D98). Verified live: `hub-view` extracts construct, `contact-find-by-name` extracts select (both previously errored).
+- ~~**Stale D77 catalog `dc:description`**~~ — already realigned by the sweep; the deployed storage description shows current `prof:hasResource` (page/concept/person/howto/working) and `rdfs:seeAlso` (8-shape containers), no stale source/procedure pointers.
 
 ## Pre-existing test_phase5j_close drift (surfaced 2026-05-23, NOT this sprint)
 
