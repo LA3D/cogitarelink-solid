@@ -18,3 +18,5 @@ export { detectClass } from "./detectClass.js";
 export { resolveThingClass, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
 export type { TypeIndex } from "./typeIndexLookup.js";
 export { TypeIndexLoader } from "./typeIndexLoader.js";
+export { findLatestAction } from "./operationLog.js";
+export type { ActionProvenance } from "./operationLog.js";
