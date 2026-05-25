@@ -10,7 +10,9 @@
     dct:identifier "wiki-memory-l3-profile" ;
     dct:created "2026-05-15T00:00:00Z"^^xsd:dateTime ;
     dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
-    wiki:maturity "draft" ;
+    wiki:maturity "draft" .
+
+<wiki-memory-l3-profile.md.meta>
     prov:wasGeneratedBy </meta/affordances/markdown-projection> .
 
 <#this>

@@ -10,7 +10,9 @@
     dct:identifier "agentic-memory-systems-moc" ;
     dct:created "2026-04-01T00:00:00Z"^^xsd:dateTime ;
     dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
-    wiki:maturity "validated" ;
+    wiki:maturity "validated" .
+
+<agentic-memory-systems-moc.md.meta>
     prov:wasGeneratedBy </meta/affordances/markdown-projection> .
 
 <#this>
