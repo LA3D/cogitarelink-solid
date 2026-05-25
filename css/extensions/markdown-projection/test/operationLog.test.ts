@@ -60,4 +60,23 @@ describe("findLatestAction", () => {
     expect(findLatestAction(dir, TGT, OPS_BASE)!.actionType)
       .toBe("https://pod.vardeman.me/vault/ontology/mem#CrystallizeAction");
   });
+
+  it("ignores triples whose subject is not the announcement URL (multi-subject hardening)", () => {
+    // <> = CrystallizeAction targeting TGT (the legitimate announcement)
+    // <urn:noise> = SupersedeAction also referencing TGT via as:object (stray subject)
+    // findLatestAction must return the <> subject's action, not the stray's.
+    const multiSubject = `@prefix as: <https://www.w3.org/ns/activitystreams#> .
+@prefix mem: <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+<> a as:Announce, mem:CrystallizeAction ;
+   as:object <${TGT}> ;
+   as:published "2026-05-25T10:00:00Z"^^xsd:dateTime .
+<urn:noise> a mem:SupersedeAction ;
+   as:object <${TGT}> ;
+   as:published "2026-06-01T09:00:00Z"^^xsd:dateTime .`;
+    writeFileSync(path.join(dir, "op-1.ttl"), multiSubject);
+    const a = findLatestAction(dir, TGT, OPS_BASE);
+    expect(a).toBeDefined();
+    expect(a!.actionType).toBe("https://pod.vardeman.me/vault/ontology/mem#CrystallizeAction");
+  });
 });

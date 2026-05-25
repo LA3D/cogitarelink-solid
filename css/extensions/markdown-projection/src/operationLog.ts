@@ -51,17 +51,24 @@ export function findLatestAction(
             continue;  // unparseable → skip, never block projection
         }
 
-        const targets = quads.filter(q => q.predicate.value === AS_OBJECT)
-                             .map(q => q.object.value);
+        // Scope all extractions to the announcement subject (annUrl).
+        // <> in the Turtle resolves to annUrl via baseIRI; a malformed/multi-subject
+        // file must not pollute the extraction with triples from stray subjects.
+        const annSubject = (q: { subject: { value: string } }) =>
+            q.subject.value === annUrl;
+
+        const targets = quads
+            .filter(q => annSubject(q) && q.predicate.value === AS_OBJECT)
+            .map(q => q.object.value);
         if (!targets.includes(resourceUri)) continue;
 
         const actionType = quads.find(
-            q => q.predicate.value === RDF_TYPE && q.object.value.startsWith(MEM),
+            q => annSubject(q) && q.predicate.value === RDF_TYPE && q.object.value.startsWith(MEM),
         )?.object.value;
         if (!actionType) continue;
 
         const publishedAt = quads.find(
-            q => q.predicate.value === AS_PUBLISHED,
+            q => annSubject(q) && q.predicate.value === AS_PUBLISHED,
         )?.object.value ?? "";
 
         if (!best || publishedAt > best.publishedAt) {
