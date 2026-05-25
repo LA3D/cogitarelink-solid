@@ -14,6 +14,7 @@ import * as YAML from "yaml";
 import { projectFrontmatter, Frontmatter, resolveCURIE } from "./frontmatterProjection.js";
 import { projectWikilinks } from "./wikilinkProjection.js";
 import { resolveThingClass, TypeIndex, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
+import type { ActionProvenance } from "./operationLog.js";
 
 const { namedNode, literal, quad } = DataFactory;
 
@@ -25,6 +26,8 @@ const RDF_TYPE                 = "http://www.w3.org/1999/02/22-rdf-syntax-ns#typ
 const SCHEMA_MAIN_ENTITY       = "https://schema.org/mainEntity";
 const SCHEMA_MAIN_ENTITY_OF_PAGE = "https://schema.org/mainEntityOfPage";
 const WIKI_PAGE                = "https://pod.vardeman.me/vault/ontology/wiki#Page";
+const MEM_PUBLISHED = "https://www.w3.org/ns/activitystreams#published";
+const PROV_AT_TIME  = "http://www.w3.org/ns/prov#atTime";
 
 // ---------------------------------------------------------------------------
 // Substrate invariants (D98 Page+Thing bridge)
@@ -139,6 +142,7 @@ export const projectionPipeline = {
         resourceUri: string,
         body: string,
         typeIndex: TypeIndex = DEFAULT_WIKI_TYPE_INDEX,
+        action?: ActionProvenance,
     ): Promise<Quad[]> {
         const { fm, rest } = splitFrontmatter(body);
 
@@ -165,13 +169,33 @@ export const projectionPipeline = {
             }
         }
 
-        // Provenance stamp — absolute URI constructed from pod root (D52/D69)
+        // Metadata-provenance audit stamp (design §3.1 statement #3): the
+        // projector generated the *metadata document*, not the resource. Attach
+        // it to the .meta-document subject — NOT the resource — to free
+        // prov:wasGeneratedBy on the resource for operation provenance.
         const affordanceUri = `${podRoot(resourceUri)}${AFFORDANCE_PATH}`;
-        const provTriple = quad(
-            namedNode(resourceUri),
+        const auditStamp = quad(
+            namedNode(`${resourceUri}.meta`),
             namedNode(PROV_GEN_BY),
             namedNode(affordanceUri),
         );
+
+        // Resource generation (design §3.2): derived from the operation log when
+        // an action targets this resource. Emit the edge + inline the action's
+        // type and time for at-a-glance reading (context economy: pointer + minimal
+        // summary, full record via the history affordance). Absent for non-operation
+        // resources (plain PUTs) — that is intended.
+        const provTriples: Quad[] = [auditStamp];
+        if (action) {
+            const act = namedNode(action.activityUrl);
+            provTriples.push(quad(namedNode(resourceUri), namedNode(PROV_GEN_BY), act));
+            provTriples.push(quad(act, namedNode(RDF_TYPE), namedNode(action.actionType)));
+            if (action.publishedAt) {
+                provTriples.push(quad(act, namedNode(PROV_AT_TIME),
+                    literal(action.publishedAt,
+                        namedNode("http://www.w3.org/2001/XMLSchema#dateTime"))));
+            }
+        }
 
         // Substrate invariants (D98 Page+Thing bridge) — emitted when Type Index
         // can resolve a Thing class. frontmatterType (fm.type) wins over container.
@@ -206,6 +230,6 @@ export const projectionPipeline = {
               )
             : fmTriples;
 
-        return [...filteredFmTriples, ...derived, ...wikiTriples, provTriple, ...invariants];
+        return [...filteredFmTriples, ...derived, ...wikiTriples, ...provTriples, ...invariants];
     },
 };

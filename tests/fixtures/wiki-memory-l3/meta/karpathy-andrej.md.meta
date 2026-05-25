@@ -11,5 +11,7 @@
     dct:created "2026-03-20T00:00:00Z"^^xsd:dateTime ;
     dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
     wiki:maturity "draft" ;
-    foaf:nick "karpathy" , "Andrej Karpathy" , "@karpathy" ;
+    foaf:nick "karpathy" , "Andrej Karpathy" , "@karpathy" .
+
+<karpathy-andrej.md.meta>
     prov:wasGeneratedBy </meta/affordances/markdown-projection> .
