@@ -6,7 +6,8 @@
 // Additional derivations beyond the individual projection modules:
 //   - dct:title — extracted from the first H1 heading when not in frontmatter
 //   - dct:identifier — derived from the URI slug when not in frontmatter
-//   - prov:wasGeneratedBy — stamped to the affordance descriptor URI (D69)
+//   - prov:wasGeneratedBy — on <>.meta: the projector audit stamp; on <resource>:
+//     the generating mem:Action, derived from the operation log (RQ-Listener-1)
 //   - substrate invariants — Page+Thing bridge per D98 (emitSubstrateInvariants)
 
 import { DataFactory, NamedNode, Quad } from "n3";
@@ -26,8 +27,6 @@ const RDF_TYPE                 = "http://www.w3.org/1999/02/22-rdf-syntax-ns#typ
 const SCHEMA_MAIN_ENTITY       = "https://schema.org/mainEntity";
 const SCHEMA_MAIN_ENTITY_OF_PAGE = "https://schema.org/mainEntityOfPage";
 const WIKI_PAGE                = "https://pod.vardeman.me/vault/ontology/wiki#Page";
-const MEM_PUBLISHED = "https://www.w3.org/ns/activitystreams#published";
-const PROV_AT_TIME  = "http://www.w3.org/ns/prov#atTime";
 
 // ---------------------------------------------------------------------------
 // Substrate invariants (D98 Page+Thing bridge)
@@ -180,21 +179,14 @@ export const projectionPipeline = {
             namedNode(affordanceUri),
         );
 
-        // Resource generation (design §3.2): derived from the operation log when
-        // an action targets this resource. Emit the edge + inline the action's
-        // type and time for at-a-glance reading (context economy: pointer + minimal
-        // summary, full record via the history affordance). Absent for non-operation
-        // resources (plain PUTs) — that is intended.
+        // Resource generation (design §3.2, RQ-Listener-1): derived from the
+        // operation log when an action targets this resource. Pointer-only — the
+        // resource carries just prov:wasGeneratedBy pointing at the announcement
+        // resource; the announcement itself (a dereferenceable resource) carries
+        // the action type/time. Absent for non-operation resources (plain PUTs).
         const provTriples: Quad[] = [auditStamp];
         if (action) {
-            const act = namedNode(action.activityUrl);
-            provTriples.push(quad(namedNode(resourceUri), namedNode(PROV_GEN_BY), act));
-            provTriples.push(quad(act, namedNode(RDF_TYPE), namedNode(action.actionType)));
-            if (action.publishedAt) {
-                provTriples.push(quad(act, namedNode(PROV_AT_TIME),
-                    literal(action.publishedAt,
-                        namedNode("http://www.w3.org/2001/XMLSchema#dateTime"))));
-            }
+            provTriples.push(quad(namedNode(resourceUri), namedNode(PROV_GEN_BY), namedNode(action.activityUrl)));
         }
 
         // Substrate invariants (D98 Page+Thing bridge) — emitted when Type Index

@@ -179,11 +179,6 @@ describe("operation-derived provenance", () => {
       q => q.subject.value === RES && q.predicate.value === PROV_GEN
            && q.object.value === action.activityUrl);
     expect(edge).toBeDefined();
-    // and the action's type is inlined for at-a-glance reading
-    const typed = triples.find(
-      q => q.subject.value === action.activityUrl
-           && q.predicate.value === "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-           && q.object.value === action.actionType);
-    expect(typed).toBeDefined();
+    // pointer-only: action type/time live on the announcement resource, not inlined here
   });
 });
