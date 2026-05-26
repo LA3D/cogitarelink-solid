@@ -2,6 +2,52 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## ⚠ ARCHITECTURE — vault-application contamination of the general substrate (raised 2026-05-26)
+
+**Concern (Chuck):** The substrate was evolved *forward from the Obsidian vault* (PARA + SKOS + wiki
+metadata) rather than *backward from fundamental Solid/LDP capabilities*. The Obsidian vault is just
+**one** linked-data application that could sit on a Pod-as-substrate; we have conflated *wiki-application*
+concerns (originally the vault's metadata structure) with what should be **general-purpose agentic
+linked-data practices** independent of the app. The principled construction is: L1 LDP capabilities
+(resources, containers, `.meta`, Type Index, storage description) → L2 memory-substrate invariants →
+**dual knowledge-graph views** (document views *and* queryable graph views over the same objects — the
+Verborgh/LDP read-write + query stance) → and only THEN application profiles like wiki-memory. We grew it
+the other way, so vault/wiki concepts leaked downward. This is the project's own D70 L1/L2/L3 split not
+being honored in practice ("wiki-memory L3 is *one* application" — CLAUDE.md — but it's coded as if it
+were the substrate). See vault note `Memory Substrate vs Memory Profile`.
+
+**Specific contaminations to unwind (not all introduced this session; several pre-existing):**
+1. **`/vault` storage name is application-suggestive AND now hardcoded in the loaders.** The 2026-05-26
+   showstopper fix hardcodes `${baseUrl}/vault` in both `loadRoutingMap` and the `TypeIndexLoader`
+   instantiation (listener.ts). Principled fix: **derive the storage root from a standard Solid mechanism**
+   (the storage description / `pim:Storage` / the resource's own container hierarchy), not a hardcoded
+   `/vault` literal. The URI `/vault/wiki/concepts/X` also makes an LM agent "read too much into the URI"
+   (vault → wiki → concept); a neutral storage root + profile sub-paths would carry less application bias.
+2. **`wiki:routesToClass` + `/vault/meta/routing.jsonld` express a GENERAL routing mechanism in L3 `wiki:`
+   clothing.** Predicate→class→container addressing is an L1/L2-general concept; it's minted in the `wiki:`
+   namespace and deployed by the wiki-memory overlay. Candidate: promote to a substrate-level namespace.
+3. **The "minimum opinionated agentic-memory kernel" (Option B, endorsed 2026-05-26) is wiki-flavored.**
+   `DEFAULT_WIKI_TYPE_INDEX` + the bootstrap routing entailments were framed as "the minimum structure that
+   makes any Pod usable as agentic memory" — but they encode the wiki-memory **L3 profile's** 8-container
+   layout. A truly general kernel would be application-neutral (LDP + Type Index + metadata + dual views);
+   the wiki layout should be ONE profile's defaults, not the substrate kernel.
+4. **`.md` / markdown-wikilink coupling is L3-specific** (markdown-projection gates on `.md`). Fine *as an
+   L3 profile extension*, but it should be understood as profile-level, not substrate-level.
+
+**How worried about the 2026-05-26 Type Index fix specifically?** Low, for the fix itself — it moves
+*toward* generality (it makes the listener read the **live, standard Solid Type Index** instead of always
+using a hardcoded wiki layout; the live index is the application-neutral mechanism). It did NOT create the
+contamination and only marginally deepened it via the `/vault` hardcode (item 1, easily refactored). The
+kernel/merge is a *fallback* contained in the L3 markdown-projection extension. So: the **code** is sound
+and refinable; the **framing** ("wiki kernel = agentic-memory kernel") is the thing to revisit. Not a
+code-rot emergency; a deliberate re-layering exercise.
+
+**Direction when picked up:** re-derive the L1/L2 substrate working backward from LDP + dual-view (document
++ queryable graph) first principles; demote wiki-memory to a clearly-bounded L3 profile; neutralize the
+storage root; decide which minted terms (`routesToClass`, etc.) belong at substrate level vs profile level.
+Precedent: D84 already did one namespace migration, so a storage-root migration is feasible but non-trivial.
+This is decision-level work (likely a new D-number + possible supersession of the "kernel" framing).
+
 ## ~~mem-operation in-resource provenance collides with the projection listener (RQ-Listener-1)~~ — RESOLVED 2026-05-26 (by collapse)
 
 **Resolved** on branch `rq-listener-1-provenance` (not yet merged). The resolution arrived in two
