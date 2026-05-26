@@ -141,6 +141,11 @@
         [ overlay:document "extending-l3.md" ;
           overlay:hostedAt "/vault/meta/extending-l3.md" ] ;
 
+    overlay:installsBootstrapContent
+        [ overlay:contentPath "routing.jsonld" ;
+          overlay:hostedAt "/vault/meta/routing.jsonld" ;
+          overlay:contentType "application/ld+json" ] ;
+
     overlay:installsHintMapping
         [ overlay:classHint "broader" ;
           overlay:projectsToPredicate skos:broader ;
