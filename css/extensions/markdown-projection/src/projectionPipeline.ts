@@ -26,6 +26,7 @@ const AFFORDANCE_PATH          = "/meta/affordances/markdown-projection";
 const RDF_TYPE                 = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 const SCHEMA_MAIN_ENTITY       = "https://schema.org/mainEntity";
 const SCHEMA_MAIN_ENTITY_OF_PAGE = "https://schema.org/mainEntityOfPage";
+const SCHEMA_NAME              = "https://schema.org/name";
 const WIKI_PAGE                = "https://pod.vardeman.me/vault/ontology/wiki#Page";
 
 // ---------------------------------------------------------------------------
@@ -199,6 +200,14 @@ export const projectionPipeline = {
             const pageIRI  = namedNode(resourceUri);
             const thingIRI = namedNode(`${resourceUri}#this`);
             invariants.push(...emitSubstrateInvariants({ pageIRI, thingIRI, thingClass }));
+            // schema:name on <#this> — required by ThingShape (minCount 1). Derived
+            // from the page title (frontmatter title > H1 > slug) so every Thing has
+            // a name; the substrate governs it. (Probe 2026-05-26: crystallized
+            // concepts were failing ThingShape because no schema:name was projected.)
+            const name = fm.title ?? extractH1(body) ?? uriSlug(resourceUri);
+            if (name) {
+                invariants.push(quad(thingIRI, namedNode(SCHEMA_NAME), literal(name)));
+            }
         }
         // When thingClass is undefined: no invariants emitted, no warning here
         // (listener context has better logging; pipeline stays pure).

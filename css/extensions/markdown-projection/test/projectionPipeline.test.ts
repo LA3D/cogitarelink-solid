@@ -167,3 +167,14 @@ describe("provenance placement (RQ-Listener-1 collapse)", () => {
     expect(onResource).toBeUndefined();
   });
 });
+
+describe("ThingShape conformance", () => {
+  it("emits schema:name on <#this> derived from the title (ThingShape minCount 1)", async () => {
+    const triples = await projectionPipeline.run(RES, BODY);
+    const name = triples.find(
+      q => q.subject.value === RES + "#this"
+           && q.predicate.value === "https://schema.org/name");
+    expect(name).toBeDefined();
+    expect(name!.object.value).toBe("Decay Theory");  // from the H1
+  });
+});
