@@ -3,7 +3,6 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { Parser, Store } from "n3";
 import { projectionPipeline } from "../src/projectionPipeline.js";
-import type { ActionProvenance } from "../src/operationLog.js";
 
 const FIX_ROOT = join(__dirname, "../../../../tests/fixtures/wiki-memory-l3");
 
@@ -144,7 +143,7 @@ type: concept
 A concept.
 `;
 
-describe("operation-derived provenance", () => {
+describe("provenance placement (RQ-Listener-1 collapse)", () => {
   it("does NOT stamp the affordance URI on the resource subject anymore", async () => {
     const triples = await projectionPipeline.run(RES, BODY);
     const stamp = triples.find(
@@ -161,24 +160,10 @@ describe("operation-derived provenance", () => {
     expect(audit).toBeDefined();
   });
 
-  it("emits NO resource-level wasGeneratedBy when no action is injected", async () => {
+  it("emits NO resource-level wasGeneratedBy (provenance lives in .operations/)", async () => {
     const triples = await projectionPipeline.run(RES, BODY);
     const onResource = triples.find(
       q => q.subject.value === RES && q.predicate.value === PROV_GEN);
     expect(onResource).toBeUndefined();
-  });
-
-  it("derives wasGeneratedBy on the resource from an injected action", async () => {
-    const action: ActionProvenance = {
-      activityUrl: "https://pod.vardeman.me/vault/wiki/.operations/op-1.ttl",
-      actionType: "https://pod.vardeman.me/vault/ontology/mem#CrystallizeAction",
-      publishedAt: "2026-05-25T10:00:00Z",
-    };
-    const triples = await projectionPipeline.run(RES, BODY, undefined, action);
-    const edge = triples.find(
-      q => q.subject.value === RES && q.predicate.value === PROV_GEN
-           && q.object.value === action.activityUrl);
-    expect(edge).toBeDefined();
-    // pointer-only: action type/time live on the announcement resource, not inlined here
   });
 });

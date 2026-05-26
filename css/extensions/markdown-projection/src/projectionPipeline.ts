@@ -6,8 +6,9 @@
 // Additional derivations beyond the individual projection modules:
 //   - dct:title — extracted from the first H1 heading when not in frontmatter
 //   - dct:identifier — derived from the URI slug when not in frontmatter
-//   - prov:wasGeneratedBy — on <>.meta: the projector audit stamp; on <resource>:
-//     the generating mem:Action, derived from the operation log (RQ-Listener-1)
+//   - prov:wasGeneratedBy — on the <>.meta document subject only (the projector
+//     audit stamp). NOT on the resource: memory-operation provenance is canonical
+//     in /vault/wiki/.operations/, not denormalized here (RQ-Listener-1 collapse).
 //   - substrate invariants — Page+Thing bridge per D98 (emitSubstrateInvariants)
 
 import { DataFactory, NamedNode, Quad } from "n3";
@@ -15,7 +16,6 @@ import * as YAML from "yaml";
 import { projectFrontmatter, Frontmatter, resolveCURIE } from "./frontmatterProjection.js";
 import { projectWikilinks } from "./wikilinkProjection.js";
 import { resolveThingClass, TypeIndex, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
-import type { ActionProvenance } from "./operationLog.js";
 
 const { namedNode, literal, quad } = DataFactory;
 
@@ -141,7 +141,6 @@ export const projectionPipeline = {
         resourceUri: string,
         body: string,
         typeIndex: TypeIndex = DEFAULT_WIKI_TYPE_INDEX,
-        action?: ActionProvenance,
     ): Promise<Quad[]> {
         const { fm, rest } = splitFrontmatter(body);
 
@@ -168,26 +167,18 @@ export const projectionPipeline = {
             }
         }
 
-        // Metadata-provenance audit stamp (design §3.1 statement #3): the
-        // projector generated the *metadata document*, not the resource. Attach
-        // it to the .meta-document subject — NOT the resource — to free
-        // prov:wasGeneratedBy on the resource for operation provenance.
+        // Metadata-provenance audit stamp: the projector generated the *metadata
+        // document*, not the resource. Attach it to the .meta-document subject —
+        // NOT the resource (the old <resource> prov:wasGeneratedBy <affordance>
+        // stamp was a PROV category error). Memory-operation provenance lives
+        // canonically in /vault/wiki/.operations/ (the announcement log), queryable
+        // via the memory-history affordance — the resource does not carry it.
         const affordanceUri = `${podRoot(resourceUri)}${AFFORDANCE_PATH}`;
-        const auditStamp = quad(
+        const provTriples: Quad[] = [quad(
             namedNode(`${resourceUri}.meta`),
             namedNode(PROV_GEN_BY),
             namedNode(affordanceUri),
-        );
-
-        // Resource generation (design §3.2, RQ-Listener-1): derived from the
-        // operation log when an action targets this resource. Pointer-only — the
-        // resource carries just prov:wasGeneratedBy pointing at the announcement
-        // resource; the announcement itself (a dereferenceable resource) carries
-        // the action type/time. Absent for non-operation resources (plain PUTs).
-        const provTriples: Quad[] = [auditStamp];
-        if (action) {
-            provTriples.push(quad(namedNode(resourceUri), namedNode(PROV_GEN_BY), namedNode(action.activityUrl)));
-        }
+        )];
 
         // Substrate invariants (D98 Page+Thing bridge) — emitted when Type Index
         // can resolve a Thing class. frontmatterType (fm.type) wins over container.

@@ -39,15 +39,6 @@ interface IPostProjectionHook {
     }): Promise<void>;
 }
 
-// Structural mirror of operationLog.ts's ActionProvenance. Inlined (same reason
-// as IPostProjectionHook): an `import("../src/...")` type reference would pull a
-// src/ file under this src-cjs rootDir and break the CJS compile.
-interface ActionProvenance {
-    activityUrl: string;
-    actionType: string;
-    publishedAt: string;
-}
-
 // ------------------------------------------------------------------
 // Simple stderr logger (same approach as markdown-render/converter.ts)
 // ------------------------------------------------------------------
@@ -64,8 +55,7 @@ function debug(...args: unknown[]): void {
 const runtimeImport = new Function("specifier", "return import(specifier)") as (s: string) => Promise<any>;
 
 interface ProjectionModule {
-    projectionPipeline: { run(uri: string, body: string, typeIndex?: Record<string, string>, action?: ActionProvenance): Promise<import("n3").Quad[]> };
-    findLatestAction: (opsDir: string, resourceUri: string, opsBaseUrl: string) => ActionProvenance | undefined;
+    projectionPipeline: { run(uri: string, body: string, typeIndex?: Record<string, string>): Promise<import("n3").Quad[]> };
     resolveGovernedForWikiClass: (cls: string) => { page: string[]; thing: string[] };
     detectClass: (triples: import("n3").Quad[]) => string | undefined;
     MetaWriter: new() => { replaceGoverned(target: string, projected: import("n3").Quad[], governed: string[], resourceUrl?: string): Promise<void> };
@@ -242,7 +232,7 @@ export class MarkdownProjectionListener extends Initializer {
         }
 
         // Load ESM projection pipeline lazily
-        const { projectionPipeline, findLatestAction, resolveGovernedForWikiClass, detectClass, MetaWriter,
+        const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter,
                 resolveThingClass, TypeIndexLoader } =
             await getPipeline();
 
@@ -286,23 +276,7 @@ export class MarkdownProjectionListener extends Initializer {
             }
         }
 
-        // Resource generation provenance: derive from the canonical operation log
-        // (RQ-Listener-1). The ops container lives at <pod>/wiki/.operations/; read
-        // it from disk (same pattern as the body read — never re-enter the store).
-        // Announce-first contract: the announcement must already exist for the edge
-        // to appear (design §5).
-        let action;
-        try {
-            const wikiRootUrl = target.path.slice(
-                0, target.path.indexOf("/wiki/") + "/wiki/".length);
-            const opsBaseUrl = `${wikiRootUrl}.operations/`;
-            const opsDir = fsPathFromUrl(opsBaseUrl, this.baseUrl, this.dataDir);
-            action = findLatestAction(opsDir, target.path, opsBaseUrl);
-        } catch (err) {
-            debug(`op-log read skipped: ${(err as Error).message}`);
-        }
-
-        const triples = await projectionPipeline.run(target.path, body, typeIndex, action);
+        const triples = await projectionPipeline.run(target.path, body, typeIndex);
 
         const cls = detectClass(triples);
         if (!cls) {
