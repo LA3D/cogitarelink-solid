@@ -1,0 +1,41 @@
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+
+<>  a wiki:QueryAffordance ,
+       prof:ResourceDescriptor ;
+    prof:hasRole wikirole:query-affordance ;
+    rdfs:label "Memory history" ;
+    rdfs:comment "Reconstruct the operation history of a memory resource: the .operations/ announcements that targeted it (as:object), newest first, optionally joined with its Memento TimeMap for byte-level versions. The on-demand counterpart to the single derived prov:wasGeneratedBy pointer on a resource's .meta (RQ-Listener-1)." ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    wiki:selectQuery """
+        PREFIX as: <https://www.w3.org/ns/activitystreams#>
+        SELECT ?op ?action ?published WHERE {
+            ?op as:object <%RESOURCE%> ;
+                a ?action ;
+                as:published ?published .
+            FILTER(STRSTARTS(STR(?action), "https://pod.vardeman.me/vault/ontology/mem#"))
+        } ORDER BY DESC(?published)
+    """ ;
+    sh:agentInstruction """
+      Reconstruct how a memory came to be, beyond the single derived
+      prov:wasGeneratedBy pointer on its .meta.
+
+      Substitute %RESOURCE% with the resource IRI, then run the SELECT over an
+      explicit source set covering /vault/wiki/.operations/ — Comunica does not
+      traverse describedby, so pass the .operations/ container and its members as
+      default-graph-uri sources (the RQ-Pod-4 workaround). Each row is one
+      operation that targeted the resource, newest first (?action is the mem:*
+      subclass, ?published its as:published time).
+
+      For byte-level history (what the resource's bytes were at time T), follow
+      the resource's Memento TimeMap at {resource}?ext=timemap.
+
+      Consumer pattern:
+        solid-pod sparql /vault/wiki/.operations/ "<substituted query>" \\
+          --default-graph-uri <each announcement .meta/body>
+    """ .

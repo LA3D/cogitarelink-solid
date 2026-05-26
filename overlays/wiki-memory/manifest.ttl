@@ -85,7 +85,8 @@
         </vault/meta/affordances/merge.ttl> ,
         </vault/meta/affordances/demote.ttl> ,
         </vault/meta/affordances/archive.ttl> ,
-        </vault/meta/affordances/link.ttl> ;
+        </vault/meta/affordances/link.ttl> ,
+        </vault/meta/affordances/memory-history.ttl> ;
 
     overlay:installsRoleScheme
         </vault/ontology/wikirole> ;
