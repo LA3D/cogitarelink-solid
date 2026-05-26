@@ -252,8 +252,13 @@ export class MarkdownProjectionListener extends Initializer {
         // Load routing map on first use alongside the Type Index (same lazy + cached
         // pattern). Uses fetch() — NOT store.getRepresentation — to avoid the re-entrant
         // write-lock crash (D92). Falls back to BOOTSTRAP_PREDICATE_TO_CLASS on any error.
+        //
+        // routing.jsonld lives under the storage root (/vault), not the server base.
+        // this.baseUrl is the CSS server base (e.g. https://pod.vardeman.me); the Pod
+        // storage is at /vault, so the doc is at <baseUrl>/vault/meta/routing.jsonld.
         if (this.routingMap === null) {
-            this.routingMap = await loadRoutingMap(this.baseUrl, fetch, BOOTSTRAP_PREDICATE_TO_CLASS);
+            const storageBase = `${this.baseUrl}/vault`;
+            this.routingMap = await loadRoutingMap(storageBase, fetch, BOOTSTRAP_PREDICATE_TO_CLASS);
         }
 
         // URI-independent dispatch: resolve the Thing class via the live Type

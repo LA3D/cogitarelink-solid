@@ -1,5 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { parseRoutingDoc } from "../src/routingLoader.js";
+import { parseRoutingDoc, loadRoutingMap } from "../src/routingLoader.js";
+
+describe("loadRoutingMap URL construction", () => {
+    it("fetches <podBase>/meta/routing.jsonld", async () => {
+        let calledUrl = "";
+        const fakeFetch = (async (url: string) => {
+            calledUrl = url;
+            return { ok: false } as Response; // force bootstrap fallback; we only assert the URL
+        }) as unknown as typeof fetch;
+        const bootstrap = { "p": "c" };
+        const out = await loadRoutingMap("https://pod.example/vault", fakeFetch, bootstrap);
+        expect(calledUrl).toBe("https://pod.example/vault/meta/routing.jsonld");
+        expect(out).toBe(bootstrap); // non-OK → bootstrap fallback
+    });
+});
 
 describe("parseRoutingDoc (JSON-LD → predicate→class map, CURIE-expanded)", () => {
     const doc = {
