@@ -138,7 +138,6 @@ def _announce(action_class_iri, subject_url):
         f"<> a as:Announce, <{action_class_iri}>, prov:Activity ;\n"
         f"    as:actor <https://pod.vardeman.me/vault/profile/card#me> ;\n"
         f"    as:object <{subject_url}> ;\n"
-        f"    as:target <{OPERATIONS}> ;\n"
         f'    as:published "{iso_now}"^^xsd:dateTime .\n'
     )
     r = httpx.put(ann_url, content=body,

@@ -27,6 +27,14 @@ derived-edge assertion. The **broad** agent-extension question (arbitrary non-go
 body rewrites — `test_agent_enrichment_survives_body_rewrite`) is NOT addressed here and stays deferred to
 the `.meta.agent` sidecar / D82.
 
+**Known limitation (low priority):** the listener derives `opsBaseUrl` via
+`target.path.indexOf("/wiki/")`, so op-log derivation is effectively `/wiki/`-scoped. For a
+substrate-governed L4 container *outside* `/wiki/` (D100 says the substrate is URI-independent),
+`indexOf` returns -1 → the op-log read throws → caught → `action` stays undefined → no derived edge
+(silently; projection still proceeds, no crash). Acceptable today since mem-operations are wiki-scoped,
+but it contradicts the URI-independence claim. Fix when an L4 mem-operation use case surfaces: resolve
+the ops container relative to the resource's own storage/Type-Index root rather than a hard-coded `/wiki/`.
+
 
 ## Shape-validator TBox bundle sync pattern (added 2026-05-23)
 
