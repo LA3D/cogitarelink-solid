@@ -3,22 +3,27 @@
 Each test exercises one action affordance's full LDP procedure (per the
 descriptor at /vault/meta/affordances/<name>) and verifies:
   1. Resource state / typed-edge postcondition (substrate write).
-  2. Operation provenance via the .operations/ announcement log (mem.ttl §5).
+  2. Operation provenance recorded canonically in the .operations/ announcement.
+  3. For body-generating ops (crystallize/supersede/merge/demote): the
+     substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta,
+     pointing back at the announcement (RQ-Listener-1, derive-from-log design).
 
-Provenance is asserted from the .operations/ announcement, NOT the content
-resource's .meta — because the MarkdownProjectionListener overwrites
-<subject> prov:wasGeneratedBy with its own activity on every write
-(RQ-Listener-1). The activity node <subject#action> a mem:*Action persists
-but the prov:wasGeneratedBy pointer is clobbered. The prescribed pattern per
-mem.ttl is a [as:Announce, mem:*Action] POST to .operations/.
+RQ-Listener-1 design (2026-05-25): the announcement is the canonical record.
+The agent posts a <>-subject [as:Announce, mem:*Action] with `as:object <target>`
+to .operations/ BEFORE the body write (announce-first), and the
+MarkdownProjectionListener DERIVES `<target> prov:wasGeneratedBy <announcement>`
+into the target's .meta on that write — agents no longer PATCH it. Because the
+derivation only fires on a BODY write, .meta-only ops (archive, link) carry no
+derived edge; their provenance lives solely in .operations/.
 
 Substrate behaviour discovered during probe sessions (2026-05-18):
 - CSS N3 Patch rejects blank nodes in solid:inserts formulas (HTTP 422).
-  PROV-O activity nodes must use named URIs (e.g. <resource-url#act-{ts}>),
-  not blank nodes. Tests use a fragment-URI pattern for the activity IRI.
+  Use named URIs, not blank nodes.
 - Memento snapshots are auto-captured on PUT; the TimeMap URI is
   `{resource}?ext=timemap` and the first version URI is
   `{resource}?version=YYYYMMDDHHMMSS`.
+- Projection is asynchronous (fires on the body PUT via the MonitoringStore
+  'changed' event), so the derived-edge assertion polls until it lands.
 """
 import time
 import uuid
@@ -87,12 +92,6 @@ def _meta_graph(url):
     return Graph().parse(data=r.text, format="turtle", publicID=url)
 
 
-def _act_uri(resource_url, action_tag):
-    """Stable named URI for a PROV-O activity (avoids blank-node CSS rejection)."""
-    ts = int(time.time())
-    return f"{resource_url}#{action_tag}-{ts}"
-
-
 def _nt_triples(*lines):
     """Join N-Triple lines with a trailing newline."""
     return "\n".join(lines) + "\n"
@@ -124,34 +123,38 @@ def _discover_memento_uri(url):
 
 
 def _announce(action_class_iri, subject_url):
-    """PUT an [as:Announce, mem:*Action] announcement to OPERATIONS; return its URL."""
-    ann_id = f"urn:uuid:{uuid.uuid4()}"
+    """PUT a <>-subject [as:Announce, mem:*Action, prov:Activity] announcement to
+    OPERATIONS (canonical form per mem.ttl); return (url, url) — subject == resource url.
+
+    The substrate derives `<subject_url> prov:wasGeneratedBy <ann_url>` from the
+    as:object link when subject_url's body is next projected (announce-first)."""
     iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    ann_url = f"{OPERATIONS}{uuid.uuid4().hex}.ttl"
     body = (
         "@prefix as:   <https://www.w3.org/ns/activitystreams#> .\n"
         "@prefix mem:  <https://pod.vardeman.me/vault/ontology/mem#> .\n"
+        "@prefix prov: <http://www.w3.org/ns/prov#> .\n"
         "@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .\n\n"
-        f"<{ann_id}> a as:Announce, <{action_class_iri}> ;\n"
-        f"    as:actor <https://pod.vardeman.me/profile/card#me> ;\n"
+        f"<> a as:Announce, <{action_class_iri}>, prov:Activity ;\n"
+        f"    as:actor <https://pod.vardeman.me/vault/profile/card#me> ;\n"
         f"    as:object <{subject_url}> ;\n"
         f"    as:target <{OPERATIONS}> ;\n"
         f'    as:published "{iso_now}"^^xsd:dateTime .\n'
     )
-    ann_url = f"{OPERATIONS}{uuid.uuid4().hex}.ttl"
     r = httpx.put(ann_url, content=body,
                   headers={"Content-Type": "text/turtle"}, verify=False)
     assert r.status_code in (201, 204, 205), (
         f"PUT announcement {ann_url}: {r.status_code} {r.text[:200]}"
     )
-    return ann_url, ann_id
+    return ann_url, ann_url
 
 
-def _assert_announced(ann_url, ann_id, action_class_iri, subject_url):
-    """GET the announcement resource, parse, assert action type + object."""
+def _assert_announced(ann_url, ann_subject, action_class_iri, subject_url):
+    """GET the announcement resource, parse, assert action type + object on its <> subject."""
     r = httpx.get(ann_url, headers={"Accept": "text/turtle"}, verify=False)
     assert r.status_code == 200, f"GET announcement {ann_url}: {r.status_code}"
     g = Graph().parse(data=r.text, format="turtle", publicID=ann_url)
-    ann = URIRef(ann_id)
+    ann = URIRef(ann_subject)
     types = set(g.objects(ann, RDF.type))
     assert AS.Announce in types, f"as:Announce missing from announcement; got {types}"
     assert URIRef(action_class_iri) in types, (
@@ -160,6 +163,22 @@ def _assert_announced(ann_url, ann_id, action_class_iri, subject_url):
     objects = list(g.objects(ann, AS.object))
     assert URIRef(subject_url) in objects, (
         f"as:object {subject_url} missing from announcement; got {objects}"
+    )
+
+
+def _assert_derived_genesis(resource_url, ann_url, retries=15, delay=0.4):
+    """Poll the resource .meta for the projector-DERIVED prov:wasGeneratedBy pointer
+    at the announcement (RQ-Listener-1). Projection is async (fires on the body PUT),
+    so retry until it converges."""
+    last = []
+    for _ in range(retries):
+        last = list(_meta_graph(resource_url).objects(URIRef(resource_url), PROV.wasGeneratedBy))
+        if URIRef(ann_url) in last:
+            return
+        time.sleep(delay)
+    raise AssertionError(
+        f"derived prov:wasGeneratedBy -> {ann_url} not found in {resource_url}.meta "
+        f"after {retries} polls; got {last}"
     )
 
 
@@ -188,31 +207,23 @@ def test_crystallize_e2e(slug):
     )
     _patch_meta(working_url, triples)
 
-    act = _act_uri(durable_url, "crystallize")
-    iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    # Announce FIRST (announce-first contract): the substrate derives the resource's
+    # prov:wasGeneratedBy from this announcement on the body PUT below.
+    ann_url, ann_subject = _announce(str(MEM.CrystallizeAction), durable_url)
 
-    # Perform: PUT durable + PATCH .meta with PROV-O
+    # Perform: PUT durable (projection finds the announcement, derives the edge)
     _put(durable_url, f"# {slug}\n\nCrystallized concept.\n")
+    # PATCH only the ungoverned provenance the substrate does NOT derive (wasDerivedFrom).
     durable_triples = _nt_triples(
         f'<{durable_url}> <http://purl.org/dc/terms/title> "{slug}" .',
         f'<{durable_url}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
         f' <https://pod.vardeman.me/vault/ontology/wiki#Page> .',
-        f'<{durable_url}> <http://www.w3.org/ns/prov#wasGeneratedBy> <{act}> .',
         f'<{durable_url}> <http://www.w3.org/ns/prov#wasDerivedFrom> <{working_url}> .',
-        f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-        f' <https://pod.vardeman.me/vault/ontology/mem#CrystallizeAction> .',
-        f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-        f' <http://www.w3.org/ns/prov#Activity> .',
-        f'<{act}> <http://www.w3.org/ns/prov#atTime>'
-        f' "{iso_now}"^^<http://www.w3.org/2001/XMLSchema#dateTime> .',
     )
     _patch_meta(durable_url, durable_triples)
 
-    # Step 3: DELETE working note
+    # DELETE working note
     _delete(working_url)
-
-    # Step 4: POST operation announcement to .operations/
-    ann_url, ann_id = _announce(str(MEM.CrystallizeAction), durable_url)
 
     try:
         # Verify 1: durable exists
@@ -234,10 +245,11 @@ def test_crystallize_e2e(slug):
             f"prov:wasDerivedFrom missing working source; got {derived}"
         )
 
-        # Verify 4: operation provenance recorded in .operations/ announcement
-        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed;
-        #  authoritative provenance is the .operations/ announcement per mem.ttl)
-        _assert_announced(ann_url, ann_id, str(MEM.CrystallizeAction), durable_url)
+        # Verify 4: operation provenance recorded canonically in .operations/
+        _assert_announced(ann_url, ann_subject, str(MEM.CrystallizeAction), durable_url)
+
+        # Verify 5: the substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta
+        _assert_derived_genesis(durable_url, ann_url)
 
     finally:
         _delete(durable_url)
@@ -270,34 +282,26 @@ def test_supersede_e2e(slug):
     # Discover prior Memento URI
     prior_memento = _discover_memento_uri(page_url)
 
-    act = _act_uri(page_url, "supersede")
-    iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-
     # If no Memento URI found yet, use timemap as sentinel
     memento_sentinel = prior_memento or (page_url + "?ext=timemap")
     ann_url = None
 
-    # Perform: PUT refined body + PATCH .meta
     try:
+        # Announce FIRST (announce-first): the substrate derives prov:wasGeneratedBy
+        # from this announcement on the body PUT below.
+        ann_url, ann_subject = _announce(str(MEM.SupersedeAction), page_url)
+
+        # Perform: PUT refined body (projection derives the edge)
         _put(page_url, f"# {slug} v2\n\nRefined version.\n")
+        # PATCH only ungoverned provenance the substrate does NOT derive (wasRevisionOf).
         refined_triples = _nt_triples(
             f'<{page_url}> <http://purl.org/dc/terms/title> "{slug} v2" .',
             f'<{page_url}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
             f' <https://pod.vardeman.me/vault/ontology/wiki#Page> .',
-            f'<{page_url}> <http://www.w3.org/ns/prov#wasGeneratedBy> <{act}> .',
             f'<{page_url}> <http://www.w3.org/ns/prov#wasRevisionOf>'
             f' <{memento_sentinel}> .',
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <https://pod.vardeman.me/vault/ontology/mem#SupersedeAction> .',
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <http://www.w3.org/ns/prov#Activity> .',
-            f'<{act}> <http://www.w3.org/ns/prov#atTime>'
-            f' "{iso_now}"^^<http://www.w3.org/2001/XMLSchema#dateTime> .',
         )
         _patch_meta(page_url, refined_triples)
-
-        # Step 3: POST operation announcement to .operations/
-        ann_url, ann_id = _announce(str(MEM.SupersedeAction), page_url)
 
         # Verify 1: page returns the refined body
         r = httpx.get(page_url, headers={"Accept": "text/markdown"}, verify=False)
@@ -319,9 +323,11 @@ def test_supersede_e2e(slug):
             # Assertion deferred — see Phase B/Memento integration follow-up.
             pass
 
-        # Verify 3: operation provenance recorded in .operations/ announcement
-        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
-        _assert_announced(ann_url, ann_id, str(MEM.SupersedeAction), page_url)
+        # Verify 3: operation provenance recorded canonically in .operations/
+        _assert_announced(ann_url, ann_subject, str(MEM.SupersedeAction), page_url)
+
+        # Verify 4: the substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta
+        _assert_derived_genesis(page_url, ann_url)
 
     finally:
         _delete(page_url)
@@ -349,41 +355,32 @@ def test_merge_e2e(slug):
     for i, url in enumerate(input_urls, start=1):
         _setup_page(url, f"{slug} input {i}")
 
-    act = _act_uri(merged_url, "merge")
-    iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     ann_url = None
 
     try:
-        # Perform: PUT merged resource
+        # Announce FIRST (announce-first): the substrate derives prov:wasGeneratedBy
+        # from this announcement on the body PUT below.
+        ann_url, ann_subject = _announce(str(MEM.MergeAction), merged_url)
+
+        # Perform: PUT merged resource (projection derives the edge)
         merged_body = f"# {slug} merged\n\nCombined from {len(input_urls)} inputs.\n"
         _put(merged_url, merged_body)
 
+        # PATCH only ungoverned provenance the substrate does NOT derive (wasDerivedFrom × 3).
         derived_triples = [
             f'<{merged_url}> <http://purl.org/dc/terms/title> "{slug} merged" .',
             f'<{merged_url}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
             f' <https://pod.vardeman.me/vault/ontology/wiki#Page> .',
-            f'<{merged_url}> <http://www.w3.org/ns/prov#wasGeneratedBy> <{act}> .',
         ]
         for inp in input_urls:
             derived_triples.append(
                 f'<{merged_url}> <http://www.w3.org/ns/prov#wasDerivedFrom> <{inp}> .'
             )
-        derived_triples += [
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <https://pod.vardeman.me/vault/ontology/mem#MergeAction> .',
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <http://www.w3.org/ns/prov#Activity> .',
-            f'<{act}> <http://www.w3.org/ns/prov#atTime>'
-            f' "{iso_now}"^^<http://www.w3.org/2001/XMLSchema#dateTime> .',
-        ]
         _patch_meta(merged_url, _nt_triples(*derived_triples))
 
         # DELETE inputs
         for inp in input_urls:
             _delete(inp)
-
-        # Step 4: POST operation announcement to .operations/
-        ann_url, ann_id = _announce(str(MEM.MergeAction), merged_url)
 
         # Verify 1: merged resource exists
         r = httpx.get(merged_url, headers={"Accept": "text/markdown"}, verify=False)
@@ -405,9 +402,11 @@ def test_merge_e2e(slug):
                 f"prov:wasDerivedFrom missing input {inp}; got {derived}"
             )
 
-        # Verify 4: operation provenance recorded in .operations/ announcement
-        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
-        _assert_announced(ann_url, ann_id, str(MEM.MergeAction), merged_url)
+        # Verify 4: operation provenance recorded canonically in .operations/
+        _assert_announced(ann_url, ann_subject, str(MEM.MergeAction), merged_url)
+
+        # Verify 5: the substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta
+        _assert_derived_genesis(merged_url, ann_url)
 
     finally:
         _delete(merged_url)
@@ -440,34 +439,27 @@ def test_demote_e2e(slug):
     prior_memento = _discover_memento_uri(durable_url)
     memento_ref = prior_memento or (durable_url + "?ext=timemap")
 
-    act = _act_uri(working_url, "demote")
-    iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     ann_url = None
 
     try:
-        # Perform: PUT to working
+        # Announce FIRST (announce-first): the substrate derives prov:wasGeneratedBy
+        # from this announcement on the body PUT below.
+        ann_url, ann_subject = _announce(str(MEM.DemoteAction), working_url)
+
+        # Perform: PUT to working (projection derives the edge)
         _put(working_url, f"# {slug} (demoted)\n\nNeeds rework.\n")
+        # PATCH only ungoverned provenance the substrate does NOT derive (wasDerivedFrom).
         working_triples = _nt_triples(
             f'<{working_url}> <http://purl.org/dc/terms/title> "{slug} demoted" .',
             f'<{working_url}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
             f' <https://pod.vardeman.me/vault/ontology/wiki#WorkingNote> .',
-            f'<{working_url}> <http://www.w3.org/ns/prov#wasGeneratedBy> <{act}> .',
             f'<{working_url}> <http://www.w3.org/ns/prov#wasDerivedFrom>'
             f' <{memento_ref}> .',
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <https://pod.vardeman.me/vault/ontology/mem#DemoteAction> .',
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <http://www.w3.org/ns/prov#Activity> .',
-            f'<{act}> <http://www.w3.org/ns/prov#atTime>'
-            f' "{iso_now}"^^<http://www.w3.org/2001/XMLSchema#dateTime> .',
         )
         _patch_meta(working_url, working_triples)
 
         # DELETE durable
         _delete(durable_url)
-
-        # Step 4: POST operation announcement to .operations/
-        ann_url, ann_id = _announce(str(MEM.DemoteAction), working_url)
 
         # Verify 1: working note exists
         r = httpx.get(working_url, headers={"Accept": "text/markdown"}, verify=False)
@@ -485,9 +477,11 @@ def test_demote_e2e(slug):
         derived = list(g.objects(URIRef(working_url), PROV.wasDerivedFrom))
         assert len(derived) >= 1, "prov:wasDerivedFrom missing on demoted working resource"
 
-        # Verify 4: operation provenance recorded in .operations/ announcement
-        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
-        _assert_announced(ann_url, ann_id, str(MEM.DemoteAction), working_url)
+        # Verify 4: operation provenance recorded canonically in .operations/
+        _assert_announced(ann_url, ann_subject, str(MEM.DemoteAction), working_url)
+
+        # Verify 5: the substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta
+        _assert_derived_genesis(working_url, ann_url)
 
     finally:
         _delete(working_url)
@@ -517,27 +511,21 @@ def test_archive_e2e(slug):
     # Setup
     _setup_page(page_url, f"{slug} to archive")
 
-    act = _act_uri(page_url, "archive")
-    iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     ann_url = None
 
     try:
-        # Perform: PATCH .meta with tombstone + PROV-O
+        # Archive is a .meta-only op (no body write): provenance lives canonically in
+        # .operations/; there is no derived prov:wasGeneratedBy (the projector only
+        # derives on a body write, and archive does not rewrite the body). Agents no
+        # longer PATCH prov:wasGeneratedBy.
         tombstone_triples = _nt_triples(
             f'<{page_url}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
             f' <https://www.w3.org/ns/activitystreams#Tombstone> .',
-            f'<{page_url}> <http://www.w3.org/ns/prov#wasGeneratedBy> <{act}> .',
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <https://pod.vardeman.me/vault/ontology/mem#ArchiveAction> .',
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <http://www.w3.org/ns/prov#Activity> .',
-            f'<{act}> <http://www.w3.org/ns/prov#atTime>'
-            f' "{iso_now}"^^<http://www.w3.org/2001/XMLSchema#dateTime> .',
         )
         _patch_meta(page_url, tombstone_triples)
 
-        # Step 2: POST operation announcement to .operations/
-        ann_url, ann_id = _announce(str(MEM.ArchiveAction), page_url)
+        # POST the canonical operation announcement to .operations/
+        ann_url, ann_subject = _announce(str(MEM.ArchiveAction), page_url)
 
         # Verify 1: body still accessible (soft delete)
         r = httpx.get(page_url, headers={"Accept": "text/markdown"}, verify=False)
@@ -550,9 +538,9 @@ def test_archive_e2e(slug):
             f"as:Tombstone missing from archived resource .meta; got {types}"
         )
 
-        # Verify 3: operation provenance recorded in .operations/ announcement
-        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
-        _assert_announced(ann_url, ann_id, str(MEM.ArchiveAction), page_url)
+        # Verify 3: operation provenance recorded canonically in .operations/
+        # (no derived edge: archive is a .meta-only op, no body write to project)
+        _assert_announced(ann_url, ann_subject, str(MEM.ArchiveAction), page_url)
 
     finally:
         _delete(page_url)
@@ -588,30 +576,21 @@ def test_link_e2e(slug):
     _setup_page(subject_url, f"{slug} subject")
     _setup_page(object_url,  f"{slug} object")
 
-    act = _act_uri(subject_url, "link")
-    iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     ann_url = None
 
     try:
-        # Perform: PATCH subject's .meta with typed edge + PROV-O
+        # Link is a .meta-only op (no body write): provenance lives canonically in
+        # .operations/; no derived prov:wasGeneratedBy (the projector only derives on
+        # a body write). Agents no longer PATCH prov:wasGeneratedBy.
         link_triples = _nt_triples(
             # Typed edge: skos:related (substrate-listed lateral predicate)
             f'<{subject_url}> <http://www.w3.org/2004/02/skos/core#related>'
             f' <{object_url}> .',
-            # PROV-O activity node (projection will overwrite prov:wasGeneratedBy pointer,
-            # but the activity node itself persists — provenance goes in .operations/)
-            f'<{subject_url}> <http://www.w3.org/ns/prov#wasGeneratedBy> <{act}> .',
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <https://pod.vardeman.me/vault/ontology/mem#LinkAction> .',
-            f'<{act}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
-            f' <http://www.w3.org/ns/prov#Activity> .',
-            f'<{act}> <http://www.w3.org/ns/prov#atTime>'
-            f' "{iso_now}"^^<http://www.w3.org/2001/XMLSchema#dateTime> .',
         )
         _patch_meta(subject_url, link_triples)
 
-        # Step 3: POST operation announcement to .operations/
-        ann_url, ann_id = _announce(str(MEM.LinkAction), subject_url)
+        # POST the canonical operation announcement to .operations/
+        ann_url, ann_subject = _announce(str(MEM.LinkAction), subject_url)
 
         # Verify 1: typed edge in subject's .meta
         g = _meta_graph(subject_url)
@@ -620,9 +599,9 @@ def test_link_e2e(slug):
             f"skos:related edge missing from subject .meta; got {related}"
         )
 
-        # Verify 2: operation provenance recorded in .operations/ announcement
-        # (RQ-Listener-1: prov:wasGeneratedBy in content .meta is projection-governed)
-        _assert_announced(ann_url, ann_id, str(MEM.LinkAction), subject_url)
+        # Verify 2: operation provenance recorded canonically in .operations/
+        # (no derived edge: link is a .meta-only op, no body write to project)
+        _assert_announced(ann_url, ann_subject, str(MEM.LinkAction), subject_url)
 
     finally:
         _delete(subject_url)
