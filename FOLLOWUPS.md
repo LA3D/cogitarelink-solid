@@ -46,6 +46,61 @@ provenance), a crystallized concept now carries `schema:name` on `<#this>`.
 assertions (no longer a workaround — it *is* the design).
 
 
+## NEXT SESSION — D106 real fix + pod-embed + comprehension re-probe (branch `rq-listener-1-provenance`)
+
+Decisions **D105** (two-hierarchy: RDFS-subsumption = addressing axis / SKOS-broader = navigation
+axis, never substituted) and **D106** (wikilink role → predicate; container → target class via Type
+Index, not role; extension types via ESCO Pattern C `rdfs:subClassOf skos:Concept` + `skos:exactMatch`,
+no punning) are **recorded** (repo `decisions.md` D105/D106 + D76(a)/(c) revised + D79 sharpened; vault
+D100/D101; project MEMORY key-pattern; auto-memory `two_hierarchy_addressing`). The **interim** resolver
+fix shipped (`07217fe`): retired the stale role→container map, default = content container `concepts/`,
+kept `author`→people; the 2 long-failing D98 fixtures are green. Three things remain:
+
+**1. Real fix (D106 full arm) — resolve container from the target's CLASS via the Type Index.**
+- File: `css/extensions/markdown-projection/src/wikilinkProjection.ts` (+ the listener which already holds
+  the live Type Index via `TypeIndexLoader`). Today `targetContainer()` falls back to the base/default
+  container; the real version resolves the target by looking up its class via the Type Index (the
+  listener has it) and routing class→container. `.role` stays predicate-only (`HINT_TO_PROJECTION`).
+- **Forward-reference guardrail:** when the target doesn't resolve (not yet created — normal in a wiki),
+  emit the edge to the default content container marked **provisional**, and signal it as a
+  dangling/reconcilable state via the existing `mem:StalenessDetected`/dangling-reference machinery so the
+  pod-curator reconciles when the target is created. `.embed` ALWAYS looks up (never role-guess).
+- Retire `HINT_TO_CONTAINER` except genuine role→type entailments (`author`). Keep the interim behavior as
+  the fallback when no Type Index is available (pure-pipeline unit tests run without a live index).
+- Note: the pipeline (`projectionPipeline.run`) is pure and has no store access; the Type-Index lookup
+  belongs in the LISTENER (`src-cjs/listener.ts`, which has `TypeIndexLoader`) — inject the resolved
+  target container into the pipeline, mirroring how `typeIndex` is already injected. Keep `run()` pure.
+
+**2. Embed the two-hierarchy explanation in the Pod self-description (for cold agents).**
+- Add agent-facing guidance so a cold agent learns the model from the Pod itself: RDFS-subsumption =
+  addressing (Type Index → container/shape), SKOS-broader = navigation; wikilink role → predicate,
+  container → target class via Type Index; extension types via Pattern C; dangling refs reconcilable.
+- Surface it where a cold agent looks: the storage-description entry-point `sh:agentInstruction` (the lone
+  audit WARN is that it's missing — this doubles as that fix) and/or a dedicated doc resource (e.g.
+  `/vault/meta/two-hierarchy.md` or extend `/vault/wiki/index.md`). Carry machine-followable
+  `dct:references` to the canonical sources (W3C *Using OWL and SKOS*
+  https://www.w3.org/2006/07/SWD/SKOS/skos-and-owl/master.html ; ESCO model https://ec.europa.eu/esco/lod/model)
+  so the agent can dereference the prior art, not just read prose.
+- The dogfood note (below) is the content exemplar to crystallize into `/wiki/concepts/`.
+
+**3. Comprehension re-probe + deploy.**
+- `make reset` first — the live Pod is behind the branch: it does NOT yet have the mem.ttl subclass-example
+  fix (`3a1c376`), the interim resolver fix (`07217fe`), or step-2's embedded guidance. Reset deploys all.
+- Then run a cold agent on a task that exercises the two-hierarchy distinction (create a concept that cites
+  a source + links a person; ask it to navigate `broader` vs reason about `subClassOf`/container) and assess
+  whether it uses RDFS-addressing vs SKOS-navigation correctly and resolves containers via the Type Index.
+  Honest comprehension check (same protocol as the 2026-05-26 cold probes — HTTP-only, no hints, no repo).
+
+**Integration (overdue):** the branch carries TWO efforts — the RQ-Listener-1 collapse AND the D105/D106
+two-hierarchy/wikilink work (~20 commits). Consider splitting into two PRs by concern before merge. Nothing
+is pushed. Full reasoning trail: decisions D105/D106 + the superseded design doc
+`docs/superpowers/specs/2026-05-25-mem-operation-provenance-derivation-design.md`.
+
+**Dogfood note:** a wiki-memory-format vault note documenting the two-hierarchy KR pattern lives at
+`~/Obsidian/obsidian/03 - Resources/Agentic Memory Systems/Two-Hierarchy Memory Addressing.md` — a
+"memory about how the memory works." Crystallize it into the Pod as the first dogfood content (and the
+content exemplar for step 2).
+
 ## Shape-validator TBox bundle sync pattern (added 2026-05-23)
 
 `css/extensions/shape-validator/data/{mem,as-subclass-axioms}.ttl` are bundled copies
