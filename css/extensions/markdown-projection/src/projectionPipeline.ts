@@ -14,7 +14,7 @@
 import { DataFactory, NamedNode, Quad } from "n3";
 import * as YAML from "yaml";
 import { projectFrontmatter, Frontmatter, resolveCURIE } from "./frontmatterProjection.js";
-import { projectWikilinks } from "./wikilinkProjection.js";
+import { projectWikilinks, BOOTSTRAP_PREDICATE_TO_CLASS } from "./wikilinkProjection.js";
 import { resolveThingClass, TypeIndex, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
 
 const { namedNode, literal, quad } = DataFactory;
@@ -142,6 +142,7 @@ export const projectionPipeline = {
         resourceUri: string,
         body: string,
         typeIndex: TypeIndex = DEFAULT_WIKI_TYPE_INDEX,
+        predicateToClass: Record<string, string> = BOOTSTRAP_PREDICATE_TO_CLASS,
     ): Promise<Quad[]> {
         const { fm, rest } = splitFrontmatter(body);
 
@@ -149,7 +150,7 @@ export const projectionPipeline = {
         const fmTriples = rebindSubject(projectFrontmatter(fm), resourceUri);
 
         // Body wikilinks → quads (subject = resourceUri)
-        const wikiTriples = projectWikilinks(rest, resourceUri);
+        const wikiTriples = projectWikilinks(rest, resourceUri, typeIndex, predicateToClass);
 
         // Derived: dct:title from H1 when frontmatter carries no title
         const derived: Quad[] = [];

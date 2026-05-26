@@ -178,3 +178,21 @@ describe("ThingShape conformance", () => {
     expect(name!.object.value).toBe("Decay Theory");  // from the H1
   });
 });
+
+describe("routing via predicateToClass", () => {
+  it("routes a body {.affiliation} link via injected Type Index + routing map", async () => {
+    const typeIndex = {
+      "/vault/wiki/concepts/":      "http://www.w3.org/2004/02/skos/core#Concept",
+      "/vault/wiki/organizations/": "https://schema.org/Organization",
+    };
+    const routing = { "https://schema.org/affiliation": "https://schema.org/Organization" };
+    const quads = await projectionPipeline.run(
+      "https://pod.example/vault/wiki/concepts/jarek.md",
+      "# Jarek\n\nWorks at [[Notre Dame]]{.affiliation}.\n",
+      typeIndex,
+      routing,
+    );
+    const edge = quads.find(q => q.predicate.value === "https://schema.org/affiliation");
+    expect(edge?.object.value).toBe("https://pod.example/vault/wiki/organizations/notre-dame.md#this");
+  });
+});
