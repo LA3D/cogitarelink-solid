@@ -2,11 +2,30 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## mem-operation in-resource provenance collides with the projection listener (RQ-Listener-1; surfaced 2026-05-23)
+## ~~mem-operation in-resource provenance collides with the projection listener (RQ-Listener-1)~~ — RESOLVED 2026-05-26
 
-The 6 `tests/integration/test_mem_operations.py` e2e tests (crystallize/supersede/merge/demote/archive/link) FAIL after the D98 test-path migration (`pages/`→`concepts/`). Root cause is **not** a regression — it's RQ-Listener-1: the `MarkdownProjectionListener` regenerates `.meta` on write and **overwrites `<subject> prov:wasGeneratedBy`** with its own activity (`</meta/affordances/markdown-projection>`). The agent's manually-PATCHed `<subject> prov:wasGeneratedBy <#action>` edge is clobbered; the activity node itself (`<#action> a mem:LinkAction`) persists, but the subject no longer points at it. The tests passed against the old `pages/` container (different/no projection); `concepts/` gets full D71 projection, exposing the collision. Verified by direct probe (PUT concept + PATCH `.meta` → readback shows projection's wasGeneratedBy, not the agent's).
+**Resolved** on branch `rq-listener-1-provenance` (not yet merged) via **derive-from-log** — a 4th
+option that supersedes the (a) pre-write-merge / (b) assert-from-announcement-only / (c) non-governed-predicate
+choices once weighed against the canonical `.operations/` log. Instead of the agent PATCHing
+`prov:wasGeneratedBy` (which the projection clobbers), the **substrate derives** it: the agent posts a
+`<>`-subject `[as:Announce, mem:*Action, prov:Activity]` with `as:object <target>` to `/vault/wiki/.operations/`
+*before* the body write (announce-first), and `MarkdownProjectionListener` re-derives
+`<target> prov:wasGeneratedBy <announcement>` into `.meta` on every projection by reading the op log from
+disk. The timing bug is moot (the edge is recomputed, never preserved) and "log wins" is structural. The
+projector's old affordance-stamp (a PROV category error — it generates *metadata*, not the resource) was
+relocated to the `.meta`-document subject.
 
-**The real finding:** agent-asserted memory-operation provenance and the substrate's projection both claim the *same* governed predicate (`prov:wasGeneratedBy`) on the content resource. `mem.ttl` actually prescribes recording actions via an `as:Announce` to `/vault/wiki/.operations/` (which now works — the 422 is fixed) **in addition to** the in-resource `prov:wasGeneratedBy`. Options to resolve: (a) fix RQ-Listener-1 so the projection preserves agent-asserted `prov:wasGeneratedBy` (pre-write read/merge — see `docs/plans/2026-05-15-rq-listener-1-mitigation-design.md`); (b) rework the e2e tests to assert operation provenance from the `.operations/` announcement rather than the content resource's `.meta`; (c) use a non-governed predicate for agent operation provenance. Until then, these 6 tests should be xfailed with this reason rather than left silently red. Decision pending.
+Shipped: `operationLog.findLatestAction` (pure FS reader), `projectionPipeline` derive + audit-stamp
+relocation (pointer-only, no inline accumulation), listener wiring, `mem.ttl` canonical `<>`-subject +
+required `as:object`, the `memory-history` affordance (op log + Memento, on-demand history). 6/6
+`test_mem_operations.py` assert the derived edge live; audit clean (0 ERROR). Design + plan:
+`docs/superpowers/{specs,plans}/2026-05-25-mem-operation-provenance-derivation*`.
+
+**Note:** the prior claim that these 6 tests were "silently red" was inaccurate — they were already green
+via an `.operations/`-only workaround (commit `eac80f9`); the fix replaces that workaround with the stronger
+derived-edge assertion. The **broad** agent-extension question (arbitrary non-governed triples surviving
+body rewrites — `test_agent_enrichment_survives_body_rewrite`) is NOT addressed here and stays deferred to
+the `.meta.agent` sidecar / D82.
 
 
 ## Shape-validator TBox bundle sync pattern (added 2026-05-23)
