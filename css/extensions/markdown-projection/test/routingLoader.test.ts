@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { parseRoutingDoc, loadRoutingMap } from "../src/routingLoader.js";
 
 describe("loadRoutingMap URL construction", () => {
@@ -12,6 +12,18 @@ describe("loadRoutingMap URL construction", () => {
         const out = await loadRoutingMap("https://pod.example/vault", fakeFetch, bootstrap);
         expect(calledUrl).toBe("https://pod.example/vault/meta/routing.jsonld");
         expect(out).toBe(bootstrap); // non-OK → bootstrap fallback
+    });
+
+    it("Fix3: emits console.error on non-OK response", async () => {
+        const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const fakeFetch = (async () =>
+            ({ ok: false, status: 404 } as Response)
+        ) as unknown as typeof fetch;
+        const bootstrap = { "p": "c" };
+        const out = await loadRoutingMap("https://pod.example/vault", fakeFetch, bootstrap);
+        expect(out).toBe(bootstrap);
+        expect(errSpy).toHaveBeenCalled();
+        errSpy.mockRestore();
     });
 });
 

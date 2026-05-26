@@ -39,14 +39,26 @@ export async function loadRoutingMap(
     fetchFn: typeof fetch,
     bootstrap: Record<string, string>,
 ): Promise<Record<string, string>> {
+    const url = `${podBase}/meta/routing.jsonld`;
     try {
-        const res = await fetchFn(`${podBase}/meta/routing.jsonld`, {
+        const res = await fetchFn(url, {
             headers: { Accept: "application/ld+json" },
         });
-        if (!res.ok) return bootstrap;
+        if (!res.ok) {
+            // eslint-disable-next-line no-console
+            console.error(`[markdown-projection] routing.jsonld unreachable at ${url} (status ${(res as any).status ?? "unknown"}); using bootstrap kernel`);
+            return bootstrap;
+        }
         const map = parseRoutingDoc(await res.json() as RoutingDoc);
-        return Object.keys(map).length ? map : bootstrap;
-    } catch {
+        if (!Object.keys(map).length) {
+            // eslint-disable-next-line no-console
+            console.error(`[markdown-projection] routing.jsonld at ${url} parsed to empty map; using bootstrap kernel`);
+            return bootstrap;
+        }
+        return map;
+    } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(`[markdown-projection] routing.jsonld unreachable at ${url} (${(err as Error).message}); using bootstrap kernel`);
         return bootstrap;
     }
 }

@@ -38,11 +38,19 @@ export class TypeIndexLoader {
             if (resp.ok) {
                 const ttl = await resp.text();
                 const live = this.parseTypeIndex(ttl, url);
-                this.cache = { ...DEFAULT_WIKI_TYPE_INDEX, ...live };
+                // Kernel-authoritative merge: DEFAULT wins for canonical containers;
+                // live ADDS genuinely-new containers (e.g. L4 overlay registrations).
+                // Without this, a live Type Index with two registrations for the same
+                // container (e.g. skos:Concept + wiki:Source both mapping to /wiki/concepts/)
+                // non-deterministically flips the canonical class on iteration order.
+                this.cache = { ...live, ...DEFAULT_WIKI_TYPE_INDEX };
                 return this.cache;
             }
-        } catch {
-            // Network error or Pod not ready — fall through to defaults
+            // eslint-disable-next-line no-console
+            console.error(`[markdown-projection] Type Index unreachable at ${url} (status ${(resp as any).status ?? "unknown"}); falling back to DEFAULT_WIKI_TYPE_INDEX`);
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error(`[markdown-projection] Type Index unreachable at ${url} (${(err as Error).message}); falling back to DEFAULT_WIKI_TYPE_INDEX`);
         }
         this.cache = { ...DEFAULT_WIKI_TYPE_INDEX };
         return this.cache;
