@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { DataFactory } from "n3";
-import { projectWikilink, projectWikilinks, HINT_TO_PROJECTION } from "../src/wikilinkProjection.js";
+import {
+    projectWikilink, projectWikilinks, HINT_TO_PROJECTION,
+    BOOTSTRAP_PREDICATE_TO_CLASS, classToContainerSegment,
+} from "../src/wikilinkProjection.js";
 
 const { namedNode } = DataFactory;
 
@@ -113,5 +116,29 @@ describe("projectWikilinks (pipeline compat — D98 #this subjects/objects)", ()
         expect(t).toBeDefined();
         expect(t?.subject.value).toBe(thingUri);
         expect(t?.object.value).toContain("#this");
+    });
+});
+
+describe("BOOTSTRAP_PREDICATE_TO_CLASS (D106 minimal kernel)", () => {
+    it("affiliation→Organization, location→Place, contributor→Person", () => {
+        expect(BOOTSTRAP_PREDICATE_TO_CLASS["https://schema.org/affiliation"]).toBe("https://schema.org/Organization");
+        expect(BOOTSTRAP_PREDICATE_TO_CLASS["https://schema.org/location"]).toBe("https://schema.org/Place");
+        expect(BOOTSTRAP_PREDICATE_TO_CLASS["http://purl.org/dc/terms/contributor"]).toBe("https://schema.org/Person");
+    });
+    it("does not entail a class for skos:related", () => {
+        expect(BOOTSTRAP_PREDICATE_TO_CLASS["http://www.w3.org/2004/02/skos/core#related"]).toBeUndefined();
+    });
+});
+
+describe("classToContainerSegment (inverts container→class Type Index)", () => {
+    const typeIndex = {
+        "/vault/wiki/concepts/":      "http://www.w3.org/2004/02/skos/core#Concept",
+        "/vault/wiki/organizations/": "https://schema.org/Organization",
+    };
+    it("maps schema:Organization → 'organizations'", () => {
+        expect(classToContainerSegment("https://schema.org/Organization", typeIndex)).toBe("organizations");
+    });
+    it("returns undefined for an unregistered class", () => {
+        expect(classToContainerSegment("https://schema.org/Event", typeIndex)).toBeUndefined();
     });
 });

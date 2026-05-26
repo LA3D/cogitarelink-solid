@@ -63,6 +63,31 @@ export const HINT_TO_PROJECTION: Record<string, Projection> = {
     embed:       { subject: "PAGE",  predicate: namedNode(WIKI + "embeds") },
 };
 
+// Minimal opinionated kernel (Option B): the smallest predicate→class entailment
+// set that makes a freshly-minted Pod usable as agentic memory with the D106
+// guardrails intact. The Pod's /vault/meta/routing.jsonld EXTENDS this at runtime
+// (RoutingLoader); this kernel is the bootstrap default used before the doc loads
+// or if it is absent — same status as DEFAULT_WIKI_TYPE_INDEX. Navigation
+// predicates (skos:related/broader, cito:*) entail nothing → default content container.
+export const BOOTSTRAP_PREDICATE_TO_CLASS: Record<string, string> = {
+    [SCHEMA + "affiliation"]: SCHEMA + "Organization",
+    [SCHEMA + "location"]:    SCHEMA + "Place",
+    [DCT + "contributor"]:    SCHEMA + "Person",
+};
+
+export function classToContainerSegment(
+    classIri: string,
+    typeIndex: Record<string, string>,
+): string | undefined {
+    for (const [prefix, cls] of Object.entries(typeIndex)) {
+        if (cls === classIri) {
+            const m = prefix.match(/\/wiki\/([^/]+)\/$/);
+            if (m) return m[1];
+        }
+    }
+    return undefined;
+}
+
 // Legacy citekey fallback predicate (dct:references) — routed as THING-scoped
 const CITEKEY_PROJECTION: Projection = {
     subject: "THING",
