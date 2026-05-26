@@ -446,6 +446,17 @@ wiki:targetClass
     """ ;
     rdfs:seeAlso wiki:deriveClass , sh:targetClass .
 
+wiki:routesToClass
+    a rdf:Property ;
+    rdfs:label "routes to class"@en ;
+    rdfs:comment "Substrate-scoped addressing relation: a wikilink edge using this predicate routes its target resource into the container registered (in the Type Index) for the named class. This is NOT a global rdfs:range claim about the predicate — it is this Pod's routing entailment (D106). The target's authoritative type remains the target's own <#this> a … (D81)."@en ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    rdfs:domain rdf:Property ;
+    rdfs:range rdfs:Class ;
+    dct:conformsTo <http://www.w3.org/2000/01/rdf-schema> ;
+    dct:created "2026-05-26"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> .
+
 wiki:threshold
     a rdf:Property ;
     rdfs:label "threshold" ;
