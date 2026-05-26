@@ -20,9 +20,9 @@
     wiki:procedure (
         "GET each input resource to fetch body + .meta"
         "Choose the merged target URL (canonical name if one exists, otherwise compose a slug from the merged content's title)"
-        "Compose the merged body and .meta including prov:wasGeneratedBy [a mem:MergeAction; ...] and prov:wasDerivedFrom <input-1>, <input-2>, ... for each input"
+        "Compose the merged body and .meta including prov:wasDerivedFrom <input-1>, <input-2>, ... for each input (agent-authored, ungoverned; do NOT PATCH prov:wasGeneratedBy — the operation is recorded in .operations/ per the final step)"
         "PUT /vault/wiki/{class}/{merged-slug}.md with body; PATCH .meta with the Turtle"
         "On 201, DELETE each input resource sequentially"
-        "POST as:Announce activity multi-typed with mem:MergeAction to /vault/wiki/.operations/, with as:object listing all inputs and as:result pointing at the merged resource"
+        "POST the canonical operation record to /vault/wiki/.operations/: a <>-subject `a as:Announce, mem:MergeAction, prov:Activity` with as:object -> the merged resource (the produced resource) and prov:wasDerivedFrom -> each input (per mem:Action, as:object names the produced resource; sources go on prov:wasDerivedFrom, never as:object)"
     ) ;
     wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .

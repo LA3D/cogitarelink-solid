@@ -15,11 +15,11 @@
     dct:description "Demotes a durable resource to /vault/wiki/working/ so it can be edited under permissive constraints before re-crystallization. The prior durable version is preserved by Memento. Used when a crystallized resource needs significant rework that wouldn't conform to its current class shape. See </vault/wiki/index.md> for the full L3 profile." ;
     dct:isPartOf </vault/wiki/index.md> ;
     wiki:precondition "Durable resource exists at /vault/wiki/{class}/{slug}.md." ;
-    wiki:postcondition "Resource appears at /vault/wiki/working/{slug}.md under the working SHACL shape (permissive); the durable URL has been deleted; Memento has captured the prior durable version; PROV-O records a mem:DemoteAction with prov:wasDerivedFrom pointing at the prior Memento URI." ;
+    wiki:postcondition "Resource appears at /vault/wiki/working/{slug}.md under the working SHACL shape (permissive); the durable URL has been deleted; Memento has captured the prior durable version; the operation is recorded canonically as a mem:DemoteAction announcement in /vault/wiki/.operations/ (as:object -> the working resource); the .meta carries prov:wasDerivedFrom pointing at the prior Memento URI." ;
     wiki:errorMode "If working-shape PUT fails (shouldn't, given working is permissive), 422 returned with sh:ValidationReport body; durable copy remains intact." ;
     wiki:procedure (
         "GET /vault/wiki/{class}/{slug}.md to fetch body and .meta"
-        "Compose working body and .meta including prov:wasGeneratedBy [a mem:DemoteAction; ...] and prov:wasDerivedFrom <prior-memento-uri>"
+        "Compose working body and .meta including prov:wasDerivedFrom <prior-memento-uri> (agent-authored, ungoverned; do NOT PATCH prov:wasGeneratedBy — the operation is recorded in .operations/ per the final step)"
         "PUT /vault/wiki/working/{slug}.md with body; PATCH .meta with the Turtle"
         "On 201, DELETE /vault/wiki/{class}/{slug}.md"
         "POST as:Announce activity multi-typed with mem:DemoteAction to /vault/wiki/.operations/"
