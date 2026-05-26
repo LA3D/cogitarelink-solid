@@ -125,6 +125,9 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
     // Typed as any because the class is loaded from the ESM module at runtime.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     typeIndexLoader = null;
+    // Cached routing map (predicate IRI → class IRI) loaded from /meta/routing.jsonld.
+    // Null until first project() call; falls back to BOOTSTRAP_PREDICATE_TO_CLASS on error.
+    routingMap = null;
     constructor(store, baseUrl, dataDir, postProjectionHook) {
         super();
         this.store = store;
@@ -187,12 +190,18 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
             return;
         }
         // Load ESM projection pipeline lazily
-        const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter, resolveThingClass, TypeIndexLoader } = await getPipeline();
+        const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter, resolveThingClass, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap } = await getPipeline();
         // Instance TypeIndexLoader on first use (after pipeline is loaded).
         // The loader caches the live Type Index; refresh-on-miss handles newly-
         // installed L4 overlays whose container registrations aren't cached yet.
         if (this.typeIndexLoader === null) {
             this.typeIndexLoader = new TypeIndexLoader(this.baseUrl);
+        }
+        // Load routing map on first use alongside the Type Index (same lazy + cached
+        // pattern). Uses fetch() — NOT store.getRepresentation — to avoid the re-entrant
+        // write-lock crash (D92). Falls back to BOOTSTRAP_PREDICATE_TO_CLASS on any error.
+        if (this.routingMap === null) {
+            this.routingMap = await loadRoutingMap(this.baseUrl, fetch, BOOTSTRAP_PREDICATE_TO_CLASS);
         }
         // URI-independent dispatch: resolve the Thing class via the live Type
         // Index (D78 class-based dispatch, Bug G fix). Skip resources whose path
@@ -216,7 +225,7 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
                 return;
             }
         }
-        const triples = await projectionPipeline.run(target.path, body, typeIndex);
+        const triples = await projectionPipeline.run(target.path, body, typeIndex, this.routingMap ?? undefined);
         const cls = detectClass(triples);
         if (!cls) {
             debug(`no rdf:type projected for ${target.path} — resource may lack type frontmatter`);
