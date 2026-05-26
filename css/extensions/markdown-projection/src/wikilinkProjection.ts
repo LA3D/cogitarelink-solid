@@ -22,6 +22,7 @@ import { DataFactory } from "n3";
 import type { NamedNode, Quad } from "n3";
 import { extractWikilinks } from "../../shared/markdown-parsing/src/wikilinks.js";
 import { slug } from "../../shared/markdown-parsing/src/resolver.js";
+import { DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
 
 const { namedNode, quad } = DataFactory;
 
@@ -142,37 +143,32 @@ function applyS3a(title: string): string {
     return title.startsWith("@") ? title.slice(1) : title;
 }
 
-// Class hint → target container segment.
-//
-// INTERIM (D106): role→container is a stopgap. The role is a content-layer (SKOS)
-// signal; it determines the *predicate* (HINT_TO_PROJECTION), NOT where the target
-// is stored. The real resolver resolves the container from the target's *class* via
-// the Type Index (D8). Only `author` is a genuine role→type entailment (an author is
-// a person). Everything else — `.source`, citekey, `.embed`, `.broader` — defaults to
-// the content container `concepts/` (post-D98: `pages`→`concepts`, `sources` merged
-// into `concepts` as `wiki:Source ⊑ skos:Concept`). The old `sources`/`pages` targets
-// were a pre-D98 layer violation that produced dead links. See decisions D105/D106.
-const HINT_TO_CONTAINER: Record<string, string> = {
-    author: "people",   // the one legitimate role→type entailment
-};
 const DEFAULT_CONTENT_CONTAINER = "concepts";
 
-function targetContainer(hint: string | undefined, _title: string, sourceCtr: string): string {
-    if (hint && HINT_TO_CONTAINER[hint]) return HINT_TO_CONTAINER[hint];
-    return sourceCtr || DEFAULT_CONTENT_CONTAINER;
+// D106: hint → predicate → entailed class (predicateToClass) → container via the
+// inverted Type Index. Defaults to concepts/ when the predicate entails no class
+// or the class is not Type-Index-registered (forward/cross-container ref — the
+// minted IRI is best-effort; the curator reconciles divergence). predicateToClass
+// is injected (Pod routing.jsonld at runtime; bootstrap kernel otherwise).
+function targetContainer(
+    hint: string | undefined,
+    title: string,
+    typeIndex: Record<string, string>,
+    predicateToClass: Record<string, string>,
+): string {
+    const proj = projectionFor(hint, title);
+    const cls = predicateToClass[proj.predicate.value];
+    if (cls) {
+        const seg = classToContainerSegment(cls, typeIndex);
+        if (seg) return seg;
+    }
+    return DEFAULT_CONTENT_CONTAINER;
 }
 
 function projectionFor(hint: string | undefined, title: string): Projection {
     if (hint && HINT_TO_PROJECTION[hint]) return HINT_TO_PROJECTION[hint];
     if (isCitekey(title)) return CITEKEY_PROJECTION;
     return DEFAULT_PROJECTION;
-}
-
-// Extract the container segment from a base URI like
-// http://localhost:3000/wiki/pages/foo.md → "pages"
-function sourceContainerOf(baseUri: string): string {
-    const m = baseUri.match(/\/wiki\/([^/]+)\//);
-    return m ? m[1] : DEFAULT_CONTENT_CONTAINER;
 }
 
 // Extract the root (everything before /wiki/) from the base URI
@@ -188,32 +184,40 @@ function baseRoot(baseUri: string): string {
  * '#this' to the target URL.  PAGE-scoped triples (embed) keep <baseUri>
  * as subject and the bare target URL as object.
  *
- * @param body     Raw markdown text (YAML frontmatter wikilinks not extracted)
- * @param baseUri  Absolute URI of the containing resource (the page document IRI)
+ * Container routing (D106): the target container is resolved from the
+ * projected predicate IRI via predicateToClass (entailment map) and the
+ * inverted Type Index. Falls back to concepts/ when no entailment exists
+ * or the entailed class is not Type-Index-registered.
+ *
+ * @param body           Raw markdown text (YAML frontmatter wikilinks not extracted)
+ * @param baseUri        Absolute URI of the containing resource (the page document IRI)
+ * @param typeIndex      Container path prefix → Thing class IRI map (defaults to DEFAULT_WIKI_TYPE_INDEX)
+ * @param predicateToClass  Predicate IRI → entailed class IRI map (defaults to BOOTSTRAP_PREDICATE_TO_CLASS)
  */
-export function projectWikilinks(body: string, baseUri: string): Quad[] {
+export function projectWikilinks(
+    body: string,
+    baseUri: string,
+    typeIndex: Record<string, string> = DEFAULT_WIKI_TYPE_INDEX,
+    predicateToClass: Record<string, string> = BOOTSTRAP_PREDICATE_TO_CLASS,
+): Quad[] {
     const pageIRI  = namedNode(baseUri);
     const thingIRI = namedNode(baseUri + "#this");
     const out: Quad[] = [];
     const root = baseRoot(baseUri);
-    const sourceCtr = sourceContainerOf(baseUri);
 
     for (const link of extractWikilinks(body)) {
         const stripped = applyS3a(link.title);
         const slugged  = slug(stripped);
-        const ctr      = targetContainer(link.classHint, link.title, sourceCtr);
+        const ctr      = targetContainer(link.classHint, link.title, typeIndex, predicateToClass);
         const targetPageURL = `${root}/wiki/${ctr}/${slugged}.md`;
         const proj     = projectionFor(link.classHint, link.title);
 
-        const subject =
-            proj.subject === "PAGE" ? pageIRI : thingIRI;
-        const object =
-            proj.subject === "PAGE"
-                ? namedNode(targetPageURL)
-                : namedNode(targetPageURL + "#this");
+        const subject = proj.subject === "PAGE" ? pageIRI : thingIRI;
+        const object  = proj.subject === "PAGE"
+            ? namedNode(targetPageURL)
+            : namedNode(targetPageURL + "#this");
 
         out.push(quad(subject, proj.predicate, object));
     }
-
     return out;
 }

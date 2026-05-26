@@ -142,3 +142,36 @@ describe("classToContainerSegment (inverts container→class Type Index)", () =>
         expect(classToContainerSegment("https://schema.org/Event", typeIndex)).toBeUndefined();
     });
 });
+
+describe("projectWikilinks container routing (D106)", () => {
+    const typeIndex = {
+        "/vault/wiki/concepts/":      "http://www.w3.org/2004/02/skos/core#Concept",
+        "/vault/wiki/people/":        "https://schema.org/Person",
+        "/vault/wiki/organizations/": "https://schema.org/Organization",
+        "/vault/wiki/places/":        "https://schema.org/Place",
+    };
+    const base = "https://pod.example/wiki/concepts/foo.md";
+    const routing = BOOTSTRAP_PREDICATE_TO_CLASS;
+
+    it("routes {.affiliation} into organizations/", () => {
+        const q = projectWikilinks("[[Notre Dame]]{.affiliation}", base, typeIndex, routing);
+        expect(q[0].object.value).toBe("https://pod.example/wiki/organizations/notre-dame.md#this");
+    });
+    it("routes {.location} into places/", () => {
+        const q = projectWikilinks("[[South Bend]]{.location}", base, typeIndex, routing);
+        expect(q[0].object.value).toBe("https://pod.example/wiki/places/south-bend.md#this");
+    });
+    it("defaults unentailed {.related} to concepts/", () => {
+        const q = projectWikilinks("[[Context Graphs]]{.related}", base, typeIndex, routing);
+        expect(q[0].object.value).toBe("https://pod.example/wiki/concepts/context-graphs.md#this");
+    });
+    it("falls back to concepts/ when entailed class is not Type-Index-registered", () => {
+        const q = projectWikilinks("[[Some Org]]{.affiliation}", base, {}, routing);
+        expect(q[0].object.value).toBe("https://pod.example/wiki/concepts/some-org.md#this");
+    });
+    it("honors a runtime-extended routing map (Pod doc adds an entailment)", () => {
+        const extended = { ...routing, "https://schema.org/about": "https://schema.org/Place" };
+        const q = projectWikilinks("[[Somewhere]]{.about}", base, typeIndex, extended);
+        expect(q[0].object.value).toBe("https://pod.example/wiki/places/somewhere.md#this");
+    });
+});
