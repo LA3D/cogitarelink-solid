@@ -73,15 +73,16 @@ mem:CrystallizeAction
     rdfs:label "Crystallize" ;
     rdfs:isDefinedBy <> ;
     rdfs:comment "Promote a working note from /vault/wiki/working/ to its class-appropriate durable container, per Type Index class→container routing. Validates against the destination class's SHACL shape at PUT time. Subclass of as:Move (move object from origin to target)." ;
-    skos:scopeNote "Used (a) on the prov:Activity blank node in the new durable resource's .meta (`prov:wasGeneratedBy [ a mem:CrystallizeAction, prov:Activity ; ... ]`), and (b) as one of the rdf:type values on the as:Announce activity posted to /vault/wiki/.operations/. NOT used as a top-level rdf:type on the durable resource itself — the durable resource is a wiki:Concept (or other wiki:Resource subclass), not the action that produced it." ;
+    skos:scopeNote "Used as an rdf:type on the as:Announce activity posted to /vault/wiki/.operations/ (the canonical operation record). NOT used as a top-level rdf:type on the durable resource itself — the durable resource is a wiki:Concept (or other wiki:Resource subclass), not the action that produced it — and the operation is NOT recorded on the durable resource's .meta (see mem:Action: provenance is canonical in the .operations/ log)." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/concepts/foo.md.meta>:
-        <> prov:wasGeneratedBy [
-            a mem:CrystallizeAction , prov:Activity ;
-            prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059> ;
-            prov:used <https://pod.vardeman.me/vault/wiki/working/foo.md> ;
-            prov:startedAtTime "2026-05-18T10:00:00Z"^^xsd:dateTime
-        ] .
+        # In <https://pod.vardeman.me/vault/wiki/.operations/<id>> (the canonical operation record):
+        <> a as:Announce , mem:CrystallizeAction , prov:Activity ;
+           as:object <https://pod.vardeman.me/vault/wiki/concepts/foo.md> ;
+           as:actor <https://orcid.org/0000-0003-4091-6059> ;
+           prov:used <https://pod.vardeman.me/vault/wiki/working/foo.md> ;
+           as:published "2026-05-18T10:00:00Z"^^xsd:dateTime .
+        # The durable resource's own .meta carries only prov:wasDerivedFrom <working-source>
+        # (agent-authored, ungoverned); it does NOT carry prov:wasGeneratedBy.
     """ ;
     rdfs:seeAlso </vault/meta/affordances/crystallize> .
 
@@ -93,13 +94,14 @@ mem:SupersedeAction
     rdfs:comment "Replace an existing durable resource with a refined version. Prior version captured by Memento; supersession recorded via prov:wasRevisionOf in the updated resource's .meta. Subclass of schema:ReplaceAction (replace one thing with another)." ;
     skos:scopeNote "Use when a durable resource's content is being substantively rewritten while keeping the same identity (URL). For full delete-and-replace at a new URL, use mem:ArchiveAction on the old + mem:CrystallizeAction for the new. Do NOT use SupersedeAction for small edits — those are PATCH operations that don't change identity and don't need a memory action." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/concepts/foo.md.meta>:
-        <> prov:wasGeneratedBy [
-            a mem:SupersedeAction , prov:Activity ;
-            prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059> ;
-            prov:startedAtTime "2026-05-18T11:00:00Z"^^xsd:dateTime
-        ] ;
-            prov:wasRevisionOf <https://pod.vardeman.me/vault/wiki/concepts/foo.md?version=2026-05-17T10:00:00Z> .
+        # In <https://pod.vardeman.me/vault/wiki/.operations/<id>> (the canonical operation record):
+        <> a as:Announce , mem:SupersedeAction , prov:Activity ;
+           as:object <https://pod.vardeman.me/vault/wiki/concepts/foo.md> ;
+           as:actor <https://orcid.org/0000-0003-4091-6059> ;
+           as:published "2026-05-18T11:00:00Z"^^xsd:dateTime .
+        # The resource's own .meta carries prov:wasRevisionOf
+        # <https://pod.vardeman.me/vault/wiki/concepts/foo.md?version=2026-05-17T10:00:00Z>
+        # (agent-authored, ungoverned); it does NOT carry prov:wasGeneratedBy.
     """ ;
     rdfs:seeAlso </vault/meta/affordances/supersede> .
 
@@ -111,13 +113,15 @@ mem:MergeAction
     rdfs:comment "Combine N durable resources into one. The merged resource's .meta carries prov:wasDerivedFrom for each input; inputs are deleted (typically via mem:ArchiveAction tombstones). No clean AS2 / schema.org parent — multi-source consolidation is substrate-specific." ;
     skos:scopeNote "Use when two or more durable resources should become one canonical resource (e.g., duplicate concepts identified by mem:ConsolidationSuggested). Provenance chain via multiple prov:wasDerivedFrom edges. NOT used for refinement-in-place (that's mem:SupersedeAction) or for adding a new edge between existing resources (mem:LinkAction)." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/concepts/canonical.md.meta>:
-        <> prov:wasGeneratedBy [
-            a mem:MergeAction , prov:Activity ;
-            prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059>
-        ] ;
-            prov:wasDerivedFrom <https://pod.vardeman.me/vault/wiki/concepts/duplicate-a.md> ,
-                                <https://pod.vardeman.me/vault/wiki/concepts/duplicate-b.md> .
+        # In <https://pod.vardeman.me/vault/wiki/.operations/<id>> (the canonical operation record):
+        <> a as:Announce , mem:MergeAction , prov:Activity ;
+           as:object <https://pod.vardeman.me/vault/wiki/concepts/canonical.md> ;
+           as:actor <https://orcid.org/0000-0003-4091-6059> ;
+           prov:wasDerivedFrom <https://pod.vardeman.me/vault/wiki/concepts/duplicate-a.md> ,
+                               <https://pod.vardeman.me/vault/wiki/concepts/duplicate-b.md> ;
+           as:published "2026-05-18T12:00:00Z"^^xsd:dateTime .
+        # as:object names the produced (canonical) resource; the inputs go on
+        # prov:wasDerivedFrom, never on as:object.
     """ ;
     rdfs:seeAlso </vault/meta/affordances/merge> .
 
@@ -129,12 +133,14 @@ mem:DemoteAction
     rdfs:comment "Move a durable resource back to working memory for reconsideration. The prior durable version is captured by Memento. Subclass of as:Undo (logically undoes the prior Crystallize)." ;
     skos:scopeNote "Use when a durable resource turns out to be premature — its claims are unsettled or its shape conformance has decayed. The resource moves back to /vault/wiki/working/ under the permissive working shape. NOT used for archival (use mem:ArchiveAction); demote is recoverable, archive is terminal." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/working/foo.md.meta>:
-        <> prov:wasGeneratedBy [
-            a mem:DemoteAction , prov:Activity ;
-            prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059> ;
-            prov:used <https://pod.vardeman.me/vault/wiki/concepts/foo.md>
-        ] .
+        # In <https://pod.vardeman.me/vault/wiki/.operations/<id>> (the canonical operation record):
+        <> a as:Announce , mem:DemoteAction , prov:Activity ;
+           as:object <https://pod.vardeman.me/vault/wiki/working/foo.md> ;
+           as:actor <https://orcid.org/0000-0003-4091-6059> ;
+           prov:used <https://pod.vardeman.me/vault/wiki/concepts/foo.md> ;
+           as:published "2026-05-18T12:30:00Z"^^xsd:dateTime .
+        # The working resource's own .meta carries prov:wasDerivedFrom <prior-durable-memento>
+        # (agent-authored, ungoverned); it does NOT carry prov:wasGeneratedBy.
     """ ;
     rdfs:seeAlso </vault/meta/affordances/demote> .
 
@@ -146,13 +152,13 @@ mem:ArchiveAction
     rdfs:comment "Soft-delete a durable resource via tombstone (per D64). The resource is retained at its URL but marked archived; the archived resource declares 'a as:Tombstone' in its .meta. Subclass of as:Delete (AS2's standard delete verb that produces a Tombstone)." ;
     skos:scopeNote "Use when a resource is no longer canonical (superseded by a merge target, content invalidated, content moved to a new identity). Memento captures the pre-archive state. Do NOT hard-DELETE durable resources — archive preserves audit trail and lets backlinks resolve to a tombstone rather than 404." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/concepts/old.md.meta>:
-        <> a as:Tombstone ;
-           prov:wasGeneratedBy [
-               a mem:ArchiveAction , prov:Activity ;
-               prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059> ;
-               prov:startedAtTime "2026-05-18T12:00:00Z"^^xsd:dateTime
-           ] .
+        # In the archived resource's own .meta (<https://pod.vardeman.me/vault/wiki/concepts/old.md.meta>):
+        <> a as:Tombstone .          # agent-PATCHed; the only triple the resource carries for this op
+        # In <https://pod.vardeman.me/vault/wiki/.operations/<id>> (the canonical operation record):
+        <> a as:Announce , mem:ArchiveAction , prov:Activity ;
+           as:object <https://pod.vardeman.me/vault/wiki/concepts/old.md> ;
+           as:actor <https://orcid.org/0000-0003-4091-6059> ;
+           as:published "2026-05-18T12:00:00Z"^^xsd:dateTime .
     """ ;
     rdfs:seeAlso </vault/meta/affordances/archive> .
 
@@ -164,12 +170,13 @@ mem:LinkAction
     rdfs:comment "Add a typed cross-reference edge to a resource's .meta. The predicate must be one of the substrate-governed edges per the relevant shape's wiki:governs list (D81 predicate-level governance), or an agent-extensible predicate outside that list. Subclass of as:Add (add object to a collection of references)." ;
     skos:scopeNote "Use when introducing a typed edge (skos:broader, wiki:extends, cito:cites, etc.) between two resources. For substrate-governed predicates, prefer editing the body markdown wikilink and letting MarkdownProjectionListener project it into .meta; explicit PATCH is for edges outside the body-projection scope. NOT used for whole-resource creation (mem:CrystallizeAction) or whole-resource replacement (mem:SupersedeAction)." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/concepts/foo.md.meta> (added via N3 Patch):
-        <> skos:broader <https://pod.vardeman.me/vault/wiki/concepts/bar.md> ;
-           prov:wasGeneratedBy [
-               a mem:LinkAction , prov:Activity ;
-               prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059>
-           ] .
+        # In the subject resource's own .meta (<https://pod.vardeman.me/vault/wiki/concepts/foo.md.meta>, via N3 Patch):
+        <> skos:broader <https://pod.vardeman.me/vault/wiki/concepts/bar.md> .   # the typed edge
+        # In <https://pod.vardeman.me/vault/wiki/.operations/<id>> (the canonical operation record):
+        <> a as:Announce , mem:LinkAction , prov:Activity ;
+           as:object <https://pod.vardeman.me/vault/wiki/concepts/foo.md> ;
+           as:actor <https://orcid.org/0000-0003-4091-6059> ;
+           as:published "2026-05-18T13:00:00Z"^^xsd:dateTime .
     """ ;
     rdfs:seeAlso </vault/meta/affordances/link> .
 
