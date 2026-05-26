@@ -23,6 +23,7 @@ catalog pointers).
 import argparse, asyncio, json, os, subprocess, sys
 from pathlib import Path
 import httpx
+import rdflib
 from rdflib import Graph, RDF, URIRef
 from pyshacl import validate
 
@@ -50,6 +51,44 @@ CATALOG_POINTERS = {
 }
 
 SEV = {SH + "Violation": "ERROR", SH + "Warning": "WARN", SH + "Info": "INFO"}
+
+SOLID = "http://www.w3.org/ns/solid/terms#"
+ROUTES_TO_CLASS = WIKI + "routesToClass"
+
+# Cached published rdfs:range for the entailed predicates (schema.org / dct).
+# Used ONLY for the agreement WARN. NOT the routing map — that is read live.
+PUBLISHED_RANGE = {
+    "https://schema.org/affiliation":       "https://schema.org/Organization",
+    "https://schema.org/location":          "https://schema.org/Place",
+    "http://purl.org/dc/terms/contributor": "https://schema.org/Person",
+}
+
+
+def load_routing_from_jsonld(path_or_text, is_text=False):
+    g = rdflib.Graph()
+    if is_text:
+        g.parse(data=path_or_text, format="json-ld")
+    else:
+        g.parse(path_or_text, format="json-ld")
+    p = rdflib.URIRef(ROUTES_TO_CLASS)
+    return {str(s): str(o) for s, o in g.subject_objects(p)}
+
+
+def check_routing(routing, type_index, published_range=PUBLISHED_RANGE):
+    "routing: {predicate: class}. type_index: {class_iri: container_path}."
+    registered = set(type_index.keys())
+    findings = []
+    for pred, cls in routing.items():
+        if cls not in registered:
+            findings.append(finding("ERROR", cls, "routing:type-index-coverage",
+                f"{pred} routes to {cls} but that class is not registered in the Type Index.",
+                f"Register {cls} in the Type Index so {pred} can route."))
+        pub = published_range.get(pred)
+        if pub and pub != cls:
+            findings.append(finding("WARN", pred, "routing:published-range-agreement",
+                f"{pred}→{cls} differs from published rdfs:range {pub}; confirm intentional.",
+                f"Confirm {pred}→{cls} is intentional or correct the routing map."))
+    return findings
 
 
 def finding(sev, location, constraint, message, remediation=""):
@@ -119,7 +158,26 @@ def resolve_ca():
     return True
 
 
-async def audit(pod_url, shapes_dir):
+async def fetch_type_index(client, sd_g, storage, canon_base, pod_base):
+    "Fetch the Type Index and return {class_iri: container_path} or {}."
+    ti_iri = next((str(o) for o in sd_g.objects(storage, URIRef(WIKI + "typeIndex"))), None)
+    if ti_iri is None:
+        return {}
+    ti_url = rewrite(ti_iri, canon_base, pod_base)
+    r = await client.get(ti_url)
+    if r.status_code != 200:
+        return {}
+    ti_g = Graph().parse(data=r.text, format="turtle", publicID=ti_url)
+    result = {}
+    for reg in ti_g.subjects(RDF.type, URIRef(SOLID + "TypeRegistration")):
+        cls = ti_g.value(reg, URIRef(SOLID + "forClass"))
+        ctr = ti_g.value(reg, URIRef(SOLID + "instanceContainer"))
+        if cls and ctr:
+            result[str(cls)] = str(ctr)
+    return result
+
+
+async def audit(pod_url, shapes_dir, check_routing_flag=False):
     findings = []
     shapes_g = load_shapes(shapes_dir)
     verify = resolve_ca()
@@ -177,6 +235,20 @@ async def audit(pod_url, shapes_dir):
         if cat_iri:
             await walk_affordances(client, rewrite(cat_iri, canon_base, pod_base),
                                    canon_base, pod_base, shapes_g, role_members, findings)
+
+        # 5. Routing sanity-check (--check-routing)
+        if check_routing_flag:
+            routing_url = pod_base + "meta/routing.jsonld"
+            rr = await client.get(routing_url, headers={"Accept": "application/ld+json"})
+            if rr.status_code != 200:
+                findings.append(finding("ERROR", routing_url, "routing:unreachable",
+                    f"routing.jsonld not reachable (HTTP {rr.status_code}).",
+                    "Ensure /meta/routing.jsonld is published on the Pod."))
+            else:
+                routing_map = load_routing_from_jsonld(rr.text, is_text=True)
+                type_index = await fetch_type_index(client, sd_g, storage, canon_base, pod_base)
+                findings += check_routing(routing_map, type_index)
+
     return findings
 
 
@@ -261,9 +333,11 @@ def main():
     ap.add_argument("--shapes-dir", default="shapes/substrate/")
     ap.add_argument("--out-format", choices=["json", "markdown"], default="markdown")
     ap.add_argument("--out")
+    ap.add_argument("--check-routing", action="store_true",
+                    help="Fetch /meta/routing.jsonld and validate routing entries against the live Type Index.")
     args = ap.parse_args()
 
-    findings = asyncio.run(audit(args.pod_url, args.shapes_dir))
+    findings = asyncio.run(audit(args.pod_url, args.shapes_dir, args.check_routing))
     text = json.dumps({"pod": args.pod_url, "findings": findings}, indent=2) \
         if args.out_format == "json" else to_markdown(args.pod_url, findings)
     if args.out:

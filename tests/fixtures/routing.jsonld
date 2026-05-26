@@ -1,0 +1,12 @@
+{
+  "@context": {
+    "wiki": "https://pod.vardeman.me/vault/ontology/wiki#",
+    "schema": "https://schema.org/",
+    "dct": "http://purl.org/dc/terms/",
+    "routesToClass": { "@id": "wiki:routesToClass", "@type": "@id" }
+  },
+  "@graph": [
+    { "@id": "schema:affiliation", "routesToClass": "schema:Organization" },
+    { "@id": "schema:location",    "routesToClass": "schema:Place" }
+  ]
+}
