@@ -1,7 +1,20 @@
 # Memory-operation provenance by derivation from the operation log (RQ-Listener-1)
 
-**Date**: 2026-05-25
-**Status**: Design — hypothesis to validate experimentally via agentic trajectories
+> ⚠️ **SUPERSEDED BY COLLAPSE (2026-05-26).** The derive-from-log mechanism this doc designs was
+> **built and then removed**. A cold-discovery probe (a fresh agent, HTTP-only, no hints, asked to
+> crystallize + record provenance) showed the derived in-resource edge was **over-design**: the agent
+> completed the whole task using only the `.operations/` log, and the edge never fired because the Pod's
+> own `crystallize.ttl` prescribes announce-**last** while derivation needed announce-first. The validated
+> design is **log + `as:object` + the `memory-history` affordance** (no derived edge). What was *kept* from
+> this doc: the PROV category-error fix (§1/§3.1 — the projector no longer stamps the affordance on the
+> resource subject; the audit stamp moved to the `.meta`-document subject) and the `mem.ttl` `as:object`
+> tightening (§3.3). The probe also surfaced a `schema:name`/ThingShape conformance bug (now fixed) and a
+> destination-class-inference gap (open). A read-path A/B eval (§7) is the *revisit trigger* if a concrete
+> high-frequency genesis-lookup workload ever appears. See `FOLLOWUPS.md` (RQ-Listener-1, RESOLVED by
+> collapse) for the as-shipped state. The rest of this doc is retained as the reasoning trail.
+
+**Date**: 2026-05-25 (superseded 2026-05-26)
+**Status**: Superseded — derive-from-log collapsed to log+affordance after a cold-probe eval (see banner)
 **Supersedes**: the recommendation in `docs/plans/2026-05-15-rq-listener-1-mitigation-design.md`
 (that doc's path B `.meta.agent` sidecar remains the answer for the *broad* agent-extension
 question, which this design does **not** close — see §8)

@@ -90,16 +90,17 @@ Pod design that demonstrably works. Original B1/B2/T framing dropped.
 Option-B is done (pod-audit walker + pod-curator skill + substrate sweep + concrete-bug sweep).
 Open threads, roughly in priority order:
 
-1. **Get the suite green.** (a) RQ-Listener-1 — ✅ **RESOLVED** on branch `rq-listener-1-provenance`
-   (not yet merged): the projector now **DERIVES** `<resource> prov:wasGeneratedBy <announcement>`
-   from the canonical `/vault/wiki/.operations/` log — a 4th option that beats pre-write-merge /
-   xfail / announce-only, because the edge is recomputed every projection (timing bug moot, "log
-   wins" structural). 6/6 e2e assert the derived edge live; audit clean. Design + plan:
-   `docs/superpowers/{specs,plans}/2026-05-25-mem-operation-provenance-derivation*`. (The earlier
-   "silently red" framing was wrong — the 6 tests were already green via an `.operations/`-only
-   workaround; they now assert the stronger derived edge.) (b) 5 pre-existing `test_phase5j_close`
-   count-drift failures (wikirole 5→9 roles, manifest 6→10 profiles, missing `dct:conformsTo`) —
-   STILL OPEN, pure test-expectation realignment. FOLLOWUPS.
+1. **Get the suite green.** (a) RQ-Listener-1 — ✅ **RESOLVED by collapse** on branch
+   `rq-listener-1-provenance` (not yet merged). A first pass built a "derive-from-log" edge; a
+   cold-discovery probe then showed it was **over-design** (a fresh agent did the whole task via the
+   `.operations/` log; the edge never fired — the affordances prescribe announce-LAST). So the derived
+   edge was removed. **Design**: operation provenance is canonical in `/vault/wiki/.operations/`
+   (`<>`-subject `as:Announce, mem:*Action` + `as:object <target>`); the resource `.meta` doesn't carry
+   it; history via the `memory-history` affordance. Kept the PROV category-error fix (no affordance stamp
+   on the resource) + `mem.ttl` `as:object`. Also fixed: `schema:name` now derived on `<#this>` (concepts
+   were failing ThingShape). Live: audit 0 ERROR, 6/6 e2e pass. Lesson captured: eval-as-engineering-
+   feedback caught the over-build before merge (see `eval_as_engineering_feedback`). (b) 5 pre-existing
+   `test_phase5j_close` count-drift failures — STILL OPEN, pure test-expectation realignment. FOLLOWUPS.
 2. **pod-curator trigger-eval re-run.** Now *valid* via the corrected mechanism (install under
    `.claude/skills/`, `claude -p`, detect `Skill` tool_use + the subagent trajectory) — the old run
    measured `.claude/commands/` (never auto-triggered). `skills/pod-curator/evals/trigger-eval.json` staged.
@@ -150,12 +151,14 @@ Rung 1.5 phase sequence (above) resumes once the suite is green: A full → C (s
 - **RQ-Hub-1**: is N=3 the right hub threshold? (Rung 1.5)
 - **RQ-Atomic-Feedback-1**: atomic in-response feedback (Option B) vs deferred (A+C,
   shipped) for write-triggered signals — needs a Rung 1.5 task class that exercises it.
-- **RQ-Listener-1**: RESOLVED for mem-operation provenance (branch `rq-listener-1-provenance`,
-  not yet merged) — instead of preserving an agent-PATCHed edge across the `.meta` overwrite, the
-  projector DERIVES the resource's `prov:wasGeneratedBy` from the `.operations/` log each
-  projection (beats the timing bug structurally). The *broad* agent-extension case (arbitrary
-  non-governed triples surviving rewrites) stays deferred → `.meta.agent` sidecar / D82. See
-  `docs/superpowers/specs/2026-05-25-mem-operation-provenance-derivation-design.md`.
+- **RQ-Listener-1**: RESOLVED for mem-operation provenance by COLLAPSE (branch
+  `rq-listener-1-provenance`, not yet merged). Provenance is canonical in the `.operations/` log
+  (`as:object` link) + the `memory-history` affordance; the resource `.meta` does not carry the
+  operation. A cold-probe showed a derived in-resource edge was over-design (unused + DOA under the
+  affordances' announce-last order), so it was removed; the PROV category-error fix was kept. The
+  *broad* agent-extension case (arbitrary non-governed triples surviving rewrites) stays deferred →
+  `.meta.agent` sidecar / D82. See `docs/superpowers/specs/2026-05-25-mem-operation-provenance-derivation-design.md`
+  (amended with the collapse note).
 - **RQ-Pod-4**: Comunica skips `text/markdown` `describedby` traversal — use explicit
   `default-graph-uri`.
 - **RQ-Pod-6**: `.meta` richness vs query overhead — needs 100+ resource benchmarks.

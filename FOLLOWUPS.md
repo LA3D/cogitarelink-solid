@@ -2,38 +2,48 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## ~~mem-operation in-resource provenance collides with the projection listener (RQ-Listener-1)~~ — RESOLVED 2026-05-26
+## ~~mem-operation in-resource provenance collides with the projection listener (RQ-Listener-1)~~ — RESOLVED 2026-05-26 (by collapse)
 
-**Resolved** on branch `rq-listener-1-provenance` (not yet merged) via **derive-from-log** — a 4th
-option that supersedes the (a) pre-write-merge / (b) assert-from-announcement-only / (c) non-governed-predicate
-choices once weighed against the canonical `.operations/` log. Instead of the agent PATCHing
-`prov:wasGeneratedBy` (which the projection clobbers), the **substrate derives** it: the agent posts a
-`<>`-subject `[as:Announce, mem:*Action, prov:Activity]` with `as:object <target>` to `/vault/wiki/.operations/`
-*before* the body write (announce-first), and `MarkdownProjectionListener` re-derives
-`<target> prov:wasGeneratedBy <announcement>` into `.meta` on every projection by reading the op log from
-disk. The timing bug is moot (the edge is recomputed, never preserved) and "log wins" is structural. The
-projector's old affordance-stamp (a PROV category error — it generates *metadata*, not the resource) was
-relocated to the `.meta`-document subject.
+**Resolved** on branch `rq-listener-1-provenance` (not yet merged). The resolution arrived in two
+passes — and the second corrected the first:
 
-Shipped: `operationLog.findLatestAction` (pure FS reader), `projectionPipeline` derive + audit-stamp
-relocation (pointer-only, no inline accumulation), listener wiring, `mem.ttl` canonical `<>`-subject +
-required `as:object`, the `memory-history` affordance (op log + Memento, on-demand history). 6/6
-`test_mem_operations.py` assert the derived edge live; audit clean (0 ERROR). Design + plan:
-`docs/superpowers/{specs,plans}/2026-05-25-mem-operation-provenance-derivation*`.
+1. *(2026-05-25, since reverted)* A "derive-from-log" mechanism: the projector re-derived
+   `<resource> prov:wasGeneratedBy <announcement>` from the `.operations/` log on each write.
+2. *(2026-05-26, shipped)* **Collapsed.** A cold-discovery probe (a fresh agent, HTTP-only, no hints,
+   asked to crystallize + record provenance) showed the derived edge was **over-design**: the agent
+   completed the whole task using only the `.operations/` log, and the edge never even fired because the
+   Pod's own `crystallize.ttl` prescribes announce-**last** while derivation needed announce-first. So the
+   derived-edge machinery was removed.
 
-**Note:** the prior claim that these 6 tests were "silently red" was inaccurate — they were already green
-via an `.operations/`-only workaround (commit `eac80f9`); the fix replaces that workaround with the stronger
-derived-edge assertion. The **broad** agent-extension question (arbitrary non-governed triples surviving
-body rewrites — `test_agent_enrichment_survives_body_rewrite`) is NOT addressed here and stays deferred to
-the `.meta.agent` sidecar / D82.
+**The actual design** (sufficient, validated by the probe): operation provenance is **canonical in
+`/vault/wiki/.operations/`** — a `<>`-subject `[as:Announce, mem:*Action, prov:Activity]` with
+`as:object <target>` (required, canonical link). The resource `.meta` does **not** carry the operation;
+agents reconstruct history by querying the log for `as:object = <resource>` (the **`memory-history`
+affordance**, op log + Memento). Kept from pass 1: the **PROV category-error fix** (the projector no longer
+stamps `<resource> prov:wasGeneratedBy <affordance>`; the audit stamp lives on the `<resource>.meta`
+document subject) and the `mem.ttl` `as:object` tightening. The 6 action affordance descriptors were made
+consistent (drop the in-resource `prov:wasGeneratedBy` PATCH guidance + the blank-node examples; `.operations/`
+is the sole provenance channel), resolving the contradiction the probe caught.
 
-**Known limitation (low priority):** the listener derives `opsBaseUrl` via
-`target.path.indexOf("/wiki/")`, so op-log derivation is effectively `/wiki/`-scoped. For a
-substrate-governed L4 container *outside* `/wiki/` (D100 says the substrate is URI-independent),
-`indexOf` returns -1 → the op-log read throws → caught → `action` stays undefined → no derived edge
-(silently; projection still proceeds, no crash). Acceptable today since mem-operations are wiki-scoped,
-but it contradicts the URI-independence claim. Fix when an L4 mem-operation use case surfaces: resolve
-the ops container relative to the resource's own storage/Type-Index root rather than a hard-coded `/wiki/`.
+Also fixed (probe finding): crystallized concepts **failed `ThingShape`** because the projector never
+synthesized `schema:name` on `<#this>` — now derived from the title (frontmatter title > H1 > slug).
+
+Verified live (`make reset`): audit 0 ERROR, 6/6 `test_mem_operations.py` pass (assert `.operations/`
+provenance), a crystallized concept now carries `schema:name` on `<#this>`.
+
+**Still open / deferred:**
+- **Read-path A/B (the over-design revisit trigger):** if a concrete high-frequency genesis-lookup
+  workload ever appears, re-evaluate a denormalized in-resource genesis edge via an A/B trajectory eval
+  (with a real workload, not synthetic). Until then, YAGNI — the log + `memory-history` is the design.
+- **Destination-class inference (probe gap):** a working note declares only `wiki:WorkingNote`, not its
+  intended durable class — the crystallize agent must infer it from content. Consider a
+  `wiki:intendedClass` hint on working notes. Low priority.
+- **Broad agent-extension** (arbitrary non-governed triples surviving body rewrites —
+  `test_agent_enrichment_survives_body_rewrite`) stays deferred to the `.meta.agent` sidecar / D82.
+
+**Note:** the earlier "silently red" framing of the 6 tests was inaccurate — they were already green via an
+`.operations/`-only workaround (commit `eac80f9`); the final design keeps `.operations/`-canonical
+assertions (no longer a workaround — it *is* the design).
 
 
 ## Shape-validator TBox bundle sync pattern (added 2026-05-23)
