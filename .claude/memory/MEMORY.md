@@ -132,6 +132,15 @@ Rung 1.5 phase sequence (above) resumes once the suite is green: A full → C (s
   source of truth); they don't duplicate substrate content.
 - **L4 extension contract** (D100): substrate is URI-independent — Type Index registration
   triggers full substrate treatment at any container path.
+- **Two-hierarchy + Type-Index addressing** (D105/D106, 2026-05-26): `rdfs:subClassOf` =
+  addressing/structure axis (Type Index → container/shape/governed predicates); `skos:broader`
+  = content/navigation axis; **never substituted**. Bridge = the subclass axiom + Type Index;
+  vault→kit transition is lossy (topic link drops the class → look it up). Wikilink `.role` →
+  *predicate* only (D36); *container* → target's class via Type Index, NOT the role (retires the
+  role→container map; D76(c) superseded). Extension types: `rdfs:subClassOf skos:Concept` (ESCO
+  Pattern C) so an instance is both topic + typed individual; cross-scheme = `skos:exactMatch`
+  (never `owl:equivalentClass`); no OWL punning. Grounded in W3C *Using OWL and SKOS* + ESCO
+  (full prior-art list in decisions.md D105/D106). Cold-probe-surfaced.
 
 ## Standards-stack + TLS caveats
 
