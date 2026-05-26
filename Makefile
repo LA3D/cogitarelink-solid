@@ -48,7 +48,7 @@ check-validator-tbox:  ## Fail if the bundled validator TBox copies have drifted
 	  || (echo "ERROR: shape-validator data/ TBox drifted from overlays/wiki-memory/ontology/ — run 'make sync-validator-tbox'"; exit 1)
 
 audit:  ## Validate the Pod's substrate self-description (D104); ERROR findings fail
-	SSL_CERT_FILE="$(CA_FILE)" $(PYTHON) scripts/pod_audit.py $(POD_URL) --shapes-dir shapes/substrate/
+	SSL_CERT_FILE="$(CA_FILE)" $(PYTHON) scripts/pod_audit.py $(POD_URL) --shapes-dir shapes/substrate/ --check-routing
 
 CURATOR_SKILL := ../solid-agent-skills/skills/pod-curator/scripts
 sync-curator-skill:  ## Sync canonical pod_audit.py + substrate shapes into the bundled pod-curator skill
