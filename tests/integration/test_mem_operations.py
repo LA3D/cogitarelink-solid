@@ -3,18 +3,16 @@
 Each test exercises one action affordance's full LDP procedure (per the
 descriptor at /vault/meta/affordances/<name>) and verifies:
   1. Resource state / typed-edge postcondition (substrate write).
-  2. Operation provenance recorded canonically in the .operations/ announcement.
-  3. For body-generating ops (crystallize/supersede/merge/demote): the
-     substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta,
-     pointing back at the announcement (RQ-Listener-1, derive-from-log design).
+  2. Operation provenance recorded canonically in the .operations/ announcement
+     (a <>-subject [as:Announce, mem:*Action, prov:Activity] with as:object <target>).
 
-RQ-Listener-1 design (2026-05-25): the announcement is the canonical record.
-The agent posts a <>-subject [as:Announce, mem:*Action] with `as:object <target>`
-to .operations/ BEFORE the body write (announce-first), and the
-MarkdownProjectionListener DERIVES `<target> prov:wasGeneratedBy <announcement>`
-into the target's .meta on that write — agents no longer PATCH it. Because the
-derivation only fires on a BODY write, .meta-only ops (archive, link) carry no
-derived edge; their provenance lives solely in .operations/.
+Provenance is canonical in /vault/wiki/.operations/, NOT on the resource .meta
+(RQ-Listener-1 collapse, 2026-05-26): the projector no longer denormalizes a
+prov:wasGeneratedBy pointer onto the resource — the cold-probe eval showed it was
+unneeded and didn't fire under the affordances' own (announce-last) procedure. A
+later agent reconstructs a resource's history by querying the log for
+as:object = <resource> (the memory-history affordance). The order of the announce
+POST vs the body write is immaterial.
 
 Substrate behaviour discovered during probe sessions (2026-05-18):
 - CSS N3 Patch rejects blank nodes in solid:inserts formulas (HTTP 422).
@@ -22,8 +20,6 @@ Substrate behaviour discovered during probe sessions (2026-05-18):
 - Memento snapshots are auto-captured on PUT; the TimeMap URI is
   `{resource}?ext=timemap` and the first version URI is
   `{resource}?version=YYYYMMDDHHMMSS`.
-- Projection is asynchronous (fires on the body PUT via the MonitoringStore
-  'changed' event), so the derived-edge assertion polls until it lands.
 """
 import time
 import uuid
@@ -126,8 +122,8 @@ def _announce(action_class_iri, subject_url):
     """PUT a <>-subject [as:Announce, mem:*Action, prov:Activity] announcement to
     OPERATIONS (canonical form per mem.ttl); return (url, url) — subject == resource url.
 
-    The substrate derives `<subject_url> prov:wasGeneratedBy <ann_url>` from the
-    as:object link when subject_url's body is next projected (announce-first)."""
+    This is the canonical operation-provenance record; a later agent reconstructs a
+    resource's history by querying the log for as:object = <subject_url>."""
     iso_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     ann_url = f"{OPERATIONS}{uuid.uuid4().hex}.ttl"
     body = (
@@ -165,22 +161,6 @@ def _assert_announced(ann_url, ann_subject, action_class_iri, subject_url):
     )
 
 
-def _assert_derived_genesis(resource_url, ann_url, retries=15, delay=0.4):
-    """Poll the resource .meta for the projector-DERIVED prov:wasGeneratedBy pointer
-    at the announcement (RQ-Listener-1). Projection is async (fires on the body PUT),
-    so retry until it converges."""
-    last = []
-    for _ in range(retries):
-        last = list(_meta_graph(resource_url).objects(URIRef(resource_url), PROV.wasGeneratedBy))
-        if URIRef(ann_url) in last:
-            return
-        time.sleep(delay)
-    raise AssertionError(
-        f"derived prov:wasGeneratedBy -> {ann_url} not found in {resource_url}.meta "
-        f"after {retries} polls; got {last}"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Test 1 — Crystallize
 # ---------------------------------------------------------------------------
@@ -206,8 +186,7 @@ def test_crystallize_e2e(slug):
     )
     _patch_meta(working_url, triples)
 
-    # Announce FIRST (announce-first contract): the substrate derives the resource's
-    # prov:wasGeneratedBy from this announcement on the body PUT below.
+    # Record the operation canonically in .operations/ (order vs the body write is immaterial).
     ann_url, ann_subject = _announce(str(MEM.CrystallizeAction), durable_url)
 
     # Perform: PUT durable (projection finds the announcement, derives the edge)
@@ -247,9 +226,6 @@ def test_crystallize_e2e(slug):
         # Verify 4: operation provenance recorded canonically in .operations/
         _assert_announced(ann_url, ann_subject, str(MEM.CrystallizeAction), durable_url)
 
-        # Verify 5: the substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta
-        _assert_derived_genesis(durable_url, ann_url)
-
     finally:
         _delete(durable_url)
         _delete(working_url)  # no-op if already gone
@@ -286,8 +262,7 @@ def test_supersede_e2e(slug):
     ann_url = None
 
     try:
-        # Announce FIRST (announce-first): the substrate derives prov:wasGeneratedBy
-        # from this announcement on the body PUT below.
+        # Record the operation canonically in .operations/ (order vs the body write is immaterial).
         ann_url, ann_subject = _announce(str(MEM.SupersedeAction), page_url)
 
         # Perform: PUT refined body (projection derives the edge)
@@ -325,9 +300,6 @@ def test_supersede_e2e(slug):
         # Verify 3: operation provenance recorded canonically in .operations/
         _assert_announced(ann_url, ann_subject, str(MEM.SupersedeAction), page_url)
 
-        # Verify 4: the substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta
-        _assert_derived_genesis(page_url, ann_url)
-
     finally:
         _delete(page_url)
         if ann_url:
@@ -357,8 +329,7 @@ def test_merge_e2e(slug):
     ann_url = None
 
     try:
-        # Announce FIRST (announce-first): the substrate derives prov:wasGeneratedBy
-        # from this announcement on the body PUT below.
+        # Record the operation canonically in .operations/ (order vs the body write is immaterial).
         ann_url, ann_subject = _announce(str(MEM.MergeAction), merged_url)
 
         # Perform: PUT merged resource (projection derives the edge)
@@ -404,9 +375,6 @@ def test_merge_e2e(slug):
         # Verify 4: operation provenance recorded canonically in .operations/
         _assert_announced(ann_url, ann_subject, str(MEM.MergeAction), merged_url)
 
-        # Verify 5: the substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta
-        _assert_derived_genesis(merged_url, ann_url)
-
     finally:
         _delete(merged_url)
         for inp in input_urls:
@@ -441,8 +409,7 @@ def test_demote_e2e(slug):
     ann_url = None
 
     try:
-        # Announce FIRST (announce-first): the substrate derives prov:wasGeneratedBy
-        # from this announcement on the body PUT below.
+        # Record the operation canonically in .operations/ (order vs the body write is immaterial).
         ann_url, ann_subject = _announce(str(MEM.DemoteAction), working_url)
 
         # Perform: PUT to working (projection derives the edge)
@@ -478,9 +445,6 @@ def test_demote_e2e(slug):
 
         # Verify 4: operation provenance recorded canonically in .operations/
         _assert_announced(ann_url, ann_subject, str(MEM.DemoteAction), working_url)
-
-        # Verify 5: the substrate-DERIVED prov:wasGeneratedBy pointer on the resource .meta
-        _assert_derived_genesis(working_url, ann_url)
 
     finally:
         _delete(working_url)
