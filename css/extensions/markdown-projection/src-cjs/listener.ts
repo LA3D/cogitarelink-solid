@@ -55,7 +55,7 @@ function debug(...args: unknown[]): void {
 const runtimeImport = new Function("specifier", "return import(specifier)") as (s: string) => Promise<any>;
 
 interface ProjectionModule {
-    projectionPipeline: { run(uri: string, body: string, typeIndex?: Record<string, string>): Promise<import("n3").Quad[]> };
+    projectionPipeline: { run(uri: string, body: string, typeIndex?: Record<string, string>, predicateToClass?: Record<string, string>): Promise<import("n3").Quad[]> };
     resolveGovernedForWikiClass: (cls: string) => { page: string[]; thing: string[] };
     detectClass: (triples: import("n3").Quad[]) => string | undefined;
     MetaWriter: new() => { replaceGoverned(target: string, projected: import("n3").Quad[], governed: string[], resourceUrl?: string): Promise<void> };
@@ -65,6 +65,8 @@ interface ProjectionModule {
         refresh(): Promise<Record<string, string>>;
         invalidate(): void;
     };
+    BOOTSTRAP_PREDICATE_TO_CLASS: Record<string, string>;
+    loadRoutingMap: (podBase: string, fetchFn: typeof fetch, bootstrap: Record<string, string>) => Promise<Record<string, string>>;
 }
 
 let pipelineCache: Promise<ProjectionModule> | null = null;
@@ -149,6 +151,9 @@ export class MarkdownProjectionListener extends Initializer {
     // Typed as any because the class is loaded from the ESM module at runtime.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private typeIndexLoader: any = null;
+    // Cached routing map (predicate IRI → class IRI) loaded from /meta/routing.jsonld.
+    // Null until first project() call; falls back to BOOTSTRAP_PREDICATE_TO_CLASS on error.
+    private routingMap: Record<string, string> | null = null;
 
     public constructor(
         store: MonitoringStore,
@@ -233,7 +238,8 @@ export class MarkdownProjectionListener extends Initializer {
 
         // Load ESM projection pipeline lazily
         const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter,
-                resolveThingClass, TypeIndexLoader } =
+                resolveThingClass, TypeIndexLoader,
+                BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap } =
             await getPipeline();
 
         // Instance TypeIndexLoader on first use (after pipeline is loaded).
@@ -241,6 +247,13 @@ export class MarkdownProjectionListener extends Initializer {
         // installed L4 overlays whose container registrations aren't cached yet.
         if (this.typeIndexLoader === null) {
             this.typeIndexLoader = new TypeIndexLoader(this.baseUrl);
+        }
+
+        // Load routing map on first use alongside the Type Index (same lazy + cached
+        // pattern). Uses fetch() — NOT store.getRepresentation — to avoid the re-entrant
+        // write-lock crash (D92). Falls back to BOOTSTRAP_PREDICATE_TO_CLASS on any error.
+        if (this.routingMap === null) {
+            this.routingMap = await loadRoutingMap(this.baseUrl, fetch, BOOTSTRAP_PREDICATE_TO_CLASS);
         }
 
         // URI-independent dispatch: resolve the Thing class via the live Type
@@ -276,7 +289,7 @@ export class MarkdownProjectionListener extends Initializer {
             }
         }
 
-        const triples = await projectionPipeline.run(target.path, body, typeIndex);
+        const triples = await projectionPipeline.run(target.path, body, typeIndex, this.routingMap ?? undefined);
 
         const cls = detectClass(triples);
         if (!cls) {

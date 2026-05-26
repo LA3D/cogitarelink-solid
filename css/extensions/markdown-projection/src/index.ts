@@ -8,8 +8,9 @@ export {
 export type { TwoSubjectPredicates } from "./governedPredicates.js";
 export { projectFrontmatter, resolveCURIE } from "./frontmatterProjection.js";
 export type { Frontmatter } from "./frontmatterProjection.js";
-export { projectWikilinks, projectWikilink, HINT_TO_PROJECTION } from "./wikilinkProjection.js";
+export { projectWikilinks, projectWikilink, HINT_TO_PROJECTION, BOOTSTRAP_PREDICATE_TO_CLASS } from "./wikilinkProjection.js";
 export type { Projection, ProjectionSubject, ProjectWikilinkArgs } from "./wikilinkProjection.js";
+export { parseRoutingDoc, loadRoutingMap } from "./routingLoader.js";
 export { projectionPipeline, emitSubstrateInvariants } from "./projectionPipeline.js";
 export type { SubstrateInvariantsArgs } from "./projectionPipeline.js";
 export { MetaWriter, buildTwoSubjectPatch } from "./metaWriter.js";
