@@ -46,11 +46,13 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MarkdownProjectionListener = void 0;
+exports.MarkdownProjectionListener = exports.NoOpPostProjectionHook = void 0;
 const Initializer_1 = require("@solid/community-server/dist/init/Initializer");
 const Vocabularies_1 = require("@solid/community-server/dist/util/Vocabularies");
 const path = __importStar(require("path"));
 const fs_1 = require("fs");
+const NoOpPostProjectionHook_1 = require("./NoOpPostProjectionHook");
+Object.defineProperty(exports, "NoOpPostProjectionHook", { enumerable: true, get: function () { return NoOpPostProjectionHook_1.NoOpPostProjectionHook; } });
 // ------------------------------------------------------------------
 // Simple stderr logger (same approach as markdown-render/converter.ts)
 // ------------------------------------------------------------------
@@ -116,17 +118,19 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
     store;
     baseUrl;
     dataDir;
+    postProjectionHook;
     // Serialise concurrent writes per the D68 chain pattern
     chain = Promise.resolve();
     // Live Type Index loader — instanced on first project() call once pipeline is loaded.
     // Typed as any because the class is loaded from the ESM module at runtime.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     typeIndexLoader = null;
-    constructor(store, baseUrl, dataDir) {
+    constructor(store, baseUrl, dataDir, postProjectionHook) {
         super();
         this.store = store;
         this.baseUrl = baseUrl.replace(/\/$/, "");
         this.dataDir = dataDir;
+        this.postProjectionHook = postProjectionHook ?? new NoOpPostProjectionHook_1.NoOpPostProjectionHook();
     }
     // Initializer.handle() — called once by CSS WorkerParallelInitializer
     async handle() {
@@ -228,6 +232,24 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
         const writer = new MetaWriter();
         await writer.replaceGoverned(fsPath, triples, governed, target.path);
         debug(`wrote .meta for ${target.path} (class=${cls}, ${triples.length} triples, ${governed.length} governed predicates)`);
+        // After .meta is written, surface <#this>-subject edges to the
+        // post-projection hook (consumed by mem-trigger's ContradictionDetector).
+        // No-op default when mem-trigger absent. Hook errors are swallowed —
+        // substrate event archival must not block .meta writes.
+        const thisIri = `${target.path}#this`;
+        const thingEdges = triples
+            .filter((q) => q.subject.value === thisIri)
+            .map((q) => ({ predicate: q.predicate.value, object: q.object.value }));
+        try {
+            await this.postProjectionHook.onEdgesWritten({
+                subject: thisIri,
+                edges: thingEdges,
+                timestamp: new Date(),
+            });
+        }
+        catch (hookErr) {
+            debug(`postProjectionHook error (substrate event archival failed; .meta still written): ${hookErr.message}`);
+        }
     }
 }
 exports.MarkdownProjectionListener = MarkdownProjectionListener;
