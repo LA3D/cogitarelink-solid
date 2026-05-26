@@ -67,6 +67,63 @@ Use named volumes for persistence — not bind mounts.
 Bind mounts cause permission issues on macOS Docker Desktop.
 Exception: read-only config/shapes/ontology use bind mounts (`:ro`).
 
+## Rebuild & verify (added 2026-05-26)
+
+### The problem: silent staleness
+
+`docker compose build --no-cache css` can silently produce a stale image when Docker's
+build cache is dirty — the staleness is invisible until `docker builder prune -f` is run.
+This once masked a regression in `pathConstraint.ts` for weeks across machines.
+**Never trust a bare `docker compose build`; always use the Makefile targets and verify.**
+
+### Build stamp (OCI revision label)
+
+The Dockerfile bakes the git commit SHA as an OCI label, declared LATE so earlier
+build layers stay cacheable:
+
+```dockerfile
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.revision=$GIT_SHA
+```
+
+`docker-compose.yml` feeds the arg from the environment:
+
+```yaml
+build:
+  context: ./css
+  dockerfile: Dockerfile
+  args:
+    GIT_SHA: ${GIT_SHA:-unknown}
+```
+
+The Makefile sets `GIT_SHA := $(shell git rev-parse --short HEAD)` and passes it
+inline (`GIT_SHA=$(GIT_SHA) docker compose build css`) to every build invocation.
+
+### Makefile rebuild targets
+
+| Target | When to use |
+|--------|-------------|
+| `make rebuild` | Changed extension code; keeps data volume intact |
+| `make reset` | Full clean-slate rebuild + overlay re-apply (`down -v`) |
+| `make rebuild-clean` | Staleness suspected; evicts entire build cache first |
+
+**Workflow after any code change**:
+1. `make rebuild` (or `make reset` for a clean slate with volume wipe)
+2. `make status` — read the "Image Revision" section at the bottom
+3. Confirm "Deployed" SHA matches "Git HEAD". If not: `make rebuild-clean`.
+
+### Manual verification
+
+```bash
+docker inspect \
+  --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' \
+  cogitarelink-solid-css-1
+# Must match: git rev-parse --short HEAD
+```
+
+`make status` does this check automatically and prints a WARNING (not a unicode
+symbol) if the running image SHA does not match HEAD.
+
 ## Rebuild reproducibility (learned 2026-05-22 cross-machine debug)
 
 - **Never declare a rebuild "verified" without `down -v`.** `make up` / `compose up`

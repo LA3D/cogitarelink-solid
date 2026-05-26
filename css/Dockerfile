@@ -169,3 +169,11 @@ RUN rm -rf /community-server/extensions/mem-trigger/node_modules/@solid/communit
     ln -sf /community-server /community-server/extensions/mem-trigger/node_modules/@solid/community-server
 
 RUN ln -sf /community-server/extensions/mem-trigger /community-server/node_modules/mem-trigger
+
+# ============================================================================
+# Build stamp — baked LATE so earlier layers remain cacheable.
+# The ARG default "unknown" means non-Makefile builds still work cleanly.
+# Verify with: docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' cogitarelink-solid-css-1
+# ============================================================================
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.revision=$GIT_SHA

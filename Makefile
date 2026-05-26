@@ -1,8 +1,9 @@
 PYTHON := ~/uvws/.venv/bin/python
 POD_URL ?= https://pod.vardeman.me/vault/
 CA_FILE := $(shell mkcert -CAROOT 2>/dev/null)/rootCA.pem
+GIT_SHA := $(shell git rev-parse --short HEAD)
 
-.PHONY: up down reset status logs import test install clean sync-validator-tbox check-validator-tbox audit sync-curator-skill
+.PHONY: up down reset rebuild rebuild-clean status logs import test install clean sync-validator-tbox check-validator-tbox audit sync-curator-skill
 
 up:  ## Start everything (idempotent)
 	docker compose up -d
@@ -10,12 +11,21 @@ up:  ## Start everything (idempotent)
 down:  ## Stop services (keep data)
 	docker compose down
 
-reset:  ## Clean slate: destroy data, rebuild, reseed
+reset:  ## Clean slate: destroy data, rebuild with SHA stamp, reseed
 	docker compose down -v
-	docker compose build css
-	docker compose up -d
+	GIT_SHA=$(GIT_SHA) docker compose build css
+	docker compose up -d --force-recreate
 
-status:  ## Health check all services
+rebuild:  ## Rebuild the css image from source + recreate container (keeps data)
+	GIT_SHA=$(GIT_SHA) docker compose build css
+	docker compose up -d --force-recreate css
+
+rebuild-clean:  ## Evict build cache, rebuild css with no cache, recreate (keeps data)
+	docker builder prune -f
+	GIT_SHA=$(GIT_SHA) docker compose build --no-cache css
+	docker compose up -d --force-recreate css
+
+status:  ## Health check all services + verify deployed image matches git HEAD
 	@echo "=== Service Status ==="
 	@echo "CSS:       $$(curl -s -o /dev/null -w '%{http_code}' https://pod.vardeman.me/)"
 	@echo "Pod:       $$(curl -s -o /dev/null -w '%{http_code}' https://pod.vardeman.me/vault/)"
@@ -25,6 +35,15 @@ status:  ## Health check all services
 	@echo "Capabilities: $$(curl -s -o /dev/null -w '%{http_code}' https://pod.vardeman.me/vault/meta/capabilities/)"
 	@echo "Setup:     $$(docker compose ps pod-setup --format '{{.State}}' 2>/dev/null || echo 'not run')"
 	@echo "(Comunica is client-side via solid-agent-skills; no Pod sidecar — D3/D29.)"
+	@echo ""
+	@echo "=== Image Revision ==="
+	@echo "Deployed:  $$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' cogitarelink-solid-css-1 2>/dev/null || echo 'n/a')"
+	@echo "Git HEAD:  $(GIT_SHA)"
+	@if [ "$$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' cogitarelink-solid-css-1 2>/dev/null)" != "$(GIT_SHA)" ]; then \
+	  echo "  WARNING: MISMATCH — running image is not HEAD; run 'make rebuild'"; \
+	else \
+	  echo "  OK deployed image matches HEAD"; \
+	fi
 
 logs:  ## Tail all logs
 	docker compose logs -f
