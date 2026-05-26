@@ -180,12 +180,16 @@ describe("ThingShape conformance", () => {
 });
 
 describe("routing via predicateToClass", () => {
-  it("routes a body {.affiliation} link via injected Type Index + routing map", async () => {
+  it("routes a body {.affiliation} link via injected Type Index + routing map (diverges from defaults)", async () => {
+    // Deliberately contradict the defaults: BOOTSTRAP maps affiliation→Organization and
+    // DEFAULT_WIKI_TYPE_INDEX registers organizations/. Here we route affiliation→Place
+    // and register only places/, so the OLD unthreaded pipeline (which used the defaults)
+    // would land the object in organizations/ — only correct threading yields places/.
     const typeIndex = {
-      "/vault/wiki/concepts/":      "http://www.w3.org/2004/02/skos/core#Concept",
-      "/vault/wiki/organizations/": "https://schema.org/Organization",
+      "/vault/wiki/concepts/": "http://www.w3.org/2004/02/skos/core#Concept",
+      "/vault/wiki/places/":   "https://schema.org/Place",
     };
-    const routing = { "https://schema.org/affiliation": "https://schema.org/Organization" };
+    const routing = { "https://schema.org/affiliation": "https://schema.org/Place" };
     const quads = await projectionPipeline.run(
       "https://pod.example/vault/wiki/concepts/jarek.md",
       "# Jarek\n\nWorks at [[Notre Dame]]{.affiliation}.\n",
@@ -193,6 +197,6 @@ describe("routing via predicateToClass", () => {
       routing,
     );
     const edge = quads.find(q => q.predicate.value === "https://schema.org/affiliation");
-    expect(edge?.object.value).toBe("https://pod.example/vault/wiki/organizations/notre-dame.md#this");
+    expect(edge?.object.value).toBe("https://pod.example/vault/wiki/places/notre-dame.md#this");
   });
 });
