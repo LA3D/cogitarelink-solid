@@ -48,8 +48,8 @@ mem:Action
     a owl:Class ;
     rdfs:label "Memory action" ;
     rdfs:isDefinedBy <> ;
-    rdfs:comment "A category of agent action on wiki-memory L3. Performed as a sequence of standard LDP operations, not transmitted as a message. The action type is recorded in the resulting resource's .meta via prov:wasGeneratedBy, and on the announcement activity the agent posts to /vault/wiki/.operations/ via multi-typing with as:Announce. Subclasses enumerate the actions the substrate supports; most also subclass an AS2 or schema.org verb the LLM already knows from pre-training." ;
-    skos:scopeNote "Abstract class; never used as rdf:type directly. Use a concrete subclass (mem:CrystallizeAction, mem:SupersedeAction, mem:MergeAction, mem:DemoteAction, mem:ArchiveAction, mem:LinkAction). The subclass IRI appears (a) on the prov:Activity blank node inside the durable resource's .meta and (b) as one of the rdf:type values on the as:Announce activity posted to /vault/wiki/.operations/." ;
+    rdfs:comment "A category of agent action on wiki-memory L3. Performed as a sequence of standard LDP operations, not transmitted as a message. The action is recorded canonically on the as:Announce activity the agent posts to /vault/wiki/.operations/ (multi-typed with the subclass IRI); the resulting resource's .meta carries a substrate-DERIVED prov:wasGeneratedBy pointer back at that announcement (RQ-Listener-1). Subclasses enumerate the actions the substrate supports; most also subclass an AS2 or schema.org verb the LLM already knows from pre-training." ;
+    skos:scopeNote "Abstract class; never used as rdf:type directly. Use a concrete subclass (mem:CrystallizeAction, mem:SupersedeAction, mem:MergeAction, mem:DemoteAction, mem:ArchiveAction, mem:LinkAction). CANONICAL announcement form (the source of truth for operation provenance): a resource PUT to /vault/wiki/.operations/ whose own subject <> is multi-typed `a as:Announce, mem:<Subclass>, prov:Activity`, carrying `as:object <target>` (REQUIRED — the resource the operation produced or rewrote; the substrate derives that resource's prov:wasGeneratedBy from this link), `as:actor <webid>`, and `as:published`^^xsd:dateTime. The resource's own .meta then carries prov:wasGeneratedBy pointing back at this announcement, DERIVED by the projector (RQ-Listener-1) — agents do not PATCH it. n-ary operations put sources/partners on prov:wasDerivedFrom, never as:object." ;
     rdfs:seeAlso </vault/meta/affordances/> .
 
 mem:Event
@@ -316,16 +316,14 @@ mem:RealignAction
     rdfs:comment "Replace a stale reference with the current one, resolving prose/pointer drift toward the authoritative source. The corrected resource is the as:object; the source resolved against is prov:used (encoding the ground-truth precedence: deployed Pod > decisions log > prose summaries); the stale prior is prov:wasDerivedFrom; the classification is mem:stalenessClass; and the agentic reasoning is carried as mem:rationale (required — a realignment without recorded reasoning is not auditable). Subclass of schema:ReplaceAction, like mem:SupersedeAction." ;
     skos:scopeNote "Use when current truth is recoverable and one side is authoritative (prose lags reality → realign the prose; reality lags a decision → repair toward the decision). Do NOT use for irreconcilable conflicts between two equally-authoritative sources — those go to a human via mem:ContradictionDetected + LDN. Two-stage commit (D73): curator proposals land in /vault/wiki/working/curator-proposals/ first; crystallization to the affected resource needs human or higher-trust review." ;
     skos:example """
-        # In <https://pod.vardeman.me/vault/wiki/.operations/<id>>:
-        <> prov:wasGeneratedBy [
-            a mem:RealignAction , prov:Activity ;
-            prov:wasAssociatedWith <https://orcid.org/0000-0003-4091-6059> ;
-            prov:used <https://pod.vardeman.me/vault/ontology/mem#> ;
-            mem:stalenessClass mem:SupersededConcept ;
-            mem:rationale "skill descriptions asserted '5-shape catalog (D77)'; D98 supersedes D77 with 8 NodeShapes / 11 files. Realigned three skill descriptions to D98." ;
-            prov:startedAtTime "2026-05-23T10:05:00Z"^^xsd:dateTime
-        ] ;
-            prov:wasDerivedFrom <https://pod.vardeman.me/vault/meta/affordances/> .
+        # In <https://pod.vardeman.me/vault/wiki/.operations/<id>> (the resource's own subject):
+        <> a as:Announce , mem:RealignAction , prov:Activity ;
+           as:object <https://pod.vardeman.me/vault/meta/affordances/wiki-search-grep.ttl> ;
+           as:actor <https://orcid.org/0000-0003-4091-6059> ;
+           prov:used <https://pod.vardeman.me/vault/ontology/mem#> ;
+           mem:stalenessClass mem:SupersededConcept ;
+           mem:rationale "skill descriptions asserted '5-shape catalog (D77)'; D98 supersedes D77 with 8 NodeShapes / 11 files. Realigned three skill descriptions to D98." ;
+           as:published "2026-05-23T10:05:00Z"^^xsd:dateTime .
     """ ;
     rdfs:seeAlso </vault/meta/affordances/> .
 
