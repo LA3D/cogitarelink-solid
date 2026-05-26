@@ -155,6 +155,20 @@ Rung 1.5 phase sequence (above) resumes once the suite is green: A full → C (s
 
 ## Open research questions (active)
 
+- **RQ-Substrate-4** ⚠ STRUCTURAL DEBT (raised 2026-05-26) — the substrate was built
+  *forward from the Obsidian vault* (wiki / PARA / SKOS) instead of *backward from LDP
+  fundamentals + dual document/graph views* (Verborgh). The `/vault/wiki/` URI carries
+  application bias: a cold-agent probe (2026-05-26) misread `wiki` as a wiki *application*
+  ("Confusion #1", confidence 3.5/5, self-corrected via self-description). **Open question
+  (the RQ's job):** what is the neutral re-layered structure — storage root, substrate-vs-
+  profile namespace split (`wiki:routesToClass` etc. are general but live in `wiki:`), and
+  `wiki-memory` demoted to a bounded L3 profile? The eventual **decision record is itself
+  TBD** — that's an *output* of this RQ, so there is deliberately **no D-entry yet**. The
+  2026-05-26 self-description work is a **MITIGATION, NOT THE FIX** — do NOT treat this as
+  resolved until the substrate is actually re-layered. Full context, evidence, and the 4
+  concrete code couplings to unwind: FOLLOWUPS.md → "vault-application contamination". Lineage:
+  continues RQ-Substrate-3 (closed by D84's namespace migration — this is the deeper
+  contamination D84 did not touch).
 - **RQ-Discovery-1**: does the cold-Pod first-arrival ritual scale? (Rung 1.5; Phase A
   gave a positive datapoint.)
 - **RQ-Hub-1**: is N=3 the right hub threshold? (Rung 1.5)

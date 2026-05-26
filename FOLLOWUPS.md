@@ -2,7 +2,26 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## ⚠ ARCHITECTURE — vault-application contamination of the general substrate (raised 2026-05-26)
+## ⚠ RQ-Substrate-4 — vault-application contamination of the general substrate (raised 2026-05-26)
+
+> **Status: OPEN research question, not a decision.** The eventual decision record is an *output* of
+> this RQ (we don't yet know the target structure), so there is deliberately **no D-entry** in
+> decisions.md yet. Tracked as **RQ-Substrate-4** in `.claude/memory/MEMORY.md` (loads every session)
+> + auto-memory. **The 2026-05-26 self-description work (Tasks 11–13) is a MITIGATION, NOT THE FIX —
+> do NOT mark this resolved until the substrate is actually re-layered.** Claude Code's bias toward
+> solving the immediate problem means this WILL get re-papered unless deliberately resurfaced; that is
+> the whole reason this is recorded redundantly.
+>
+> **Empirical evidence (cold-agent probe, 2026-05-26):** a clean HTTP-only agent, no repo/hints, given
+> only the Pod URL + a realistic store-a-concept task, reached confidence **3.5/5**. Its **Confusion #1**
+> (verbatim): the `wiki` URL segment "initially read to me as an application or tool name — 'this is a
+> wiki tool, like MediaWiki' ... created a brief framing error I had to correct." It self-corrected via
+> the existing self-description and never flagged `vault` itself. Every item on its own "what would make
+> this 5/5" list was a **self-description** improvement, not a URI change — which is why mitigation is a
+> reasonable *interim* but the URI bias is the real, deferred problem. (Other probe confusions #4/#5/#6/#8
+> are two-hierarchy/projection comprehension gaps that the dogfood note + agentInstruction address; #3 is
+> the concepts/sources container-merge asymmetry from D98.)
+
 
 **Concern (Chuck):** The substrate was evolved *forward from the Obsidian vault* (PARA + SKOS + wiki
 metadata) rather than *backward from fundamental Solid/LDP capabilities*. The Obsidian vault is just
