@@ -117,17 +117,24 @@ function applyS3a(title: string): string {
     return title.startsWith("@") ? title.slice(1) : title;
 }
 
-// Class hint → target container segment
+// Class hint → target container segment.
+//
+// INTERIM (D106): role→container is a stopgap. The role is a content-layer (SKOS)
+// signal; it determines the *predicate* (HINT_TO_PROJECTION), NOT where the target
+// is stored. The real resolver resolves the container from the target's *class* via
+// the Type Index (D8). Only `author` is a genuine role→type entailment (an author is
+// a person). Everything else — `.source`, citekey, `.embed`, `.broader` — defaults to
+// the content container `concepts/` (post-D98: `pages`→`concepts`, `sources` merged
+// into `concepts` as `wiki:Source ⊑ skos:Concept`). The old `sources`/`pages` targets
+// were a pre-D98 layer violation that produced dead links. See decisions D105/D106.
 const HINT_TO_CONTAINER: Record<string, string> = {
-    source: "sources",
-    author: "people",
-    embed:  "pages",
+    author: "people",   // the one legitimate role→type entailment
 };
+const DEFAULT_CONTENT_CONTAINER = "concepts";
 
-function targetContainer(hint: string | undefined, title: string, sourceCtr: string): string {
+function targetContainer(hint: string | undefined, _title: string, sourceCtr: string): string {
     if (hint && HINT_TO_CONTAINER[hint]) return HINT_TO_CONTAINER[hint];
-    if (isCitekey(title)) return "sources";
-    return sourceCtr;
+    return sourceCtr || DEFAULT_CONTENT_CONTAINER;
 }
 
 function projectionFor(hint: string | undefined, title: string): Projection {
@@ -140,7 +147,7 @@ function projectionFor(hint: string | undefined, title: string): Projection {
 // http://localhost:3000/wiki/pages/foo.md → "pages"
 function sourceContainerOf(baseUri: string): string {
     const m = baseUri.match(/\/wiki\/([^/]+)\//);
-    return m ? m[1] : "pages";
+    return m ? m[1] : DEFAULT_CONTENT_CONTAINER;
 }
 
 // Extract the root (everything before /wiki/) from the base URI

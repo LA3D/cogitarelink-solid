@@ -35,7 +35,7 @@ function dumpStore(label: string, store: Store): void {
 describe("projectionPipeline", () => {
     it("Wiki-Memory L3 Profile body+frontmatter projects to graph-equal .meta", async () => {
         const body = readFileSync(join(FIX_ROOT, "bodies", "wiki-memory-l3-profile.md"), "utf8");
-        const baseIRI = "http://localhost:3000/wiki/pages/wiki-memory-l3-profile.md";
+        const baseIRI = "http://localhost:3000/wiki/concepts/wiki-memory-l3-profile.md";
         const expected = loadStore(join(FIX_ROOT, "meta", "wiki-memory-l3-profile.md.meta"), baseIRI);
         const triples = await projectionPipeline.run(baseIRI, body);
         const actual = new Store(triples);
@@ -48,7 +48,7 @@ describe("projectionPipeline", () => {
 
     it("Agentic Memory Systems MOC projects to graph-equal .meta", async () => {
         const body = readFileSync(join(FIX_ROOT, "bodies", "agentic-memory-systems-moc.md"), "utf8");
-        const baseIRI = "http://localhost:3000/wiki/pages/agentic-memory-systems-moc.md";
+        const baseIRI = "http://localhost:3000/wiki/concepts/agentic-memory-systems-moc.md";
         const expected = loadStore(join(FIX_ROOT, "meta", "agentic-memory-systems-moc.md.meta"), baseIRI);
         const triples = await projectionPipeline.run(baseIRI, body);
         const actual = new Store(triples);

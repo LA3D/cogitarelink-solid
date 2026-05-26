@@ -74,7 +74,7 @@ describe("projectWikilink (D98 #this resolution)", () => {
 });
 
 describe("projectWikilinks (pipeline compat — D98 #this subjects/objects)", () => {
-    const baseUri = "http://localhost:3000/wiki/pages/wiki-memory-l3-profile.md";
+    const baseUri = "http://localhost:3000/wiki/concepts/wiki-memory-l3-profile.md";
     const thingUri = baseUri + "#this";
 
     it("projects [[Title]]{.broader} to skos:broader with #this subject and #this object", () => {
@@ -83,7 +83,7 @@ describe("projectWikilinks (pipeline compat — D98 #this subjects/objects)", ()
         const t = triples.find(t => t.predicate.value === "http://www.w3.org/2004/02/skos/core#broader");
         expect(t).toBeDefined();
         expect(t?.subject.value).toBe(thingUri);
-        expect(t?.object.value).toBe("http://localhost:3000/wiki/pages/agentic-memory-systems-moc.md#this");
+        expect(t?.object.value).toBe("http://localhost:3000/wiki/concepts/agentic-memory-systems-moc.md#this");
     });
 
     it("projects [[@citekey]] to dct:references with #this subject and #this object", () => {
@@ -92,7 +92,9 @@ describe("projectWikilinks (pipeline compat — D98 #this subjects/objects)", ()
         const t = triples.find(t => t.predicate.value === "http://purl.org/dc/terms/references");
         expect(t).toBeDefined();
         expect(t?.subject.value).toBe(thingUri);
-        expect(t?.object.value).toBe("http://localhost:3000/wiki/sources/karpathy-2026-llm-wiki.md#this");
+        // D106: citekey no longer special-routes to /sources/ (retired post-D98);
+        // a citation source is a concept (wiki:Source ⊑ skos:Concept) → content container.
+        expect(t?.object.value).toBe("http://localhost:3000/wiki/concepts/karpathy-2026-llm-wiki.md#this");
     });
 
     it("projects [[name]]{.author} to dct:contributor with #this subject and #this object", () => {
