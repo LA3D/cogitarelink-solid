@@ -104,6 +104,29 @@ intertwined threads to think through together, plus fresh evidence:
 framing (Verborgh) → a re-layering spec → the decision record. See `solid-profiles-and-conneg` +
 `solid-uri-conformance` + `solid-storage-description` skills for the relevant standards.
 
+## Code-review follow-ups (2026-05-27 — D106 sprint final review)
+
+Two items from the final branch review (opus); the blocker (I1, stale committed `dist-cjs`
+re-encoding the `/vault` bug) was FIXED in-sprint by recompiling. Remaining:
+
+- **Stop tracking compiled `dist-cjs/*.js` (or add a build-drift guard).** The committed
+  `dist-cjs/listener.js` had silently drifted from `src-cjs/listener.ts` — it still carried the
+  pre-fix `new TypeIndexLoader(this.baseUrl)` because the artifact wasn't recompiled after the
+  `8fd2649` fix. Runtime was saved only because `css/Dockerfile` rebuilds from source, but a
+  committed artifact that contradicts its source IS the silent-failure class. Durable fix: gitignore
+  the compiled outputs under `dist-cjs/` (keep the hand-written `*.jsonld` Components.js metadata +
+  `package.json` tracked — they're NOT regenerated), OR add a `make check-dist` / pre-push hook that
+  fails when `git diff --exit-code dist-cjs/` is non-empty after `npm run build`. Same observability
+  theme as the Docker stamp.
+- **`pod_audit.PUBLISHED_RANGE` is a hand-maintained mirror — drift-prone.** The predicate→class
+  entailment is now single-source at runtime (the live `routing.jsonld`; `--check-routing` reads it,
+  no Python mirror of the *map*). But `PUBLISHED_RANGE` (the published-range agreement check) is still
+  hand-maintained, AND the TS `BOOTSTRAP_PREDICATE_TO_CLASS` kernel + `routing.jsonld` are hand-mirrors
+  of each other. Adding a 4th entailed predicate means editing 3 files in lockstep
+  (`wikilinkProjection.ts`, `overlays/wiki-memory/routing.jsonld`, `pod_audit.py`). Currently all three
+  agree (verified in review). Consider deriving the kernel from `routing.jsonld` at build, or a test
+  that cross-checks the three. Folds naturally into the RQ-Substrate-4 re-layering.
+
 ## ~~mem-operation in-resource provenance collides with the projection listener (RQ-Listener-1)~~ — RESOLVED 2026-05-26 (by collapse)
 
 **Resolved** on branch `rq-listener-1-provenance` (not yet merged). The resolution arrived in two

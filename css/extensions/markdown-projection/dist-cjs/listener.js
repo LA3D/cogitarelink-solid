@@ -191,21 +191,22 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
         }
         // Load ESM projection pipeline lazily
         const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter, resolveThingClass, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap } = await getPipeline();
+        // Storage root is at /vault under the CSS server base.
+        // Both TypeIndexLoader and loadRoutingMap require the /vault-inclusive base —
+        // the live Type Index is at /vault/settings/publicTypeIndex, and routing.jsonld
+        // is at /vault/meta/routing.jsonld. Using this.baseUrl (server root) would fetch
+        // /settings/publicTypeIndex → 404 (the showstopper bug fixed here).
+        const storageBase = `${this.baseUrl}/vault`;
         // Instance TypeIndexLoader on first use (after pipeline is loaded).
         // The loader caches the live Type Index; refresh-on-miss handles newly-
         // installed L4 overlays whose container registrations aren't cached yet.
         if (this.typeIndexLoader === null) {
-            this.typeIndexLoader = new TypeIndexLoader(this.baseUrl);
+            this.typeIndexLoader = new TypeIndexLoader(storageBase);
         }
         // Load routing map on first use alongside the Type Index (same lazy + cached
         // pattern). Uses fetch() — NOT store.getRepresentation — to avoid the re-entrant
         // write-lock crash (D92). Falls back to BOOTSTRAP_PREDICATE_TO_CLASS on any error.
-        //
-        // routing.jsonld lives under the storage root (/vault), not the server base.
-        // this.baseUrl is the CSS server base (e.g. https://pod.vardeman.me); the Pod
-        // storage is at /vault, so the doc is at <baseUrl>/vault/meta/routing.jsonld.
         if (this.routingMap === null) {
-            const storageBase = `${this.baseUrl}/vault`;
             this.routingMap = await loadRoutingMap(storageBase, fetch, BOOTSTRAP_PREDICATE_TO_CLASS);
         }
         // URI-independent dispatch: resolve the Thing class via the live Type

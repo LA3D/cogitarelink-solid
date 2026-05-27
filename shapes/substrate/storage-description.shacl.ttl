@@ -65,7 +65,12 @@ wiki:StorageDescriptionShape
     # (the StaticStorageDescriber path — it can only emit IRIs) OR a
     # sh:agentInstruction string literal (for future hand-authored descriptions).
     # wiki:agentGuide is now emitted via void-description.json, so this
-    # sh:or evaluates to true and the WARN is closed.
+    # sh:or evaluates to true and the requirement is met.
+    # DELIBERATE Violation severity (was Warning): entry-point guidance is now
+    # MANDATORY — it was advisory only because previously unsatisfiable
+    # (StaticStorageDescriber can't emit a literal sh:agentInstruction); now that
+    # wiki:agentGuide makes it satisfiable, a missing entry-point guide is an ERROR.
+    # Source of the agentGuide IRI: css/config/void-description.json (keep in sync).
     sh:or (
         [ sh:property [ sh:path wiki:agentGuide ;
                         sh:minCount 1 ;

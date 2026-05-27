@@ -331,7 +331,7 @@
             ]
           },
           {
-            "comment": "Entry-point agent guide: explains the wiki-memory profile, substrate stratification, and wiki=profile (not wiki-app) orientation. Satisfies storage-description audit requirement via IRI pointer (StaticStorageDescriber emits IRIs, not literals).",
+            "comment": "Entry-point agent guide: explains the wiki-memory profile, substrate stratification, and wiki=profile (not wiki-app) orientation. Satisfies storage-description audit requirement via IRI pointer (StaticStorageDescriber emits IRIs, not literals). FORWARD DEPENDENCY: shapes/substrate/storage-description.shacl.ttl now HARD-REQUIRES this (Violation severity) — removing this entry flips `make audit` from pass to ERROR. Keep these two files in sync.",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
