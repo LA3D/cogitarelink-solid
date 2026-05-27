@@ -329,6 +329,16 @@
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/extending-l3.md"
               }
             ]
+          },
+          {
+            "comment": "Entry-point agent guide: explains the wiki-memory profile, substrate stratification, and wiki=profile (not wiki-app) orientation. Satisfies storage-description audit requirement via IRI pointer (StaticStorageDescriber emits IRIs, not literals).",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#agentGuide",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/concepts/two-hierarchy-memory-addressing.md"
+              }
+            ]
           }
         ]
       }

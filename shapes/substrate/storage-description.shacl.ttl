@@ -61,14 +61,17 @@ wiki:StorageDescriptionShape
         sh:nodeKind sh:IRI ;
         sh:message "Storage description must declare at least one dct:conformsTo profile."
     ] ;
-    # Entry-point guidance is a substrate-quality obligation, not yet shipped:
-    # the storage description currently carries no sh:agentInstruction of its
-    # own (the seed prose is in FOLLOWUPS / D104 sweep). WARN, not ERROR, so
-    # the audit surfaces it as a curator work item without failing the reset.
-    sh:property [
-        sh:path sh:agentInstruction ;
-        sh:minCount 1 ;
-        sh:datatype xsd:string ;
-        sh:severity sh:Warning ;
-        sh:message "Storage description should carry an entry-point sh:agentInstruction telling arriving agents how to use the catalog pointers (D104 sweep item)."
-    ] .
+    # Entry-point guidance: satisfied by EITHER a wiki:agentGuide IRI pointer
+    # (the StaticStorageDescriber path — it can only emit IRIs) OR a
+    # sh:agentInstruction string literal (for future hand-authored descriptions).
+    # wiki:agentGuide is now emitted via void-description.json, so this
+    # sh:or evaluates to true and the WARN is closed.
+    sh:or (
+        [ sh:property [ sh:path wiki:agentGuide ;
+                        sh:minCount 1 ;
+                        sh:nodeKind sh:IRI ] ]
+        [ sh:property [ sh:path sh:agentInstruction ;
+                        sh:minCount 1 ;
+                        sh:datatype xsd:string ] ]
+    ) ;
+    sh:message "Storage description must carry either a wiki:agentGuide IRI pointer or an sh:agentInstruction literal as an entry-point orientation for arriving agents." .

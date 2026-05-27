@@ -10,6 +10,10 @@ wiki:profileDocument: <>
 <!-- This page is the primary entry point for agents navigating this Pod's
      wiki-memory. It is itself a wiki-memory page; if you can read it, you
      can read every other page in this substrate. -->
+<!-- ORIENTATION: the `wiki` path segment names the wiki-memory *profile* (an L3 reference
+     profile layered on a general Solid/LDP substrate) — not a wiki application. This Pod
+     is a standard LDP server; wiki-memory is one profile built on it. For the full
+     addressing model, see [concepts/two-hierarchy-memory-addressing.md](/vault/wiki/concepts/two-hierarchy-memory-addressing.md). -->
 
 ## Overview
 

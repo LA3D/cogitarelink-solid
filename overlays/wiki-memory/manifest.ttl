@@ -144,7 +144,10 @@
     overlay:installsBootstrapContent
         [ overlay:contentPath "routing.jsonld" ;
           overlay:hostedAt "/vault/meta/routing.jsonld" ;
-          overlay:contentType "application/ld+json" ] ;
+          overlay:contentType "application/ld+json" ] ,
+        [ overlay:contentPath "concepts/two-hierarchy-memory-addressing.md" ;
+          overlay:hostedAt "/vault/wiki/concepts/two-hierarchy-memory-addressing.md" ;
+          overlay:contentType "text/markdown" ] ;
 
     overlay:installsHintMapping
         [ overlay:classHint "broader" ;
