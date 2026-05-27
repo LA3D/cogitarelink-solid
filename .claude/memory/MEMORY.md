@@ -168,7 +168,14 @@ Rung 1.5 phase sequence (above) resumes once the suite is green: A full → C (s
   resolved until the substrate is actually re-layered. Full context, evidence, and the 4
   concrete code couplings to unwind: FOLLOWUPS.md → "vault-application contamination". Lineage:
   continues RQ-Substrate-3 (closed by D84's namespace migration — this is the deeper
-  contamination D84 did not touch).
+  contamination D84 did not touch). **Next session = a structural BRAINSTORM (not code)**, three
+  threads (full brief in FOLLOWUPS "Next-session structural-thinking brief"): (1) neutral URI
+  structure — a 2nd cold probe (2026-05-27) AGAIN misread `wiki` as an application, mitigation only
+  helped by luck; (2) URI-provenance audit — the layout may be partly *hallucinated*; trace each
+  segment to a decision/spec or re-derive from LDP first principles; (3) PROF profiles ontology is
+  deployed (D86) but the agent IGNORES `rel="profile"` — decide if PROF is the right (under-wired)
+  resource-kind affordance or redundant with Type Index + SHACL. Eval evidence:
+  `docs/plans/2026-05-27-two-hierarchy-eval.md`.
 - **RQ-Discovery-1**: does the cold-Pod first-arrival ritual scale? (Rung 1.5; Phase A
   gave a positive datapoint.)
 - **RQ-Hub-1**: is N=3 the right hub threshold? (Rung 1.5)

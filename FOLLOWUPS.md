@@ -67,6 +67,43 @@ storage root; decide which minted terms (`routesToClass`, etc.) belong at substr
 Precedent: D84 already did one namespace migration, so a storage-root migration is feasible but non-trivial.
 This is decision-level work (likely a new D-number + possible supersession of the "kernel" framing).
 
+### Next-session structural-thinking brief (added 2026-05-27)
+
+This is NOT a code task — it is a **structural-design brainstorm** (use `superpowers:brainstorming`)
+that should produce the re-layering design + the decision record RQ-Substrate-4 resolves to. Three
+intertwined threads to think through together, plus fresh evidence:
+
+1. **Linked-data URI structure.** The `/vault/wiki/` path is application-biased. *New evidence:* a
+   second independent cold-agent probe (2026-05-27, see `docs/plans/2026-05-27-two-hierarchy-eval.md`)
+   **again** misread `wiki` as a wiki *application* ("MediaWiki mounted at /wiki/"); the `wiki:`
+   vocabulary prefix on storage-description properties compounded it. The self-description mitigation
+   only helped by luck (the agent stumbled on the dogfood note; it never followed `wiki:agentGuide`
+   nor read index.md). Conceptual framing must live at the storage-description ENTRY POINT, not a
+   buried note. Target: neutral storage root, profile-bounded sub-paths.
+
+2. **URI structure provenance — possibly HALLUCINATED.** Chuck's concern (2026-05-27): the URI layout
+   (`/vault/wiki/{8 containers}`, `/meta/` split, etc.) was evolved forward-from-the-vault and may
+   contain segments that were **invented along the way without a principled grounding** rather than
+   derived from a decision/spec. **Do a provenance audit:** for each URI-structure choice, trace it to
+   a D-decision or a spec, or flag it as accreted/hallucinated and re-derive it from first principles
+   (LDP + the storage description + Type Index). Don't assume the current layout is intentional.
+
+3. **PROF profiles ontology — deployed but NOT used by the agent.** D86 shipped PROF
+   (`prof:ResourceDescriptor`, `SolidPodProfile`, the profile-link extension emitting
+   `Link: rel="profile"`, the wikirole scheme). But in the cold probe the agent SAW the `rel="profile"`
+   headers (`CoreProfile`, `SolidPodProfile`) and **dismissed them** ("names I didn't recognize …
+   weren't needed"). So PROF is paying deployment cost while delivering no agent value — the agent
+   orients via Type Index + shapes + the dogfood note instead. **Open question:** what is PROF's
+   proper role? Is it the right primary resource-kind / "what schema is this?" affordance that we've
+   under-wired, or is it redundant with the Type Index + SHACL and should be trimmed? This needs to be
+   resolved as part of the re-layering — the agent's actual self-description path (storage description
+   → catalogs → Type Index → shapes) should be designed deliberately, with PROF either promoted to a
+   first-class consumed affordance or demoted.
+
+**Deliverable:** a structural brainstorm spanning (1)+(2)+(3) grounded in the dual document/graph-view
+framing (Verborgh) → a re-layering spec → the decision record. See `solid-profiles-and-conneg` +
+`solid-uri-conformance` + `solid-storage-description` skills for the relevant standards.
+
 ## ~~mem-operation in-resource provenance collides with the projection listener (RQ-Listener-1)~~ — RESOLVED 2026-05-26 (by collapse)
 
 **Resolved** on branch `rq-listener-1-provenance` (not yet merged). The resolution arrived in two
