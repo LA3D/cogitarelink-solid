@@ -67,7 +67,19 @@ storage root; decide which minted terms (`routesToClass`, etc.) belong at substr
 Precedent: D84 already did one namespace migration, so a storage-root migration is feasible but non-trivial.
 This is decision-level work (likely a new D-number + possible supersession of the "kernel" framing).
 
-### Next-session structural-thinking brief (added 2026-05-27)
+### Brainstorm DONE 2026-05-27 → resolution next session
+
+The structural-design brainstorm below was completed 2026-05-27. Output:
+**`docs/superpowers/specs/2026-05-27-neurosymbolic-substrate-unification-design.md`** — a unified
+neurosymbolic architecture that absorbs all three threads below plus the deeper findings (shared
+multi-user substrate; SAI registration vocabulary over live Type-Index+SHACL; views as declarative
+projections via conneg-by-profile; context-canonical write-back dissolving the lens problem; the
+neuro/symbolic partition = D81 governed predicates; identity anchored in WebID/AddressBook with
+mint-first + hard-key-unify; two-curator model; RQ-Identity-1). The key meta-finding: **we had
+already solved bits and pieces of the consistency problem and lost track that we had** — the spec is a
+unification + inventory (§5 built/partial/missing), not greenfield. **Next session = resolution**:
+turn that spec into the re-layering plan + the RQ-Substrate-4 decision record (start at the spec's
+§6 sequencing + §7 open questions). The three original threads (now folded into the spec):
 
 This is NOT a code task — it is a **structural-design brainstorm** (use `superpowers:brainstorming`)
 that should produce the re-layering design + the decision record RQ-Substrate-4 resolves to. Three
