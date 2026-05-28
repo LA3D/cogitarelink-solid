@@ -38,6 +38,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | Phase A pilot + skills-bootstrap + self-validating substrate | `phase-a-complete` | D103, D104 |
 | Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
 | Option-B substrate audit + curator (pod-audit walker + pod-curator skill, 2026-05-24) | — | D104 / vault-D99 |
+| RQ-Substrate-4 URI re-layering Phases 1–4 (sub: namespace, reframe, storage-root, PROF; 2026-05-28, branch `rq-listener-1-provenance`, NOT merged; cold-probe eval RQ-View-2 + view layer still open) | — | **D107** |
 
 Other tags: `substrate-cleanup-complete`, `phase-b-complete`, `phase-c-complete`.
 
@@ -155,27 +156,28 @@ Rung 1.5 phase sequence (above) resumes once the suite is green: A full → C (s
 
 ## Open research questions (active)
 
-- **RQ-Substrate-4** ⚠ STRUCTURAL DEBT (raised 2026-05-26) — the substrate was built
-  *forward from the Obsidian vault* (wiki / PARA / SKOS) instead of *backward from LDP
-  fundamentals + dual document/graph views* (Verborgh). The `/vault/wiki/` URI carries
-  application bias: a cold-agent probe (2026-05-26) misread `wiki` as a wiki *application*
-  ("Confusion #1", confidence 3.5/5, self-corrected via self-description). **Open question
-  (the RQ's job):** what is the neutral re-layered structure — storage root, substrate-vs-
-  profile namespace split (`wiki:routesToClass` etc. are general but live in `wiki:`), and
-  `wiki-memory` demoted to a bounded L3 profile? The eventual **decision record is itself
-  TBD** — that's an *output* of this RQ, so there is deliberately **no D-entry yet**. The
-  2026-05-26 self-description work is a **MITIGATION, NOT THE FIX** — do NOT treat this as
-  resolved until the substrate is actually re-layered. Full context, evidence, and the 4
-  concrete code couplings to unwind: FOLLOWUPS.md → "vault-application contamination". Lineage:
-  continues RQ-Substrate-3 (closed by D84's namespace migration — this is the deeper
-  contamination D84 did not touch). **Next session = a structural BRAINSTORM (not code)**, three
-  threads (full brief in FOLLOWUPS "Next-session structural-thinking brief"): (1) neutral URI
-  structure — a 2nd cold probe (2026-05-27) AGAIN misread `wiki` as an application, mitigation only
-  helped by luck; (2) URI-provenance audit — the layout may be partly *hallucinated*; trace each
-  segment to a decision/spec or re-derive from LDP first principles; (3) PROF profiles ontology is
-  deployed (D86) but the agent IGNORES `rel="profile"` — decide if PROF is the right (under-wired)
-  resource-kind affordance or redundant with Type Index + SHACL. Eval evidence:
-  `docs/plans/2026-05-27-two-hierarchy-eval.md`.
+- **RQ-Substrate-4** — URI/namespace slice SHIPPED as **D107** (2026-05-28, Phases 1–4 deployed,
+  audit 0 ERROR, branch `rq-listener-1-provenance`, NOT merged); **RQ itself still OPEN** (two
+  pieces remain). Origin: substrate built *forward from the Obsidian vault* instead of *backward
+  from LDP + dual document/graph views* (Verborgh); two cold probes (2026-05-26/27) misread the
+  `wiki` URL segment as a MediaWiki *application*. **D107 shipped** (`docs/superpowers/specs/2026-05-28-rq-substrate-4-uri-relayering-decision.md`
+  + plan `…/plans/2026-05-28-rq-substrate-4-uri-relayering.md`): three-bucket namespace partition
+  — Bucket 1 aggressive standard-predicate reuse (`wiki:typeIndex`→`solid:publicTypeIndex`, a D48
+  dual-mechanism cleanup); Bucket 2 mint `sub:` = `https://pod.vardeman.me/vault/ontology/substrate#`
+  (35 general terms: catalogs/routing/governance/affordance vocab); Bucket 3 `wiki:` keeps only L3
+  content + `/wiki/` reframed as "the wiki-memory **document view**" in *served* self-description
+  (agentGuide + synthesis + PROF descriptors); `/vault` kept but storage-root **parameterized** (no
+  source hardcode); PROF promoted to actionable out-of-band hint (`rel="profile"` + per-descriptor
+  `sh:agentInstruction`). Grounded in Solid vocab-by-concern + Verborgh (our contamination *is* his
+  contacts conundrum); aggressive standard-reuse is the data-level interoperability he argues for.
+  Round-trip-across-views test green. **STILL OPEN — do NOT mark RQ closed:** (1) **cold-probe eval
+  RQ-View-2** (Probes A/B/C — does the reframe kill the `wiki`→MediaWiki misread? behavioral
+  validation vs the 2026-05-26/27 baseline; design in D107 §5 + decisions.md RQ-View-2) — teed up,
+  not yet run; (2) the deep contacts-conundrum fix (one entity, multiple writable views) = the
+  **deferred VIEW LAYER** (D107 §6 / spec §4.3: view processor + conneg-by-profile `?_profile=`).
+  Pre-existing debt surfaced during the migration (NOT migration-caused): 2 stale live-tests +
+  broken-but-unused `build:esm` → FOLLOWUPS "Pre-existing test/build debt". Lineage: continues
+  RQ-Substrate-3 (closed by D84); D107 is the deeper contamination D84 didn't touch.
 - **RQ-Discovery-1**: does the cold-Pod first-arrival ritual scale? (Rung 1.5; Phase A
   gave a positive datapoint.)
 - **RQ-Hub-1**: is N=3 the right hub threshold? (Rung 1.5)

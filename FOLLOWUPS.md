@@ -4,6 +4,19 @@ Things to come back to. Open items only; closed items move to commit history and
 
 ## ⚠ RQ-Substrate-4 — vault-application contamination of the general substrate (raised 2026-05-26)
 
+> **IMPLEMENTATION UPDATE 2026-05-28 — URI/namespace slice SHIPPED (D107), Phases 1–4 deployed, audit 0 ERROR.**
+> The `sub:` re-layering is live on branch `rq-listener-1-provenance` (not yet merged): Bucket-1 standard-predicate
+> reuse (`wiki:typeIndex`→`solid:publicTypeIndex`), Bucket-2 35-term migration to `sub:` (`https://pod.vardeman.me/vault/ontology/substrate#`),
+> `/wiki/` reframed as "the wiki-memory document view" in served self-description (agentGuide + synthesis + PROF
+> descriptors), `/vault` storage-root parameterized (no source hardcode), PROF promoted to actionable out-of-band
+> hint (`rel="profile"` + `sh:agentInstruction` on every descriptor). Round-trip-across-views test passes. The 4
+> contamination couplings below are RESOLVED by D107's buckets. **STILL OPEN (do NOT mark RQ closed):** (a) the
+> **cold-probe eval (RQ-View-2 / Probes A/B/C)** — the behavioral validation that the reframe actually kills the
+> `wiki`→MediaWiki misread — is the teed-up next step (design in D107 §5 + decisions.md RQ-View-2; deterministic
+> round-trip already green). (b) The deep contacts-conundrum fix (one entity, multiple writable views) = the
+> deferred VIEW LAYER (D107 §6 / spec §4.3). **New pre-existing items surfaced during the migration (NOT
+> migration-caused), see "Pre-existing test/build debt" at bottom.**
+>
 > **Status: OPEN research question, not a decision.** The eventual decision record is an *output* of
 > this RQ (we don't yet know the target structure), so there is deliberately **no D-entry** in
 > decisions.md yet. Tracked as **RQ-Substrate-4** in `.claude/memory/MEMORY.md` (loads every session)
@@ -912,6 +925,12 @@ constraints on `.meta` content with precision, in case an L4 use
 case demands it.
 
 Effort: ~30 min in checkPathConstraint + new unit tests.
+
+## Pre-existing test/build debt (surfaced during the D107 migration, 2026-05-28 — NOT migration-caused)
+
+- **`test_wiki_memory_l3_discovery.py::test_wiki_containers_exist`** asserts the pre-D98 container names `pages`/`sources` (404 — D98 renamed `pages`→`concepts`, merged `sources`). Stale test; update to the D98 7-container set. Confirmed pre-existing (the rename predates this work; the test only surfaced because it's a live-Pod integration test rarely run green).
+- **`test_synthesis_page.py::test_all_wiki_memory_shape_agent_instructions_reference_synthesis`** fails: `overlays/wiki-memory/shapes/howto.shacl.ttl`'s `sh:agentInstruction` does not reference the synthesis URL (`/vault/wiki/index.md`). Pre-existing coverage gap (howto shape untouched by D107). Either add the synthesis ref to the howto shape, or relax the test's "every shape" requirement.
+- **`build:esm` is broken** in `css/extensions/markdown-projection`: `npm run build` = `build:esm && build:cjs`, and `build:esm` (default `tsconfig.json`, `moduleResolution: NodeNext`) cannot resolve `src-cjs/listener.ts`'s deep `@solid/community-server/dist/*` imports (TS2307) + an extension-less relative import (TS2835). The ESM output (`dist/`) is gitignored and **unused by CSS** (loader uses `dist-cjs` per `package.json` main/require/lsd:components). D107 Phase 3 worked around it by pointing the Dockerfile at `npm run build:cjs` (commit `90e2c9d`). Proper fix: either repair `build:esm` (add `.js` extensions + fix deep-import resolution) or drop the unused ESM build from the `build` script. Low priority (output unused), but `npm run build` failing locally is a footgun.
 
 ## Pre-existing (earlier rungs)
 
