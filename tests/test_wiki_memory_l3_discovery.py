@@ -17,6 +17,7 @@ from rdflib import Graph, Namespace
 POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
 WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
 SUB = Namespace("https://pod.vardeman.me/vault/ontology/substrate#")
+SOLID = Namespace("http://www.w3.org/ns/solid/terms#")
 
 
 def test_seven_step_first_arrival_ritual() -> None:
@@ -61,8 +62,8 @@ def test_seven_step_first_arrival_ritual() -> None:
     shape_objects = list(sd.objects(predicate=SUB.shapeCatalog))
     assert shape_objects, f"Storage description lacks sub:shapeCatalog:\n{r.text}"
 
-    ti_objects = list(sd.objects(predicate=WIKI.typeIndex))
-    assert ti_objects, f"Storage description lacks wiki:typeIndex:\n{r.text}"
+    ti_objects = list(sd.objects(predicate=SOLID.publicTypeIndex))
+    assert ti_objects, f"Storage description lacks solid:publicTypeIndex:\n{r.text}"
 
     # Step 3: GET context document — must be valid JSON-LD with Concept term
     ctx_url = str(ctx_objects[0])

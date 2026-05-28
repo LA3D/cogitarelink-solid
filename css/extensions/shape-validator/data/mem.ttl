@@ -1,4 +1,5 @@
 @prefix mem:    <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix sub:    <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix as:     <https://www.w3.org/ns/activitystreams#> .
 @prefix prov:   <http://www.w3.org/ns/prov#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -167,7 +168,7 @@ mem:LinkAction
     rdfs:subClassOf mem:Action , as:Add ;
     rdfs:label "Link" ;
     rdfs:isDefinedBy <> ;
-    rdfs:comment "Add a typed cross-reference edge to a resource's .meta. The predicate must be one of the substrate-governed edges per the relevant shape's wiki:governs list (D81 predicate-level governance), or an agent-extensible predicate outside that list. Subclass of as:Add (add object to a collection of references)." ;
+    rdfs:comment "Add a typed cross-reference edge to a resource's .meta. The predicate must be one of the substrate-governed edges per the relevant shape's sub:governs list (D81 predicate-level governance), or an agent-extensible predicate outside that list. Subclass of as:Add (add object to a collection of references)." ;
     skos:scopeNote "Use when introducing a typed edge (skos:broader, wiki:extends, cito:cites, etc.) between two resources. For substrate-governed predicates, prefer editing the body markdown wikilink and letting MarkdownProjectionListener project it into .meta; explicit PATCH is for edges outside the body-projection scope. NOT used for whole-resource creation (mem:CrystallizeAction) or whole-resource replacement (mem:SupersedeAction)." ;
     skos:example """
         # In the subject resource's own .meta (<https://pod.vardeman.me/vault/wiki/concepts/foo.md.meta>, via N3 Patch):
