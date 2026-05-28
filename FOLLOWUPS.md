@@ -5,7 +5,7 @@ Things to come back to. Open items only; closed items move to commit history and
 ## ⚠ RQ-Substrate-4 — vault-application contamination of the general substrate (raised 2026-05-26)
 
 > **IMPLEMENTATION UPDATE 2026-05-28 — URI/namespace slice SHIPPED (D107), Phases 1–4 deployed, audit 0 ERROR.**
-> The `sub:` re-layering is live on branch `rq-listener-1-provenance` (not yet merged): Bucket-1 standard-predicate
+> The `sub:` re-layering is **merged to `main`** (2026-05-28, commit `02f9b58`; the `rq-listener-1-provenance` branch was fast-forward-merged and the local label deleted; NOT pushed — `origin/main` still at `8364cee`): Bucket-1 standard-predicate
 > reuse (`wiki:typeIndex`→`solid:publicTypeIndex`), Bucket-2 35-term migration to `sub:` (`https://pod.vardeman.me/vault/ontology/substrate#`),
 > `/wiki/` reframed as "the wiki-memory document view" in served self-description (agentGuide + synthesis + PROF
 > descriptors), `/vault` storage-root parameterized (no source hardcode), PROF promoted to actionable out-of-band
@@ -169,7 +169,7 @@ re-encoding the `/vault` bug) was FIXED in-sprint by recompiling. Remaining:
 
 ## ~~mem-operation in-resource provenance collides with the projection listener (RQ-Listener-1)~~ — RESOLVED 2026-05-26 (by collapse)
 
-**Resolved** on branch `rq-listener-1-provenance` (not yet merged). The resolution arrived in two
+**Resolved** (merged to `main` 2026-05-28, commit `02f9b58`; reviewed + APPROVED in the 2026-05-28 session). The resolution arrived in two
 passes — and the second corrected the first:
 
 1. *(2026-05-25, since reverted)* A "derive-from-log" mechanism: the projector re-derived
@@ -197,6 +197,7 @@ Verified live (`make reset`): audit 0 ERROR, 6/6 `test_mem_operations.py` pass (
 provenance), a crystallized concept now carries `schema:name` on `<#this>`.
 
 **Still open / deferred:**
+- **Review nit (2026-05-28):** `prov:wasGeneratedBy` is in `PAGE_GOVERNED_PREDICATES` (governed on subject `<>`) but the projector now emits the audit stamp on subject `<>.meta`. It's correct (the governance entry guards against agents stamping the resource, which `mem.ttl` forbids; the `.meta` stamp is re-emitted each write), but add a one-line comment in `governedPredicates.ts` explaining the subject split so a future reader doesn't read it as collapse leftover.
 - **Read-path A/B (the over-design revisit trigger):** if a concrete high-frequency genesis-lookup
   workload ever appears, re-evaluate a denormalized in-resource genesis edge via an A/B trajectory eval
   (with a real workload, not synthetic). Until then, YAGNI — the log + `memory-history` is the design.
@@ -211,7 +212,9 @@ provenance), a crystallized concept now carries `schema:name` on `<#this>`.
 assertions (no longer a workaround — it *is* the design).
 
 
-## NEXT SESSION — D106 real fix + pod-embed + comprehension re-probe (branch `rq-listener-1-provenance`)
+## ~~NEXT SESSION — D106 real fix + pod-embed + comprehension re-probe~~ — DONE / SUPERSEDED (shipped on the branch, merged to main 2026-05-28)
+
+> **All three items shipped and are in `main`:** (1) D106 full-arm Type-Index-driven container routing via `routing.jsonld` (commits `a4560c0`/`4c052eb`/`22e9405`/`0554e28`/`f35a6de`/`cb25021`); (2) two-hierarchy/dual-view self-description embedding (`4381a80` + D107 Phase 3.1) — closed the audit WARN; (3) comprehension re-probe ran 2026-05-27 (`docs/plans/2026-05-27-two-hierarchy-eval.md`). The dogfood note was crystallized to `/wiki/concepts/two-hierarchy-memory-addressing.md` (the `sub:agentGuide` target). Integration question resolved: both efforts (RQ-Listener-1 + D105/D106) merged as one to `main`. **The post-D107 behavioral re-probe is now RQ-View-2** (see decisions.md). Historical detail retained below for trace.
 
 Decisions **D105** (two-hierarchy: RDFS-subsumption = addressing axis / SKOS-broader = navigation
 axis, never substituted) and **D106** (wikilink role → predicate; container → target class via Type

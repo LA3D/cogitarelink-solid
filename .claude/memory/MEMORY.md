@@ -12,9 +12,16 @@ authoritative home:
 
 Repo decision IDs differ from vault IDs; both numberings are reconciled in `decisions.md`.
 
-## Project state (as of 2026-05-24)
+## Project state (as of 2026-05-28)
 
-- **Branch**: main, clean. Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
+- **Branch**: main, clean. **D107 URI re-layering + RQ-Listener-1 merged to `main` 2026-05-28**
+  (commit `02f9b58`, ff-merge of the former `rq-listener-1-provenance` branch; branch label deleted).
+  **NOT pushed** — `origin/main` still at `8364cee` (local main 73 ahead); stale remote branch
+  `origin/rq-listener-1-provenance` @ `61c382b` remains. **Live Pod deployed at `1cc4986`** (D107
+  Phase 4) — substrate artifacts are identical to `main` HEAD (commits since are tests/docs/Makefile
+  only), so the running Pod is consistent; `make status` will WARN deployed≠HEAD (cosmetic — a
+  `make reset` would re-stamp it but isn't needed for substrate correctness).
+- Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
   via mkcert. `make reset` = reproducible fresh-volume rebuild (use this to verify, never
@@ -38,7 +45,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | Phase A pilot + skills-bootstrap + self-validating substrate | `phase-a-complete` | D103, D104 |
 | Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
 | Option-B substrate audit + curator (pod-audit walker + pod-curator skill, 2026-05-24) | — | D104 / vault-D99 |
-| RQ-Substrate-4 URI re-layering Phases 1–4 (sub: namespace, reframe, storage-root, PROF; 2026-05-28, branch `rq-listener-1-provenance`, NOT merged; cold-probe eval RQ-View-2 + view layer still open) | — | **D107** |
+| RQ-Substrate-4 URI re-layering Phases 1–4 (sub: namespace, reframe, storage-root, PROF; **merged to main 2026-05-28**, commit `02f9b58`, not pushed; cold-probe eval RQ-View-2 + view layer still open) | — | **D107** |
 
 Other tags: `substrate-cleanup-complete`, `phase-b-complete`, `phase-c-complete`.
 
@@ -86,32 +93,32 @@ Pod design that demonstrably works. Original B1/B2/T framing dropped.
 - Design doc: `docs/plans/2026-05-23-rung-1.5-redesign-design.md`. Pilot report:
   `docs/plans/2026-05-23-phase-a-pilot-report.md` (18 substrate failure modes in §4).
 
-### Next-session candidates (option-B shipped 2026-05-24)
+### Next-session candidates (post-D107-merge, 2026-05-28)
 
-Option-B is done (pod-audit walker + pod-curator skill + substrate sweep + concrete-bug sweep).
-Open threads, roughly in priority order:
+D107 URI re-layering + RQ-Listener-1 are merged to `main` (above). RQ-Listener-1 ✅ resolved by
+collapse + reviewed/APPROVED 2026-05-28 (design: operation provenance canonical in `/vault/wiki/.operations/`
+via `<>`-subject `as:Announce, mem:*Action` + `as:object`; `memory-history` affordance; PROV
+category-error fix; `schema:name` on `<#this>`; lesson `eval_as_engineering_feedback`). Open threads,
+roughly priority order:
 
-1. **Get the suite green.** (a) RQ-Listener-1 — ✅ **RESOLVED by collapse** on branch
-   `rq-listener-1-provenance` (not yet merged). A first pass built a "derive-from-log" edge; a
-   cold-discovery probe then showed it was **over-design** (a fresh agent did the whole task via the
-   `.operations/` log; the edge never fired — the affordances prescribe announce-LAST). So the derived
-   edge was removed. **Design**: operation provenance is canonical in `/vault/wiki/.operations/`
-   (`<>`-subject `as:Announce, mem:*Action` + `as:object <target>`); the resource `.meta` doesn't carry
-   it; history via the `memory-history` affordance. Kept the PROV category-error fix (no affordance stamp
-   on the resource) + `mem.ttl` `as:object`. Also fixed: `schema:name` now derived on `<#this>` (concepts
-   were failing ThingShape). Live: audit 0 ERROR, 6/6 e2e pass. Lesson captured: eval-as-engineering-
-   feedback caught the over-build before merge (see `eval_as_engineering_feedback`). (b) 5 pre-existing
-   `test_phase5j_close` count-drift failures — STILL OPEN, pure test-expectation realignment. FOLLOWUPS.
-2. **pod-curator trigger-eval re-run.** Now *valid* via the corrected mechanism (install under
-   `.claude/skills/`, `claude -p`, detect `Skill` tool_use + the subagent trajectory) — the old run
-   measured `.claude/commands/` (never auto-triggered). `skills/pod-curator/evals/trigger-eval.json` staged.
-3. **Phase A pilot iter-3** with per-condition assertions (Component 5 in FOLLOWUPS); compare against iter-1/2.
-4. **Remaining substrate shapes** (capability descriptors, per-catalog-entry label/comment, vocab
-   declarations, JSON-LD context, Type Index) + wire `make audit` into `make reset`/CI once iter-3 clears.
-5. The lone audit WARN — entry-point `sh:agentInstruction` needs a tiny custom StorageDescriber
-   (StaticStorageDescriber emits only IRIs, not literals).
-
-Rung 1.5 phase sequence (above) resumes once the suite is green: A full → C (scale) → B1 → B2 → D.
+1. **RQ-View-2 cold-probe eval** (the behavioral validation D107 is still waiting on): does the
+   `/wiki/`-as-document-view reframe kill the `wiki`→MediaWiki misread? Probes A/B/C, round-trip-across-
+   views, **tune the harness not the server** — full design in decisions.md RQ-View-2 + D107 §5. Baseline
+   to beat = the 2026-05-26/27 cold probes (`docs/plans/2026-05-27-two-hierarchy-eval.md`). Deterministic
+   round-trip already green.
+2. **Test-hygiene sprint** — the suite has drifted across D70/D98/D3-D29/D84 (26 pre-existing failures,
+   ALL triaged). Full audit + phased plan: `docs/plans/2026-05-28-test-suite-audit.md`. Highest-value
+   first: structural fixes A–D (testpaths→`tests`, apply markers, Pod-availability skipif gate, shared
+   TLS fixture). Then fix drifted (D98 container/shape names, wikirole counts, `/vault/wiki/` paths) and
+   skip/relocate obsolete (vault_import, sparql→solid-agent-skills). Also: investigate possible PARA
+   residue (`test_no_para_residue` finds `resources/` = 200).
+3. **Push decision** — `main` is 73 ahead of `origin/main` (not pushed); stale `origin/rq-listener-1-provenance`
+   @ `61c382b`. Decide whether to push + delete the remote branch.
+4. **RQ-Substrate-4 deeper slice (NOT closed by D107):** the VIEW LAYER (view processor + conneg-by-profile
+   `?_profile=` selection) is the real fix for Verborgh's contacts conundrum (D107 §6 / spec §4.3, deferred).
+5. **Rung 1.5 backlog** (from 2026-05-24, still valid): pod-curator trigger-eval re-run (corrected mechanism);
+   Phase A pilot iter-3; remaining substrate shapes. Rung 1.5 sequence resumes once the suite is green:
+   A full → C (scale) → B1 → B2 → D.
 
 ## Key architecture patterns (quick-ref; full text via decision-lookup)
 
@@ -157,7 +164,7 @@ Rung 1.5 phase sequence (above) resumes once the suite is green: A full → C (s
 ## Open research questions (active)
 
 - **RQ-Substrate-4** — URI/namespace slice SHIPPED as **D107** (2026-05-28, Phases 1–4 deployed,
-  audit 0 ERROR, branch `rq-listener-1-provenance`, NOT merged); **RQ itself still OPEN** (two
+  audit 0 ERROR, **merged to main 2026-05-28** commit `02f9b58`, not pushed); **RQ itself still OPEN** (two
   pieces remain). Origin: substrate built *forward from the Obsidian vault* instead of *backward
   from LDP + dual document/graph views* (Verborgh); two cold probes (2026-05-26/27) misread the
   `wiki` URL segment as a MediaWiki *application*. **D107 shipped** (`docs/superpowers/specs/2026-05-28-rq-substrate-4-uri-relayering-decision.md`
@@ -183,8 +190,8 @@ Rung 1.5 phase sequence (above) resumes once the suite is green: A full → C (s
 - **RQ-Hub-1**: is N=3 the right hub threshold? (Rung 1.5)
 - **RQ-Atomic-Feedback-1**: atomic in-response feedback (Option B) vs deferred (A+C,
   shipped) for write-triggered signals — needs a Rung 1.5 task class that exercises it.
-- **RQ-Listener-1**: RESOLVED for mem-operation provenance by COLLAPSE (branch
-  `rq-listener-1-provenance`, not yet merged). Provenance is canonical in the `.operations/` log
+- **RQ-Listener-1**: RESOLVED for mem-operation provenance by COLLAPSE (**merged to main
+  2026-05-28**, reviewed/APPROVED). Provenance is canonical in the `.operations/` log
   (`as:object` link) + the `memory-history` affordance; the resource `.meta` does not carry the
   operation. A cold-probe showed a derived in-resource edge was over-design (unused + DOA under the
   affordances' announce-last order), so it was removed; the PROV category-error fix was kept. The
