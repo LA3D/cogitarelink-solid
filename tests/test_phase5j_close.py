@@ -175,13 +175,15 @@ def test_affordance_additive_prof_typing(filename, role):
     g.parse(affordance_path, format="turtle", publicID=f"file://{affordance_path}")
     doc_uri = URIRef(f"file://{affordance_path}")
 
-    # 1) Existing wiki:*Affordance typing preserved (any wiki:*Affordance subclass passes).
-    has_wiki_type = any(
-        str(t).startswith("https://pod.vardeman.me/vault/ontology/wiki#")
+    # 1) Affordance-class typing preserved (any *Affordance subclass passes). The
+    # affordance classes moved wiki: -> sub: in D107 Bucket 2 (substrate namespace);
+    # the descriptor must still carry a substrate Affordance type.
+    has_affordance_type = any(
+        str(t).startswith("https://pod.vardeman.me/vault/ontology/substrate#")
         and "Affordance" in str(t)
         for t in g.objects(doc_uri, RDF.type)
     )
-    assert has_wiki_type, f"{filename} lost wiki:*Affordance typing"
+    assert has_affordance_type, f"{filename} lost sub:*Affordance typing"
 
     # 2) New PROF typing.
     assert (doc_uri, RDF.type, PROF.ResourceDescriptor) in g, \
