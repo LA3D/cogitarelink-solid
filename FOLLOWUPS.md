@@ -67,6 +67,21 @@ storage root; decide which minted terms (`routesToClass`, etc.) belong at substr
 Precedent: D84 already did one namespace migration, so a storage-root migration is feasible but non-trivial.
 This is decision-level work (likely a new D-number + possible supersession of the "kernel" framing).
 
+### Resolution DONE 2026-05-28 → D107 (URI/namespace slice)
+
+**The URI/namespace slice of RQ-Substrate-4 is now resolved as D107** (`docs/superpowers/specs/2026-05-28-rq-substrate-4-uri-relayering-decision.md`):
+three-bucket partition (Bucket 1 aggressive standard-predicate reuse — delete `wiki:`
+parallels like `wiki:typeIndex`→`solid:publicTypeIndex`; Bucket 2 mint `sub:` substrate
+namespace, framed as proto-view vocabulary; Bucket 3 `wiki:` keeps only L3 content, `/wiki/`
+re-framed as "the wiki-memory document view"); keep `/vault` (derive, don't hardcode);
+PROF promoted to actionable out-of-band view-identity hint; validation = dual-view cold-probe
+eval + round-trip-across-views (RQ-View-2). Grounded in Solid vocab-by-concern + Verborgh's
+hybrid-graph/views model (the contamination *is* his contacts conundrum). **STILL OPEN:**
+D107 does NOT close RQ-Substrate-4 — the deep contacts-conundrum fix (one entity, multiple
+writable views) is the deferred view layer (spec §6 step 5). Implementation plan is the next
+artifact (`docs/superpowers/plans/`). The four contamination couplings below are addressed by
+D107's buckets; keep them here until the plan ships and `make reset`/`make audit` verify green.
+
 ### Brainstorm DONE 2026-05-27 → resolution next session
 
 The structural-design brainstorm below was completed 2026-05-27. Output:
