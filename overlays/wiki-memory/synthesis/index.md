@@ -19,6 +19,8 @@ sub:profileDocument: <>
 
 Wiki-memory L3 is a memory substrate built on Solid Protocol. This page is itself a wiki-memory page — if you can read it via standard Solid primitives, you can read every other page here.
 
+This Pod is a hybrid contextualized knowledge graph (Verborgh): each entity has a **document view** (the markdown body) and a **graph view** (the `.meta` triples, queryable via SPARQL) of the same underlying statements. `/vault/wiki/` is the wiki-memory profile's **document view** — it is **not** a wiki application. Class → container routing is via the Type Index (`solid:publicTypeIndex`); that is one view's routing hint, not a privileged hierarchy.
+
 **Navigation principle** — this is a Linked Data substrate. Three layered dereferencing primitives:
 
 1. **Resources** — any URI in this Pod is dereferenceable via HTTP `GET`. Resources have multiple representations: ask for `Accept: text/markdown` for body prose, `Accept: text/turtle` for the RDF `.meta`, or `Accept: text/html` for rendered HTML (with embedded JSON-LD in a `<script>` block).
