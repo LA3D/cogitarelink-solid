@@ -28,13 +28,19 @@
         {
           "comment": "IPostProjectionHook — optional, wildcard range to accept any structurally-compatible class from any extension (NoOpPostProjectionHook by default, MemTriggerPostProjectionHook when mem-trigger overrides).",
           "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_postProjectionHook"
+        },
+        {
+          "comment": "Pod storage root path under baseUrl (e.g. /vault). Injected so the storage segment lives in one declared config location, not a TS source literal (RQ-Substrate-4 Phase 3 / D107 §4.4). Optional — the constructor defaults to /vault.",
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_storagePath",
+          "range": "xsd:string"
         }
       ],
       "constructorArguments": [
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_store" },
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_baseUrl" },
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_dataDir" },
-        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_postProjectionHook" }
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_postProjectionHook" },
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_storagePath" }
       ]
     },
     {

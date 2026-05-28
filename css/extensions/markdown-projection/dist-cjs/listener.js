@@ -118,6 +118,10 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
     store;
     baseUrl;
     dataDir;
+    // Pod storage root path under baseUrl, injected via Components.js
+    // (markdown-projection.json), default "/vault". Was a hardcoded literal in
+    // project() before RQ-Substrate-4 Phase 3 (FOLLOWUPS contamination item 1).
+    storagePath;
     postProjectionHook;
     // Serialise concurrent writes per the D68 chain pattern
     chain = Promise.resolve();
@@ -128,12 +132,24 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
     // Cached routing map (predicate IRI → class IRI) loaded from /meta/routing.jsonld.
     // Null until first project() call; falls back to BOOTSTRAP_PREDICATE_TO_CLASS on error.
     routingMap = null;
-    constructor(store, baseUrl, dataDir, postProjectionHook) {
+    constructor(store, baseUrl, dataDir, postProjectionHook, storagePath = "/vault") {
         super();
         this.store = store;
         this.baseUrl = baseUrl.replace(/\/$/, "");
         this.dataDir = dataDir;
+        // Normalise: leading "/", no trailing "/" — baseUrl is already right-
+        // trimmed, so storageBase = baseUrl + storagePath joins cleanly.
+        const sp = storagePath.startsWith("/") ? storagePath : `/${storagePath}`;
+        this.storagePath = sp.replace(/\/$/, "");
         this.postProjectionHook = postProjectionHook ?? new NoOpPostProjectionHook_1.NoOpPostProjectionHook();
+    }
+    // Storage root URL = baseUrl + injected storagePath. The live Type Index
+    // (<storageBase>/settings/publicTypeIndex) and routing.jsonld
+    // (<storageBase>/meta/routing.jsonld) hang off this base. Exposed for tests
+    // so the derived base is asserted from the injected storagePath, not a
+    // hardcoded /vault literal (RQ-Substrate-4 Phase 3 / D107 §4.4).
+    get storageBase() {
+        return `${this.baseUrl}${this.storagePath}`;
     }
     // Initializer.handle() — called once by CSS WorkerParallelInitializer
     async handle() {
@@ -191,12 +207,13 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
         }
         // Load ESM projection pipeline lazily
         const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter, resolveThingClass, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap } = await getPipeline();
-        // Storage root is at /vault under the CSS server base.
-        // Both TypeIndexLoader and loadRoutingMap require the /vault-inclusive base —
-        // the live Type Index is at /vault/settings/publicTypeIndex, and routing.jsonld
-        // is at /vault/meta/routing.jsonld. Using this.baseUrl (server root) would fetch
-        // /settings/publicTypeIndex → 404 (the showstopper bug fixed here).
-        const storageBase = `${this.baseUrl}/vault`;
+        // Storage root = baseUrl + storagePath (injected via Components.js,
+        // default "/vault" — no longer hardcoded; RQ-Substrate-4 Phase 3 / D107 §4.4).
+        // Both TypeIndexLoader and loadRoutingMap require the storage-inclusive base —
+        // the live Type Index is at <storageBase>/settings/publicTypeIndex, and
+        // routing.jsonld is at <storageBase>/meta/routing.jsonld. Using this.baseUrl
+        // (server root) would fetch /settings/publicTypeIndex → 404.
+        const storageBase = this.storageBase;
         // Instance TypeIndexLoader on first use (after pipeline is loaded).
         // The loader caches the live Type Index; refresh-on-miss handles newly-
         // installed L4 overlays whose container registrations aren't cached yet.

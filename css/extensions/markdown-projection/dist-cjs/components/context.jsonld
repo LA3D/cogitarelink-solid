@@ -19,6 +19,9 @@
           },
           "postProjectionHook": {
             "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_postProjectionHook"
+          },
+          "storagePath": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_storagePath"
           }
         }
       },

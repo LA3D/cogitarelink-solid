@@ -18,7 +18,8 @@
       "store": { "@id": "urn:solid-server:default:ResourceStore" },
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
       "dataDir": { "@id": "urn:solid-server:default:variable:rootFilePath" },
-      "postProjectionHook": { "@id": "urn:cogitarelink:NoOpPostProjectionHook" }
+      "postProjectionHook": { "@id": "urn:cogitarelink:NoOpPostProjectionHook" },
+      "storagePath": "/vault"
     }
   ]
 }
