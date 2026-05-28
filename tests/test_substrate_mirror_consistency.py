@@ -9,8 +9,9 @@ Migration guard for the sub: namespace migration (RQ-Substrate-4 Phase 0).
 routing.jsonld is the runtime SoT; every entry it declares must agree with the
 others where present.
 """
-import importlib.util, json, pathlib, re
+import pathlib, re
 import rdflib
+from scripts.pod_audit import ROUTES_TO_CLASS, PUBLISHED_RANGE
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -27,7 +28,7 @@ def _bootstrap_from_ts() -> dict[str, str]:
 
     # Extract top-level IRI prefix constants: const SCHEMA = "https://schema.org/";
     prefix_map: dict[str, str] = {}
-    for m in re.finditer(r'^const\s+(\w+)\s*=\s*"([^"]+)"\s*;', txt, re.MULTILINE):
+    for m in re.finditer(r'^const\s+(\w+)\s*=\s*"([^"]+[#/])"\s*;', txt, re.MULTILINE):
         prefix_map[m.group(1)] = m.group(2)
 
     # Isolate the BOOTSTRAP_PREDICATE_TO_CLASS block: { ... }
@@ -50,25 +51,22 @@ def _bootstrap_from_ts() -> dict[str, str]:
 
 
 def _routing_jsonld() -> dict[str, str]:
-    """Parse routing.jsonld via rdflib (same path used in pod_audit.py's load_routing_from_jsonld)."""
-    ROUTES_TO_CLASS = "https://pod.vardeman.me/vault/ontology/wiki#routesToClass"
+    """Parse routing.jsonld via rdflib (same path used in pod_audit.py's load_routing_from_jsonld).
+
+    ROUTES_TO_CLASS is imported from scripts.pod_audit — when the migration updates
+    that constant, this query IRI moves with it automatically.
+    """
     g = rdflib.Graph()
     g.parse(str(ROOT / "overlays/wiki-memory/routing.jsonld"), format="json-ld")
     return {str(s): str(o) for s, o in g.subject_objects(rdflib.URIRef(ROUTES_TO_CLASS))}
 
 
 def _published_range() -> dict[str, str]:
-    """Import pod_audit.py by path and return PUBLISHED_RANGE as {str: str}.
+    """Return PUBLISHED_RANGE from scripts.pod_audit as {str: str}.
 
-    The file's top-level code is imports + constant definitions only — no
-    network calls at import time — so dynamic import is safe here.
-    The existing test_pod_audit_routing.py already imports the module the
-    same way (via 'from scripts.pod_audit import ...').
+    Plain package import — same pattern as test_pod_audit_routing.py.
     """
-    spec = importlib.util.spec_from_file_location("pod_audit", ROOT / "scripts/pod_audit.py")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return {str(k): str(v) for k, v in mod.PUBLISHED_RANGE.items()}
+    return {str(k): str(v) for k, v in PUBLISHED_RANGE.items()}
 
 
 def test_three_mirrors_agree():
