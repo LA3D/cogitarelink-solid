@@ -89,7 +89,7 @@ def test_seven_step_first_arrival_ritual() -> None:
     LDP = Namespace("http://www.w3.org/ns/ldp#")
     assert (None, RDF.type, LDP.BasicContainer) in aff_g, "Affordance catalog is not an LDP BasicContainer"
 
-    # Step 5: GET projection affordance — must declare wiki:governs
+    # Step 5: GET projection affordance — must declare sub:governs
     proj_url = f"{POD}/vault/meta/affordances/markdown-projection.ttl"
     r = httpx.get(proj_url, headers={"Accept": "text/turtle"})
     assert r.status_code == 200, f"Projection affordance GET failed: {r.status_code}\nURL: {proj_url}"
