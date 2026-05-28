@@ -7,6 +7,6 @@
     cap:name "wiki-vocabulary" ;
     cap:version "1.0" ;
     rdfs:label "Wiki Vocabulary" ;
-    rdfs:comment "The wiki: namespace (https://pod.vardeman.me/vault/ontology/wiki#) is dereferenceable with the wiki-memory L3 class hierarchy (wiki:Resource, wiki:Concept, wiki:Person, wiki:WorkingNote, wiki:Hub, wiki:Page, wiki:MOC) and predicates (wiki:contextDocument, wiki:shapeCatalog, wiki:affordanceCatalog, wiki:typeIndex). Procedure content uses schema:HowTo (not wiki:Procedure). Consumers can rely on dereference + parse." ;
+    rdfs:comment "The wiki: namespace (https://pod.vardeman.me/vault/ontology/wiki#) is dereferenceable with the wiki-memory L3 class hierarchy (wiki:Resource, wiki:Concept, wiki:Person, wiki:WorkingNote, wiki:Hub, wiki:Page, wiki:MOC) and predicates (wiki:contextDocument, wiki:shapeCatalog, wiki:affordanceCatalog). Procedure content uses schema:HowTo (not wiki:Procedure). Consumers can rely on dereference + parse." ;
     cap:providedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
     cap:hostedAt   <https://pod.vardeman.me/vault/ontology/wiki> .

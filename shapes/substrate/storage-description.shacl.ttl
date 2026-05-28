@@ -3,6 +3,7 @@
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 @prefix pim:   <http://www.w3.org/ns/pim/space#> .
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
 @prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
 
 <> dct:conformsTo <https://www.w3.org/TR/shacl/> .
@@ -24,7 +25,7 @@ wiki:StorageDescriptionShape
     dct:created "2026-05-23"^^xsd:date ;
     dct:creator <https://orcid.org/0000-0003-4091-6059> ;
     sh:targetClass pim:Storage ;
-    sh:agentInstruction """This Pod's storage description is its front door. An agent arriving cold should GET <.well-known/solid> (Accept: text/turtle), then follow wiki:affordanceCatalog to enumerate capabilities, wiki:typeIndex for class -> container routing, wiki:contextDocument for prefix -> IRI resolution, wiki:shapeCatalog for the SHACL governing content, and wiki:profileDocument for the wiki-memory L3 profile narrative. Each pointer must resolve (pod-audit HEAD-checks them). If you are extending the substrate with a new catalog, add its pointer here so agents can discover it.""" ;
+    sh:agentInstruction """This Pod's storage description is its front door. An agent arriving cold should GET <.well-known/solid> (Accept: text/turtle), then follow wiki:affordanceCatalog to enumerate capabilities, solid:publicTypeIndex for class -> container routing, wiki:contextDocument for prefix -> IRI resolution, wiki:shapeCatalog for the SHACL governing content, and wiki:profileDocument for the wiki-memory L3 profile narrative. Each pointer must resolve (pod-audit HEAD-checks them). If you are extending the substrate with a new catalog, add its pointer here so agents can discover it.""" ;
     sh:property [
         sh:path wiki:affordanceCatalog ;
         sh:minCount 1 ;
@@ -32,10 +33,10 @@ wiki:StorageDescriptionShape
         sh:message "Storage description must point at the affordance catalog via wiki:affordanceCatalog (D52)."
     ] ;
     sh:property [
-        sh:path wiki:typeIndex ;
+        sh:path solid:publicTypeIndex ;
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
-        sh:message "Storage description must point at the Type Index via wiki:typeIndex (D8) for class -> container routing."
+        sh:message "Storage description must point at the Type Index via solid:publicTypeIndex (D8) for class -> container routing."
     ] ;
     sh:property [
         sh:path wiki:contextDocument ;

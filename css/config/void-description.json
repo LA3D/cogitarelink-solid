@@ -182,7 +182,7 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#typeIndex",
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/solid/terms#publicTypeIndex",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/settings/publicTypeIndex"
               }
             ]

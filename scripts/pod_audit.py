@@ -28,6 +28,7 @@ from rdflib import Graph, RDF, URIRef
 from pyshacl import validate
 
 WIKI = "https://pod.vardeman.me/vault/ontology/wiki#"
+SOLID = "http://www.w3.org/ns/solid/terms#"
 LDP  = "http://www.w3.org/ns/ldp#"
 SH   = "http://www.w3.org/ns/shacl#"
 RDFS = "http://www.w3.org/2000/01/rdf-schema#"
@@ -44,7 +45,7 @@ ROLE_DOC = "ontology/wikirole"  # relative to pod_base
 # Storage-description pointers the walker HEAD-checks (label → predicate IRI).
 CATALOG_POINTERS = {
     "affordanceCatalog": WIKI + "affordanceCatalog",
-    "typeIndex":         WIKI + "typeIndex",
+    "typeIndex":         SOLID + "publicTypeIndex",
     "contextDocument":   WIKI + "contextDocument",
     "shapeCatalog":      WIKI + "shapeCatalog",
     "profileDocument":   WIKI + "profileDocument",
@@ -52,7 +53,6 @@ CATALOG_POINTERS = {
 
 SEV = {SH + "Violation": "ERROR", SH + "Warning": "WARN", SH + "Info": "INFO"}
 
-SOLID = "http://www.w3.org/ns/solid/terms#"
 ROUTES_TO_CLASS = WIKI + "routesToClass"
 
 # Cached published rdfs:range for the entailed predicates (schema.org / dct).
@@ -160,7 +160,7 @@ def resolve_ca():
 
 async def fetch_type_index(client, sd_g, storage, canon_base, pod_base):
     "Fetch the Type Index and return {class_iri: container_path} or {}."
-    ti_iri = next((str(o) for o in sd_g.objects(storage, URIRef(WIKI + "typeIndex"))), None)
+    ti_iri = next((str(o) for o in sd_g.objects(storage, URIRef(SOLID + "publicTypeIndex"))), None)
     if ti_iri is None:
         return {}
     ti_url = rewrite(ti_iri, canon_base, pod_base)

@@ -668,7 +668,7 @@ wiki:WikiMemoryProfile
     a dct:Standard ;
     rdfs:label "Wiki-memory application profile v1.0" ;
     rdfs:isDefinedBy <> ;
-    rdfs:comment "Application profile that pulls together this vocabulary, the 6-shape SHACL catalog at /vault/meta/shapes/, the affordance catalog at /vault/meta/affordances/, and the Type Index at /vault/settings/publicTypeIndex into a single conformance target. Resources hosted under /vault/wiki/ declare dct:conformsTo wiki:WikiMemoryProfile." ;
+    rdfs:comment "Application profile that pulls together this vocabulary, the 6-shape SHACL catalog at /vault/meta/shapes/, the affordance catalog at /vault/meta/affordances/, and the Type Index (solid:publicTypeIndex) at /vault/settings/publicTypeIndex into a single conformance target. Resources hosted under /vault/wiki/ declare dct:conformsTo wiki:WikiMemoryProfile." ;
     dct:hasVersion "1.0" ;
     skos:scopeNote "Used as the object of dct:conformsTo on wiki resources, container .meta, and overlay manifests. Distinct from wiki:L3Profile (which is the L3 layer identity in the storage description). For the substrate-level conformance declaration, use both." ;
     skos:example """
@@ -758,20 +758,6 @@ wiki:capabilityCatalog
         <> wiki:capabilityCatalog </vault/meta/capabilities/> .
     """ ;
     rdfs:seeAlso </vault/meta/capabilities/> .
-
-wiki:typeIndex
-    a rdf:Property ;
-    rdfs:label "type index" ;
-    rdfs:isDefinedBy <> ;
-    rdfs:comment "Points at the Solid Type Index at /vault/settings/publicTypeIndex. Per D8 (Type Index for class→container routing) and D78 (class-based shape targeting), the Type Index maps each wiki class to its instance container — letting an agent discover where to PUT a new wiki:Concept without out-of-band knowledge." ;
-    skos:scopeNote "Used at the storage-description level. Object is the Type Index resource URL. An agent looking up class→container routing GETs the Type Index and queries for solid:TypeRegistration with solid:forClass <target-class>." ;
-    rdfs:domain rdfs:Resource ;
-    rdfs:range rdfs:Resource ;
-    skos:example """
-        # In /vault/.well-known/solid:
-        <> wiki:typeIndex </vault/settings/publicTypeIndex> .
-    """ ;
-    rdfs:seeAlso </vault/settings/publicTypeIndex> .
 
 wiki:contactCatalog
     a rdf:Property ;
