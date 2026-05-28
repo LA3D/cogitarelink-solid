@@ -141,10 +141,10 @@ def test_wiki_containers_exist() -> None:
 def test_affordance_descriptors_parseable() -> None:
     """All four affordance descriptors must be parseable Turtle with correct rdf:type."""
     affordances = {
-        "markdown-projection.ttl": WIKI.WriteAffordance,
-        "hub-view.ttl": WIKI.DerivedClassAffordance,
-        "breadcrumb-view.ttl": WIKI.DerivedNavigationAffordance,
-        "memento.ttl": WIKI.VersionAffordance,
+        "markdown-projection.ttl": SUB.WriteAffordance,
+        "hub-view.ttl": SUB.DerivedClassAffordance,
+        "breadcrumb-view.ttl": SUB.DerivedNavigationAffordance,
+        "memento.ttl": SUB.VersionAffordance,
     }
     from rdflib.namespace import RDF
     for fname, expected_type in affordances.items():
