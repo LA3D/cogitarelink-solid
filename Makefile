@@ -3,7 +3,7 @@ POD_URL ?= https://pod.vardeman.me/vault/
 CA_FILE := $(shell mkcert -CAROOT 2>/dev/null)/rootCA.pem
 GIT_SHA := $(shell git rev-parse --short HEAD)
 
-.PHONY: up down reset rebuild rebuild-clean status logs import test install clean sync-validator-tbox check-validator-tbox audit sync-curator-skill
+.PHONY: up down reset rebuild rebuild-clean status logs import test install clean sync-validator-tbox check-validator-tbox audit verify sync-curator-skill
 
 up:  ## Start everything (idempotent)
 	docker compose up -d
@@ -15,6 +15,15 @@ reset:  ## Clean slate: destroy data, rebuild with SHA stamp, reseed
 	docker compose down -v
 	GIT_SHA=$(GIT_SHA) docker compose build css
 	docker compose up -d --force-recreate
+
+verify:  ## Wait for the async pod-setup seed to finish, then audit. Use after `make reset` — `make audit` alone races the seed (false ERRORs on an unseeded Pod).
+	@echo "Waiting for pod-setup seed (polling $(POD_URL)wiki/index.md)..."
+	@for i in $$(seq 1 72); do \
+	  code=$$(curl -s -o /dev/null -w '%{http_code}' $(POD_URL)wiki/index.md); \
+	  if [ "$$code" = "200" ]; then echo "seeded after ~$$((i*5))s"; break; fi; \
+	  sleep 5; \
+	done
+	$(MAKE) audit
 
 rebuild:  ## Rebuild the css image from source + recreate container (keeps data)
 	GIT_SHA=$(GIT_SHA) docker compose build css
