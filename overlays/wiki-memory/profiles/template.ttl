@@ -3,11 +3,13 @@
 @prefix dct:  <http://purl.org/dc/terms/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
 
 <https://pod.vardeman.me/vault/meta/profiles/template>
   a prof:Profile ;
   rdfs:label "Wiki-Memory L3 — Template descriptor profile" ;
+  sh:agentInstruction "You are reading the wiki-memory Template document view of this entity. The same entity also has a graph view — its .meta triples (Accept: text/turtle on <this>.meta), queryable via SPARQL for the typed predicates. The governing SHACL shape is at /vault/meta/shapes/template.shacl.ttl (sub:shapeCatalog). The canonical entity node is <#this>. (Future: conneg-by-profile ?_profile= will let you select document vs graph view explicitly.)" ;
   rdfs:comment "Profile for wiki:Template descriptor pages. tmpl:-vocabulary based substrate template declarations." ;
   dct:publisher <https://orcid.org/0000-0003-4091-6059> ;
   dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
