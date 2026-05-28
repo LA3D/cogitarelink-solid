@@ -519,7 +519,7 @@ def test_link_e2e(slug):
     """Link: add typed edge in subject's .meta; provenance via .operations/ announcement.
 
     Procedure from /vault/meta/affordances/link.ttl:
-      1. Inspect subject's class shape wiki:governs list for permitted predicates
+      1. Inspect subject's class shape sub:governs list for permitted predicates
       2. PATCH subject's .meta inserting the typed edge + mem:LinkAction activity
       3. POST [as:Announce, mem:LinkAction] to /vault/wiki/.operations/
 

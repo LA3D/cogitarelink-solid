@@ -55,7 +55,7 @@
 # Added 2026-05-24 — query/search role concepts. :search-affordance was
 # referenced by /vault/meta/affordances/wiki-search-grep (prof:hasRole) but
 # never defined (a dangling role); :query-affordance is the new role for the
-# WoT td:ActionAffordance-aligned SPARQL-SELECT lookups (wiki:QueryAffordance).
+# WoT td:ActionAffordance-aligned SPARQL-SELECT lookups (sub:QueryAffordance).
 
 :search-affordance
     a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;

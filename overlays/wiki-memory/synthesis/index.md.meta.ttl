@@ -3,6 +3,7 @@
 @prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 
@@ -10,13 +11,13 @@
     a wiki:Page ;
     dct:title "Wiki-Memory L3 — Profile Synthesis" ;
     dct:conformsTo <https://pod.vardeman.me/vault/meta/profiles/page> ;
-    wiki:profileDocument <> ;
-    wiki:bootstrapResource <https://pod.vardeman.me/vault/.well-known/solid> ,
+    sub:profileDocument <> ;
+    sub:bootstrapResource <https://pod.vardeman.me/vault/.well-known/solid> ,
                            <https://pod.vardeman.me/vault/meta/shapes/> ,
                            <https://pod.vardeman.me/vault/meta/affordances/> ,
                            <https://pod.vardeman.me/vault/settings/publicTypeIndex> ;
     ldp:inbox <https://pod.vardeman.me/vault/wiki/.operations/> ;
-    wiki:eventStream <https://pod.vardeman.me/vault/wiki/.events/> ;
+    sub:eventStream <https://pod.vardeman.me/vault/wiki/.events/> ;
     dct:hasPart <https://pod.vardeman.me/vault/meta/shapes/> ,
                 <https://pod.vardeman.me/vault/meta/affordances/> ,
                 <https://pod.vardeman.me/vault/meta/capabilities/> ,

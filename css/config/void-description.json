@@ -118,6 +118,16 @@
             ]
           },
           {
+            "comment": "VoID: general agentic-substrate vocabulary (D107 Bucket 2)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://rdfs.org/ns/void#vocabulary",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/ontology/substrate#"
+              }
+            ]
+          },
+          {
             "comment": "VoID: wikirole SKOS concept scheme vocabulary (D86)",
             "@type": "StaticStorageDescriber",
             "terms": [
@@ -152,7 +162,7 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#contextDocument",
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#contextDocument",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/context.jsonld"
               }
             ]
@@ -162,7 +172,7 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#shapeCatalog",
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#shapeCatalog",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/shapes/"
               }
             ]
@@ -172,7 +182,7 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#affordanceCatalog",
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#affordanceCatalog",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/affordances/"
               }
             ]
@@ -202,7 +212,7 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#profileDocument",
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#profileDocument",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/index.md"
               }
             ]
@@ -305,7 +315,7 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#contactCatalog",
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#contactCatalog",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/contacts/"
               }
             ]
@@ -315,7 +325,7 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#templateCatalog",
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#templateCatalog",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/templates/"
               }
             ]
@@ -325,7 +335,7 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#extensionGuide",
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#extensionGuide",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/extending-l3.md"
               }
             ]
@@ -335,7 +345,7 @@
             "@type": "StaticStorageDescriber",
             "terms": [
               {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/wiki#agentGuide",
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#agentGuide",
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/concepts/two-hierarchy-memory-addressing.md"
               }
             ]

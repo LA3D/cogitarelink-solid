@@ -175,7 +175,7 @@ def test_no_sparql_endpoint_claimed():
     """Affordance descriptors don't claim /sparql endpoint anymore."""
     hub = httpx.get(POD_URL + "meta/affordances/hub-view.ttl", timeout=5).text
     assert "wiki:invokedAt" not in hub, "hub-view should not have wiki:invokedAt"
-    assert "wiki:requiresCapability" in hub, "hub-view should declare cap requirement"
+    assert "sub:requiresCapability" in hub, "hub-view should declare cap requirement"
 
 
 def test_type_index_has_wiki_registrations():

@@ -1,4 +1,5 @@
 @prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix sh:    <http://www.w3.org/ns/shacl#> .
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
@@ -6,11 +7,11 @@
 @prefix dct:      <http://purl.org/dc/terms/> .
 
 </vault/meta/affordances/org-find-by-ror.ttl>
-    a wiki:QueryAffordance , prof:ResourceDescriptor ;
+    a sub:QueryAffordance , prof:ResourceDescriptor ;
     prof:hasRole wikirole:query-affordance ;
     rdfs:label "Find organization by ROR" ;
     dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
-    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
+    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
     sh:agentInstruction """
       Canonical institutional identity lookup via ROR (Research Organization
       Registry) IRI. Use this when an external source provides a ROR identifier
@@ -30,7 +31,7 @@
       ROR; the agent should prompt to create a stub card via the addressbook
       overlay templates.
     """ ;
-    wiki:selectQuery """
+    sub:selectQuery """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 SELECT ?org WHERE {

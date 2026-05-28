@@ -1,4 +1,5 @@
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix oslc:     <http://open-services.net/ns/core#> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dct:      <http://purl.org/dc/terms/> .
@@ -6,16 +7,16 @@
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 
-<>  a wiki:SearchAffordance ,
+<>  a sub:SearchAffordance ,
        prof:ResourceDescriptor ;
     dct:conformsTo <http://www.w3.org/TR/dx-prof/> ,
                    <https://docs.oasis-open-projects.org/oslc-op/query/v3.0/oslc-query.html> ;
     prof:hasRole wikirole:search-affordance ;
     rdfs:label "Wiki Grep Search" ;
     rdfs:comment "Recursive literal-substring AND-search over all readable text/markdown descendants of the target container. Paginated per OSLC Query 3.0 — see oslc:nextPage in responses." ;
-    wiki:targetContainer </vault/wiki/> ;
-    wiki:dispatchPattern "?ext=search-grep" ;
-    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    sub:targetContainer </vault/wiki/> ;
+    sub:dispatchPattern "?ext=search-grep" ;
+    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
     sh:agentInstruction """
       Recursive literal-witness search over wiki-memory pages.
 
@@ -42,16 +43,16 @@
       Consumer CLI:
         solid-pod wiki-search <container-url> "phrase 1" "phrase 2" …
     """ ;
-    wiki:queryParameter [
-        wiki:parameter "oslc.searchTerms" ;
+    sub:queryParameter [
+        sub:parameter "oslc.searchTerms" ;
         rdfs:comment "Comma-separated quoted phrases per OSLC Query 3.0 §7.3. URL-encoded. Required." ;
-        wiki:required true
+        sub:required true
     ] , [
-        wiki:parameter "oslc.pageSize" ;
+        sub:parameter "oslc.pageSize" ;
         rdfs:comment "Max results per page. Default 25, server cap 100." ;
-        wiki:required false
+        sub:required false
     ] , [
-        wiki:parameter "oslc.startIndex" ;
+        sub:parameter "oslc.startIndex" ;
         rdfs:comment "0-based result offset. Default 0." ;
-        wiki:required false
+        sub:required false
     ] .

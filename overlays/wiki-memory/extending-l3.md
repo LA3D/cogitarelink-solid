@@ -285,17 +285,17 @@ GET /vault/                                         (Pod root)
   → Link: <.../.well-known/solid>; rel="solid:storageDescription"
   ↓
 GET /vault/.well-known/solid
-  → wiki:extensionGuide </vault/meta/extending-l3.md>  (NEW in D100)
-  → wiki:shapeCatalog   </vault/meta/shapes/>
-  → wiki:contextDocument </vault/meta/context.jsonld>
-  → wiki:typeIndex      </vault/settings/publicTypeIndex>
-  → wiki:affordanceCatalog </vault/meta/affordances/>
+  → sub:extensionGuide </vault/meta/extending-l3.md>  (NEW in D100)
+  → sub:shapeCatalog   </vault/meta/shapes/>
+  → sub:contextDocument </vault/meta/context.jsonld>
+  → solid:publicTypeIndex </vault/settings/publicTypeIndex>
+  → sub:affordanceCatalog </vault/meta/affordances/>
   ↓
 GET /vault/meta/extending-l3.md
   → this page
 ```
 
-The storage description advertises `wiki:extensionGuide` so agents arriving cold can dereference and read the manual without prior knowledge.
+The storage description advertises `sub:extensionGuide` so agents arriving cold can dereference and read the manual without prior knowledge.
 
 ## See Also
 

@@ -15,10 +15,11 @@ from rdflib import Graph, URIRef
 POD = "https://pod.vardeman.me/vault/"
 SYNTH = "https://pod.vardeman.me/vault/wiki/index.md"
 WIKI_NS = "https://pod.vardeman.me/vault/ontology/wiki#"
+SUB_NS = "https://pod.vardeman.me/vault/ontology/substrate#"
 
 
 def test_pod_root_advertises_profile_document():
-    """A GET on /vault/.well-known/solid emits wiki:profileDocument → synthesis page."""
+    """A GET on /vault/.well-known/solid emits sub:profileDocument → synthesis page."""
     well_known = f"{POD}.well-known/solid"
     r = httpx.get(well_known, headers={"Accept": "text/turtle"}, verify=False)
     assert r.status_code == 200
@@ -26,10 +27,10 @@ def test_pod_root_advertises_profile_document():
     # storage description (e.g. <../wiki/index.md>) resolve correctly
     # against /vault/.well-known/solid, not against /vault/.
     g = Graph().parse(data=r.text, format="turtle", publicID=well_known)
-    profile_docs = list(g.objects(predicate=URIRef(f"{WIKI_NS}profileDocument")))
+    profile_docs = list(g.objects(predicate=URIRef(f"{SUB_NS}profileDocument")))
     assert len(profile_docs) >= 1
     assert any(str(p) == SYNTH for p in profile_docs), (
-        f"wiki:profileDocument should point at {SYNTH}; got {[str(p) for p in profile_docs]}"
+        f"sub:profileDocument should point at {SYNTH}; got {[str(p) for p in profile_docs]}"
     )
 
 
@@ -57,18 +58,18 @@ def test_synthesis_page_markdown_body_has_required_sections():
 
 
 def test_synthesis_page_meta_has_bootstrap_pointers():
-    """The synthesis page's .meta carries the wiki:bootstrapResource pointers."""
+    """The synthesis page's .meta carries the sub:bootstrapResource pointers."""
     r = httpx.get(f"{SYNTH}.meta",
                   headers={"Accept": "text/turtle"}, verify=False)
     assert r.status_code == 200
     g = Graph().parse(data=r.text, format="turtle", publicID=SYNTH)
-    bootstrap = list(g.objects(predicate=URIRef(f"{WIKI_NS}bootstrapResource")))
+    bootstrap = list(g.objects(predicate=URIRef(f"{SUB_NS}bootstrapResource")))
     assert len(bootstrap) >= 4, (
         f"Expected ≥4 bootstrap pointers (storage description, shape catalog, "
         f"affordance catalog, type index); got {len(bootstrap)}: {bootstrap}"
     )
     # Self-reference: the synthesis declares itself as the profile document.
-    profile_docs = list(g.objects(predicate=URIRef(f"{WIKI_NS}profileDocument")))
+    profile_docs = list(g.objects(predicate=URIRef(f"{SUB_NS}profileDocument")))
     assert any(str(p) == SYNTH for p in profile_docs)
 
 

@@ -2,7 +2,7 @@
 type: wiki:Page
 dct:title: "Wiki-Memory L3 — Profile Synthesis"
 dct:conformsTo: <https://pod.vardeman.me/vault/meta/profiles/page>
-wiki:profileDocument: <>
+sub:profileDocument: <>
 ---
 
 # Wiki-Memory L3 — Profile Synthesis
@@ -111,7 +111,7 @@ The transition between them is the `mem:CrystallizeAction` (see [Operations](#op
 
 ### Predicate-level governance
 
-Each SHACL shape declares which RDF predicates the substrate **governs** (via `wiki:governs` properties on the shape). The substrate owns those predicates: it validates them, may project them from body content, and refuses external changes that violate them. **All other predicates the agent owns** — write them via standard PATCH to `.meta`. The dividing line is per-shape; check the shape's `wiki:governs` list before patching.
+Each SHACL shape declares which RDF predicates the substrate **governs** (via `sub:governs` properties on the shape). The substrate owns those predicates: it validates them, may project them from body content, and refuses external changes that violate them. **All other predicates the agent owns** — write them via standard PATCH to `.meta`. The dividing line is per-shape; check the shape's `sub:governs` list before patching.
 
 ## Affordances available
 

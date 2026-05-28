@@ -2,11 +2,12 @@
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 
 <>
-    a wiki:Affordance , wiki:WriteAffordance , prof:ResourceDescriptor ;
+    a sub:Affordance , sub:WriteAffordance , prof:ResourceDescriptor ;
     dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
     prof:hasRole wikirole:write-affordance ;
     rdfs:label "Demote" ;
@@ -24,4 +25,4 @@
         "On 201, DELETE /vault/wiki/{class}/{slug}.md"
         "POST as:Announce activity multi-typed with mem:DemoteAction to /vault/wiki/.operations/"
     ) ;
-    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .

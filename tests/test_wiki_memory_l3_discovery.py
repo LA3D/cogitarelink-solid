@@ -16,6 +16,7 @@ from rdflib import Graph, Namespace
 
 POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
 WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
+SUB = Namespace("https://pod.vardeman.me/vault/ontology/substrate#")
 
 
 def test_seven_step_first_arrival_ritual() -> None:
@@ -51,14 +52,14 @@ def test_seven_step_first_arrival_ritual() -> None:
     sd = Graph()
     sd.parse(data=r.text, format="turtle", publicID=sd_url)
 
-    ctx_objects = list(sd.objects(predicate=WIKI.contextDocument))
-    assert ctx_objects, f"Storage description lacks wiki:contextDocument:\n{r.text}"
+    ctx_objects = list(sd.objects(predicate=SUB.contextDocument))
+    assert ctx_objects, f"Storage description lacks sub:contextDocument:\n{r.text}"
 
-    aff_objects = list(sd.objects(predicate=WIKI.affordanceCatalog))
-    assert aff_objects, f"Storage description lacks wiki:affordanceCatalog:\n{r.text}"
+    aff_objects = list(sd.objects(predicate=SUB.affordanceCatalog))
+    assert aff_objects, f"Storage description lacks sub:affordanceCatalog:\n{r.text}"
 
-    shape_objects = list(sd.objects(predicate=WIKI.shapeCatalog))
-    assert shape_objects, f"Storage description lacks wiki:shapeCatalog:\n{r.text}"
+    shape_objects = list(sd.objects(predicate=SUB.shapeCatalog))
+    assert shape_objects, f"Storage description lacks sub:shapeCatalog:\n{r.text}"
 
     ti_objects = list(sd.objects(predicate=WIKI.typeIndex))
     assert ti_objects, f"Storage description lacks wiki:typeIndex:\n{r.text}"
@@ -93,8 +94,8 @@ def test_seven_step_first_arrival_ritual() -> None:
     assert r.status_code == 200, f"Projection affordance GET failed: {r.status_code}\nURL: {proj_url}"
     proj = Graph()
     proj.parse(data=r.text, format="turtle", publicID=proj_url)
-    governs_objects = list(proj.objects(predicate=WIKI.governs))
-    assert governs_objects, f"Projection affordance lacks wiki:governs: {r.text}"
+    governs_objects = list(proj.objects(predicate=SUB.governs))
+    assert governs_objects, f"Projection affordance lacks sub:governs: {r.text}"
 
     # Step 6: GET shape catalog — 200 or 404 acceptable (populated in Rung 1.5)
     shape_url = str(shape_objects[0])

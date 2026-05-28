@@ -2,11 +2,12 @@
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 
 <>
-    a wiki:Affordance , wiki:WriteAffordance , prof:ResourceDescriptor ;
+    a sub:Affordance , sub:WriteAffordance , prof:ResourceDescriptor ;
     dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
     prof:hasRole wikirole:write-affordance ;
     rdfs:label "Merge" ;
@@ -25,4 +26,4 @@
         "On 201, DELETE each input resource sequentially"
         "POST the canonical operation record to /vault/wiki/.operations/: a <>-subject `a as:Announce, mem:MergeAction, prov:Activity` with as:object -> the merged resource (the produced resource) and prov:wasDerivedFrom -> each input (per mem:Action, as:object names the produced resource; sources go on prov:wasDerivedFrom, never as:object)"
     ) ;
-    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .

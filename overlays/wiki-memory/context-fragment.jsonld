@@ -1,6 +1,7 @@
 {
   "@context": {
     "wiki":       "https://pod.vardeman.me/vault/ontology/wiki#",
+    "sub":        "https://pod.vardeman.me/vault/ontology/substrate#",
     "cito":       "http://purl.org/spar/cito/",
     "foaf":       "http://xmlns.com/foaf/0.1/",
     "schema":     "https://schema.org/",

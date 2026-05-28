@@ -6,18 +6,19 @@
 @prefix cito:     <http://purl.org/spar/cito/> .
 @prefix prov:     <http://www.w3.org/ns/prov#> .
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix cap:      <https://pod.vardeman.me/vault/ontology/capability#> .
 @prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 
-<> a wiki:WriteAffordance ,
+<> a sub:WriteAffordance ,
        prof:ResourceDescriptor ;
     dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
     prof:hasRole wikirole:write-affordance ;
     rdfs:label "Markdown projection listener" ;
-    wiki:requiresCapability <https://pod.vardeman.me/vault/meta/capabilities/markdown-content-projection.ttl> ;
-    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
-    wiki:governs rdf:type ,
+    sub:requiresCapability <https://pod.vardeman.me/vault/meta/capabilities/markdown-content-projection.ttl> ;
+    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    sub:governs rdf:type ,
         dct:title ,
         dct:identifier ,
         dct:created ,
@@ -34,12 +35,12 @@
         cito:disagreesWith ,
         wiki:maturity ,
         prov:wasGeneratedBy ;
-    wiki:projectsFromFrontmatter "type" ,
+    sub:projectsFromFrontmatter "type" ,
         "created" ,
         "modified" ,
         "maturity" ,
         "aliases" ,
         "identifier" ,
         "citekey" ;
-    wiki:classHintTable <../context.jsonld> ;
-    sh:agentInstruction "Substrate writes the predicates listed in wiki:governs. To express any of those, edit the body+frontmatter; do not PATCH .meta directly. Other predicates are agent-extensible." .
+    sub:classHintTable <../context.jsonld> ;
+    sh:agentInstruction "Substrate writes the predicates listed in sub:governs. To express any of those, edit the body+frontmatter; do not PATCH .meta directly. Other predicates are agent-extensible." .

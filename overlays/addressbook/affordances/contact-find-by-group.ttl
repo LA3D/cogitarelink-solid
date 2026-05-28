@@ -1,4 +1,5 @@
 @prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix sh:    <http://www.w3.org/ns/shacl#> .
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
@@ -6,11 +7,11 @@
 @prefix dct:      <http://purl.org/dc/terms/> .
 
 </vault/meta/affordances/contact-find-by-group.ttl>
-    a wiki:QueryAffordance , prof:ResourceDescriptor ;
+    a sub:QueryAffordance , prof:ResourceDescriptor ;
     prof:hasRole wikirole:query-affordance ;
     rdfs:label "Find contacts by group" ;
     dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
-    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
+    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#addressbook> ;
     sh:agentInstruction """
       Enumerate all Person cards that are members of a specific vCard Group.
       Groups collect ad-hoc sets of contacts (e.g., "nd-collaborators",
@@ -26,7 +27,7 @@
       Returns ?person IRIs (Person card fragment identifiers). Dereference each
       IRI to retrieve full contact metadata.
     """ ;
-    wiki:selectQuery """
+    sub:selectQuery """
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 
 SELECT ?person WHERE {

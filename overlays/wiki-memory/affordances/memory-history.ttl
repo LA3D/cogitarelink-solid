@@ -1,18 +1,19 @@
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix sh:       <http://www.w3.org/ns/shacl#> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dct:      <http://purl.org/dc/terms/> .
 
-<>  a wiki:QueryAffordance ,
+<>  a sub:QueryAffordance ,
        prof:ResourceDescriptor ;
     prof:hasRole wikirole:query-affordance ;
     rdfs:label "Memory history" ;
     rdfs:comment "Reconstruct the operation history of a memory resource: the .operations/ announcements that targeted it (as:object), newest first, optionally joined with its Memento TimeMap for byte-level versions. The on-demand counterpart to the single derived prov:wasGeneratedBy pointer on a resource's .meta (RQ-Listener-1)." ;
     dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
-    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
-    wiki:selectQuery """
+    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    sub:selectQuery """
         PREFIX as: <https://www.w3.org/ns/activitystreams#>
         SELECT ?op ?action ?published WHERE {
             ?op as:object <%RESOURCE%> ;

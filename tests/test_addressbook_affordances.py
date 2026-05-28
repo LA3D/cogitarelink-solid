@@ -5,6 +5,7 @@ from rdflib.plugins.sparql.parser import parseQuery
 
 AFFORDANCE_DIR = Path(__file__).parent.parent / "overlays" / "addressbook" / "affordances"
 WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
+SUB  = Namespace("https://pod.vardeman.me/vault/ontology/substrate#")
 RDF  = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 
 
@@ -19,7 +20,7 @@ def _query_text(g: Graph, query_predicate) -> str:
 def _check_affordance(name: str, must_contain: list[str]):
     """Reusable helper: affordance file parses, has selectQuery, SPARQL is valid, contains expected predicates."""
     g = _load(name)
-    query = _query_text(g, WIKI.selectQuery)
+    query = _query_text(g, SUB.selectQuery)
     for marker in must_contain:
         assert marker in query, f"{name}: query missing expected marker {marker!r}"
     parseQuery(query)  # raises on invalid SPARQL

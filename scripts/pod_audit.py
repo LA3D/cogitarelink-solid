@@ -28,6 +28,7 @@ from rdflib import Graph, RDF, URIRef
 from pyshacl import validate
 
 WIKI = "https://pod.vardeman.me/vault/ontology/wiki#"
+SUB  = "https://pod.vardeman.me/vault/ontology/substrate#"
 SOLID = "http://www.w3.org/ns/solid/terms#"
 LDP  = "http://www.w3.org/ns/ldp#"
 SH   = "http://www.w3.org/ns/shacl#"
@@ -44,16 +45,16 @@ ROLE_DOC = "ontology/wikirole"  # relative to pod_base
 
 # Storage-description pointers the walker HEAD-checks (label → predicate IRI).
 CATALOG_POINTERS = {
-    "affordanceCatalog": WIKI + "affordanceCatalog",
+    "affordanceCatalog": SUB + "affordanceCatalog",
     "typeIndex":         SOLID + "publicTypeIndex",
-    "contextDocument":   WIKI + "contextDocument",
-    "shapeCatalog":      WIKI + "shapeCatalog",
-    "profileDocument":   WIKI + "profileDocument",
+    "contextDocument":   SUB + "contextDocument",
+    "shapeCatalog":      SUB + "shapeCatalog",
+    "profileDocument":   SUB + "profileDocument",
 }
 
 SEV = {SH + "Violation": "ERROR", SH + "Warning": "WARN", SH + "Info": "INFO"}
 
-ROUTES_TO_CLASS = WIKI + "routesToClass"
+ROUTES_TO_CLASS = SUB + "routesToClass"
 
 # Cached published rdfs:range for the entailed predicates (schema.org / dct).
 # Used ONLY for the agreement WARN. NOT the routing map — that is read live.
@@ -284,7 +285,7 @@ async def walk_affordances(client, cat_url, canon_base, pod_base, shapes_g, role
         ent_g = Graph().parse(data=resp.text, format="turtle", publicID=entry)
         # Catalog membership is ground truth: anything in ldp:contains IS a
         # descriptor and should conform to the contract. Typing is inconsistent
-        # across overlays (the addressbook affordances are wiki:Affordance only,
+        # across overlays (the addressbook affordances are sub:Affordance only,
         # so prof:ResourceDescriptor-targeted SHACL never sees them). Enforce the
         # governing type here so under-described entries can't slip through.
         if (URIRef(entry), RDF.type, URIRef(PROF + "ResourceDescriptor")) not in ent_g:
@@ -292,7 +293,7 @@ async def walk_affordances(client, cat_url, canon_base, pod_base, shapes_g, role
                 "Catalog entry is not typed prof:ResourceDescriptor, so it escapes "
                 "the descriptor contract (no role/label/conformsTo/installedBy enforced).",
                 "Add 'a prof:ResourceDescriptor' plus prof:hasRole, rdfs:label, "
-                "dct:conformsTo, wiki:installedBy to bring it under governance."))
+                "dct:conformsTo, sub:installedBy to bring it under governance."))
         # prof:hasRole membership: a role under the wikirole namespace must be
         # defined in the scheme. Catches dangling roles SHACL can't see (it only
         # checks cardinality, not that the target concept exists).

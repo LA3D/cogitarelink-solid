@@ -2,11 +2,12 @@
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
 
 <>
-    a wiki:Affordance , wiki:WriteAffordance , prof:ResourceDescriptor ;
+    a sub:Affordance , sub:WriteAffordance , prof:ResourceDescriptor ;
     dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
     prof:hasRole wikirole:write-affordance ;
     rdfs:label "Crystallize" ;
@@ -25,4 +26,4 @@
         "On 201, DELETE /vault/wiki/working/{slug}.md"
         "POST the canonical operation record to /vault/wiki/.operations/: a <>-subject resource multi-typed `a as:Announce, mem:CrystallizeAction, prov:Activity` with as:object <durable-url>, as:actor <webid>, as:published (named subject <>, not a blank node — CSS N3 Patch / this PUT both reject blank-node activity subjects)"
     ) ;
-    wiki:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .
+    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> .

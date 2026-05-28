@@ -5,6 +5,7 @@
 @prefix pim:   <http://www.w3.org/ns/pim/space#> .
 @prefix solid: <http://www.w3.org/ns/solid/terms#> .
 @prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:   <https://pod.vardeman.me/vault/ontology/substrate#> .
 
 <> dct:conformsTo <https://www.w3.org/TR/shacl/> .
 
@@ -25,12 +26,12 @@ wiki:StorageDescriptionShape
     dct:created "2026-05-23"^^xsd:date ;
     dct:creator <https://orcid.org/0000-0003-4091-6059> ;
     sh:targetClass pim:Storage ;
-    sh:agentInstruction """This Pod's storage description is its front door. An agent arriving cold should GET <.well-known/solid> (Accept: text/turtle), then follow wiki:affordanceCatalog to enumerate capabilities, solid:publicTypeIndex for class -> container routing, wiki:contextDocument for prefix -> IRI resolution, wiki:shapeCatalog for the SHACL governing content, and wiki:profileDocument for the wiki-memory L3 profile narrative. Each pointer must resolve (pod-audit HEAD-checks them). If you are extending the substrate with a new catalog, add its pointer here so agents can discover it.""" ;
+    sh:agentInstruction """This Pod's storage description is its front door. An agent arriving cold should GET <.well-known/solid> (Accept: text/turtle), then follow sub:affordanceCatalog to enumerate capabilities, solid:publicTypeIndex for class -> container routing, sub:contextDocument for prefix -> IRI resolution, sub:shapeCatalog for the SHACL governing content, and sub:profileDocument for the wiki-memory L3 profile narrative. Each pointer must resolve (pod-audit HEAD-checks them). If you are extending the substrate with a new catalog, add its pointer here so agents can discover it.""" ;
     sh:property [
-        sh:path wiki:affordanceCatalog ;
+        sh:path sub:affordanceCatalog ;
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
-        sh:message "Storage description must point at the affordance catalog via wiki:affordanceCatalog (D52)."
+        sh:message "Storage description must point at the affordance catalog via sub:affordanceCatalog (D52)."
     ] ;
     sh:property [
         sh:path solid:publicTypeIndex ;
@@ -39,22 +40,22 @@ wiki:StorageDescriptionShape
         sh:message "Storage description must point at the Type Index via solid:publicTypeIndex (D8) for class -> container routing."
     ] ;
     sh:property [
-        sh:path wiki:contextDocument ;
+        sh:path sub:contextDocument ;
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
-        sh:message "Storage description must point at the JSON-LD context via wiki:contextDocument (D76/D79)."
+        sh:message "Storage description must point at the JSON-LD context via sub:contextDocument (D76/D79)."
     ] ;
     sh:property [
-        sh:path wiki:shapeCatalog ;
+        sh:path sub:shapeCatalog ;
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
-        sh:message "Storage description must point at the SHACL shape catalog via wiki:shapeCatalog (D77/D98)."
+        sh:message "Storage description must point at the SHACL shape catalog via sub:shapeCatalog (D77/D98)."
     ] ;
     sh:property [
-        sh:path wiki:profileDocument ;
+        sh:path sub:profileDocument ;
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
-        sh:message "Storage description must point at the wiki-memory L3 profile document via wiki:profileDocument (D71/D93)."
+        sh:message "Storage description must point at the wiki-memory L3 profile document via sub:profileDocument (D71/D93)."
     ] ;
     sh:property [
         sh:path dct:conformsTo ;
@@ -62,22 +63,22 @@ wiki:StorageDescriptionShape
         sh:nodeKind sh:IRI ;
         sh:message "Storage description must declare at least one dct:conformsTo profile."
     ] ;
-    # Entry-point guidance: satisfied by EITHER a wiki:agentGuide IRI pointer
+    # Entry-point guidance: satisfied by EITHER a sub:agentGuide IRI pointer
     # (the StaticStorageDescriber path — it can only emit IRIs) OR a
     # sh:agentInstruction string literal (for future hand-authored descriptions).
-    # wiki:agentGuide is now emitted via void-description.json, so this
+    # sub:agentGuide is now emitted via void-description.json, so this
     # sh:or evaluates to true and the requirement is met.
     # DELIBERATE Violation severity (was Warning): entry-point guidance is now
     # MANDATORY — it was advisory only because previously unsatisfiable
     # (StaticStorageDescriber can't emit a literal sh:agentInstruction); now that
-    # wiki:agentGuide makes it satisfiable, a missing entry-point guide is an ERROR.
+    # sub:agentGuide makes it satisfiable, a missing entry-point guide is an ERROR.
     # Source of the agentGuide IRI: css/config/void-description.json (keep in sync).
     sh:or (
-        [ sh:property [ sh:path wiki:agentGuide ;
+        [ sh:property [ sh:path sub:agentGuide ;
                         sh:minCount 1 ;
                         sh:nodeKind sh:IRI ] ]
         [ sh:property [ sh:path sh:agentInstruction ;
                         sh:minCount 1 ;
                         sh:datatype xsd:string ] ]
     ) ;
-    sh:message "Storage description must carry either a wiki:agentGuide IRI pointer or an sh:agentInstruction literal as an entry-point orientation for arriving agents." .
+    sh:message "Storage description must carry either a sub:agentGuide IRI pointer or an sh:agentInstruction literal as an entry-point orientation for arriving agents." .
