@@ -1,0 +1,18 @@
+<../> a <http://www.w3.org/ns/pim/space#Storage>, <http://rdfs.org/ns/void#Dataset>, <http://www.w3.org/ns/dcat#DataService>;
+    <http://purl.org/dc/terms/conformsTo> <https://w3id.org/cogitarelink/fabric#CoreProfile>, <https://w3id.org/cogitarelink/fabric#SolidPodProfile>;
+    <http://rdfs.org/ns/void#vocabulary> <http://www.w3.org/2004/02/skos/core#>, <http://purl.org/dc/terms/>, <http://www.w3.org/ns/prov#>, <../ontology#>;
+    <http://rdfs.org/ns/void#feature> <https://w3id.org/cogitarelink/fabric#LDPBrowse>;
+    <http://rdfs.org/ns/void#vocabulary> <../ontology/wiki#>, <../ontology/wikirole#>, <http://purl.org/spar/cito/>;
+    <../ontology/capability#catalog> <../meta/capabilities/>;
+    <../ontology/wiki#contextDocument> <../meta/context.jsonld>;
+    <../ontology/wiki#shapeCatalog> <../meta/shapes/>;
+    <../ontology/wiki#affordanceCatalog> <../meta/affordances/>;
+    <../ontology/wiki#typeIndex> <../settings/publicTypeIndex>;
+    <../ontology/wiki#conformsTo> <../ontology/wiki#L3Profile>;
+    <../ontology/wiki#profileDocument> <../wiki/index.md>;
+    <http://www.w3.org/2000/01/rdf-schema#seeAlso> <../wiki/concepts/>, <../wiki/people/>, <../wiki/places/>, <../wiki/events/>, <../wiki/organizations/>, <../wiki/procedures/>, <../wiki/working/>;
+    <http://www.w3.org/ns/dx/prof/hasResource> <../meta/profiles/page>, <../meta/profiles/concept>, <../meta/profiles/person>, <../meta/profiles/howto>, <../meta/profiles/working>;
+    <../ontology/wiki#contactCatalog> <../contacts/>;
+    <../ontology/wiki#templateCatalog> <../meta/templates/>;
+    <../ontology/wiki#extensionGuide> <../meta/extending-l3.md>;
+    <../ontology/wiki#agentGuide> <../wiki/concepts/two-hierarchy-memory-addressing.md>.
