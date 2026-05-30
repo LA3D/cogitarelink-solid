@@ -128,3 +128,47 @@ def test_narrative_frame_table_matches_spine():
         assert prefixed in rows[0], (
             f"narrative role '{decl_role}' row says {rows[0].strip()!r} but shape "
             f"{shape} declares sub:labelProperty {prefixed} — FRAME DRIFT between narrative and spine")
+
+import json
+OVERLAY_NS = Namespace("https://pod.vardeman.me/vault/ontology/overlay#")
+VOID_DESC = ROOT / "css" / "config" / "void-description.json"
+SUB_AGENTGUIDE = "https://pod.vardeman.me/vault/ontology/substrate#agentGuide"
+
+# expected (targetResource_suffix, body_suffix) for the 4 installsPage entries this task adds
+EXPECTED_PAGES = [
+    ("wiki/concepts/how-wiki-memory-works.md", "concepts/how-wiki-memory-works.md"),
+    ("wiki/concepts/photosynthesis.md",        "concepts/photosynthesis.md"),
+    ("wiki/concepts/biology.md",               "concepts/biology.md"),
+    ("wiki/people/marie-curie.md",             "people/marie-curie.md"),
+]
+
+def test_manifest_installs_narrative_and_exemplars_as_pages():
+    g = _g(OVL / "manifest.ttl")
+    # collect (targetResource, body, meta) per installsPage bnode
+    entries = []
+    for pi in g.objects(None, OVERLAY_NS.installsPage):
+        tr = g.value(pi, OVERLAY_NS.targetResource)
+        body = g.value(pi, OVERLAY_NS.body)
+        meta = g.value(pi, OVERLAY_NS.meta)
+        entries.append((str(tr) if tr else "", str(body) if body else "", str(meta) if meta else ""))
+    for tr_suf, body_suf in EXPECTED_PAGES:
+        match = [e for e in entries if e[0].endswith(tr_suf)]
+        assert match, f"no installsPage with targetResource ending {tr_suf}; entries={entries}"
+        tr, body, meta = match[0]
+        assert body.endswith(body_suf), f"{tr_suf}: body {body!r} should end {body_suf}"
+        assert meta.endswith(body_suf + ".meta.ttl"), f"{tr_suf}: meta {meta!r} should end {body_suf}.meta.ttl"
+
+def test_agentguide_in_void_points_at_narrative():
+    data = json.loads(VOID_DESC.read_text())
+    found = []
+    def walk(o):
+        if isinstance(o, dict):
+            if o.get("StaticStorageDescriber:_terms_key") == SUB_AGENTGUIDE:
+                found.append(o.get("StaticStorageDescriber:_terms_value"))
+            for v in o.values(): walk(v)
+        elif isinstance(o, list):
+            for v in o: walk(v)
+    walk(data)
+    assert found, "no sub:agentGuide StaticStorageDescriber term in void-description.json"
+    assert any("how-wiki-memory-works.md" in v for v in found), \
+        f"agentGuide still points elsewhere: {found}"

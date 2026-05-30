@@ -115,6 +115,34 @@
         dct:title "Wiki-memory L3 synthesis (deploy at substrate root)"
     ] ;
 
+    overlay:installsPage [
+        overlay:targetResource <https://pod.vardeman.me/vault/wiki/concepts/how-wiki-memory-works.md> ;
+        overlay:body <concepts/how-wiki-memory-works.md> ;
+        overlay:meta <concepts/how-wiki-memory-works.md.meta.ttl> ;
+        dct:title "How Wiki-Memory Works (conceptual model + worked example)"
+    ] ;
+
+    overlay:installsPage [
+        overlay:targetResource <https://pod.vardeman.me/vault/wiki/concepts/photosynthesis.md> ;
+        overlay:body <concepts/photosynthesis.md> ;
+        overlay:meta <concepts/photosynthesis.md.meta.ttl> ;
+        dct:title "Photosynthesis (gold exemplar concept)"
+    ] ;
+
+    overlay:installsPage [
+        overlay:targetResource <https://pod.vardeman.me/vault/wiki/concepts/biology.md> ;
+        overlay:body <concepts/biology.md> ;
+        overlay:meta <concepts/biology.md.meta.ttl> ;
+        dct:title "Biology (broader-concept exemplar)"
+    ] ;
+
+    overlay:installsPage [
+        overlay:targetResource <https://pod.vardeman.me/vault/wiki/people/marie-curie.md> ;
+        overlay:body <people/marie-curie.md> ;
+        overlay:meta <people/marie-curie.md.meta.ttl> ;
+        dct:title "Marie Curie (thing-frame exemplar)"
+    ] ;
+
     overlay:installsTypeRegistration
         [ solid:forClass skos:Concept   ; solid:instanceContainer </vault/wiki/concepts/> ] ,
         [ solid:forClass wiki:Source     ; solid:instanceContainer </vault/wiki/concepts/> ] ,

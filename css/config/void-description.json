@@ -346,7 +346,7 @@
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#agentGuide",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/concepts/two-hierarchy-memory-addressing.md"
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/concepts/how-wiki-memory-works.md"
               }
             ]
           }
