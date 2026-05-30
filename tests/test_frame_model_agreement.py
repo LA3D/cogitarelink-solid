@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 from rdflib import Graph, Namespace, URIRef, RDF, RDFS
 import pytest
 import pyshacl
@@ -129,7 +130,6 @@ def test_narrative_frame_table_matches_spine():
             f"narrative role '{decl_role}' row says {rows[0].strip()!r} but shape "
             f"{shape} declares sub:labelProperty {prefixed} — FRAME DRIFT between narrative and spine")
 
-import json
 OVERLAY_NS = Namespace("https://pod.vardeman.me/vault/ontology/overlay#")
 VOID_DESC = ROOT / "css" / "config" / "void-description.json"
 SUB_AGENTGUIDE = "https://pod.vardeman.me/vault/ontology/substrate#agentGuide"
