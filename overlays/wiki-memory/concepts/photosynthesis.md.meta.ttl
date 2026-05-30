@@ -1,0 +1,20 @@
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix schema: <https://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+<photosynthesis.md>
+    a wiki:Page ;
+    dct:title "Photosynthesis" ;
+    rdfs:label "Photosynthesis" ;
+    schema:mainEntity <photosynthesis.md#this> .
+
+<photosynthesis.md#this>
+    a skos:Concept ;
+    schema:name "Photosynthesis" ;
+    skos:prefLabel "Photosynthesis" ;
+    rdfs:label "Photosynthesis" ;
+    skos:definition "The process by which plants convert light into chemical energy." ;
+    skos:broader <biology.md#this> ;
+    schema:mainEntityOfPage <photosynthesis.md> .

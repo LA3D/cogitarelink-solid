@@ -37,3 +37,38 @@ def test_shape_declares_frame(fname, shape, role, subj, labelprop):
     assert str(g.value(shape, SUB.frameRole)) == role
     assert str(g.value(shape, SUB.governsSubject)) == subj
     assert g.value(shape, SUB.labelProperty) == labelprop
+
+# exemplar source meta files (named <name>.md.meta.ttl in the overlay tree) and the frame each must satisfy
+EX_DIR = OVL / "concepts"   # concept exemplars live in the concepts container
+EXEMPLARS = [
+    # (meta_file, entity_subject_suffix, shape_label_prop)
+    ("photosynthesis.md.meta.ttl", "photosynthesis.md#this", SKOS.prefLabel),
+]
+
+@pytest.mark.parametrize("meta,subj_suffix,labelprop", EXEMPLARS)
+def test_exemplar_materializes_frame_label(meta, subj_suffix, labelprop):
+    g = _g(EX_DIR / meta)
+    subj = [s for s in set(g.subjects()) if str(s).endswith(subj_suffix)]
+    assert subj, f"entity subject ...{subj_suffix} not found in {meta}"
+    s = subj[0]
+    assert (s, labelprop, None) in g, f"{s} missing required {labelprop} (frame label)"
+
+def test_exemplar_concept_is_skos_concept():
+    g = _g(EX_DIR / "photosynthesis.md.meta.ttl")
+    s = URIRef([str(x) for x in g.subjects() if str(x).endswith("photosynthesis.md#this")][0])
+    assert (s, RDF.type, SKOS.Concept) in g, "exemplar concept not typed skos:Concept"
+    assert (s, SKOS.broader, None) in g, "exemplar concept missing a skos:broader hop"
+
+import pyshacl
+
+def _shapes_graph():
+    g = Graph()
+    for f in ("page.shacl.ttl", "thing.shacl.ttl", "concept.shacl.ttl"):
+        g.parse(OVL / "shapes" / f, format="turtle")
+    return g
+
+def test_exemplar_concept_conforms_to_shapes():
+    data = _g(EX_DIR / "photosynthesis.md.meta.ttl")
+    conforms, _, report = pyshacl.validate(
+        data, shacl_graph=_shapes_graph(), inference="none")
+    assert conforms, f"gold exemplar violates its own shapes:\n{report}"
