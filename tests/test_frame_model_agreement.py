@@ -112,3 +112,20 @@ def test_narrative_states_each_frame_label():
         assert token in text, f"narrative omits frame label property {token}"
     assert "photosynthesis.md" in text, "worked example must reference the gold exemplar"
     assert "sub:labelProperty" in text or "sub:frameRole" in text, "worked example must trace to the spine annotations"
+
+def test_narrative_frame_table_matches_spine():
+    """The narrative's frame table rows must match each shape's sub: annotations.
+    Drift guard: change a shape's labelProperty without the narrative -> red."""
+    text = NARRATIVE.read_text()
+    for fname, shape, role, subj, labelprop in FRAMES:
+        g = _g(OVL / "shapes" / fname)
+        decl_role = str(g.value(shape, SUB.frameRole))
+        decl_label = g.value(shape, SUB.labelProperty)
+        # the narrative table row for this role must name the same label property
+        rows = [ln for ln in text.splitlines() if ln.strip().startswith("| " + decl_role + " ")]
+        assert rows, f"narrative frame table has no row for role '{decl_role}'"
+        label_short = str(decl_label).split("/")[-1].split("#")[-1]
+        prefixed = {"title": "dct:title", "name": "schema:name", "prefLabel": "skos:prefLabel"}[label_short]
+        assert prefixed in rows[0], (
+            f"narrative role '{decl_role}' row says {rows[0].strip()!r} but shape "
+            f"{shape} declares sub:labelProperty {prefixed} — FRAME DRIFT between narrative and spine")
