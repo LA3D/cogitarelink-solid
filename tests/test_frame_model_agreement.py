@@ -72,3 +72,20 @@ def test_exemplar_concept_conforms_to_shapes():
     conforms, _, report = pyshacl.validate(
         data, shacl_graph=_shapes_graph(), inference="none")
     assert conforms, f"gold exemplar violates its own shapes:\n{report}"
+
+PEOPLE_DIR = OVL / "people"
+
+def test_broader_target_exists_and_conforms():
+    p = EX_DIR / "biology.md.meta.ttl"
+    assert p.exists(), "skos:broader target biology.md.meta.ttl missing (would dangle)"
+    data = _g(p)
+    conforms, _, report = pyshacl.validate(data, shacl_graph=_shapes_graph(), inference="none")
+    assert conforms, f"biology exemplar violates shapes:\n{report}"
+
+def test_thing_exemplar_uses_schema_name_not_preflabel():
+    g = _g(PEOPLE_DIR / "marie-curie.md.meta.ttl")
+    s = URIRef([str(x) for x in g.subjects() if str(x).endswith("marie-curie.md#this")][0])
+    assert (s, SCHEMA.name, None) in g, "person thing missing schema:name"
+    assert (s, RDF.type, SCHEMA.Person) in g
+    # thing-frame: a Person is not a concept, must NOT carry prefLabel
+    assert (s, SKOS.prefLabel, None) not in g, "person wrongly carries skos:prefLabel (frame confusion)"
