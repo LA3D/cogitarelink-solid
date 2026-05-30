@@ -1,6 +1,7 @@
 from pathlib import Path
 from rdflib import Graph, Namespace, URIRef, RDF, RDFS
 import pytest
+import pyshacl
 
 ROOT = Path(__file__).resolve().parent.parent
 OVL = ROOT / "overlays" / "wiki-memory"
@@ -58,8 +59,6 @@ def test_exemplar_concept_is_skos_concept():
     s = URIRef([str(x) for x in g.subjects() if str(x).endswith("photosynthesis.md#this")][0])
     assert (s, RDF.type, SKOS.Concept) in g, "exemplar concept not typed skos:Concept"
     assert (s, SKOS.broader, None) in g, "exemplar concept missing a skos:broader hop"
-
-import pyshacl
 
 def _shapes_graph():
     g = Graph()

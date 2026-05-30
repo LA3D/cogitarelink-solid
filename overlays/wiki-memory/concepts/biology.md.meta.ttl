@@ -5,9 +5,16 @@
 @prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
 
 <biology.md>
-    a wiki:Page ; dct:title "Biology" ; rdfs:label "Biology" ;
+    a wiki:Page ;
+    dct:title "Biology" ;
+    rdfs:label "Biology" ;
     schema:mainEntity <biology.md#this> .
+
 <biology.md#this>
-    a skos:Concept ; schema:name "Biology" ; skos:prefLabel "Biology" ; rdfs:label "Biology" ;
+    a skos:Concept ;
+    schema:name "Biology" ;
+    skos:prefLabel "Biology" ;
+    rdfs:label "Biology" ;
+    skos:definition "The study of living organisms." ;
     skos:narrower <photosynthesis.md#this> ;
     schema:mainEntityOfPage <biology.md> .

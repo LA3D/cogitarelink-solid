@@ -543,7 +543,7 @@ sub:extensionGuide
 
 sub:frameRole
     a rdf:Property ;
-    rdfs:label "Frame role" ;
+    rdfs:label "frame role" ;
     rdfs:comment "The node-frame a content SHACL shape governs: \"page\", \"thing\", or \"concept\" (D108)." ;
     rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
     rdfs:domain sh:NodeShape ;
@@ -552,7 +552,7 @@ sub:frameRole
 
 sub:governsSubject
     a rdf:Property ;
-    rdfs:label "Governs subject" ;
+    rdfs:label "governs subject" ;
     rdfs:comment "Which subject of a wiki page's .meta the shape governs: the page document (<>) or the entity (<#this>) (D96/D108)." ;
     rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
     rdfs:domain sh:NodeShape ;
@@ -561,7 +561,7 @@ sub:governsSubject
 
 sub:labelProperty
     a rdf:Property ;
-    rdfs:label "Label property" ;
+    rdfs:label "label property" ;
     rdfs:comment "The canonical label property for this shape's frame: dct:title (page), schema:name (thing), or skos:prefLabel (concept) (D108)." ;
     rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
     rdfs:domain sh:NodeShape ;

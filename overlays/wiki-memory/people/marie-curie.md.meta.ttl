@@ -4,9 +4,15 @@
 @prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
 
 <marie-curie.md>
-    a wiki:Page ; dct:title "Marie Curie" ; rdfs:label "Marie Curie" ;
+    a wiki:Page ;
+    dct:title "Marie Curie" ;
+    rdfs:label "Marie Curie" ;
     schema:mainEntity <marie-curie.md#this> .
+
 <marie-curie.md#this>
-    a schema:Person ; schema:name "Marie Curie" ; rdfs:label "Marie Curie" ;
-    schema:givenName "Marie" ; schema:familyName "Curie" ;
+    a schema:Person ;
+    schema:name "Marie Curie" ;
+    rdfs:label "Marie Curie" ;
+    schema:givenName "Marie" ;
+    schema:familyName "Curie" ;
     schema:mainEntityOfPage <marie-curie.md> .

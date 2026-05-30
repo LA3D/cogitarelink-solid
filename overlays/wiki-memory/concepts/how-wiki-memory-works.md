@@ -30,9 +30,10 @@ have a `skos:prefLabel` — it is the term SKOS navigation labels results with.
 ## The write recipe
 
 Write a markdown body + frontmatter. `type: Concept` (or Person, Organization, …) sets the
-`<#this>` class; body wikilinks `[[Target]]{.role}` project to typed edges (the `.role` picks
-the predicate; the container of the target is resolved from the target's class via the Type
-Index — D106). The substrate projects your body into the `.meta` graph view.
+`<#this>` class; body wikilinks `[[Target]]{.broader}` project to typed edges (the hint after
+the dot — here `broader` — picks the predicate; the container of the target is resolved from
+the target's class via the Type Index — D106). The substrate projects your body into the `.meta`
+graph view.
 
 ## The validation contract
 
@@ -54,7 +55,8 @@ If a write violates a shape you get an HTTP `422` with a SHACL `sh:ValidationRep
 1. GET the document view: `GET /vault/wiki/concepts/photosynthesis.md` — the markdown body.
 2. GET the graph view: `GET /vault/wiki/concepts/photosynthesis.md.meta` — observe on
    `<photosynthesis.md#this>`: `a skos:Concept`, `schema:name`, **`skos:prefLabel`**,
-   `skos:broader <biology.md#this>`. Two subjects, two/three label frames.
+   `skos:broader <biology.md#this>`. Two subjects; three label values across them (`dct:title`
+   on the page; `schema:name` + `skos:prefLabel` on the concept).
 3. Find the model through the spine: `GET /vault/meta/shapes/concept.shacl.ttl` — observe
    `sub:frameRole "concept" ; sub:governsSubject "<#this>" ; sub:labelProperty skos:prefLabel`.
    The shape both *enforces* and *describes* the concept frame.
