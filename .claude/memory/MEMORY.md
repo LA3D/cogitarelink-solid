@@ -16,8 +16,8 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 
 - **Branch**: main, clean. **D107 URI re-layering + RQ-Listener-1 merged to `main` 2026-05-28**
   (commit `02f9b58`, ff-merge of the former `rq-listener-1-provenance` branch; branch label deleted).
-  **NOT pushed** — `origin/main` still at `8364cee` (local main 73 ahead); stale remote branch
-  `origin/rq-listener-1-provenance` @ `61c382b` remains. **Live Pod deployed at `1cc4986`** (D107
+  **PUSHED 2026-05-29** — `origin/main` == local `main` @ `c894255` (0 ahead/0 behind); the stale
+  `origin/rq-listener-1-provenance` remote branch is gone. Tree clean. **Live Pod deployed at `1cc4986`** (D107
   Phase 4) — substrate artifacts are identical to `main` HEAD (commits since are tests/docs/Makefile
   only), so the running Pod is consistent; `make status` will WARN deployed≠HEAD (cosmetic — a
   `make reset` would re-stamp it but isn't needed for substrate correctness).
@@ -92,6 +92,27 @@ Pod design that demonstrably works. Original B1/B2/T framing dropped.
   federation skill).
 - Design doc: `docs/plans/2026-05-23-rung-1.5-redesign-design.md`. Pilot report:
   `docs/plans/2026-05-23-phase-a-pilot-report.md` (18 substrate failure modes in §4).
+
+### ★ ACTIVE PRIORITY (2026-05-30) — D108: SKOS backbone + dual-view enforcement
+
+Pulling the `prefLabel`-not-enforced thread (RQ-View-2 Probe-A repeats, 2026-05-29) proved a root
+cause: **the wiki-memory L3 content corpus is unvalidated at write time** (no `ldp:constrainedBy`
+on wiki containers; the upstream validator validates the markdown *body* not the projected `.meta`;
+`.meta` is auxiliary-exempt; projection is post-commit). D104's "self-validating substrate" held
+only for the RDF-body substrates (contacts/WebID). **D108 decided** (`### D108` in decisions.md;
+spec `docs/superpowers/specs/2026-05-30-skos-backbone-dual-view-enforcement-decision.md`): SKOS is
+the real conceptual backbone (concepts=scheme, notes attach); 3 label frames (`<>` Page→`dct:title`,
+`<#this>` Thing→`schema:name`, `<#this>` Concept→`skos:prefLabel`); `prefLabel` enforced+materialized
+(today materialized nowhere → SKOS label queries empty); **derive the inferable** (`rdfs:label` apex
++ `schema:name`) but **reserve the 422 for judgment metadata** (`prefLabel` agent-authored via
+template NOT silently derived; `dct:identifier` on Source); **container=gate / class=dispatch** with
+**in-band synchronous projection** as the load-bearing fix (RQ-Enforce-1); **two enforcement
+audiences** — runtime agent (SHACL+422+`sh:agentInstruction`) AND dev agent (tests/CI encoding the
+frame model). **Two-front program:** Front 1 (agentic harness — single-sourced legible conceptual
+model; **brainstorm OPENED 2026-05-30**) → Front 2 (substrate guardrails + dual-graph structure).
+**GATES RQ-View-2** (do D108 first; deterministic round-trip already green). Adversarial review
+(2026-05-29) killed the naive "retire `constrainedBy`/class-only/derive-prefLabel" version — keep
+`constrainedBy` as the gate. Auto-mem `skos-backbone-enforcement-architecture`; FOLLOWUPS top section.
 
 ### Next-session candidates (post-D107-merge, 2026-05-28)
 
