@@ -2,6 +2,22 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## ★ ACTIVE PRIORITY — D108: SKOS backbone + dual-view enforcement (decided 2026-05-30; gates RQ-View-2)
+
+**Decision recorded** (`### D108` in decisions.md; full record `docs/superpowers/specs/2026-05-30-skos-backbone-dual-view-enforcement-decision.md`). Pulling the `skos:prefLabel`-not-enforced thread (RQ-View-2 Probe-A repeats, 2026-05-29) unravelled a **proven root cause: the entire wiki-memory L3 content corpus is unvalidated at write time** (no `/vault/wiki/` container declares `ldp:constrainedBy`; the upstream validator validates the markdown *body* not the projected `.meta`; `.meta` is auxiliary-exempt; projection is post-commit). Controlled write of a `prefLabel`-less concept → `201`. D104 "self-validating substrate" held only for the RDF-body substrates (contacts/WebID).
+
+**What was decided** (see D108): SKOS is the real conceptual backbone (concepts = scheme, notes attach); three label frames (`<>`→`dct:title`, `<#this>` Thing→`schema:name`, `<#this>` Concept→`skos:prefLabel`); `prefLabel` **enforced + materialized** (today materialized nowhere → SKOS label queries empty corpus-wide); **derive the inferable** (`rdfs:label` apex + `schema:name`) but **reserve the 422 for judgment metadata** (`prefLabel` agent-authored via template — NOT silently derived; `dct:identifier` on Source); **container=gate / class=dispatch** enforcement with **in-band synchronous projection** as the load-bearing fix; **two enforcement audiences** — runtime agent (SHACL+422+`sh:agentInstruction`) AND dev agent (tests/CI encoding the frame model, failing with meaningful messages when the substrate is rewritten without understanding).
+
+**Two-front program (next work):**
+- **Front 1 — agentic harness:** one canonical, single-sourced, cheaply-acquirable conceptual model (Page/Thing/Concept ↔ subjects ↔ label frames; SKOS-as-navigation; write recipe; validation contract; correction protocol) delivered at the entry point + shape `agentInstruction` + skills + 422 message. *Brainstorm this first* (highest leverage, lowest cost; sharpens what each shape's `agentInstruction` must say). **In progress — brainstorm opened 2026-05-30.**
+- **Front 2 — substrate guardrails + dual-graph structure:** in-band projection (RQ-Enforce-1); container=gate/class=dispatch; `constrainedBy` on durable wiki containers, `working/` permissive (D73); uniform `rdfs:label` + frame labels materialized; `prefLabel` enforced; dev-side tests encoding the frame model + agreement contracts.
+
+**Sequencing:** D108 **gates RQ-View-2** — the cold-probe eval surfaced this mismatch; re-running before the structure is right measures a broken target. Deterministic round-trip already green. **This supersedes the §"RQ-Substrate-4 … (a) cold-probe eval RQ-View-2" next-step** below: do D108 first.
+
+**RQ-Enforce-1 (open):** how to make projection in-band/synchronous without breaking the post-commit MonitoringStore architecture (D58/D71). See decisions.md.
+
+Subsumes/relocates the earlier "unrelated issues" list from the Probe-A analysis: `prefLabel` (→ enforce, materialize, agent-author); `dct:identifier` on `<#this>` for `wiki:Source` (→ the un-inferable judgment-metadata 422 exemplar); the POST-vs-`.md` projection footgun (→ Front-2 write semantics); two-stage-commit discovery clarity (→ Front-1). The `{.affiliation}`-resolve-check stays a skill-layer (resolve-before-assert) item, separate from D108.
+
 ## ⚠ RQ-Substrate-4 — vault-application contamination of the general substrate (raised 2026-05-26)
 
 > **IMPLEMENTATION UPDATE 2026-05-28 — URI/namespace slice SHIPPED (D107), Phases 1–4 deployed, audit 0 ERROR.**
