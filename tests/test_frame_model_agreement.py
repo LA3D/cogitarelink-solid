@@ -89,3 +89,26 @@ def test_thing_exemplar_uses_schema_name_not_preflabel():
     assert (s, RDF.type, SCHEMA.Person) in g
     # thing-frame: a Person is not a concept, must NOT carry prefLabel
     assert (s, SKOS.prefLabel, None) not in g, "person wrongly carries skos:prefLabel (frame confusion)"
+
+NARRATIVE = OVL / "concepts" / "how-wiki-memory-works.md"
+REQUIRED_HEADINGS = [
+    "The model in 30 seconds",
+    "SKOS is the conceptual backbone",
+    "The write recipe",
+    "The validation contract",
+    "The correction protocol",
+    "Worked example",
+]
+
+def test_narrative_has_required_sections():
+    assert NARRATIVE.exists(), "narrative memory missing"
+    text = NARRATIVE.read_text()
+    for h in REQUIRED_HEADINGS:
+        assert h in text, f"narrative missing section: {h}"
+
+def test_narrative_states_each_frame_label():
+    text = NARRATIVE.read_text()
+    for token in ("dct:title", "schema:name", "skos:prefLabel"):
+        assert token in text, f"narrative omits frame label property {token}"
+    assert "photosynthesis.md" in text, "worked example must reference the gold exemplar"
+    assert "sub:labelProperty" in text or "sub:frameRole" in text, "worked example must trace to the spine annotations"

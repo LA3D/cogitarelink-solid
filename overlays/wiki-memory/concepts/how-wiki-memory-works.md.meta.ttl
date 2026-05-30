@@ -1,0 +1,16 @@
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix schema: <https://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+<how-wiki-memory-works.md>
+    a wiki:Page ; dct:title "How Wiki-Memory Works" ; rdfs:label "How Wiki-Memory Works" ;
+    schema:mainEntity <how-wiki-memory-works.md#this> .
+<how-wiki-memory-works.md#this>
+    a skos:Concept ;
+    schema:name "How Wiki-Memory Works" ;
+    skos:prefLabel "How Wiki-Memory Works" ;
+    rdfs:label "How Wiki-Memory Works" ;
+    skos:definition "The conceptual model of this Pod's memory: three node-frames and the SKOS backbone." ;
+    schema:mainEntityOfPage <how-wiki-memory-works.md> .
