@@ -3,6 +3,7 @@ import json
 from rdflib import Graph, Namespace, URIRef, RDF, RDFS
 import pytest
 import pyshacl
+import httpx
 
 ROOT = Path(__file__).resolve().parent.parent
 OVL = ROOT / "overlays" / "wiki-memory"
@@ -172,3 +173,44 @@ def test_agentguide_in_void_points_at_narrative():
     assert found, "no sub:agentGuide StaticStorageDescriber term in void-description.json"
     assert any("how-wiki-memory-works.md" in v for v in found), \
         f"agentGuide still points elsewhere: {found}"
+
+SH_AGENT_INSTRUCTION = "http://www.w3.org/ns/shacl#agentInstruction"
+
+def test_void_declares_entrypoint_literal_agent_instruction():
+    """Config: void-description.json carries a QUOTED (literal) sh:agentInstruction term."""
+    data = json.loads(VOID_DESC.read_text())
+    found = []
+    def walk(o):
+        if isinstance(o, dict):
+            if o.get("StaticStorageDescriber:_terms_key") == SH_AGENT_INSTRUCTION:
+                found.append(o.get("StaticStorageDescriber:_terms_value"))
+            for v in o.values(): walk(v)
+        elif isinstance(o, list):
+            for v in o: walk(v)
+    walk(data)
+    assert found, "no sh:agentInstruction StaticStorageDescriber term in void-description.json"
+    val = found[0]
+    # MUST be N-Triples-quoted so StaticStorageDescriber emits a Literal, not a NamedNode IRI
+    assert val.startswith('"') and ('"' in val[1:]), \
+        f"agentInstruction value must be a quoted literal, got {val!r}"
+    body = val.strip().lstrip('"').rsplit('"', 1)[0]
+    for token in ("SKOS", "three", "prefLabel"):
+        assert token in body, f"entry-point literal omits {token!r}"
+
+POD_WK = "https://pod.vardeman.me/vault/.well-known/solid"
+
+def _pod_up():
+    try:
+        return httpx.get(POD_WK, verify=False, timeout=3).status_code == 200
+    except Exception:
+        return False
+
+@pytest.mark.skipif(not _pod_up(), reason="live Pod unavailable")
+def test_entrypoint_serves_literal_agent_instruction_live():
+    txt = httpx.get(POD_WK, verify=False, headers={"Accept": "text/turtle"}).text
+    g = Graph(); g.parse(data=txt, format="turtle")
+    from rdflib import Literal
+    SH = Namespace("http://www.w3.org/ns/shacl#")
+    lits = [o for o in g.objects(None, SH.agentInstruction) if isinstance(o, Literal)]
+    assert lits, "entry point serves no LITERAL sh:agentInstruction"
+    assert any("SKOS" in str(o) for o in lits), "served agentInstruction literal omits the model"

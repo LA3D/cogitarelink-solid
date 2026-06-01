@@ -349,6 +349,16 @@
                 "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/concepts/how-wiki-memory-works.md"
               }
             ]
+          },
+          {
+            "comment": "Entry-point literal sh:agentInstruction (D108 Front-1). Quoted value => StaticStorageDescriber emits a rdfs:Literal (verified: rdf-string stringToTerm yields a Literal for a quoted string), so the 30-second conceptual model is served INLINE at .well-known/solid, not only behind the sub:agentGuide IRI pointer. The agentGuide IRI term STAYS (substrate audit shape requires it).",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/shacl#agentInstruction",
+                "StaticStorageDescriber:_terms_value": "\"This Pod's memory is a SKOS concept backbone. Every wiki page has three node-frames: the page document <> (dct:title), the entity <#this> (schema:name), and -- for concepts -- the SKOS unit <#this> (skos:prefLabel). skos:broader/narrower/related is the navigation axis. Writes are validated by SHACL shapes; a 422 returns a sh:ValidationReport you correct against. Read sub:agentGuide before writing.\""
+              }
+            ]
           }
         ]
       }
