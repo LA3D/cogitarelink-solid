@@ -4,13 +4,13 @@
 
 **Goal:** Make wiki-memory's conceptual model (page/thing/concept ↔ `<>`/`<#this>` ↔ `dct:title`/`schema:name`/`skos:prefLabel`; SKOS-as-navigation) canonical, single-sourced, cheap-to-acquire, and drift-proof — so agents stop reconstructing it from scratch and the corpus stops drifting.
 
-**Architecture:** The SHACL shapes ARE the normative spine, augmented with `sub:` frame annotations. A dogfooded on-Pod narrative + read-only worked example carries the in-context learning and traces back to the spine. Hand-authored gold exemplars serve simultaneously as worked-example read targets, agreement-test fixtures, and pattern-match corpus. Python agreement tests (the dev-agent guardrail) assert {shape annotations ↔ narrative ↔ gold exemplars} agree. A custom CSS StorageDescriber emits a terse literal model hook at the storage-description entry point (also closing the lone audit WARN).
+**Architecture:** The SHACL shapes ARE the normative spine, augmented with `sub:` frame annotations. A dogfooded on-Pod narrative + read-only worked example carries the in-context learning and traces back to the spine. Hand-authored gold exemplars serve simultaneously as worked-example read targets, agreement-test fixtures, and pattern-match corpus. Python agreement tests (the dev-agent guardrail) assert {shape annotations ↔ narrative ↔ gold exemplars} agree. The storage-description entry point serves a terse literal `sh:agentInstruction` (the 30-second model) via a quoted-value `StaticStorageDescriber` term — config-only, no custom extension (see Phase B deviation note).
 
-**Tech Stack:** Turtle (SHACL shapes + `sub:` vocab), Markdown (narrative + exemplars), rdflib + pytest (agreement tests), TypeScript + Components.js (custom StorageDescriber CSS extension), the overlay apply machinery (`overlay:installsShape`/`installsBootstrap` in `manifest.ttl`), `make reset`/`make audit`/`make test`.
+**Tech Stack:** Turtle (SHACL shapes + `sub:` vocab), Markdown (narrative + exemplars), rdflib + pytest (agreement tests), the overlay apply machinery (`overlay:installsPage` in `manifest.ttl`), Components.js `StaticStorageDescriber` config (`void-description.json`), `make reset`/`make verify`/`make audit`/`docker compose restart css`.
 
 **Parent docs:** Decision D108 (`docs/superpowers/specs/2026-05-30-skos-backbone-dual-view-enforcement-decision.md`); Front-1 design (`docs/superpowers/specs/2026-05-30-front1-conceptual-model-artifact-design.md`). **Gates RQ-View-2.**
 
-**Phasing:** **Phase A** (Tasks 1–8) is pure RDF/content/test — no Docker, ships the spine + narrative + exemplars + agreement tests independently. **Phase B** (Tasks 9–11) is the custom StorageDescriber TS extension (needs Docker rebuild) — the entry-point literal hook + WARN fix. Front 1 is valuable after Phase A alone (per spec §9 "ships independently"); Phase B is the delivery enhancement.
+**Phasing:** **Phase A** (Tasks 1–8) is pure RDF/content/test — no Docker, ships the spine + narrative + exemplars + agreement tests independently. **Phase B** (Task 9, revised) is the entry-point literal `sh:agentInstruction` — a **config-only** change (one quoted `StaticStorageDescriber` term + restart; original TS-extension Tasks 10–11 DROPPED, see the Phase B deviation note). Front 1 is valuable after Phase A alone (per spec §9 "ships independently"); Phase B is the delivery enhancement.
 
 **Conventions confirmed (verified against the codebase during plan self-review — do not re-derive):**
 - Python: `~/uvws/.venv/bin/python`; live-Pod tests use `httpx` with `verify=False` (mkcert dev) OR `export SSL_CERT_FILE=$(mkcert -CAROOT)/rootCA.pem`. No project venv. **No `tests/conftest.py` exists** — the test file is self-contained.
@@ -802,146 +802,149 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Phase B — Entry-point literal hook (custom StorageDescriber; closes the lone audit WARN)
+## Phase B — Entry-point literal `sh:agentInstruction` (CONFIG-ONLY; revised 2026-06-01)
 
-### Task 9: Scaffold the custom StorageDescriber CSS extension
+**PLAN DEVIATION (verified live 2026-06-01):** the original Phase B (a custom TypeScript
+`StorageDescriber` extension, Tasks 9–11) was premised on the recorded belief *"StaticStorageDescriber
+emits IRIs, not literals."* **That belief is false.** `StaticStorageDescriber` builds objects via
+`rdf-string`'s `stringToTerm`, which yields a **Literal** when the value is N-Triples-quoted
+(`"\"text\""`) and a NamedNode otherwise. Verified two ways: (1) `stringToTerm('"x"')` → `Literal`;
+(2) a throwaway quoted-value term added to `void-description.json` + `docker compose restart css` →
+served live as `<…#probeLiteral> "PROBE_LITERAL_VALUE"` (a literal). The prior "IRIs only" finding
+almost certainly hit the *predicate*-must-be-NamedNode guard, not a quoted *object*.
 
-**Files:**
-- Create: `css/extensions/storage-describer/package.json`, `tsconfig.json`, `.componentsjs-generator-config.json`, `src/index.ts`, `src/FrameModelStorageDescriber.ts`
-- Reference: invoke the `css-extension` skill; read an existing extension (`css/extensions/memento/` or `markdown-projection/`) for the package.json `lsd:*` fields + Dockerfile symlink trick; read upstream CSS `StaticStorageDescriber` for the `StorageDescriber` interface (the `getMetadata`/handle signature that yields RDF quads on the storage subject).
+So Phase B collapses to **one config-only change** — no TS extension, no Docker rebuild, no symlink.
+`css/config` is volume-mounted read-only (`./css/config:/config:ro` in docker-compose.yml), so a
+config edit needs only `docker compose restart css` (~6s), not `make reset`.
 
-- [ ] **Step 1: Read the references** (no code yet)
+**Goal correction:** the audit is ALREADY `0 WARN` (D107 satisfied the substrate shape via the
+`sub:agentGuide` *IRI* pointer). Phase B does NOT "close a WARN." Its real value is the **delivery
+improvement** the RQ-View-2 cold agent explicitly asked for: the 30-second model served *inline* at
+`.well-known/solid`, not behind a pointer the agent must choose to follow. The existing
+`sub:agentGuide` IRI pointer STAYS (the audit shape requires it); the literal is ADDED alongside.
 
-Run: `ls css/extensions/memento/ && sed -n '1,40p' css/extensions/memento/package.json`
-Then locate the upstream describer interface:
-Run: `grep -rl "StorageDescriber" css/extensions/*/node_modules/@solid/community-server/dist 2>/dev/null | head` and read the `.d.ts`.
-Goal: confirm the method that yields quads for the storage description and its signature.
-
-- [ ] **Step 2: Scaffold package.json + tsconfig + componentsjs config** following the `css-extension` skill exactly (CommonJS, `lsd:components`/`lsd:contexts`/`lsd:importPaths`, dist-cjs output — mirror `markdown-projection`'s working config since Front-2/Dockerfile already builds `dist-cjs`).
-
-- [ ] **Step 3: Commit the scaffold**
-
-```bash
-git add css/extensions/storage-describer/
-git commit -m "[Agent: Claude] D108 Front-1: scaffold custom StorageDescriber extension
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
-```
-
----
-
-### Task 10: Implement + unit-test the literal-emitting describer
+### Task 9 (revised): Add the entry-point literal `sh:agentInstruction` term to `void-description.json`
 
 **Files:**
-- Create: `css/extensions/storage-describer/src/FrameModelStorageDescriber.ts`
-- Test: `css/extensions/storage-describer/test/FrameModelStorageDescriber.test.ts` (vitest, mirroring the test setup in `markdown-projection`)
+- Modify: `css/config/void-description.json` — add one `StaticStorageDescriber` handler with a quoted literal value.
+- Test: `tests/test_frame_model_agreement.py` (APPEND — one config test + one live test).
 
-- [ ] **Step 1: Write the failing unit test** — the describer yields a quad `<storageSubject> sh:agentInstruction "<literal>"` where the literal contains the 30-second model.
-
-```typescript
-// pseudocode-precise; adapt imports to the confirmed interface
-import { FrameModelStorageDescriber } from "../src/FrameModelStorageDescriber";
-import { DataFactory } from "n3";
-
-test("emits a literal sh:agentInstruction on the storage subject", async () => {
-  const d = new FrameModelStorageDescriber();
-  const subject = DataFactory.namedNode("https://pod.vardeman.me/vault/");
-  const quads = await d.describe(subject); // adapt to confirmed method name
-  const ai = quads.find(q => q.predicate.value === "http://www.w3.org/ns/shacl#agentInstruction");
-  expect(ai).toBeTruthy();
-  expect(ai!.object.termType).toBe("Literal");
-  expect(ai!.object.value).toContain("SKOS concept");
-  expect(ai!.object.value).toContain("three");
-});
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `cd css/extensions/storage-describer && npm test`
-Expected: FAIL (class not implemented).
-
-- [ ] **Step 3: Implement `FrameModelStorageDescriber`** — yields one literal quad. The literal text (terse, ≤ one screen):
-
-```
-This Pod's memory is a SKOS concept backbone. Every wiki page has three node-frames:
-the page document <> (dct:title), the entity <#this> (schema:name), and — for concepts —
-the SKOS unit <#this> (skos:prefLabel). Writes are validated by SHACL shapes; a 422 returns
-a sh:ValidationReport you correct against. Read the agentGuide before writing.
-```
-Emit it as `sh:agentInstruction` on the storage subject (in addition to whatever the static describer emits — this is additive, like the MetadataWriter composition pattern D67).
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `cd css/extensions/storage-describer && npm test`
-Expected: PASS.
-
-- [ ] **Step 5: Build + commit**
-
-```bash
-cd css/extensions/storage-describer && npm run build:cjs   # match markdown-projection's working build (D107 Phase 3)
-cd ../../.. && git add css/extensions/storage-describer/
-git commit -m "[Agent: Claude] D108 Front-1: implement literal entry-point sh:agentInstruction describer
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
-```
-
----
-
-### Task 11: Wire the describer into CSS config; deploy; verify the WARN is closed
-
-**Files:**
-- Modify: `css/config/solid-config.json` (or `void-description.json`) — register the custom describer alongside/replacing the StaticStorageDescriber, composing additively.
-- Modify: `css/Dockerfile` if needed (mirror how other extensions' dist-cjs are copied).
-- Test: `tests/test_frame_model_agreement.py` (live assertion).
-
-- [ ] **Step 1: Write the failing live test** (skip if Pod unavailable)
+- [ ] **Step 1: Append the failing tests** to `tests/test_frame_model_agreement.py`
 
 ```python
-import os, httpx, pytest
+import httpx
 
-POD = "https://pod.vardeman.me/vault/.well-known/solid"
+SH_AGENT_INSTRUCTION = "http://www.w3.org/ns/shacl#agentInstruction"
+
+def test_void_declares_entrypoint_literal_agent_instruction():
+    """Config: void-description.json carries a QUOTED (literal) sh:agentInstruction term."""
+    data = json.loads(VOID_DESC.read_text())
+    found = []
+    def walk(o):
+        if isinstance(o, dict):
+            if o.get("StaticStorageDescriber:_terms_key") == SH_AGENT_INSTRUCTION:
+                found.append(o.get("StaticStorageDescriber:_terms_value"))
+            for v in o.values(): walk(v)
+        elif isinstance(o, list):
+            for v in o: walk(v)
+    walk(data)
+    assert found, "no sh:agentInstruction StaticStorageDescriber term in void-description.json"
+    val = found[0]
+    # MUST be N-Triples-quoted so StaticStorageDescriber emits a Literal, not a NamedNode IRI
+    assert val.startswith('"') and ('"' in val[1:]), \
+        f"agentInstruction value must be a quoted literal, got {val!r}"
+    body = val.strip().lstrip('"').rsplit('"', 1)[0]
+    for token in ("SKOS", "three", "prefLabel"):
+        assert token in body, f"entry-point literal omits {token!r}"
+
+POD_WK = "https://pod.vardeman.me/vault/.well-known/solid"
 
 def _pod_up():
     try:
-        return httpx.get(POD, verify=False, timeout=3).status_code == 200
+        return httpx.get(POD_WK, verify=False, timeout=3).status_code == 200
     except Exception:
         return False
 
 @pytest.mark.skipif(not _pod_up(), reason="live Pod unavailable")
-def test_entrypoint_emits_literal_agent_instruction():
-    g = Graph(); g.parse(data=httpx.get(POD, verify=False, headers={"Accept":"text/turtle"}).text, format="turtle")
+def test_entrypoint_serves_literal_agent_instruction_live():
+    txt = httpx.get(POD_WK, verify=False, headers={"Accept": "text/turtle"}).text
+    g = Graph(); g.parse(data=txt, format="turtle")
+    from rdflib import Literal
     SH = Namespace("http://www.w3.org/ns/shacl#")
     lits = [o for o in g.objects(None, SH.agentInstruction) if isinstance(o, Literal)]
-    assert lits, "entry point has no literal sh:agentInstruction (custom describer not wired)"
-    assert any("SKOS" in str(o) for o in lits)
+    assert lits, "entry point serves no LITERAL sh:agentInstruction"
+    assert any("SKOS" in str(o) for o in lits), "served agentInstruction literal omits the model"
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [ ] **Step 2: Run config test to verify it fails**
 
-Run: `~/uvws/.venv/bin/python -m pytest tests/test_frame_model_agreement.py::test_entrypoint_emits_literal_agent_instruction -v`
-Expected: FAIL (no literal yet — describer not deployed).
+Run: `~/uvws/.venv/bin/python -m pytest tests/test_frame_model_agreement.py::test_void_declares_entrypoint_literal_agent_instruction -v`
+Expected: FAIL (no `sh:agentInstruction` term yet).
 
-- [ ] **Step 3: Wire the describer** in `solid-config.json` (follow `components-override` skill for additive insertion; the describer composes with the static one). Rebuild image if Dockerfile needs the new dist-cjs.
+- [ ] **Step 3: Add the literal term to `void-description.json`.** Append a new `StaticStorageDescriber`
+handler to the `@graph[0].overrideParameters.handlers` list (same list the `sub:agentGuide` term is in;
+add it right after that one). The `_terms_value` MUST be a single N-Triples-quoted string (escaped `\"`
+in JSON). Keep it one screen, terse:
 
-- [ ] **Step 4: Deploy clean + verify**
+```json
+{
+  "comment": "Entry-point literal sh:agentInstruction (D108 Front-1). Quoted value => StaticStorageDescriber emits a rdfs:Literal (verified: rdf-string stringToTerm yields a Literal for a quoted string), so the 30-second conceptual model is served INLINE at .well-known/solid, not only behind the sub:agentGuide IRI pointer. The agentGuide IRI term STAYS (substrate audit shape requires it).",
+  "@type": "StaticStorageDescriber",
+  "terms": [
+    {
+      "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/shacl#agentInstruction",
+      "StaticStorageDescriber:_terms_value": "\"This Pod's memory is a SKOS concept backbone. Every wiki page has three node-frames: the page document <> (dct:title), the entity <#this> (schema:name), and -- for concepts -- the SKOS unit <#this> (skos:prefLabel). skos:broader/narrower/related is the navigation axis. Writes are validated by SHACL shapes; a 422 returns a sh:ValidationReport you correct against. Read sub:agentGuide before writing.\""
+    }
+  ]
+}
+```
+Note: use plain ASCII in the literal (`--` not an em-dash; no smart quotes) to avoid Turtle/JSON
+escaping surprises. Verify the file is still valid JSON.
 
-Run: `make reset && ~/uvws/.venv/bin/python -m pytest tests/test_frame_model_agreement.py::test_entrypoint_emits_literal_agent_instruction -v`
-Expected: PASS.
+- [ ] **Step 4: Run config test + JSON validity**
 
-- [ ] **Step 5: Verify the audit WARN is closed**
+Run: `~/uvws/.venv/bin/python -c "import json; json.load(open('css/config/void-description.json')); print('json OK')"`
+Run: `~/uvws/.venv/bin/python -m pytest tests/test_frame_model_agreement.py::test_void_declares_entrypoint_literal_agent_instruction -v`
+Expected: json OK; config test PASS.
+
+- [ ] **Step 5: Deploy (restart only — config is mounted) + verify live**
+
+Run: `docker compose restart css`
+Then wait for health + run the live test:
+Run: `for i in $(seq 1 24); do c=$(curl -sk -o /dev/null -w '%{http_code}' https://pod.vardeman.me/vault/.well-known/solid); [ "$c" = "200" ] && break; sleep 2; done`
+Run: `~/uvws/.venv/bin/python -m pytest tests/test_frame_model_agreement.py::test_entrypoint_serves_literal_agent_instruction_live -v`
+Expected: PASS — the literal is served at the entry point.
+
+- [ ] **Step 6: Confirm audit still green + both pointer forms present**
 
 Run: `make audit`
-Expected: `0 ERROR`; the lone "entry-point lacks `sh:agentInstruction`" WARN is gone (WARN count drops by 1).
+Expected: still `0 ERROR · 0 WARN` (the literal is additive; the `agentGuide` IRI term is untouched).
+Run: `curl -sk -H "Accept: text/turtle" https://pod.vardeman.me/vault/.well-known/solid | grep -iE "agentInstruction|agentGuide"`
+Expected: BOTH a literal `sh:agentInstruction "...SKOS..."` AND the `sub:agentGuide <...how-wiki-memory-works.md>` IRI.
 
-- [ ] **Step 6: Full suite + commit**
+- [ ] **Step 7: Full suite + commit**
 
 ```bash
 ~/uvws/.venv/bin/python -m pytest tests/test_frame_model_agreement.py -v
-git add css/config/ css/Dockerfile tests/test_frame_model_agreement.py
-git commit -m "[Agent: Claude] D108 Front-1: wire entry-point literal describer; close lone audit WARN
+git add css/config/void-description.json tests/test_frame_model_agreement.py
+git commit -m "[Agent: Claude] D108 Front-1 Phase B: entry-point literal sh:agentInstruction (config-only)
+
+StaticStorageDescriber emits a literal for a quoted value (verified live) — no
+custom TS extension needed. Serves the 30-second conceptual model inline at
+.well-known/solid alongside the existing sub:agentGuide IRI pointer.
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ```
+
+**Note — image stamp:** this is a config-only, restart-only change (no `make reset`), so the deployed
+image label still reads the Phase-A HEAD SHA; `make status` will show OK if HEAD is unchanged, or a
+cosmetic MISMATCH if you commit after restarting. Substrate correctness is unaffected (config is
+mounted, not baked). A later `make reset` re-stamps if desired.
+
+### Tasks 10–11: DROPPED
+
+The custom `StorageDescriber` TS extension (original Tasks 10–11) is **not built** — the config-only
+Task 9 achieves the same served result. No `css/extensions/storage-describer/`, no Dockerfile change.
 
 ---
 
