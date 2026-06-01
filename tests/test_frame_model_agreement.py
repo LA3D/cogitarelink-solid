@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from rdflib import Graph, Namespace, URIRef, RDF, RDFS
+from rdflib import Graph, Namespace, URIRef, RDF, RDFS, Literal
 import pytest
 import pyshacl
 import httpx
@@ -209,7 +209,6 @@ def _pod_up():
 def test_entrypoint_serves_literal_agent_instruction_live():
     txt = httpx.get(POD_WK, verify=False, headers={"Accept": "text/turtle"}).text
     g = Graph(); g.parse(data=txt, format="turtle")
-    from rdflib import Literal
     SH = Namespace("http://www.w3.org/ns/shacl#")
     lits = [o for o in g.objects(None, SH.agentInstruction) if isinstance(o, Literal)]
     assert lits, "entry point serves no LITERAL sh:agentInstruction"

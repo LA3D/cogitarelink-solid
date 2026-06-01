@@ -7,7 +7,9 @@
     {
       "comment": "Override StorageDescriber to add VoID + DCAT to .well-known/solid (D9, D12, D15). Aligned with fabric four-layer self-description pattern.",
       "@type": "Override",
-      "overrideInstance": { "@id": "urn:solid-server:default:StorageDescriber" },
+      "overrideInstance": {
+        "@id": "urn:solid-server:default:StorageDescriber"
+      },
       "overrideParameters": {
         "@type": "StatusArrayUnionHandler",
         "handlers": [
@@ -98,7 +100,7 @@
             ]
           },
           {
-            "comment": "VoID: LDP browse feature flag (D15 — distinguishes pod from triplestore)",
+            "comment": "VoID: LDP browse feature flag (D15 \u2014 distinguishes pod from triplestore)",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
@@ -208,7 +210,7 @@
             ]
           },
           {
-            "comment": "L3: wiki-memory profile document — primary agent entry point per D93. The synthesis page is at /vault/wiki/index.md (a resource), not /vault/wiki/ (the container) — CSS treats trailing-slash URLs as containers and ignores arbitrary bodies PUT to them.",
+            "comment": "L3: wiki-memory profile document \u2014 primary agent entry point per D93. The synthesis page is at /vault/wiki/index.md (a resource), not /vault/wiki/ (the container) \u2014 CSS treats trailing-slash URLs as containers and ignores arbitrary bodies PUT to them.",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
@@ -218,46 +220,67 @@
             ]
           },
           {
-            "comment": "L3: wiki container rdfs:seeAlso — the D98 7-container set. Realigned 2026-05-24: was pages/+sources/ (pre-D98, 404). This static config is authoritative — storage-description PATCH is 405, so the overlay cannot set seeAlso here.",
+            "comment": "L3: wiki container rdfs:seeAlso \u2014 the D98 7-container set. Realigned 2026-05-24: was pages/+sources/ (pre-D98, 404). This static config is authoritative \u2014 storage-description PATCH is 405, so the overlay cannot set seeAlso here.",
             "@type": "StaticStorageDescriber",
             "terms": [
-              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/concepts/" }
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/concepts/"
+              }
             ]
           },
           {
             "@type": "StaticStorageDescriber",
             "terms": [
-              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/people/" }
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/people/"
+              }
             ]
           },
           {
             "@type": "StaticStorageDescriber",
             "terms": [
-              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/places/" }
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/places/"
+              }
             ]
           },
           {
             "@type": "StaticStorageDescriber",
             "terms": [
-              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/events/" }
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/events/"
+              }
             ]
           },
           {
             "@type": "StaticStorageDescriber",
             "terms": [
-              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/organizations/" }
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/organizations/"
+              }
             ]
           },
           {
             "@type": "StaticStorageDescriber",
             "terms": [
-              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/procedures/" }
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/procedures/"
+              }
             ]
           },
           {
             "@type": "StaticStorageDescriber",
             "terms": [
-              { "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso", "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/working/" }
+              {
+                "StaticStorageDescriber:_terms_key": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/wiki/working/"
+              }
             ]
           },
           {
@@ -341,7 +364,7 @@
             ]
           },
           {
-            "comment": "Entry-point agent guide: explains the wiki-memory profile, substrate stratification, and wiki=profile (not wiki-app) orientation. Satisfies storage-description audit requirement via IRI pointer (StaticStorageDescriber emits IRIs, not literals). FORWARD DEPENDENCY: shapes/substrate/storage-description.shacl.ttl now HARD-REQUIRES this (Violation severity) — removing this entry flips `make audit` from pass to ERROR. Keep these two files in sync.",
+            "comment": "Entry-point agent guide: explains the wiki-memory profile, substrate stratification, and wiki=profile (not wiki-app) orientation. Satisfies storage-description audit requirement via IRI pointer (StaticStorageDescriber emits IRIs, not literals). FORWARD DEPENDENCY: shapes/substrate/storage-description.shacl.ttl now HARD-REQUIRES this (Violation severity) \u2014 removing this entry flips `make audit` from pass to ERROR. Keep these two files in sync.",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
@@ -356,7 +379,7 @@
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/shacl#agentInstruction",
-                "StaticStorageDescriber:_terms_value": "\"This Pod's memory is a SKOS concept backbone. Every wiki page has three node-frames: the page document <> (dct:title), the entity <#this> (schema:name), and -- for concepts -- the SKOS unit <#this> (skos:prefLabel). skos:broader/narrower/related is the navigation axis. Writes are validated by SHACL shapes; a 422 returns a sh:ValidationReport you correct against. Read sub:agentGuide before writing.\""
+                "StaticStorageDescriber:_terms_value": "\"This Pod's memory is a SKOS concept backbone. Every wiki page has TWO RDF subjects with three frame roles: the page document <> (dct:title), the entity <#this> (schema:name), and -- when the entity is a concept -- the SKOS unit <#this> (skos:prefLabel). skos:broader/narrower/related is the navigation axis. Writes are validated by SHACL shapes; a 422 returns a sh:ValidationReport you correct against. Read sub:agentGuide before writing.\""
               }
             ]
           }
