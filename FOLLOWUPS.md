@@ -8,15 +8,81 @@ Things to come back to. Open items only; closed items move to commit history and
 
 **What was decided** (see D108): SKOS is the real conceptual backbone (concepts = scheme, notes attach); three label frames (`<>`→`dct:title`, `<#this>` Thing→`schema:name`, `<#this>` Concept→`skos:prefLabel`); `prefLabel` **enforced + materialized** (today materialized nowhere → SKOS label queries empty corpus-wide); **derive the inferable** (`rdfs:label` apex + `schema:name`) but **reserve the 422 for judgment metadata** (`prefLabel` agent-authored via template — NOT silently derived; `dct:identifier` on Source); **container=gate / class=dispatch** enforcement with **in-band synchronous projection** as the load-bearing fix; **two enforcement audiences** — runtime agent (SHACL+422+`sh:agentInstruction`) AND dev agent (tests/CI encoding the frame model, failing with meaningful messages when the substrate is rewritten without understanding).
 
-**Two-front program (next work):**
-- **Front 1 — agentic harness:** one canonical, single-sourced, cheaply-acquirable conceptual model (Page/Thing/Concept ↔ subjects ↔ label frames; SKOS-as-navigation; write recipe; validation contract; correction protocol) delivered at the entry point + shape `agentInstruction` + skills + 422 message. *Brainstorm this first* (highest leverage, lowest cost; sharpens what each shape's `agentInstruction` must say). **In progress — brainstorm opened 2026-05-30.**
-- **Front 2 — substrate guardrails + dual-graph structure:** in-band projection (RQ-Enforce-1); container=gate/class=dispatch; `constrainedBy` on durable wiki containers, `working/` permissive (D73); uniform `rdfs:label` + frame labels materialized; `prefLabel` enforced; dev-side tests encoding the frame model + agreement contracts.
+**Two-front program:**
+- **Front 1 — agentic harness: ✅ COMPLETE (2026-06-01, branch `d108-front1-conceptual-model`, 13 commits, live-verified, audit 0/0).** Built: `sub:` frame-spine vocab (`frameRole`/`governsSubject`/`labelProperty`) + Page/Thing/Concept shape annotations; hand-authored gold exemplars (photosynthesis + biology broader-target + marie-curie thing); canonical narrative `how-wiki-memory-works.md` + read-only worked example; narrative↔spine drift-guard agreement test (the dev-agent guardrail, adversarially verified to fire both directions); overlay `installsPage` wiring + `sub:agentGuide` repoint; entry-point literal `sh:agentInstruction` served at `.well-known/solid` (**Phase B — config-only, NOT a custom TS extension**: verified live that `StaticStorageDescriber` emits a literal for an N-Triples-quoted value, so the recorded "IRIs-only" belief was false; orig Tasks 10-11 dropped). New test file `tests/test_frame_model_agreement.py` (16 passing). Plan: `docs/superpowers/plans/2026-05-30-front1-conceptual-model-artifact.md`.
+- **Front 2 — substrate guardrails + dual-graph structure (NOT STARTED; now gated by the grammar fix below):** in-band projection (RQ-Enforce-1); container=gate/class=dispatch; `constrainedBy` on durable wiki containers, `working/` permissive (D73); uniform `rdfs:label` + frame labels materialized; `prefLabel` enforced; dev-side tests encoding the frame model + agreement contracts.
 
-**Sequencing:** D108 **gates RQ-View-2** — the cold-probe eval surfaced this mismatch; re-running before the structure is right measures a broken target. Deterministic round-trip already green. **This supersedes the §"RQ-Substrate-4 … (a) cold-probe eval RQ-View-2" next-step** below: do D108 first.
+### ⚠ NEW (2026-06-01) — RQ-View-2 RAN + surfaced an authoring-grammar expressivity bug (RQ-Grammar-1)
 
-**RQ-Enforce-1 (open):** how to make projection in-band/synchronous without breaking the post-commit MonitoringStore architecture (D58/D71). See decisions.md.
+**RQ-View-2 result (n=2 cold probes, 2026-06-01, against the Front-1-complete live Pod):** the
+`wiki`→MediaWiki **misread is killed** (the D107/Front-1 comprehension goal — achieved; one agent
+cited the Phase-B entry-point literal as where it learned the SKOS model). BUT both probes scored
+**3/5 (DOWN from the n=3 baseline 4/5)** — and the drop is *diagnostic, not regression*: a more
+legible substrate let the agents **see** a defect the baseline agents never noticed. Both
+independently (n=2 consistent): discovered `skos:prefLabel` is required, found NO inline mechanism
+to supply it, and were **forced to PATCH `.meta` directly — violating the substrate's own no-PATCH
+rule.** Also hit: `type: Source`/`Organization` short-forms mis-projecting; `{.affiliation}` on a
+Concept "felt semantically questionable"; the documented 422 correction contract doesn't fire.
+(Probe concepts were cleaned up post-run.)
 
-Subsumes/relocates the earlier "unrelated issues" list from the Probe-A analysis: `prefLabel` (→ enforce, materialize, agent-author); `dct:identifier` on `<#this>` for `wiki:Source` (→ the un-inferable judgment-metadata 422 exemplar); the POST-vs-`.md` projection footgun (→ Front-2 write semantics); two-stage-commit discovery clarity (→ Front-1). The `{.affiliation}`-resolve-check stays a skill-layer (resolve-before-assert) item, separate from D108.
+**Root cause = RQ-Grammar-1 (authoring-grammar expressivity bug, upstream of D108 Front-2 enforcement):**
+Traced via the typed-wikilink provenance work (Sparna *Semantic Markdown Spec*,
+<https://hackmd.io/@sparna/semantic-markdown-draft>; doc `docs/decisions/typed-wikilink-syntax-provenance.md`).
+RDFa (which Sparna targets) is RDF-complete on **three axes**: `typeof`→`rdf:type`, `property`→predicate-with-**literal**,
+`rel`/`resource`→predicate-with-**resource**. **Our inline `[[X]]{.class}` grammar collapsed to ONE
+axis: a single predicate, resource-object only** (object-property edges between resources). The
+type axis is handled (poorly) only by the frontmatter `type:` key; the **literal-property axis does
+not exist inline at all** — so `skos:prefLabel`/`skos:altLabel`/`skos:definition` (literals on
+`<#this>`) are **unexpressible** by any wikilink, and the frontmatter allowlist
+(`type`/`created`/`modified`/`maturity`/`aliases`/`identifier`/`citekey`) doesn't project them
+either. Net: **{link-grammar ∪ frontmatter-allowlist} does NOT cover what the shapes require**, so a
+cold agent *cannot author a conformant concept inline* even with a perfect 422 gate. This is an
+**expressivity gap upstream of the enforcement gap** — "derive prefLabel for them" would paper over
+a missing grammar axis rather than restore it. NB: this is *accreted*, not one agent's regression —
+D36 was born edge-only ("typed wikilinks → predicates"); the type/literal axes were never built
+inline; frontmatter was a partial stopgap that never grew to cover the shapes.
+
+**Framing locked for the brainstorm (do NOT re-litigate in passing):**
+1. The markdown authoring grammar must be expressive enough to **round-trip the full governed graph**
+   the shapes require (type + literal-properties + resource-edges) into `.meta`.
+2. **RDFa-in-HTML rendering is OUT OF SCOPE / a red herring.** RDFa matters here ONLY as *proof* that
+   an annotation-on-markup model can be RDF-complete (it round-trips losslessly to Turtle). D75
+   ("no RDFa in served HTML; humans get CSS classes") was right *about HTML display* but got tangled
+   with "the authoring grammar only needs links" (wrong). The invariant is the markdown→`.meta`
+   projection round-trip — which never went through RDFa anyway.
+
+**The fork to brainstorm (Chuck leans A or C, undecided — needs the brainstorm's framing to choose):**
+- **(A)** Enrich the inline grammar toward Sparna/RDFa completeness — add a literal-property axis and
+  a type axis (a span/attribute form for literals, distinct from the wikilink edge form).
+- **(B)** Keep wikilinks edge-only; make frontmatter the literal/type surface but *complete* it
+  (project `prefLabel`/`altLabel`/`definition`; fix `type:` short-forms). [Chuck's lean: NOT B alone.]
+- **(C)** Hybrid, anchored on "grammar must round-trip the governed predicates."
+
+**Sequencing (revised — this is the dev-process answer):**
+`RQ-Grammar-1 brainstorm → spec → implement grammar fix → then D108 Front-2 enforcement → then
+RQ-View-2 RE-EVAL.` Front-2's "supply the required metadata" contract is only *honest* once the
+grammar can express it; and re-evaluating before both land would measure a substrate where
+conformant authoring is still impossible. Recommended cadence: **finish/merge the Front-1 branch
+first** (clean shippable checkpoint — Front 1 is complete + green), **then open the RQ-Grammar-1
+brainstorm as its own focused session** (framing above is locked; A/C decided there, not now).
+
+**RQ-Enforce-1 (open, D108 Front-2):** how to make projection in-band/synchronous without breaking
+the post-commit MonitoringStore architecture (D58/D71). See decisions.md.
+
+Subsumes/relocates the earlier "unrelated issues" list from the Probe-A analysis: `prefLabel` (→ now
+RQ-Grammar-1: make it *expressible* inline, then enforce); `dct:identifier` on `<#this>` for
+`wiki:Source` (→ same — a literal-on-`<#this>` the grammar can't carry); `type:` short-form
+mis-projection (→ RQ-Grammar-1 type-axis); the POST-vs-`.md` projection footgun (→ Front-2 write
+semantics); two-stage-commit discovery clarity (→ Front-1, shipped). The `{.affiliation}`-resolve-check
+stays a skill-layer (resolve-before-assert) item.
+
+**Provenance doc drift caveat:** `docs/decisions/typed-wikilink-syntax-provenance.md` (uncommitted)
+documents the Sparna lineage + the D36 deviation. It currently still describes a render-path "RDFa
+`property` CURIE" — that is STALE (D75 dropped RDFa from HTML; render path emits CSS classes via
+`rehype-wikilink-classes.ts`). Also the hint→predicate map has drifted: `shared/markdown-parsing/src/predicates.ts`
+(render path) still uses legacy `vault:` predicates; the canonical/current map is the served JSON-LD
+context (`/vault/meta/context.jsonld`) + shape `sh:agentInstruction` (projection path) using `cito:`/`skos:`.
+Reconcile the doc + the two maps as part of the RQ-Grammar-1 work.
 
 ## ⚠ RQ-Substrate-4 — vault-application contamination of the general substrate (raised 2026-05-26)
 
