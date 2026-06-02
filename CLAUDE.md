@@ -39,7 +39,7 @@ Sibling repos under `~/dev/git/LA3D/agents/`:
 - `cogitarelink-fabric` — Graph-native fabric nodes (Oxigraph + FastAPI + Credo)
 - `rlm` — RLM agent substrate (dspy.RLM)
 
-For architectural decisions (D1-D86, K1-K3, RQ-*), invoke the `decision-lookup` skill — index at `.claude/skills/decision-lookup/decisions.md`.
+For architectural decisions (D1-D110, K1-K4, RQ-*), invoke the `decision-lookup` skill — index at `.claude/skills/decision-lookup/decisions.md`.
 See @.claude/memory/MEMORY.md for experiment state, active plan, and key patterns.
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/Unified Externalization Prototype Plan.md (active plan)
 See @~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-PLAN.md (phase plan)
@@ -95,7 +95,7 @@ docs/plans/      — Architecture design documents
 
 | Solid spec & integration skills (Claude-invokable; `.claude/skills/<name>/SKILL.md`) | Topic |
 |---|---|
-| `decision-lookup` | Full architectural decisions index (D1-D86, K1-K3, RQ-*) |
+| `decision-lookup` | Full architectural decisions index (D1-D110, K1-K4, RQ-*) |
 | `solid-spec` | Solid Protocol, WebID Profile, Solid-OIDC, ACP, WAC (upstream-derived) |
 | `solid-servers` | CSS, Pivot, public servers, Docker, CLI (upstream-derived) |
 | `solid-data-modelling` | Vocabularies, SHACL conventions, Type Index (upstream-derived) |
