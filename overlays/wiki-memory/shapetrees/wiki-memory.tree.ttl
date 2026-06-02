@@ -1,0 +1,23 @@
+@prefix st:       <http://www.w3.org/ns/shapetrees#> .
+@prefix wikitree: <https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree#> .
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+# Resource trees — one per governed class; st:shape -> the deployed SHACL NodeShape IRI.
+wikitree:ConceptResourceTree      a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:ConceptShape .
+wikitree:SourceResourceTree       a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:SourceShape .
+wikitree:PersonResourceTree       a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PersonShape .
+wikitree:PlaceResourceTree        a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PlaceShape .
+wikitree:EventResourceTree        a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:EventShape .
+wikitree:OrganizationResourceTree a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:OrganizationShape .
+wikitree:HowToResourceTree        a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:HowToShape .
+wikitree:WorkingNoteResourceTree  a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:WorkingNoteShape .
+
+# Container trees — one per container; concepts/ holds BOTH Concept and Source.
+wikitree:ConceptContainerTree      a st:ShapeTree ; st:expectsType st:Container ;
+    st:contains wikitree:ConceptResourceTree, wikitree:SourceResourceTree .
+wikitree:PersonContainerTree       a st:ShapeTree ; st:expectsType st:Container ; st:contains wikitree:PersonResourceTree .
+wikitree:PlaceContainerTree        a st:ShapeTree ; st:expectsType st:Container ; st:contains wikitree:PlaceResourceTree .
+wikitree:EventContainerTree        a st:ShapeTree ; st:expectsType st:Container ; st:contains wikitree:EventResourceTree .
+wikitree:OrganizationContainerTree a st:ShapeTree ; st:expectsType st:Container ; st:contains wikitree:OrganizationResourceTree .
+wikitree:ProcedureContainerTree    a st:ShapeTree ; st:expectsType st:Container ; st:contains wikitree:HowToResourceTree .
+wikitree:WorkingNoteContainerTree  a st:ShapeTree ; st:expectsType st:Container ; st:contains wikitree:WorkingNoteResourceTree .
