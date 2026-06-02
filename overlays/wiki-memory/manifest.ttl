@@ -180,7 +180,39 @@
           overlay:contentType "application/ld+json" ] ,
         [ overlay:contentPath "concepts/two-hierarchy-memory-addressing.md" ;
           overlay:hostedAt "/vault/wiki/concepts/two-hierarchy-memory-addressing.md" ;
-          overlay:contentType "text/markdown" ] ;
+          overlay:contentType "text/markdown" ] ,
+        # interop foundation: Shape-Trees doc + Application + registry + per-container Managers.
+        # Served extension-less at the IRI paths the artifacts use (so #fragment IRIs resolve).
+        [ overlay:contentPath "shapetrees/wiki-memory.tree.ttl" ;
+          overlay:hostedAt "/vault/meta/shapetrees/wiki-memory.tree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/application.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/application" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/registry.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/registry" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/concepts.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/concepts.shapetree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/people.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/people.shapetree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/places.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/places.shapetree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/events.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/events.shapetree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/organizations.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/organizations.shapetree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/procedures.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/procedures.shapetree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/working.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/working.shapetree" ;
+          overlay:contentType "text/turtle" ] ;
 
     overlay:installsHintMapping
         [ overlay:classHint "broader" ;
