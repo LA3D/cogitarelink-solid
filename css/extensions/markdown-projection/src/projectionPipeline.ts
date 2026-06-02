@@ -16,6 +16,7 @@ import * as YAML from "yaml";
 import { projectFrontmatter, Frontmatter, resolveCURIE } from "./frontmatterProjection.js";
 import { projectWikilinks, BOOTSTRAP_PREDICATE_TO_CLASS } from "./wikilinkProjection.js";
 import { resolveThingClass, TypeIndex, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
+import { projectSpanLiteralsFramed, DEFAULT_LITERAL_BINDING } from "./spanLiteralProjection.js";
 
 const { namedNode, literal, quad } = DataFactory;
 
@@ -143,6 +144,7 @@ export const projectionPipeline = {
         body: string,
         typeIndex: TypeIndex = DEFAULT_WIKI_TYPE_INDEX,
         predicateToClass: Record<string, string> = BOOTSTRAP_PREDICATE_TO_CLASS,
+        literalBinding: Record<string, string> = DEFAULT_LITERAL_BINDING,
     ): Promise<Quad[]> {
         const { fm, rest } = splitFrontmatter(body);
 
@@ -151,6 +153,9 @@ export const projectionPipeline = {
 
         // Body wikilinks → quads (subject = resourceUri)
         const wikiTriples = projectWikilinks(rest, resourceUri, typeIndex, predicateToClass);
+
+        // Body literal spans → quads (subject resolved per-span by frame: prefLabel→<#this>, title→<>)
+        const spanTriples = projectSpanLiteralsFramed(rest, resourceUri, literalBinding);
 
         // Derived: dct:title from H1 when frontmatter carries no title
         const derived: Quad[] = [];
@@ -223,6 +228,6 @@ export const projectionPipeline = {
               )
             : fmTriples;
 
-        return [...filteredFmTriples, ...derived, ...wikiTriples, ...provTriples, ...invariants];
+        return [...filteredFmTriples, ...derived, ...wikiTriples, ...spanTriples, ...provTriples, ...invariants];
     },
 };
