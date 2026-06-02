@@ -14,6 +14,20 @@ omission, states the target architecture, and decomposes the fix so the conceptu
 
 ---
 
+**Two intertwined threads this addresses** (verification anchor — both must stay covered):
+
+1. **Markdown ↔ knowledge-graph synchronization** — the vault / wiki-memory *as an application*:
+   keeping the markdown authoring surface in sync with the `.meta` graph. → §3 (layer-partitioned
+   authority + the server-managed projection bridge), §4 (coherence: floor + loop), §6 (grammar's
+   role), and **sub-project A / RQ-Grammar-1** (§7) = the concrete fix.
+2. **Global-graph construction via correct ontologies + progressive disclosure** — start from the
+   right *foundational* and *application-layer* ontologies and load them by progressive disclosure
+   (the model was built backward-from-the-vault, hence problematic — the RQ-Substrate-4 mask in §1).
+   → §4 Tier-0 (layered context-loading: base vocabulary index on startup, per-app ontologies loaded
+   dynamically), §5 (the **foundational-ontology layer** the `ontology/` cache provides), and **D110**
+   (re-base `cap:`/`overlay:` on `interop:` = the app-ontology-declaration mechanism). Partly shipped
+   (`interop:` + DID Core grounded); remainder = the ground-now cache backlog + D110.
+
 ## 1. What we got wrong — one omission, four masks
 
 The design of record (`Hybrid Contextualized KG as Agent Memory Substrate`,
