@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseSpanLiterals } from "./spanLiterals";
+import { parseSpanLiterals } from "./spanLiterals.js";
 
 describe("parseSpanLiterals", () => {
   it("parses a single-bracket literal span with a predicate hint", () => {
