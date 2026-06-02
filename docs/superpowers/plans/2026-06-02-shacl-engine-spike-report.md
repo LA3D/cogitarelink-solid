@@ -139,3 +139,28 @@ to point at `ShaclEngineValidator` instead of `ShaclValidator`. Zazuko remains t
 - `css/extensions/shape-validator/spike/package.json` — `{"type":"module"}` for ESM context
 - `css/extensions/shape-validator/package.json` — `shacl-engine@^1.1.0`, `@rdfjs/dataset@2.0.2` added to devDependencies
 - `css/extensions/shape-validator/package-lock.json` — lockfile update
+
+---
+
+## Build-integration correction (controller, post-spike 2026-06-02)
+
+The spike's "adapter wired behind the seam, selectable via Components.js" state **broke the Docker
+build** and is corrected here. The CSS `Dockerfile` installs only explicit packages for the
+shape-validator (`rdf-validate-shacl componentsjs-generator typescript`), NOT the `package.json`
+devDeps — then runs `tsc` + `componentsjs-generator` over `src/`. With `ShaclEngineValidator.ts` in
+`src/` (importing `shacl-engine`) and exported from `index.ts`, the production build would fail to
+resolve `shacl-engine` (and forcing it in would bloat the image 46 MB for a **HELD**, unused dep).
+
+**Correction applied:** the adapter was **moved to `spike/ShaclEngineValidator.ts`** (alongside
+`parity.mjs`) and its `index.ts` export removed. It is now a **spike reference artifact, excluded
+from the production build** — not wired/selectable. This is the honest HOLD state: real, verified,
+preserved, but not carried in the shipped extension. (`shacl-engine`/`@rdfjs/dataset` remain in
+`package.json` devDeps for local re-runs only; they are not installed into the image.)
+
+**To PROMOTE later:** move `spike/ShaclEngineValidator.ts` back into `src/storage/validators/`,
+re-add the `index.ts` export, add `shacl-engine @rdfjs/dataset` to the Dockerfile's shape-validator
+`npm install` line, and point the Components.js `validator` injection at it. Verdict-parity (above)
+already passed; the only open gate is the footprint vs. the experimental-branch payoff.
+
+Verified post-correction: `src/` clean of `shacl-engine`; `npm run build` (tsc + componentsjs-generator)
+OK; 39/39 tests pass.
