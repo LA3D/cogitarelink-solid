@@ -1,8 +1,17 @@
 # Re-base `cap:`/`overlay:` app-declaration terms on `interop:` — Decision (D110, STUB)
 
-**Date:** 2026-06-02. **Status:** STUB — opened during the D109 substrate re-grounding; **not yet
-designed.** **Parent:** D109 §5 (foundational ontology layer). **Grounding artifact:**
-`ontology/interop.ttl` (+ `ontology/README.md`).
+**Date:** 2026-06-02. **Status:** DESIGNED + SCOPE-CORRECTED — realized in
+`2026-06-02-interop-foundation-design.md`. **Parent:** D109 §5. **Grounding artifacts:**
+`ontology/interop.ttl`, `ontology/shapetrees.ttl` (+ `ontology/README.md`).
+
+> **Scope correction (2026-06-02, from grounding).** The mapping table below contains a **category
+> error**: `cap:requires`/`overlay:providesCapability` declare a dependency on a **substrate feature
+> implemented by a CSS extension**, NOT an `interop:AccessNeed` (an `acl:` access request for
+> shape-typed data). interop does **not** model substrate features. The corrected rebase covers
+> **only the data-declaration half** (overlay → `Application` + `AccessNeedGroup`/`AccessNeed`; typed
+> containers → `DataRegistration` keyed by `registeredShapeTree` → `st:ShapeTree` → our SHACL); **the
+> `cap:`/feature layer stays bespoke.** Shape Trees fit 1:1 (`st:shape` has an open range → points at
+> our SHACL NodeShape; no deviation). See the realized design for the corrected model.
 
 ## Problem
 

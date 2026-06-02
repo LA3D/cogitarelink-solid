@@ -2,6 +2,23 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## ⚙ Infrastructure note — replace Zazuko `rdf-validate-shacl` with `shacl-engine` (future op, Chuck leaning YES)
+
+Recorded 2026-06-02 while fresh, at Chuck's request. **Chuck is leaning toward replacing the current
+SHACL validator** — `rdf-validate-shacl@^0.6.0` (Zazuko, wrapped by `shape-validation-component`'s
+`ShaclValidator`, `css/extensions/shape-validator/`) — **with `rdf-ext/shacl-engine`** as a forward
+operation, not merely a spike. Rationale: shacl-engine is a *fast RDF/JS* engine that is
+**factory-agnostic** (pass N3's factory/dataset — the rdf-ext-vs-Solid conflict fear is largely
+unfounded), and its **experimental** branch brings **SHACL 1.2 + SPARQL-based node expressions +
+coverage** (the subgraph of triples a shape covers) — features that look important for agentic
+systems (coverage → grammar-term 422 hints + the round-trip oracle; RQ-Grammar-1). **Watch-item:**
+the experimental branch pulls `@comunica/query-sparql-rdfjs-lite` + `@traqula/*` (SPARQL 1.2) —
+measure the CSS-image footprint. **Now:** spiking behind the existing pluggable `ShaclValidator` seam
+(`ShapeValidationStore` takes a `validator`), stable v1.1.0 first, Zazuko kept as fallback (interop
+foundation spec §7 has the full assessment). **Future op:** promote to the default validator once the
+spike proves the footprint and the 1.2/coverage features earn their keep. Don't lose this — flagged
+explicitly.
+
 ## ★ ACTIVE PRIORITY — D109: substrate re-grounding (umbrella; decided 2026-06-01)
 
 **Decision recorded** (`### D109` in decisions.md; full record `docs/superpowers/specs/2026-06-01-substrate-regrounding-design.md`). Pulling RQ-Grammar-1 to its root surfaced **one omission wearing four masks** (RQ-Grammar-1 inexpressible literals / D108 inert shapes / `prefLabel` materialized nowhere / RQ-Substrate-4 contamination): the substrate was built as the **document view with an RDF annotation bolted on**, not the **hybrid contextualized KG** (Verborgh) the design called for. The conceptual spine (SKOS / three frames / two hierarchies / owner partition) is **sound**; the failure is *realization in the graph*.

@@ -48,7 +48,7 @@ A `#` header block, then the **verbatim** upstream vocab below it:
 | | `sh:` (SHACL) | the validation floor | ground (planned) |
 | | `void:` / `dcat:` / `ni:` | storage desc, content integrity (D21) | declare |
 | **Agentic-app interop** | `interop:` | app/agent/registration/access-need | **GROUNDED** |
-| | `st:` (Shape Trees) | interop data binding — **frozen (2021)** | bridge → our SHACL |
+| | `st:` (Shape Trees) | interop data binding (`registeredShapeTree`→`st:ShapeTree`); `st:shape`→our SHACL | **GROUNDED** `shapetrees.ttl` (ns IRI not dereferenceable) |
 | **Identity / auth / VC / IDs** | `acl:` (WAC) | interop's `accessMode` target | enumerate-defer |
 | | `acp:` (ACP) | preferred authz | enumerate-defer |
 | | VCDM (`cred:`) | Verifiable Credentials (W3C Rec) | enumerate-defer |
@@ -74,6 +74,14 @@ when that application engages (interop `ApplicationRegistration` + `AccessNeedGr
   "SAI is too heavy, don't use it" dismissal, which conflated the immature
   *runtime* with the foundational *vocabulary*. Re-bases bespoke
   `cap:`/`overlay:` app-declaration terms (proposed D110).
+
+- `shapetrees.ttl` — cached 2026-06-02 (143 triples, rdflib-valid); W3C Solid CG Shape Trees
+  vocab (`st:`). **Grounded because the namespace IRI is not dereferenceable** (shapetrees.org
+  unreachable) yet it is REQUIRED to operate interop's data binding (`interop:registeredShapeTree
+  → st:ShapeTree`). `st:shape` is shape-language-agnostic → points at our SHACL NodeShapes;
+  `st:focusNode` → the resource's `<#this>`; `st:contains` → container hierarchy. Upstream
+  namespace drift documented in the file header (interop.ttl's `shapetree#` singular vs the
+  ontology's `shapetrees#` plural — we use the plural).
 
 - `did.ttl` — cached 2026-06-02; DID Core RDFS vocab (`did:`, W3C Rec) + `did-v1.context.jsonld`
   (the DID-document JSON-LD context). **Grounded ahead of the deferred URI/DID migration** so the
