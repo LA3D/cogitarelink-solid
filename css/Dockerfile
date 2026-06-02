@@ -96,11 +96,13 @@ COPY extensions/markdown-projection /community-server/extensions/markdown-projec
 
 RUN cd extensions/markdown-projection && npm install --ignore-scripts
 
-# Build ONLY dist-cjs — that is the artifact CSS loads (package.json main/require/
-# lsd:components all point at dist-cjs/). The ESM build (`build:esm`/`dist/`) is unused
-# at runtime and currently fails under NodeNext on src-cjs's deep @solid/community-server
-# imports; running the full `npm run build` here breaks the image build (surfaced when a
-# source change invalidates the Docker layer cache). See FOLLOWUPS (build:esm breakage).
+# Build BOTH artifacts: the ESM pipeline (dist/, which the CJS listener loads at runtime via its
+# dynamic import — projectionPipeline.run lives here) AND the CJS wrapper (dist-cjs/, the
+# Components.js entry). build:esm previously failed under NodeNext because the ESM tsconfig pulled in
+# src-cjs (deep @solid/community-server imports) + *.test.ts; those are now excluded so build:esm
+# compiles only the pure src/ pipeline (no @solid deps) and exits clean. This makes dist/ REPRODUCIBLE
+# from source instead of shipping a stale COPY'd local build (RQ-Grammar-1 deploy fix, 2026-06-02).
+RUN cd extensions/markdown-projection && npm run build:esm
 RUN cd extensions/markdown-projection && npm run build:cjs
 
 # Same @solid/community-server symlink trick — class identity must match CSS host

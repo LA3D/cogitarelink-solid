@@ -24,17 +24,7 @@ def _pod_up():
         return False
 
 
-pytestmark = [
-    pytest.mark.skipif(not _pod_up(), reason="Pod not running"),
-    # BLOCKED on a deploy-infra gap (NOT a grammar bug — the grammar is verified offline by
-    # css/extensions/markdown-projection/src/conformance.test.ts). The listener loads the compiled
-    # ESM dist/, built by `build:esm`; the Dockerfile runs only `build:cjs`, and dist/ is gitignored,
-    # so the deployed pipeline is a STALE pre-grammar build with no literal axis (debug 2026-06-02:
-    # projected .meta had skos:broader + schema:name but NOT skos:prefLabel/definition). Un-skip after
-    # build:esm runs in the Dockerfile (exclude *.test.ts + src-cjs from the ESM tsconfig so it exits
-    # clean) + `make reset`. See FOLLOWUPS "build:esm deploy gap".
-    pytest.mark.skip(reason="blocked on build:esm-in-Docker deploy gap; grammar verified offline"),
-]
+pytestmark = pytest.mark.skipif(not _pod_up(), reason="Pod not running")
 
 
 def _load_shapes():
