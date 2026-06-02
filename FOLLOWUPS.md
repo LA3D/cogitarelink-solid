@@ -37,6 +37,22 @@ two-subject `<>`/`<#this>`, two-stage commit, SHACL 422). Two gaps to act on:
 Also: the `pod-discover` skill (solid-agent-skills) is **drifted** — still references `wiki:typeIndex`,
 `/wiki/{pages,sources,…}/`, and `:3000` (all pre-D107/D98). Re-sync when touched.
 
+**Graph-view dimension (the *second* view — verified live 2026-06-02 via the `solid-pod sparql`
+Comunica CLI).** The cold probes tested only the **document view** (GET + reading `.meta` as *text*);
+the **graph view** (SPARQL over the RDF) is a different mode, and the pod hosts **no SPARQL endpoint**
+(D3/D29) — a GET-only agent can't use it; it must bring Comunica and point at `.meta` sources. Live
+cross-resource query over `/wiki/concepts/`: (a) **it works** — the CLI's container `.meta`
+auto-discovery handles the RQ-Pod-4 describedby-skip (`metaSources=4`, cross-resource results); (b)
+**the SKOS backbone is HOLEY** — `photosynthesis`/`biology` (hand-authored gold exemplars) carry
+`skos:prefLabel`, but `how-wiki-memory-works` (and likely other doc-concepts) have only `schema:name`
+→ SKOS-label queries return PARTIAL results. The graph view is the lens that reveals what the document
+view hides; the holes are the downstream cost of (grammar untaught) + (no enforcement floor). **Three
+adds:** (i) the eval must test **both views** — a **graph-view cold probe** equipping an agent with the
+Comunica CLI + a KG-navigation task (does it discover/use the graph view, or just GET?); (ii) the
+in-band teaching must cover **querying** (the pod is a queryable graph; the container-auto-discovery /
+explicit-`.meta`-source pattern) as well as authoring; (iii) backfill missing `prefLabel`s on deployed
+doc-concepts (or let the enforcement floor + grammar-teaching prevent the recurrence).
+
 ## ⚙ Interop foundation — deferred-runtime gaps (D109 sub-A+B final review, 2026-06-02)
 
 The interop foundation (Application / AccessNeeds / RegistrySet / DataRegistrations /
