@@ -385,7 +385,8 @@ async def audit_interop_registration(client, pod_base, findings):
             f"st:shape {iri} referenced in the tree doc is not a sh:NodeShape in the shape catalog.",
             "Define the missing NodeShape in the appropriate shape file under /meta/shapes/."))
 
-    if not dangling_shapes and len(registrations) == 7 and not (tree_shapes - defined_shapes):
+    trees_all_defined = len(reg_trees) == 7 and all(t in defined_trees for t in reg_trees.values())
+    if not dangling_shapes and len(registrations) == 7 and trees_all_defined:
         findings.append(finding("INFO", registry_url, "interop:registration-ok",
             f"Interop registration graph: {len(registrations)} DataRegistrations, "
             f"all shape trees defined, all st:shape IRIs resolve in the catalog.", ""))
