@@ -53,7 +53,7 @@ A `#` header block, then the **verbatim** upstream vocab below it:
 | | `acp:` (ACP) | preferred authz | enumerate-defer |
 | | VCDM (`cred:`) | Verifiable Credentials (W3C Rec) | enumerate-defer |
 | | `sec:` | Data Integrity proofs / DID verif. methods | enumerate-defer |
-| | `did:` (DID Core, W3C Rec) | agent identifiers (D14 WebID↔DID bridge) | enumerate-defer |
+| | `did:` (DID Core, W3C Rec) | identity-layer agent/owner identifiers (D14 bridge) | **GROUNDED** `did.ttl` + `did-v1.context.jsonld` (prefer `did:webvh`; migration deferred) |
 | | `odrl:` | fine-grained policy (KG permissions aspect) | note only |
 | **Domain / L3** | skos, dct, schema, foaf, cito, prov, vcard, org, td, oslc | content vocab | declare (cache SKOS/DC/PROV to fix drift) |
 | **Minted (ours)** | wiki, sub, mem, **overlay, cap** | L3 + substrate | ours — re-base overlay/cap on `interop:` (D110) |
@@ -74,6 +74,12 @@ when that application engages (interop `ApplicationRegistration` + `AccessNeedGr
   "SAI is too heavy, don't use it" dismissal, which conflated the immature
   *runtime* with the foundational *vocabulary*. Re-bases bespoke
   `cap:`/`overlay:` app-declaration terms (proposed D110).
+
+- `did.ttl` — cached 2026-06-02; DID Core RDFS vocab (`did:`, W3C Rec) + `did-v1.context.jsonld`
+  (the DID-document JSON-LD context). **Grounded ahead of the deferred URI/DID migration** so the
+  identity-layer ontology isn't missing later; for web-hosted DIDs prefer **`did:webvh`** (did:web +
+  verifiable history — trust off DNS). DID↔Solid integration deferred (Solid #217/#35 dormant). See
+  `solid-identity-stack` did.md + D109 §5. `sec:` companion (verification methods) stays enumerate-defer.
 
 ## Drift to reconcile
 

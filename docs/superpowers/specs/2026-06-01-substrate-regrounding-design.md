@@ -157,7 +157,7 @@ corrects the earlier "SAI too heavy, don't use it" dismissal, which conflated th
 with the foundational *vocabulary*.
 
 **The identity layer interop sits on is enumerated-but-deferred:** `acl:`/`acp:` (interop's `accessMode`
-target), VCDM/`sec:`/`did:` (the VC + identifier stack, D14 WebID↔DID bridge), `odrl:` (policy).
+target), VCDM/`sec:` (the VC + Data-Integrity stack), `odrl:` (policy). The **DID Core vocabulary is grounded now** (`ontology/did.ttl` + context) ahead of the deferred URI/DID migration so it isn't missing later — prefer `did:webvh` (trust off DNS) bridged to WebID (D14); resources stay pod-relative (D84).
 In-scope per the shared-multi-user substrate framing (not single-owner); deferred because auth is
 dev-allow-all. D109 names them so the interop adoption doesn't silently assume an auth plane that
 doesn't exist.
