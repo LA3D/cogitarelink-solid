@@ -1,9 +1,10 @@
 # Substrate Re-Grounding: Hybrid Contextualized KG with Co-Equal Writable Views — Decision (D109)
 
-**Date:** 2026-06-01. **Status:** Decision recorded; umbrella for a multi-sub-project program
-(each sub-project gets its own spec → plan → build). **Supersedes the framing** (not the model) of
-"build forward from the vault"; **subsumes** the deeper slice of RQ-Substrate-4 and the
-authoring-grammar bug RQ-Grammar-1; **is the umbrella D108's two fronts sit under.**
+**Date:** 2026-06-01 (rev. 2026-06-02). **Status:** Decision recorded; umbrella for a
+multi-sub-project program (each sub-project gets its own spec → plan → build). **Supersedes the
+framing** (not the model) of "build forward from the vault"; **subsumes** the deeper slice of
+RQ-Substrate-4 and the authoring-grammar bug RQ-Grammar-1; **is the umbrella D108's two fronts sit
+under.**
 
 Origin: pulling the RQ-Grammar-1 thread (a cold agent cannot author a conformant concept inline,
 RQ-View-2 2026-06-01) to its root cause — and finding it is the *same* root cause as D108's inert
@@ -48,7 +49,7 @@ This is why the worry should not be "the model is wrong." The conceptual spine i
 single-sourced (D108 Front-1):
 
 - **SKOS backbone** — concepts are a SKOS concept scheme; pages/notes are memories that attach to it.
-- **Three node-kinds / three label frames** — `<>` Page → `dct:title`; `<#this>` Thing → `schema:name`;
+- **Three node-kinds, three label frames** — `<>` Page → `dct:title`; `<#this>` Thing → `schema:name`;
   `<#this>` Concept → `skos:prefLabel` (+ `altLabel`).
 - **Two hierarchies, never substituted** — `rdfs:subClassOf` = addressing/structure (Type Index →
   container/shape/governed predicates); `skos:broader` = navigation/content (D105/D106).
@@ -59,7 +60,7 @@ The model (D95/D96/D105/D106/D108) is right. What's broken is that it lives fait
 document view** and was never **completely or bidirectionally realized in the graph.** That is
 recoverable plumbing, not a wrong foundation.
 
-## 3. Target architecture — graph-canonical storage, co-equal writable views
+## 3. Target architecture — graph-canonical storage, layer-partitioned writable views
 
 **Storage primacy must not dictate the agent architecture.** LLMs are RL-centered on markdown; the
 substrate must be **modality-neutral** so different agents work in their native modality:
@@ -76,11 +77,28 @@ query agents get the graph in *their* native modality. Nobody fights their train
 is Verborgh's model stated as an agent-architecture requirement ("views are server-generated; the
 write decisions of one app don't affect another's").
 
-**Scope note (avoid over-build):** "co-equal views over one canonical graph" (single master, N writable
-projections) is *much* simpler than "two symmetric masters reconciled" (CRDT territory —
-`@desmet-2026-orset-rdf`). For a single Pod, single-master-graph + writable-views delivers everything
-above. True symmetric masters buy only independent offline divergence + merge — a **Scale-3 federation**
-concern, **deferred**.
+**The authority is layer-partitioned** (grounded in Solid's own model — verified against the Solid
+Protocol + Application Interoperability specs), *not* a single-master-vs-symmetric replication choice:
+
+- **L3 / wiki-memory → the markdown is authoritative** for the governed content it expresses. (Solid
+  Protocol: the markdown is the *subject resource*.)
+- **L1–L2 / Solid pod → the `.meta` graph is authoritative** for the interoperable representation +
+  everything the markdown doesn't express (substrate-derived `rdfs:label`/`prefLabel`/provenance;
+  curator-added `broader`). (Application-Interop: RDF is the shared, shape-governed, agent-accessed
+  substrate.)
+- **The bridge is the server-managed description resource** — i.e., the projection. Solid says the
+  *server* manages `.meta` (the `describedby` auxiliary), which is exactly "the substrate generates
+  Turtle from the markdown."
+- Both views are independently writable (protocol-legal: PATCH the description resource; PUT the body)
+  **without competing for the same truth** — each layer owns a different aspect, overlapping only on
+  the governed predicates the markdown expresses. Consistency over the overlap is *our* policy (the §4
+  floor + loop + the D81 governed-predicate partition); Solid deliberately doesn't define it.
+
+**The one hazard this forces:** the projection must own only the governed (markdown-expressed) subset
+and **not clobber** graph-layer-authoritative triples (curator `broader`, substrate provenance) on body
+rewrites — i.e., RQ-Listener-1 / the deferred `.meta.agent` sidecar (D82). **Symmetric two-master
+replication** (CRDT — `@desmet-2026-orset-rdf`) is a *different axis* (independent offline divergence +
+merge) and stays deferred to **Scale-3 federation**.
 
 ## 4. The coherence model — a control loop, not a storage protocol
 
@@ -88,9 +106,16 @@ Co-equal writable views cannot be kept consistent by storage cleverness, *becaus
 agentic* — an LLM spraying tokens produces disconnected, ungrounded memories unless something catches
 it. Coherence here is a **two-tier control loop** plus legibility:
 
-- **Tier 0 — Legibility** (D108 Front-1, **done**): one canonical, cheap-to-acquire conceptual model
-  (Page/Thing/Concept ↔ frames ↔ SKOS ↔ two hierarchies), single-sourced and referenced from every
-  channel. Every agent can *understand* the structure.
+- **Tier 0 — Legibility / layered context-loading** (D108 Front-1 shipped the single-sourced model; the
+  loading architecture is new here): the conceptual model must not just be single-sourced but **loaded
+  into the agent's context, layered and dynamic** — mirroring an agent's own startup (CLAUDE.md +
+  memory index + skills index → progressive disclosure). The **base vocabulary index** (the grounded
+  foundational ontologies, §5) is the *enforced minimum context* the harness pulls on first arrival,
+  anchored at the storage-description entry point (D108 Front-1's served `agentInstruction`) and
+  navigable from there. **Per-application ontologies load dynamically** when an app engages (wiki-memory
+  → its shapes/vocab; AddressBook → its own) via interop `ApplicationRegistration` + `AccessNeedGroup` +
+  `registeredShapeTree`. Delivered via skills now (the pod-discover bootstrap, D103), MCP eventually.
+  This is L2 invariant #2 (tiered retrieval) + #6 (procedural memory) applied to the *vocabulary itself*.
 - **Tier 1 — the deterministic admission floor** (rules / "minimum graph commitment"): SHACL shapes +
   the minimum structural commitments every memory must satisfy to be admitted (subject frames, required
   labels, type dispatch, bounded branching, governed predicates). This is the **write-time 422**
@@ -114,7 +139,36 @@ floor + deferred curation → `crystallize` strict floor); **pod-curator** is a 
 `mem:*` triggers are the loop's signals; D108 Front-1's drift-guard tests are the *dev-agent's* version
 of the loop. D109's contribution is recognizing these compose into one model.
 
-## 5. The grammar's role (frames RQ-Grammar-1)
+## 5. Foundational ontology layer — interop adoption + the vocabulary cache
+
+The substrate's vocabularies are partitioned and cached as grounding artifacts (`ontology/`, basis:
+`ontology/README.md`). Three tiers: **ground** (cache verbatim + provenance header — the always-loaded
+base), **declare-by-reference** (`void:vocabulary` IRI, D49), **enumerate-but-defer** (in-scope, not
+yet grounded).
+
+**`interop:` (W3C Solid Application Interoperability) is adopted as the foundational vocabulary for the
+agentic-app layer** — it is the only Solid-native vocabulary for *apps-as-agents declaring the
+shapes/data they need and receiving scoped access to shared graph data* (Type Index = routing only;
+WAC/ACP = access only). **Adopt the vocabulary now; defer the runtime** (Authorization-Agent service +
+full grant flow — demo-ware, CSS-unsupported, grant-half volatile per CG #334); bridge its `st:`
+Shape-Tree coupling to our SHACL. This directly supplies §3 (overlays are `interop:Application`s; wiki
+containers are `interop:DataRegistration`s over the shared graph) and §4-Tier-0 (per-app context
+loading = `ApplicationRegistration` + `AccessNeedGroup` + `registeredShapeTree`). Our bespoke
+`cap:`/`overlay:` app-declaration terms reinvent interop and are re-based on it (**D110**). This
+corrects the earlier "SAI too heavy, don't use it" dismissal, which conflated the immature *runtime*
+with the foundational *vocabulary*.
+
+**The identity layer interop sits on is enumerated-but-deferred:** `acl:`/`acp:` (interop's `accessMode`
+target), VCDM/`sec:`/`did:` (the VC + identifier stack, D14 WebID↔DID bridge), `odrl:` (policy).
+In-scope per the shared-multi-user substrate framing (not single-owner); deferred because auth is
+dev-allow-all. D109 names them so the interop adoption doesn't silently assume an auth plane that
+doesn't exist.
+
+**The grounded set is the base vocabulary index** that §4-Tier-0's layered context-loading delivers on
+startup. Cache drift to reconcile: CLAUDE.md claims SKOS/DC/PROV-O are cached here; they are not
+(`interop.ttl` is the first grounded external vocab).
+
+## 6. The grammar's role (frames RQ-Grammar-1)
 
 The markdown write-view serves **three agents**, and the middle one is why completeness matters most:
 
@@ -130,7 +184,7 @@ the governed subgraph — rich enough to feed the refinement loop and consistent
 "Rule-grounded by construction" (it can only express what maps to the governed graph; validated in-band
 by the floor) is precisely what stops the LLM "creating memories all over the place that don't connect."
 
-## 6. Decomposition + sequencing
+## 7. Decomposition + sequencing
 
 Too large for one spec. Each sub-project gets its own spec → plan → build cycle.
 
@@ -140,10 +194,11 @@ Too large for one spec. Each sub-project gets its own spec → plan → build cy
 | **B** | **D108 Front-2** | the **admission floor**: in-band/synchronous projection so the validator validates the *projected graph*; container=gate / class=dispatch; `constrainedBy` on durable containers, `working/` permissive; 422 reserved for judgment metadata; dev-side tests encoding the frame model | after A (A makes the floor *honest*) |
 | **C** | **Curation loop** | **Karpathy Lint as a continuous agentic process**; elevate pod-curator to the Tier-2 reviewer; wire `mem:*` triggers; "enough info for the refinement process" contract | after/with B |
 | **D** | **View layer** | graph→document **regeneration**; the graph as a second writable view; conneg-by-profile `?_profile=` view selection (D107 §6) | **deferred** — design-for now |
+| **(cross-cutting)** | **D110 — interop re-base** | re-base `cap:`/`overlay:` app-declaration on `interop:` (§5); foundational-vocabulary cache (`ontology/`) populated to the ground-now tier | opened (stub) |
 
 Then: re-run **RQ-View-2** once A + B land (the eval that surfaced all this; it was gated on D108).
 
-## 7. Open decisions deferred to the sub-specs (recorded so they're not lost)
+## 8. Open decisions deferred to the sub-specs (recorded so they're not lost)
 
 - **(A)** the concrete inline syntax for the **literal axis + subject-switching** — Sparna-informed
   (`{=…}` sets the subject and scopes over a block; `[text]{property}` for literals) but **trimmed**:
@@ -154,25 +209,37 @@ Then: re-run **RQ-View-2** once A + B land (the eval that surfaced all this; it 
   (render path, legacy `vault:`) vs the served `context.jsonld` + shape `sh:agentInstruction`
   (projection path, current `cito:`/`skos:`). Canonical = the projection path. (provenance doc + D106
   review flagged this.)
-- **(B)** the **floor/loop line** for *durable* shapes: strict floor (422 demands `prefLabel`, a valid
-  `broader`, etc. at write → fewer bad memories, more write friction) vs. light floor + strong loop
-  (admit permissively, curate after → easy writes, transient incoherence). D73's container split
-  (`working/` light, durable strict) is the default frame; the open question is how much the *durable*
-  floor demands vs. defers to the loop.
+- **(B)** the **floor/loop line** for *durable* shapes. **Decision rule (locked):** *derive* the
+  inferable (`rdfs:label`, `schema:name`); *floor* (422) the locally-authorable judgment the author can
+  supply without global graph knowledge (`prefLabel`, `definition`, type, `dct:identifier`); *loop*
+  (curate after) the graph-global judgment the author can't have at write time (`broader`/`narrower`
+  placement, `exactMatch`, consolidation, contradiction). D73's container split (`working/` light,
+  durable strict) is the frame. Remaining open: per-predicate edge cases (is *one* `broader`
+  required-but-provisional? is `definition` floored or encouraged?) — want shape work + write-friction
+  data.
 - **(D)** the **view-authoring / regeneration** mechanics (who authors view definitions; how graph→doc
   re-rendering preserves human-authored prose); single-master vs symmetric-master (Scale-3, deferred).
+- **(D110)** the `registeredShapeTree`→SHACL bridge; migration of deployed `cap:`/`overlay:` triples +
+  the audit/curator tooling that reads them; which `interop:` terms map cleanly vs. need a documented
+  deviation; avoid the volatile grant/authorization terms (CG #334).
 
-## 8. Relationship to prior decisions
+## 9. Relationship to prior decisions
 
 - **Realizes D70** — the L1/L2/L3 split that was "not honored in practice" (CLAUDE.md): graph-canonical
   substrate + view layer is L1/L2; wiki-memory is a bounded L3 profile over it.
 - **Completes D58/D71** — dual-layer linking was built one-directional + lossy; D109 makes the body↔graph
   projection complete, validated, and (eventually) bidirectional.
-- **Honors D81** — governed predicates *are* the admission floor's structural commitment.
+- **Honors D81** — governed predicates *are* the admission floor's structural commitment, and the
+  layer-partition's no-clobber subset.
 - **Builds on D95/D96** — the two subjects (`<>` Page / `<#this>` Thing) are the subjects the grammar
   must address; the grammar gap is that authoring never reached `<#this>`.
 - **Builds on D105/D106/D108** — the two hierarchies + the SKOS-backbone/frame model are the sound spine.
 - **Umbrella over D108** — Front-1 (legibility) = Tier 0; Front-2 (enforcement) = Tier 1 / sub-project B.
 - **Resolves the deep slice of RQ-Substrate-4** — D107 fixed the URI/namespace slice; the deferred view
   layer (D107 §6) is sub-project D here.
+- **Grounds the agentic-app layer in `interop:`** (W3C Solid Application Interoperability, §5) —
+  adopt-vocabulary / defer-runtime; re-bases `cap:`/`overlay:` (**D110**). Solid-grounded §3: the
+  layer-partitioned authority is the Solid Protocol's server-managed *description resource*
+  (`describedby`) + the Application-Interop *shared-graph / apps-as-agents* model; the no-clobber
+  constraint is RQ-Listener-1 / D82.
 - **Frames RQ-Grammar-1** (sub-project A) and **RQ-Enforce-1** (sub-project B, in-band projection).
