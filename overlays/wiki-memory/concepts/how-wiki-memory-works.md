@@ -30,8 +30,8 @@ have a `skos:prefLabel` — it is the term SKOS navigation labels results with.
 ## The write recipe
 
 Write a markdown body + frontmatter. `type: Concept` (or Person, Organization, …) sets the
-`<#this>` class; body wikilinks `[[Target]]{.broader}` project to typed edges (the hint after
-the dot — here `broader` — picks the predicate; the container of the target is resolved from
+`<#this>` class; a body wikilink tagged with a `{.broader}`-style hint projects to a typed edge (the
+hint after the dot — here `broader` — picks the predicate; the container of the target is resolved from
 the target's class via the Type Index — D106). The substrate projects your body into the `.meta`
 graph view.
 
