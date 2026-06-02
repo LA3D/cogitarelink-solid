@@ -53,6 +53,24 @@ in-band teaching must cover **querying** (the pod is a queryable graph; the cont
 explicit-`.meta`-source pattern) as well as authoring; (iii) backfill missing `prefLabel`s on deployed
 doc-concepts (or let the enforcement floor + grammar-teaching prevent the recurrence).
 
+**Access-tier framing (Chuck 2026-06-02 — TWO parts of universality; CLI-first).** The graph view is
+NOT a standard SPARQL endpoint — querying a pod uses Comunica-specific algorithms (link-traversal +
+the RQ-Pod-4 explicit-`.meta`-source pattern), available only in the Comunica framework. The answer is
+*not* "embed Comunica in every agent" — it is two tiers, **learn-then-universalize**:
+- **Tier 1 — CLI tools + skills (NOW; the dev-time eval instrument, NOT a throwaway baseline).** The
+  agentic harnesses that matter for us — Claude Code, OpenAI Codex CLI, Gemini CLI — all run
+  command-line tools and carry skills. Dispatching SDK agents from the CLI, equipped with the
+  solid-agent-skills + `solid-pod sparql`, is how we (a) **eval at development time what a *good* pod
+  memory structure is** and (b) verify an agent can **consistently answer questions from its memory**.
+  This is where we LEARN the KR/structure — run the graph-view eval HERE, now.
+- **Tier 2 — MCP (LATER; the second universality).** Wrap the now-understood query capability behind a
+  **Comunica-Solid MCP** (one has been built) to reach harnesses that DON'T have CLI/skills access and
+  aren't wrapped by the skills protocol for propagating procedural knowledge + tools. Build the MCP
+  *after* the Tier-1 eval tells us what to expose.
+Re-tiers D55: HTTP/LDP = universal authoring; **CLI+skills = dev-time KR eval + consistent agent
+access**; MCP = broadest runtime querying (follow-on). Depends on de-drifting `pod-discover` first —
+it is the Tier-1 access layer the eval rides on.
+
 ## ⚙ Interop foundation — deferred-runtime gaps (D109 sub-A+B final review, 2026-06-02)
 
 The interop foundation (Application / AccessNeeds / RegistrySet / DataRegistrations /
