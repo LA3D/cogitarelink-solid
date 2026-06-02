@@ -1,0 +1,41 @@
+@prefix interop:  <http://www.w3.org/ns/solid/interop#> .
+@prefix wikitree: <https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree#> .
+@prefix reg:      <https://pod.vardeman.me/vault/meta/interop/registry#> .
+@prefix app:      <https://pod.vardeman.me/vault/meta/interop/application#> .
+
+<https://pod.vardeman.me/vault/profile/card#me> interop:hasRegistrySet reg:set .
+
+reg:set a interop:RegistrySet ; interop:hasDataRegistry reg:data .
+
+reg:data a interop:DataRegistry ;
+    interop:hasDataRegistration reg:concepts, reg:people, reg:places, reg:events,
+        reg:organizations, reg:procedures, reg:working .
+
+reg:concepts a interop:DataRegistration ;
+    interop:registeredShapeTree wikitree:ConceptContainerTree ;
+    interop:registeredWith app:wiki-memory ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+reg:people a interop:DataRegistration ;
+    interop:registeredShapeTree wikitree:PersonContainerTree ;
+    interop:registeredWith app:wiki-memory ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+reg:places a interop:DataRegistration ;
+    interop:registeredShapeTree wikitree:PlaceContainerTree ;
+    interop:registeredWith app:wiki-memory ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+reg:events a interop:DataRegistration ;
+    interop:registeredShapeTree wikitree:EventContainerTree ;
+    interop:registeredWith app:wiki-memory ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+reg:organizations a interop:DataRegistration ;
+    interop:registeredShapeTree wikitree:OrganizationContainerTree ;
+    interop:registeredWith app:wiki-memory ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+reg:procedures a interop:DataRegistration ;
+    interop:registeredShapeTree wikitree:ProcedureContainerTree ;
+    interop:registeredWith app:wiki-memory ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+reg:working a interop:DataRegistration ;
+    interop:registeredShapeTree wikitree:WorkingNoteContainerTree ;
+    interop:registeredWith app:wiki-memory ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .

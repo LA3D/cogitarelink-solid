@@ -44,3 +44,18 @@ def test_application_declares_8_access_needs_each_with_a_resource_tree_and_modes
         tree = g.value(n, INTEROP.registeredShapeTree)
         assert tree is not None and str(tree).endswith("ResourceTree"), f"{n}: registeredShapeTree must be a ResourceTree, got {tree}"
         assert list(g.objects(n, INTEROP.accessMode)), f"{n}: missing accessMode"
+
+OWNER = rdflib.URIRef("https://pod.vardeman.me/vault/profile/card#me")
+REG = REPO / "overlays/wiki-memory/interop/registry.ttl"
+
+def test_registry_chain_owner_to_7_dataregistrations_each_a_container_tree():
+    g = rdflib.Graph(); g.parse(REG, format="turtle")
+    rset = g.value(OWNER, INTEROP.hasRegistrySet)
+    assert rset is not None, "owner WebID has no hasRegistrySet"
+    dreg = g.value(rset, INTEROP.hasDataRegistry)
+    assert dreg is not None, "RegistrySet has no DataRegistry"
+    regs = list(g.objects(dreg, INTEROP.hasDataRegistration))
+    assert len(regs) == 7, f"expected 7 DataRegistrations, got {len(regs)}"
+    for r in regs:
+        t = g.value(r, INTEROP.registeredShapeTree)
+        assert t is not None and str(t).endswith("ContainerTree"), f"{r}: registeredShapeTree must be a ContainerTree, got {t}"
