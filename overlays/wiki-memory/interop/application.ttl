@@ -1,0 +1,32 @@
+@prefix interop:  <http://www.w3.org/ns/solid/interop#> .
+@prefix acl:      <http://www.w3.org/ns/auth/acl#> .
+@prefix wikitree: <https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree#> .
+@prefix app:      <https://pod.vardeman.me/vault/meta/interop/application#> .
+
+app:wiki-memory a interop:Application ;
+    interop:applicationName "Wiki-Memory" ;
+    interop:applicationDescription "Agentic memory: a SKOS concept backbone plus typed memory notes." ;
+    interop:hasAccessNeedGroup app:wiki-needs .
+
+app:wiki-needs a interop:AccessNeedGroup ;
+    interop:accessNecessity interop:AccessRequired ;
+    interop:accessScenario interop:PersonalAccess ;
+    interop:hasAccessNeed app:need-concept, app:need-source, app:need-person, app:need-place,
+        app:need-event, app:need-organization, app:need-howto, app:need-working-note .
+
+app:need-concept a interop:AccessNeed ; interop:registeredShapeTree wikitree:ConceptResourceTree ;
+    interop:accessMode acl:Read, acl:Write ; interop:accessNecessity interop:AccessRequired .
+app:need-source a interop:AccessNeed ; interop:registeredShapeTree wikitree:SourceResourceTree ;
+    interop:accessMode acl:Read, acl:Write ; interop:accessNecessity interop:AccessRequired .
+app:need-person a interop:AccessNeed ; interop:registeredShapeTree wikitree:PersonResourceTree ;
+    interop:accessMode acl:Read, acl:Write ; interop:accessNecessity interop:AccessRequired .
+app:need-place a interop:AccessNeed ; interop:registeredShapeTree wikitree:PlaceResourceTree ;
+    interop:accessMode acl:Read, acl:Write ; interop:accessNecessity interop:AccessRequired .
+app:need-event a interop:AccessNeed ; interop:registeredShapeTree wikitree:EventResourceTree ;
+    interop:accessMode acl:Read, acl:Write ; interop:accessNecessity interop:AccessRequired .
+app:need-organization a interop:AccessNeed ; interop:registeredShapeTree wikitree:OrganizationResourceTree ;
+    interop:accessMode acl:Read, acl:Write ; interop:accessNecessity interop:AccessRequired .
+app:need-howto a interop:AccessNeed ; interop:registeredShapeTree wikitree:HowToResourceTree ;
+    interop:accessMode acl:Read, acl:Write ; interop:accessNecessity interop:AccessRequired .
+app:need-working-note a interop:AccessNeed ; interop:registeredShapeTree wikitree:WorkingNoteResourceTree ;
+    interop:accessMode acl:Read, acl:Write, acl:Append ; interop:accessNecessity interop:AccessRequired .

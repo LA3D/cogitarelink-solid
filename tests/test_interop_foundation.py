@@ -29,3 +29,18 @@ def test_concepts_container_contains_both_concept_and_source():
     cct = rdflib.URIRef(TREE_NS + "ConceptContainerTree")
     contained = {str(o).split("#")[-1] for o in g.objects(cct, ST.contains)}
     assert contained == {"ConceptResourceTree", "SourceResourceTree"}, contained
+
+INTEROP = rdflib.Namespace("http://www.w3.org/ns/solid/interop#")
+APP = REPO / "overlays/wiki-memory/interop/application.ttl"
+
+def test_application_declares_8_access_needs_each_with_a_resource_tree_and_modes():
+    g = rdflib.Graph(); g.parse(APP, format="turtle")
+    app = next(g.subjects(rdflib.RDF.type, INTEROP.Application))
+    group = g.value(app, INTEROP.hasAccessNeedGroup)
+    assert group is not None, "Application has no AccessNeedGroup"
+    needs = list(g.objects(group, INTEROP.hasAccessNeed))
+    assert len(needs) == 8, f"expected 8 AccessNeeds, got {len(needs)}"
+    for n in needs:
+        tree = g.value(n, INTEROP.registeredShapeTree)
+        assert tree is not None and str(tree).endswith("ResourceTree"), f"{n}: registeredShapeTree must be a ResourceTree, got {tree}"
+        assert list(g.objects(n, INTEROP.accessMode)), f"{n}: missing accessMode"
