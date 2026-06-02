@@ -93,7 +93,13 @@ Pod design that demonstrably works. Original B1/B2/T framing dropped.
 - Design doc: `docs/plans/2026-05-23-rung-1.5-redesign-design.md`. Pilot report:
   `docs/plans/2026-05-23-phase-a-pilot-report.md` (18 substrate failure modes in §4).
 
-### ★ ACTIVE PRIORITY (2026-05-30) — D108: SKOS backbone + dual-view enforcement
+### ★ ACTIVE PRIORITY (2026-06-01) — D109 substrate re-grounding (umbrella; D108 is now sub-project B)
+
+**D109** (`docs/superpowers/specs/2026-06-01-substrate-regrounding-design.md`; decisions.md `### D109`): pulling RQ-Grammar-1 to its root showed **one omission, four masks** — the substrate was built as the *document view + RDF annotation*, not the **hybrid contextualized KG** (Verborgh) the design called for. **Target = layer-partitioned co-equal authority over a hybrid store** (markdown = L3 authoring authority incl. prose; `.meta` graph = L1/L2 queryable/interop authority incl. substrate-derived + curator-added; **NOT graph-canonical** — authoring stays markdown-native; server-managed description-resource projection bridges; L3 references the pod, not vice versa; symmetric/CRDT → Scale-3; no-clobber = RQ-Listener-1/D82). **Coherence** = Tier-0 legibility/**layered-context-loading** + Tier-1 SHACL **admission floor** (D108 Front-2) + Tier-2 **agentic curation loop** (Karpathy Lint); floor/loop rule = derive-inferable / floor-locally-authorable / loop-graph-global. **Foundational-ontology layer:** `ontology/` cache (basis `ontology/README.md`); **`interop:` adopted** as the agentic-app vocabulary (vocabulary now / Authorization-Agent runtime deferred — corrects the "SAI too heavy" dismissal); identity layer (`acl`/`acp`/VCDM/`sec`/`did`) enumerated-but-deferred; **D110** (stub) re-bases `cap:`/`overlay:`→`interop:`. **Decomposition:** A **RQ-Grammar-1** (the grammar) → B **D108 Front-2** → C curation loop → D view layer (deferred). **▶ NEXT DEV SESSION = brainstorm sub-project A (RQ-Grammar-1)** — "the complete, reversible, rule-grounded markdown write-view into the substrate graph"; open syntax in D109 §8. Branch `d109-substrate-regrounding` (not pushed). Auto-mems `foundational-ontology-cache`, `skos-backbone-enforcement-architecture`, `authoring-grammar-expressivity-gap`.
+
+**↓ D108 detail below is now D109 sub-project B (the admission floor):**
+
+### D108: SKOS backbone + dual-view enforcement
 
 Pulling the `prefLabel`-not-enforced thread (RQ-View-2 Probe-A repeats, 2026-05-29) proved a root
 cause: **the wiki-memory L3 content corpus is unvalidated at write time** (no `ldp:constrainedBy`

@@ -60,45 +60,43 @@ The model (D95/D96/D105/D106/D108) is right. What's broken is that it lives fait
 document view** and was never **completely or bidirectionally realized in the graph.** That is
 recoverable plumbing, not a wrong foundation.
 
-## 3. Target architecture — graph-canonical storage, layer-partitioned writable views
+## 3. Target architecture — layer-partitioned co-equal authority over a hybrid store
 
-**Storage primacy must not dictate the agent architecture.** LLMs are RL-centered on markdown; the
-substrate must be **modality-neutral** so different agents work in their native modality:
+**There is no single global canonical store.** The substrate is a hybrid store (Verborgh's "documents
+*and* triples, co-equal") with **layer-partitioned authority** — each representation is authoritative
+for its own concern, bridged by the projection:
 
-- **Graph-canonical storage** — the graph (triples + the markdown blobs) is the single source of truth.
-- **Co-equal *writable* views over it** — a **markdown-native** authoring agent writes the *body view*
-  (the substrate ingests it into the graph); a **graph-native** curator / query agent edits or reads
-  *triples* directly (the body view re-renders from the graph).
+- **Markdown = the authoritative *authoring* surface for L3 / wiki-memory** — the write-source for
+  governed content *and* the sole home of prose the graph never holds. (Solid Protocol: the markdown is
+  the *subject resource*.)
+- **The `.meta` graph = the authoritative *queryable / interoperable* representation for L1–L2 / the
+  Solid pod** — holds the projected governed content *plus* substrate-derived (`rdfs:label`,
+  materialized `prefLabel`, provenance) and curator-added (`broader`) triples the markdown never holds.
+  (Application-Interop: RDF is the shared, shape-governed, agent-accessed substrate.)
+- **They overlap only on the governed predicates** the markdown expresses; the **server-managed
+  description resource** (the `describedby` auxiliary) is the bridge — i.e., the projection. Solid says
+  the *server* manages `.meta`, which is exactly "the substrate generates Turtle from the markdown."
+- **Directionality:** L3 / wiki-memory may reference the pod/graph; the L1–L2 substrate does **not**
+  depend on the markdown.
 
-The key property that resolves the RL-distribution worry: **graph-canonical at storage ≠ graph-native
-at authoring.** The authoring agent never leaves markdown — markdown is a first-class write-surface,
-not a second-class escape; the graph being canonical underneath is invisible to it. The curator and
-query agents get the graph in *their* native modality. Nobody fights their training distribution. This
-is Verborgh's model stated as an agent-architecture requirement ("views are server-generated; the
-write decisions of one app don't affect another's").
+**Why partition rather than pick one canonical store:** storage primacy must not dictate the agent
+architecture. LLMs are RL-centered on markdown, so a **markdown-native** authoring agent writes the body
+(never leaving markdown — a first-class write-surface, not a second-class escape), while a
+**graph-native** curator / query agent reads and edits triples in *its* native modality. Neither fights
+its training distribution because the substrate is **modality-neutral** (Verborgh: "no view is more
+special; views are server-generated; one app's writes don't affect another's"). This is the asymmetry
+that made *"graph-canonical"* the wrong word: the graph is the canonical *queryable/interop*
+representation, but that does **not** make authoring graph-native — the author still writes markdown.
 
-**The authority is layer-partitioned** (grounded in Solid's own model — verified against the Solid
-Protocol + Application Interoperability specs), *not* a single-master-vs-symmetric replication choice:
-
-- **L3 / wiki-memory → the markdown is authoritative** for the governed content it expresses. (Solid
-  Protocol: the markdown is the *subject resource*.)
-- **L1–L2 / Solid pod → the `.meta` graph is authoritative** for the interoperable representation +
-  everything the markdown doesn't express (substrate-derived `rdfs:label`/`prefLabel`/provenance;
-  curator-added `broader`). (Application-Interop: RDF is the shared, shape-governed, agent-accessed
-  substrate.)
-- **The bridge is the server-managed description resource** — i.e., the projection. Solid says the
-  *server* manages `.meta` (the `describedby` auxiliary), which is exactly "the substrate generates
-  Turtle from the markdown."
-- Both views are independently writable (protocol-legal: PATCH the description resource; PUT the body)
-  **without competing for the same truth** — each layer owns a different aspect, overlapping only on
-  the governed predicates the markdown expresses. Consistency over the overlap is *our* policy (the §4
-  floor + loop + the D81 governed-predicate partition); Solid deliberately doesn't define it.
-
-**The one hazard this forces:** the projection must own only the governed (markdown-expressed) subset
-and **not clobber** graph-layer-authoritative triples (curator `broader`, substrate provenance) on body
-rewrites — i.e., RQ-Listener-1 / the deferred `.meta.agent` sidecar (D82). **Symmetric two-master
-replication** (CRDT — `@desmet-2026-orset-rdf`) is a *different axis* (independent offline divergence +
-merge) and stays deferred to **Scale-3 federation**.
+- Both views are **independently writable** (protocol-legal: PATCH the description resource; PUT the
+  body) **without competing for the same truth** — each layer owns a different aspect. Consistency over
+  the governed overlap is *our* policy (the §4 floor + loop + the D81 governed-predicate partition);
+  Solid deliberately doesn't define it.
+- **The one hazard this forces:** the projection must own only the governed (markdown-expressed) subset
+  and **not clobber** graph-layer-authoritative triples (curator `broader`, substrate provenance) on
+  body rewrites — i.e., RQ-Listener-1 / the deferred `.meta.agent` sidecar (D82).
+- **Symmetric two-master replication** (CRDT — `@desmet-2026-orset-rdf`) is a *different axis*
+  (independent offline divergence + merge) and stays deferred to **Scale-3 federation**.
 
 ## 4. The coherence model — a control loop, not a storage protocol
 
@@ -129,8 +127,8 @@ it. Coherence here is a **two-tier control loop** plus legibility:
   SHACL verifies *well-formed*; only an agent verifies *well-placed*.
 
 **How consistency actually holds:** every write — markdown-view edit or graph edit — **funnels through
-the same floor (admitted or 422'd) and the same loop (curated for fit)**. The canonical graph is the
-post-floor, post-loop state; views render from it. The agentic behavior is **contained by the floor and
+the same floor (admitted or 422'd) and the same loop (curated for fit)**. The substrate graph is the
+post-floor, post-loop queryable state; the document view stays consistent with it via the projection. The agentic behavior is **contained by the floor and
 curated by the loop** — there is no symmetric-merge problem because writes serialize through floor+loop,
 not on two free-running copies.
 
@@ -190,7 +188,7 @@ Too large for one spec. Each sub-project gets its own spec → plan → build cy
 
 | | Sub-project | What | Status |
 |---|---|---|---|
-| **A** | **RQ-Grammar-1** | complete, reversible, rule-grounded, refinement-ready, discovery-consistent **markdown write-view into the canonical graph** (build the forward markdown→graph direction now; design the graph→markdown direction in, don't build it) | **next** — brainstorm to its own spec |
+| **A** | **RQ-Grammar-1** | complete, reversible, rule-grounded, refinement-ready, discovery-consistent **markdown write-view into the substrate graph** (build the forward markdown→graph direction now; design the graph→markdown direction in, don't build it) | **next** — brainstorm to its own spec |
 | **B** | **D108 Front-2** | the **admission floor**: in-band/synchronous projection so the validator validates the *projected graph*; container=gate / class=dispatch; `constrainedBy` on durable containers, `working/` permissive; 422 reserved for judgment metadata; dev-side tests encoding the frame model | after A (A makes the floor *honest*) |
 | **C** | **Curation loop** | **Karpathy Lint as a continuous agentic process**; elevate pod-curator to the Tier-2 reviewer; wire `mem:*` triggers; "enough info for the refinement process" contract | after/with B |
 | **D** | **View layer** | graph→document **regeneration**; the graph as a second writable view; conneg-by-profile `?_profile=` view selection (D107 §6) | **deferred** — design-for now |
@@ -225,8 +223,8 @@ Then: re-run **RQ-View-2** once A + B land (the eval that surfaced all this; it 
 
 ## 9. Relationship to prior decisions
 
-- **Realizes D70** — the L1/L2/L3 split that was "not honored in practice" (CLAUDE.md): graph-canonical
-  substrate + view layer is L1/L2; wiki-memory is a bounded L3 profile over it.
+- **Realizes D70** — the L1/L2/L3 split that was "not honored in practice" (CLAUDE.md): the hybrid store +
+  layer-partitioned authority + view layer is L1/L2; wiki-memory is a bounded L3 profile over it.
 - **Completes D58/D71** — dual-layer linking was built one-directional + lossy; D109 makes the body↔graph
   projection complete, validated, and (eventually) bidirectional.
 - **Honors D81** — governed predicates *are* the admission floor's structural commitment, and the
