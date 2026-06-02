@@ -27,15 +27,17 @@ import rdflib
 from rdflib import Graph, RDF, URIRef
 from pyshacl import validate
 
-WIKI = "https://pod.vardeman.me/vault/ontology/wiki#"
-SUB  = "https://pod.vardeman.me/vault/ontology/substrate#"
-SOLID = "http://www.w3.org/ns/solid/terms#"
-LDP  = "http://www.w3.org/ns/ldp#"
-SH   = "http://www.w3.org/ns/shacl#"
-RDFS = "http://www.w3.org/2000/01/rdf-schema#"
-PIM  = "http://www.w3.org/ns/pim/space#"
-PROF = "http://www.w3.org/ns/dx/prof/"
-SKOS = "http://www.w3.org/2004/02/skos/core#"
+WIKI   = "https://pod.vardeman.me/vault/ontology/wiki#"
+SUB    = "https://pod.vardeman.me/vault/ontology/substrate#"
+SOLID  = "http://www.w3.org/ns/solid/terms#"
+LDP    = "http://www.w3.org/ns/ldp#"
+SH     = "http://www.w3.org/ns/shacl#"
+RDFS   = "http://www.w3.org/2000/01/rdf-schema#"
+PIM    = "http://www.w3.org/ns/pim/space#"
+PROF   = "http://www.w3.org/ns/dx/prof/"
+SKOS   = "http://www.w3.org/2004/02/skos/core#"
+INTEROP = "http://www.w3.org/ns/solid/interop#"
+ST     = "http://www.w3.org/ns/shapetrees#"
 
 # The wikirole SKOS scheme — prof:hasRole targets under this namespace must be
 # defined here, else the role is dangling (e.g. the search-affordance role that
@@ -237,7 +239,10 @@ async def audit(pod_url, shapes_dir, check_routing_flag=False):
             await walk_affordances(client, rewrite(cat_iri, canon_base, pod_base),
                                    canon_base, pod_base, shapes_g, role_members, findings)
 
-        # 5. Routing sanity-check (--check-routing)
+        # 5. Interop registration graph
+        await audit_interop_registration(client, pod_base, findings)
+
+        # 6. Routing sanity-check (--check-routing)
         if check_routing_flag:
             routing_url = pod_base + "meta/routing.jsonld"
             rr = await client.get(routing_url, headers={"Accept": "application/ld+json"})
@@ -264,6 +269,126 @@ async def load_role_members(client, pod_base):
         return {str(s) for s in g.subjects(URIRef(SKOS + "inScheme"), None)}
     except (httpx.HTTPError, ValueError):
         return None
+
+
+async def audit_interop_registration(client, pod_base, findings):
+    """Walk the interop registration graph (Task 7 / D109 interop foundation).
+
+    Checks:
+    1. WebID + registry doc: RegistrySet → DataRegistry → 7 DataRegistrations.
+    2. Each registeredShapeTree names a st:ShapeTree in the deployed tree doc.
+    3. Each st:shape in the tree doc resolves to a sh:NodeShape in the shape catalog.
+    """
+    webid_url    = pod_base + "profile/card"
+    registry_url = pod_base + "meta/interop/registry"
+    trees_url    = pod_base + "meta/shapetrees/wiki-memory.tree"
+    shapes_url   = pod_base + "meta/shapes/"
+    webid_iri    = pod_base + "profile/card#me"
+
+    # Fetch and merge the WebID card + registry doc.
+    card_r, reg_r = await asyncio.gather(
+        client.get(webid_url,    headers={"Accept": "text/turtle"}),
+        client.get(registry_url, headers={"Accept": "text/turtle"}),
+    )
+    for url, r in ((webid_url, card_r), (registry_url, reg_r)):
+        if r.status_code != 200:
+            findings.append(finding("ERROR", url, "interop:unreachable",
+                f"Interop registration resource not reachable (HTTP {r.status_code}).",
+                "Ensure the resource is seeded and publicly readable."))
+            return
+    g = Graph()
+    g.parse(data=card_r.text, format="turtle", publicID=webid_url)
+    g.parse(data=reg_r.text,  format="turtle", publicID=registry_url)
+
+    me = URIRef(webid_iri)
+    reg_sets = list(g.objects(me, URIRef(INTEROP + "hasRegistrySet")))
+    if not reg_sets:
+        findings.append(finding("ERROR", webid_iri, "interop:no-registry-set",
+            "No interop:hasRegistrySet on the WebID subject (merged card + registry).",
+            "Publish the registry doc at meta/interop/registry with the hasRegistrySet triple."))
+        return
+
+    data_regs = []
+    for rs in reg_sets:
+        data_regs += list(g.objects(rs, URIRef(INTEROP + "hasDataRegistry")))
+    if not data_regs:
+        findings.append(finding("ERROR", registry_url, "interop:no-data-registry",
+            "No interop:hasDataRegistry found on any RegistrySet.",
+            "Add a DataRegistry node linked from the RegistrySet."))
+        return
+
+    registrations = []
+    for dr in data_regs:
+        registrations += list(g.objects(dr, URIRef(INTEROP + "hasDataRegistration")))
+    if len(registrations) != 7:
+        findings.append(finding("ERROR", registry_url, "interop:registration-count",
+            f"Expected 7 DataRegistrations, found {len(registrations)}.",
+            "Add or remove DataRegistration nodes until exactly 7 exist."))
+
+    # Collect the registeredShapeTree IRIs.
+    reg_trees = {}  # registration IRI → tree IRI
+    for reg in registrations:
+        tree = g.value(reg, URIRef(INTEROP + "registeredShapeTree"))
+        if tree:
+            reg_trees[str(reg)] = str(tree)
+        else:
+            findings.append(finding("ERROR", str(reg), "interop:missing-shape-tree",
+                "DataRegistration has no interop:registeredShapeTree.",
+                "Add interop:registeredShapeTree pointing at a ShapeTree in the tree doc."))
+
+    # 2. Fetch the ShapeTree doc; verify every referenced tree exists there.
+    trees_r = await client.get(trees_url)
+    if trees_r.status_code != 200:
+        findings.append(finding("ERROR", trees_url, "interop:shapetrees-unreachable",
+            f"ShapeTree document not reachable (HTTP {trees_r.status_code}).",
+            "Seed the wiki-memory.tree file into the Pod."))
+        return
+    tree_g = Graph().parse(data=trees_r.text, format="turtle", publicID=trees_url)
+    defined_trees = {str(s) for s in tree_g.subjects(RDF.type, URIRef(ST + "ShapeTree"))}
+
+    for reg_iri, tree_iri in reg_trees.items():
+        if tree_iri not in defined_trees:
+            findings.append(finding("ERROR", reg_iri, "interop:dangling-shape-tree",
+                f"registeredShapeTree {tree_iri} is not defined (a st:ShapeTree) in {trees_url}.",
+                "Define the missing ShapeTree in wiki-memory.tree or correct the registration."))
+
+    # 3. Collect all st:shape IRIs from the tree doc; resolve each against the shape catalog.
+    tree_shapes = {str(o) for o in tree_g.objects(None, URIRef(ST + "shape"))}
+    if not tree_shapes:
+        findings.append(finding("WARN", trees_url, "interop:no-tree-shapes",
+            "No st:shape predicates found in the ShapeTree document.",
+            "Ensure resource trees declare st:shape pointing at SHACL NodeShapes."))
+        return
+
+    # Walk the shape catalog: GET container, then fetch each shape doc, collect NodeShapes.
+    shapes_r = await client.get(shapes_url, headers={"Accept": "text/turtle"})
+    if shapes_r.status_code != 200:
+        findings.append(finding("ERROR", shapes_url, "interop:shapes-catalog-unreachable",
+            f"Shape catalog not reachable (HTTP {shapes_r.status_code}).",
+            "Ensure /meta/shapes/ is published on the Pod."))
+        return
+    cat_g = Graph().parse(data=shapes_r.text, format="turtle", publicID=shapes_url)
+    shape_docs = [str(o) for o in cat_g.objects(URIRef(shapes_url), URIRef(LDP + "contains"))]
+
+    fetched = await asyncio.gather(*(
+        client.get(doc_url) for doc_url in shape_docs), return_exceptions=True)
+    defined_shapes = set()
+    for doc_url, resp in zip(shape_docs, fetched):
+        if isinstance(resp, Exception) or resp.status_code != 200:
+            continue
+        sg = Graph().parse(data=resp.text, format="turtle", publicID=doc_url)
+        defined_shapes.update(str(s) for s in sg.subjects(RDF.type, URIRef(SH + "NodeShape")))
+
+    dangling_shapes = tree_shapes - defined_shapes
+    for iri in sorted(dangling_shapes):
+        findings.append(finding("ERROR", iri, "interop:dangling-shape",
+            f"st:shape {iri} referenced in the tree doc is not a sh:NodeShape in the shape catalog.",
+            "Define the missing NodeShape in the appropriate shape file under /meta/shapes/."))
+
+    if not dangling_shapes and len(registrations) == 7 and not (tree_shapes - defined_shapes):
+        findings.append(finding("INFO", registry_url, "interop:registration-ok",
+            f"Interop registration graph: {len(registrations)} DataRegistrations, "
+            f"all shape trees defined, all st:shape IRIs resolve in the catalog.", ""))
 
 
 async def walk_affordances(client, cat_url, canon_base, pod_base, shapes_g, role_members, findings):
