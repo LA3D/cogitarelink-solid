@@ -2,6 +2,25 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## ⚙ Interop foundation — deferred-runtime gaps (D109 sub-A+B final review, 2026-06-02)
+
+The interop foundation (Application / AccessNeeds / RegistrySet / DataRegistrations /
+ShapeTrees-over-SHACL; branch `d109-grammar-interop-specs`) is **vocabulary-now / runtime-deferred**
+(D109 §5). Two consistency gaps are deliberate but will resurface when the SAI runtime lands:
+- **`interop:hasRegistrySet` is asserted in the registry doc, not the WebID card.** A real SAI client
+  discovers the RegistrySet by following `hasRegistrySet` from the *dereferenced WebID*; it won't find
+  it there. `pod_audit` passes only because it merges card+registry before querying. Fix when the
+  runtime matters: seed the `hasRegistrySet` triple into `/vault/profile/card` (owner-identity overlay).
+- **Shape Trees namespace drift:** we use plural `http://www.w3.org/ns/shapetrees#` (the actual
+  ontology) consistently, but SAI's cached `interop.ttl` declares `registeredShapeTree`'s range as
+  singular `…/ns/shapetree#`. A strict interop range check would mismatch. Documented in
+  `ontology/shapetrees.ttl` header; revisit at D110 / SAI-runtime time.
+
+RESOLVED in the same branch: the **build:esm deploy gap** — the Dockerfile now runs `build:esm`, so the
+ESM projection pipeline `dist/` (which the listener loads at runtime) is rebuilt from source instead of
+shipping a stale COPY'd local build (commit `569a78c`). Sharpens the older "stop tracking compiled
+dist drift" code-review follow-up below.
+
 ## ⚙ Infrastructure note — replace Zazuko `rdf-validate-shacl` with `shacl-engine` (future op, Chuck leaning YES)
 
 Recorded 2026-06-02 while fresh, at Chuck's request. **Chuck is leaning toward replacing the current

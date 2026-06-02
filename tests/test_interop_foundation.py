@@ -79,7 +79,7 @@ def test_no_dangling_shape_trees_and_every_shape_defined():
 MGR_DIR = REPO / "overlays/wiki-memory/interop/managers"
 CONTAINER_SLUGS = ["concepts", "people", "places", "events", "organizations", "procedures", "working"]
 
-def test_one_manager_per_container_assigns_a_container_tree_and_focuses_this():
+def test_one_manager_per_container_assigns_a_container_tree():
     for slug in CONTAINER_SLUGS:
         f = MGR_DIR / f"{slug}.shapetree.ttl"
         assert f.exists(), f"missing manager {f}"
@@ -89,5 +89,6 @@ def test_one_manager_per_container_assigns_a_container_tree_and_focuses_this():
         assert a is not None, f"{slug}: no st:hasAssignment"
         assigned = g.value(a, ST.assigns)
         assert assigned is not None and str(assigned).endswith("ContainerTree"), f"{slug}: st:assigns must be a ContainerTree"
-        focus = g.value(a, ST.focusNode)
-        assert focus is not None and "#this" in str(focus), f"{slug}: focusNode must target #this"
+        # A container Manager assigns the container tree + names the managed container; the per-resource
+        # validation focus is each contained resource's <#this> (resolved at validation, not pinned here).
+        assert g.value(a, ST.manages) is not None, f"{slug}: st:manages must name the container"

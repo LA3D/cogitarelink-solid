@@ -14,5 +14,5 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*.ts", "../shared/markdown-parsing/src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "../shared/markdown-parsing/src/**/*.test.ts"]
 }

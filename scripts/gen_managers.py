@@ -5,8 +5,10 @@
 # A Manager associates a container with its CONTAINER shape tree (st:assigns). The shapes
 # themselves live on the container tree's contained resource trees (st:contains), so the
 # assignment carries NO st:shape — correct for the co-resident concepts/ container
-# (Concept + Source). st:focusNode uses a "{instance}" template marker: per contained
-# resource, the validation focus is that resource's <#this>.
+# (Concept + Source). It also carries NO st:focusNode — a container Manager has no single focus
+# node; the per-resource validation focus is each contained resource's <#this>, resolved at
+# validation time (the earlier "{instance}#this" form was dropped: it was an invalid IRI that
+# crashed RDF re-serialization).
 from pathlib import Path
 
 BASE = "https://pod.vardeman.me/vault"
@@ -32,7 +34,6 @@ for slug, tree in CONTAINERS.items():
         "<> a st:Manager ; st:hasAssignment <#a1> .\n"
         "<#a1>\n"
         f"    st:assigns <{TREE_NS}{tree}> ;\n"
-        f"    st:manages <{container}> ;\n"
-        f"    st:focusNode <{container}{{instance}}#this> .\n"
+        f"    st:manages <{container}> .\n"
     )
 print(f"wrote {len(CONTAINERS)} manager files")

@@ -18,5 +18,5 @@
     "test/**/*.ts",
     "../shared/markdown-parsing/src/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "src-cjs"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "../shared/markdown-parsing/src/**/*.test.ts", "src-cjs"]
 }

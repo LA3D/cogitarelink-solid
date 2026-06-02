@@ -3,5 +3,4 @@
 <> a st:Manager ; st:hasAssignment <#a1> .
 <#a1>
     st:assigns <https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree#EventContainerTree> ;
-    st:manages <https://pod.vardeman.me/vault/wiki/events/> ;
-    st:focusNode <https://pod.vardeman.me/vault/wiki/events/{instance}#this> .
+    st:manages <https://pod.vardeman.me/vault/wiki/events/> .

@@ -3,5 +3,4 @@
 <> a st:Manager ; st:hasAssignment <#a1> .
 <#a1>
     st:assigns <https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree#ConceptContainerTree> ;
-    st:manages <https://pod.vardeman.me/vault/wiki/concepts/> ;
-    st:focusNode <https://pod.vardeman.me/vault/wiki/concepts/{instance}#this> .
+    st:manages <https://pod.vardeman.me/vault/wiki/concepts/> .
