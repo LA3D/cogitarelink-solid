@@ -2,6 +2,41 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## 🔍 Cold-probe findings (n=3, 2026-06-02) — in-band grammar teaching + URI opacity
+
+Three independent cold-probe agents (HTTP-only, no repo/skills/hints) interpreting the live pod.
+**Strong positives:** all three read it as **agentic memory** ("an agent's durable externalized
+memory," "agentic memory pod" — the **"memory pod"** framing lands unprompted); all three accurately
+reconstructed the structure (discovery chain → catalogs/Type-Index/shapes, dual-layer markdown+`.meta`,
+two-subject `<>`/`<#this>`, two-stage commit, SHACL 422). Two gaps to act on:
+
+1. **★ The grammar is undiscoverable in-band (highest value; do BEFORE D108 Front-2 enforcement).**
+   All three found `skos:prefLabel` is *required* on a concept but **NONE discovered the
+   `[text]{.prefLabel}` literal-axis grammar** — they guessed frontmatter key / `.meta` PATCH /
+   wikilink hint. The grammar SHIPPED + works (G10), but the **Tier-0 teaching surface was never
+   updated**: the storage `sh:agentInstruction`, the `markdown-projection` affordance descriptor
+   (`sub:projectsFromFrontmatter` lists `type/created/…` but NOT the literal axis), and
+   `how-wiki-memory-works.md` don't teach *how* to author `prefLabel`/`definition` inline. No point
+   enforcing the floor before agents can learn to satisfy it. **Quick win = teach it IN-BAND (not a
+   skill):** add the literal/edge/type axes + required-fields-per-shape to those three surfaces.
+   Sub-requirement: the projector must **skip wikilinks/spans inside code spans** so a teaching doc can
+   SHOW `[text]{.prefLabel}` examples without projecting them (this is the root of the dangling-broader
+   bug — fixed minimally at `f8aaeaf`, proper fix folds in here).
+2. **URI opacity (the deeper RQ-Substrate-4 frame).** All three still hit the `/vault/wiki/` "false
+   friend" — first read it as "a MediaWiki app," then self-corrected via the orientation note. The
+   misread is *killed at comprehension* but the **URI segment is still friction**. Reframe (Chuck): a
+   URI path should be **OPAQUE** — semantics are defined by the `.meta`/representation, NOT by path
+   tokens; agents *reading* `wiki`/`vault` as semantic tokens is the bug (they should treat the path as
+   an opaque identifier and take meaning from the RDF). Fix space (NOT now): communicate/treat paths as
+   opaque + lean on metadata for semantics, and/or rename toward the **"memory pod"** framing (retire
+   "vault"/"wiki" as semantic segments). Continues the deferred RQ-Substrate-4 view-layer / storage-root work.
+3. **Bridge affordances need design.** All three noted two person stores — `/vault/contacts/` (vCard)
+   vs `/vault/wiki/people/` (schema:Person notes) — plus `bridge-card-to-wiki.ttl`, but the relationship
+   (dedup? federation? when to use which?) wasn't legible from a read. Needs a design pass.
+
+Also: the `pod-discover` skill (solid-agent-skills) is **drifted** — still references `wiki:typeIndex`,
+`/wiki/{pages,sources,…}/`, and `:3000` (all pre-D107/D98). Re-sync when touched.
+
 ## ⚙ Interop foundation — deferred-runtime gaps (D109 sub-A+B final review, 2026-06-02)
 
 The interop foundation (Application / AccessNeeds / RegistrySet / DataRegistrations /
