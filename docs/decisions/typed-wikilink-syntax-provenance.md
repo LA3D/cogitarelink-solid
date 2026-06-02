@@ -62,6 +62,13 @@ attribute, mapping directly to RDFa —
 Verbatim: *"My name is `[Manu Sporny]{:name}` and you can give me a ring via
 `[1-800-555-0199]{:telephone}`."*
 
+**Stated purpose** (the spec's "What is Semantic Markdown"): *"RDFa Lite for Markdown"* — it
+*"aims at enhancing the HTML generated from Markdown with RDFa Lite attributes,"* so the rendered
+HTML is the machine-readable surface (document-coupled self-description). That purpose is exactly
+our **render path** (§4 path 2) — and exactly the surface D75 dropped; see the §4 tension flag.
+Contrast DOT-LD, whose stated purpose is a *render-independent* KG emittable to RDF/OWL/JSON-LD/any
+format — that maps to our **projection path** (§4 path 1), not the render path.
+
 **Relationship to D36 (the precise lineage):** we share the **core convention — a Pandoc
 `{.class}` attribute whose leading-`.` carries an RDF type**, rendered to RDFa. The one
 difference is the *carrier*: Sparna annotates **inline bracketed spans** (`[text]{.class}`,
@@ -112,6 +119,8 @@ Concepts/`), which frames the multi-layer affordance model (`.meta` sidecar + ty
 - **Two consumption paths from the same `{.class}` source (D58/D71):**
   1. **Projection path** → `.meta` Turtle triple (the queryable graph view).
   2. **Render path** → RDFa `property` CURIE on the `<a>` (the HTML view for humans/web agents).
+
+  > **⚠ Inconsistent with D75 — open, parked 2026-06-02.** Path 2 describes the **pre-D75** design. **D75 dropped RDFa-in-HTML**: rendered HTML now carries semantic CSS classes only (`class="wikilink wikilink-{type}"`), and the data layer is *exclusively* `.meta` Turtle. So as of D75 there is **one** machine path (projection → `.meta`), not two. Whether to restore RDFa as the self-describing face of the `text/html` representation (Tier-1 web-agent consumer; content-negotiation argument) vs. D75's "redundant surface nobody reads" is an **unresolved decision** — do not treat Path 2 as current until reconciled. Vault companion: `Linked Data Affordances in Markdown` (same flag).
 
 ### Drift caveat (flagged for Front-2 cleanup)
 
