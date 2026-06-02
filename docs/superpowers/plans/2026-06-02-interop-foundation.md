@@ -55,22 +55,35 @@ TypeScript (CSS v8 extension, N3 v2) for the shacl-engine spike only.
 - `docs/superpowers/plans/2026-06-02-shacl-engine-spike-report.md` — the spike's findings + decision.
 
 **Type list (the data the emission is driven by — single source for this plan):**
-`GOVERNED_TYPES` = the deployed D98 catalog, read from the live Type Index at build time, but for
-authoring the artifacts use this canonical list (class IRI → container slug → SHACL shape IRI):
+`GOVERNED_TYPES` = the deployed D98 catalog. **This table is authoritative (reconciled — see Task 0
+below). Every Turtle/test example in the tasks MUST use these values; any divergent literal in an
+example block is superseded by this table.**
 
-| class | container | SHACL NodeShape |
+| class | container | SHACL NodeShape (IRI) |
 |---|---|---|
-| `skos:Concept` | `concepts/` | `…/shapes/concept.shacl#ConceptShape` |
-| `schema:Person` | `people/` | `…/shapes/person.shacl#PersonShape` |
-| `schema:Place` | `places/` | `…/shapes/place.shacl#PlaceShape` |
-| `schema:Organization` | `organizations/` | `…/shapes/organization.shacl#OrganizationShape` |
-| `mem:Event` | `events/` | `…/shapes/event.shacl#EventShape` |
-| `mem:Procedure` | `procedures/` | `…/shapes/procedure.shacl#ProcedureShape` |
-| `wiki:WorkingNote` | `working/` | `…/shapes/working-note.shacl#WorkingNoteShape` |
+| `skos:Concept` | `concepts/` | `wiki:ConceptShape` |
+| `wiki:Source` | `concepts/` (co-resident) | `wiki:SourceShape` |
+| `schema:Person` | `people/` | `wiki:PersonShape` |
+| `schema:Place` | `places/` | `wiki:PlaceShape` |
+| `schema:Event` | `events/` | `wiki:EventShape` |
+| `schema:Organization` | `organizations/` | `wiki:OrganizationShape` |
+| `schema:HowTo` | `procedures/` | `wiki:HowToShape` |
+| `wiki:WorkingNote` | `working/` | `wiki:WorkingNoteShape` |
 
-> **Task 0 (verify the list before authoring):** GET the live `publicTypeIndex` and the deployed
-> shape catalog; reconcile this table against them. If a class/shape name differs, fix the table
-> here first. Command: `(cd ../solid-agent-skills && node dist/cli.js read https://pod.vardeman.me/vault/settings/publicTypeIndex)` and `… read …/vault/meta/shapes/`. Record the reconciled list in this plan before Task 1.
+where `wiki:` = `https://pod.vardeman.me/vault/ontology/wiki#` (shape NodeShape IRIs live in the wiki
+ontology namespace; the shape *documents* are served under `/vault/meta/shapes/<file>.shacl` and
+discovered via the shape catalog), `schema:` = `https://schema.org/`.
+
+> **Task 0 — RECONCILED 2026-06-02** (against `overlays/wiki-memory/manifest.ttl`
+> `installsTypeRegistration` + `overlays/wiki-memory/shapes/*.shacl.ttl`). The table CORRECTS the
+> pre-reconciliation draft, which wrongly used `mem:Event`/`mem:Procedure` and
+> `…/shapes/X.shacl#XShape` IRIs and omitted `wiki:Source`. **Decisions locked here:**
+> - **`st:shape` → the NodeShape IRI** (`wiki:XShape`) — the shape's *identity*, not a document URL.
+>   Shape *location* is resolved via the served shape catalog (`/vault/meta/shapes/`), so the audit
+>   (Task 7) resolves shape→catalog rather than HEAD-ing the IRI.
+> - **`wiki:Source` is co-resident in `concepts/`:** the `ConceptContainerTree` `st:contains` BOTH the
+>   Concept and Source resource trees; there are **8 AccessNeeds** (one per class incl. Source) but
+>   **7 DataRegistrations** (one per container; `concepts/` covers Concept + Source).
 
 ---
 
