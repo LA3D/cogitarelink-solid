@@ -59,3 +59,35 @@ def test_registry_chain_owner_to_7_dataregistrations_each_a_container_tree():
     for r in regs:
         t = g.value(r, INTEROP.registeredShapeTree)
         assert t is not None and str(t).endswith("ContainerTree"), f"{r}: registeredShapeTree must be a ContainerTree, got {t}"
+
+
+# --- Task 4: cross-artifact agreement (anti-drift guard) ---
+
+def test_no_dangling_shape_trees_and_every_shape_defined():
+    g = rdflib.Graph()
+    for f in (TREE, APP, REG):
+        g.parse(f, format="turtle")
+    defined_trees = set(g.subjects(ST.expectsType, None))
+    used_trees = set(g.objects(None, INTEROP.registeredShapeTree))
+    assert used_trees <= defined_trees, f"dangling registeredShapeTree: {used_trees - defined_trees}"
+    shapes = {str(o).split('#')[-1] for o in g.objects(None, ST.shape)}
+    assert shapes == set(RESOURCE_SHAPES), shapes
+
+
+# --- Task 5: per-container .shapetree Manager auxiliaries ---
+
+MGR_DIR = REPO / "overlays/wiki-memory/interop/managers"
+CONTAINER_SLUGS = ["concepts", "people", "places", "events", "organizations", "procedures", "working"]
+
+def test_one_manager_per_container_assigns_a_container_tree_and_focuses_this():
+    for slug in CONTAINER_SLUGS:
+        f = MGR_DIR / f"{slug}.shapetree.ttl"
+        assert f.exists(), f"missing manager {f}"
+        g = rdflib.Graph(); g.parse(f, format="turtle")
+        mgr = next(g.subjects(rdflib.RDF.type, ST.Manager))
+        a = g.value(mgr, ST.hasAssignment)
+        assert a is not None, f"{slug}: no st:hasAssignment"
+        assigned = g.value(a, ST.assigns)
+        assert assigned is not None and str(assigned).endswith("ContainerTree"), f"{slug}: st:assigns must be a ContainerTree"
+        focus = g.value(a, ST.focusNode)
+        assert focus is not None and "#this" in str(focus), f"{slug}: focusNode must target #this"
