@@ -10,21 +10,68 @@
 export type TypeIndex = Record<string, string>;
 // Map of container path prefix (with trailing slash) → Thing class IRI
 
+// The wiki-memory L3 profile's own container-layout segment. This is a profile
+// constant (the L3 layout names its sub-containers /wiki/{concepts,…}/), NOT a
+// deployment/storage-root literal. The STORAGE ROOT (e.g. /vault) is always
+// supplied by the caller (D107 storagePath parameterization). Keeping the
+// segment here is the only baked-in path string permitted by the banned-literal
+// guard — see test/bannedLiterals.test.ts.
+export const WIKI_SEGMENT = "wiki";
+
+// The seven wiki-memory L3 container names → Thing class IRI. The container
+// path (key in the TypeIndex) is built per-deployment from the storage base;
+// only the segment name + class IRI are profile-intrinsic.
+const WIKI_CONTAINER_CLASSES: ReadonlyArray<readonly [string, string]> = [
+    ["concepts",      "http://www.w3.org/2004/02/skos/core#Concept"],
+    ["people",        "https://schema.org/Person"],
+    ["places",        "https://schema.org/Place"],
+    ["events",        "https://schema.org/Event"],
+    ["organizations", "https://schema.org/Organization"],
+    ["procedures",    "https://schema.org/HowTo"],
+    ["working",       "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote"],
+];
+
 /**
- * Hardcoded Type Index for the wiki-memory L3 canonical container layout.
- * Used as the projection pipeline's fallback when no external typeIndex is
- * provided (A.2 fix). Writes without explicit frontmatter type still emit
- * D98 substrate invariants by container path.
+ * Build the canonical wiki-memory L3 Type Index for a given storage base.
+ *
+ * The fallback map used by the projection pipeline when no live Type Index is
+ * available (fresh Pod / unreachable index). Writes without explicit frontmatter
+ * type still emit D98 substrate invariants by container path.
+ *
+ * @param storageBase  The storage-root URL or path, e.g. "https://pod.example/vault"
+ *                     or "/vault". The container keys are returned as PATH prefixes
+ *                     (pathname only) so resolveThingClass — which matches against a
+ *                     resource pathname — works regardless of whether storageBase is
+ *                     absolute or path-only.
+ * @returns Container path prefix (with trailing slash) → Thing class IRI map
  */
-export const DEFAULT_WIKI_TYPE_INDEX: TypeIndex = {
-    "/vault/wiki/concepts/":      "http://www.w3.org/2004/02/skos/core#Concept",
-    "/vault/wiki/people/":        "https://schema.org/Person",
-    "/vault/wiki/places/":        "https://schema.org/Place",
-    "/vault/wiki/events/":        "https://schema.org/Event",
-    "/vault/wiki/organizations/": "https://schema.org/Organization",
-    "/vault/wiki/procedures/":    "https://schema.org/HowTo",
-    "/vault/wiki/working/":       "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote",
-};
+export function defaultWikiTypeIndex(storageBase: string): TypeIndex {
+    // Reduce storageBase to its pathname so keys are path prefixes that match
+    // resolveThingClass's pathname input (e.g. "/vault"). Accepts both absolute
+    // URLs and bare paths.
+    let basePath: string;
+    try {
+        basePath = new URL(storageBase).pathname;
+    } catch {
+        basePath = storageBase;
+    }
+    basePath = basePath.replace(/\/$/, "");
+    const out: TypeIndex = {};
+    for (const [seg, cls] of WIKI_CONTAINER_CLASSES) {
+        out[`${basePath}/${WIKI_SEGMENT}/${seg}/`] = cls;
+    }
+    return out;
+}
+
+/**
+ * Historical default for the canonical /vault deployment, kept as a deprecated
+ * alias so existing callers/tests that assumed the /vault storage root keep
+ * working. New code should call defaultWikiTypeIndex(storageBase) with the
+ * injected storage base instead of relying on this baked-in /vault literal.
+ *
+ * @deprecated Use defaultWikiTypeIndex(storageBase) with the injected storage root.
+ */
+export const DEFAULT_WIKI_TYPE_INDEX: TypeIndex = defaultWikiTypeIndex("/vault");
 
 /**
  * Resolve the canonical Thing class IRI for a resource.

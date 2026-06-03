@@ -115,7 +115,7 @@ class MarkdownBodyProjector {
             this.routingMap = await loadRoutingMap(storageBase, fetch, BOOTSTRAP_PREDICATE_TO_CLASS);
         }
         const typeIndex = await this.typeIndexLoader.getTypeIndex();
-        const quads = await projectionPipeline.run(identifier.path, body, typeIndex, this.routingMap ?? undefined);
+        const quads = await projectionPipeline.run(identifier.path, body, typeIndex, this.routingMap ?? undefined, undefined, storageBase);
         // After Bug-F filtering, the wiki: class is removed from the page resource
         // triples when invariants are emitted. The thing class (skos:Concept,
         // schema:Person, …) is only on <#this>. We resolve governed predicates using

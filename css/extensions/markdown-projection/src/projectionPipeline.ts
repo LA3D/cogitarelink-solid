@@ -138,6 +138,13 @@ export const projectionPipeline = {
      *                     When provided, substrate invariants (D98) are emitted
      *                     when a Thing class can be resolved. Pass an empty
      *                     object or omit to skip invariant emission (backward compat).
+     * @param predicateToClass  Predicate IRI → entailed class IRI map.
+     * @param literalBinding    Span-literal frame binding.
+     * @param storageBase  Storage-root URL the wikilink target IRIs are minted
+     *                     under, e.g. "https://pod.example/vault". Threaded from
+     *                     the injected storagePath (listener / MarkdownBodyProjector).
+     *                     Omit to recover the root from resourceUri by splitting on
+     *                     the wiki segment (backward-compat fallback for tests).
      */
     async run(
         resourceUri: string,
@@ -145,14 +152,17 @@ export const projectionPipeline = {
         typeIndex: TypeIndex = DEFAULT_WIKI_TYPE_INDEX,
         predicateToClass: Record<string, string> = BOOTSTRAP_PREDICATE_TO_CLASS,
         literalBinding: Record<string, string> = DEFAULT_LITERAL_BINDING,
+        storageBase?: string,
     ): Promise<Quad[]> {
         const { fm, rest } = splitFrontmatter(body);
 
         // Frontmatter → quads (subject still urn:placeholder:subject)
         const fmTriples = rebindSubject(projectFrontmatter(fm), resourceUri);
 
-        // Body wikilinks → quads (subject = resourceUri)
-        const wikiTriples = projectWikilinks(rest, resourceUri, typeIndex, predicateToClass);
+        // Body wikilinks → quads (subject = resourceUri). storageBase (config-derived)
+        // is the root the target IRIs are minted under; when omitted, projectWikilinks
+        // recovers it from resourceUri.
+        const wikiTriples = projectWikilinks(rest, resourceUri, typeIndex, predicateToClass, storageBase);
 
         // Body literal spans → quads (subject resolved per-span by frame: prefLabel→<#this>, title→<>)
         const spanTriples = projectSpanLiteralsFramed(rest, resourceUri, literalBinding);

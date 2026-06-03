@@ -22,7 +22,7 @@ import { DataFactory } from "n3";
 import type { NamedNode, Quad } from "n3";
 import { extractWikilinks } from "../../shared/markdown-parsing/src/wikilinks.js";
 import { slug } from "../../shared/markdown-parsing/src/resolver.js";
-import { DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
+import { DEFAULT_WIKI_TYPE_INDEX, WIKI_SEGMENT } from "./typeIndexLookup.js";
 
 const { namedNode, quad } = DataFactory;
 
@@ -76,13 +76,19 @@ export const BOOTSTRAP_PREDICATE_TO_CLASS: Record<string, string> = {
     [DCT + "contributor"]:    SCHEMA + "Person",
 };
 
+// Inverts the container→class Type Index: given a class IRI, return the wiki
+// container segment (e.g. "organizations") it is registered under. Matches the
+// profile's /<WIKI_SEGMENT>/<segment>/ layout — the storage root is irrelevant
+// here because we only extract the trailing segment.
+const WIKI_SEGMENT_RE = new RegExp(`/${WIKI_SEGMENT}/([^/]+)/$`);
+
 export function classToContainerSegment(
     classIri: string,
     typeIndex: Record<string, string>,
 ): string | undefined {
     for (const [prefix, cls] of Object.entries(typeIndex)) {
         if (cls === classIri) {
-            const m = prefix.match(/\/wiki\/([^/]+)\/$/);
+            const m = prefix.match(WIKI_SEGMENT_RE);
             if (m) return m[1];
         }
     }
@@ -171,9 +177,14 @@ function projectionFor(hint: string | undefined, title: string): Projection {
     return DEFAULT_PROJECTION;
 }
 
-// Extract the root (everything before /wiki/) from the base URI
+// Recover the storage root (everything before /<WIKI_SEGMENT>/) from a resource
+// URI. Used ONLY as the fallback when projectWikilinks is called without an
+// explicit wikiRoot (e.g. unit tests). The production callers (pipeline → listener
+// / MarkdownBodyProjector) pass the injected storage base in, so the root no longer
+// depends on the deployment carrying a literal /wiki/ split point.
+const BASE_ROOT_RE = new RegExp(`^(.+?)/${WIKI_SEGMENT}/`);
 function baseRoot(baseUri: string): string {
-    const m = baseUri.match(/^(.+?)\/wiki\//);
+    const m = baseUri.match(BASE_ROOT_RE);
     return m ? m[1] : "";
 }
 
@@ -193,23 +204,30 @@ function baseRoot(baseUri: string): string {
  * @param baseUri        Absolute URI of the containing resource (the page document IRI)
  * @param typeIndex      Container path prefix → Thing class IRI map (defaults to DEFAULT_WIKI_TYPE_INDEX)
  * @param predicateToClass  Predicate IRI → entailed class IRI map (defaults to BOOTSTRAP_PREDICATE_TO_CLASS)
+ * @param wikiRoot       Storage root URL the target IRIs are minted under, e.g.
+ *                       "https://pod.example/vault". Threaded from the pipeline
+ *                       (which gets it from the injected storage base) so the root
+ *                       is config-derived, not recovered by splitting baseUri on a
+ *                       literal /wiki/. Omit to recover the root from baseUri
+ *                       (backward-compat fallback for unit tests).
  */
 export function projectWikilinks(
     body: string,
     baseUri: string,
     typeIndex: Record<string, string> = DEFAULT_WIKI_TYPE_INDEX,
     predicateToClass: Record<string, string> = BOOTSTRAP_PREDICATE_TO_CLASS,
+    wikiRoot?: string,
 ): Quad[] {
     const pageIRI  = namedNode(baseUri);
     const thingIRI = namedNode(baseUri + "#this");
     const out: Quad[] = [];
-    const root = baseRoot(baseUri);
+    const root = (wikiRoot ?? baseRoot(baseUri)).replace(/\/$/, "");
 
     for (const link of extractWikilinks(body)) {
         const stripped = applyS3a(link.title);
         const slugged  = slug(stripped);
         const ctr      = targetContainer(link.classHint, link.title, typeIndex, predicateToClass);
-        const targetPageURL = `${root}/wiki/${ctr}/${slugged}.md`;
+        const targetPageURL = `${root}/${WIKI_SEGMENT}/${ctr}/${slugged}.md`;
         const proj     = projectionFor(link.classHint, link.title);
 
         const subject = proj.subject === "PAGE" ? pageIRI : thingIRI;

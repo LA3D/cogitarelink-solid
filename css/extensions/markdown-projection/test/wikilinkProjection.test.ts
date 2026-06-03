@@ -175,3 +175,32 @@ describe("projectWikilinks container routing (D106)", () => {
         expect(q[0].object.value).toBe("https://pod.example/wiki/places/somewhere.md#this");
     });
 });
+
+// R4: target IRIs are minted under the threaded wikiRoot (config-derived storage
+// base), NOT recovered by splitting baseUri on a literal /wiki/.
+describe("projectWikilinks wikiRoot threading (R4 / D107)", () => {
+    const routing = BOOTSTRAP_PREDICATE_TO_CLASS;
+    const typeIndex = {
+        "/store/wiki/concepts/": "http://www.w3.org/2004/02/skos/core#Concept",
+        "/store/wiki/organizations/": "https://schema.org/Organization",
+    };
+
+    it("mints targets under the injected wikiRoot regardless of baseUri layout", () => {
+        // baseUri deliberately has NO /wiki/ split point; wikiRoot supplies the root.
+        const base = "https://pod.example/store/wiki/concepts/foo.md";
+        const q = projectWikilinks("[[Notre Dame]]{.affiliation}", base, typeIndex, routing, "https://pod.example/store");
+        expect(q[0].object.value).toBe("https://pod.example/store/wiki/organizations/notre-dame.md#this");
+    });
+
+    it("tolerates a trailing slash on wikiRoot", () => {
+        const base = "https://pod.example/store/wiki/concepts/foo.md";
+        const q = projectWikilinks("[[Context Graphs]]{.related}", base, typeIndex, routing, "https://pod.example/store/");
+        expect(q[0].object.value).toBe("https://pod.example/store/wiki/concepts/context-graphs.md#this");
+    });
+
+    it("falls back to baseUri-split when wikiRoot is omitted (back-compat)", () => {
+        const base = "https://pod.example/store/wiki/concepts/foo.md";
+        const q = projectWikilinks("[[Context Graphs]]{.related}", base, typeIndex, routing);
+        expect(q[0].object.value).toBe("https://pod.example/store/wiki/concepts/context-graphs.md#this");
+    });
+});

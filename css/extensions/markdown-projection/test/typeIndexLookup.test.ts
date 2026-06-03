@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveThingClass, DEFAULT_WIKI_TYPE_INDEX } from "../src/typeIndexLookup.js";
+import { resolveThingClass, DEFAULT_WIKI_TYPE_INDEX, defaultWikiTypeIndex } from "../src/typeIndexLookup.js";
 
 describe("resolveThingClass", () => {
   const typeIndex = {
@@ -106,5 +106,42 @@ describe("DEFAULT_WIKI_TYPE_INDEX", () => {
       "https://chuck.example/biz/Equipment",
     );
     expect(cls).toBe("https://chuck.example/biz/Equipment");
+  });
+});
+
+// R4: storagePath-derived wiki layout — keys come from the injected storage
+// base, not a baked /vault literal.
+describe("defaultWikiTypeIndex(storageBase)", () => {
+  it("DEFAULT_WIKI_TYPE_INDEX is the /vault deployment of defaultWikiTypeIndex (back-compat)", () => {
+    expect(DEFAULT_WIKI_TYPE_INDEX).toEqual(defaultWikiTypeIndex("/vault"));
+  });
+
+  it("builds path-prefix keys under an absolute storage base", () => {
+    const ti = defaultWikiTypeIndex("https://pod.example/store");
+    expect(ti["/store/wiki/concepts/"]).toBe("http://www.w3.org/2004/02/skos/core#Concept");
+    expect(ti["/store/wiki/people/"]).toBe("https://schema.org/Person");
+    // No /vault key — root came from config.
+    expect(ti["/vault/wiki/concepts/"]).toBeUndefined();
+  });
+
+  it("builds keys under a path-only storage base and tolerates a trailing slash", () => {
+    expect(defaultWikiTypeIndex("/store/")["/store/wiki/concepts/"])
+      .toBe("http://www.w3.org/2004/02/skos/core#Concept");
+  });
+
+  it("emits all seven wiki containers", () => {
+    const ti = defaultWikiTypeIndex("/vault");
+    expect(Object.keys(ti)).toHaveLength(7);
+    expect(ti["/vault/wiki/places/"]).toBe("https://schema.org/Place");
+    expect(ti["/vault/wiki/events/"]).toBe("https://schema.org/Event");
+    expect(ti["/vault/wiki/organizations/"]).toBe("https://schema.org/Organization");
+    expect(ti["/vault/wiki/procedures/"]).toBe("https://schema.org/HowTo");
+    expect(ti["/vault/wiki/working/"]).toBe("https://pod.vardeman.me/vault/ontology/wiki#WorkingNote");
+  });
+
+  it("resolveThingClass works against a non-/vault derived index", () => {
+    const ti = defaultWikiTypeIndex("/store");
+    expect(resolveThingClass("/store/wiki/concepts/foo.md", ti, undefined))
+      .toBe("http://www.w3.org/2004/02/skos/core#Concept");
   });
 });

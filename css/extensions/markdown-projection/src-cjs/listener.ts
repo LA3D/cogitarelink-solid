@@ -95,7 +95,7 @@ export function shouldReproject(
 const runtimeImport = new Function("specifier", "return import(specifier)") as (s: string) => Promise<any>;
 
 interface ProjectionModule {
-    projectionPipeline: { run(uri: string, body: string, typeIndex?: Record<string, string>, predicateToClass?: Record<string, string>): Promise<import("n3").Quad[]> };
+    projectionPipeline: { run(uri: string, body: string, typeIndex?: Record<string, string>, predicateToClass?: Record<string, string>, literalBinding?: Record<string, string>, storageBase?: string): Promise<import("n3").Quad[]> };
     resolveGovernedForWikiClass: (cls: string) => { page: string[]; thing: string[] };
     detectClass: (triples: import("n3").Quad[]) => string | undefined;
     MetaWriter: new() => { replaceGoverned(target: string, projected: import("n3").Quad[], governed: string[], resourceUrl?: string): Promise<void> };
@@ -148,11 +148,17 @@ function extractFrontmatterType(body: string): string | undefined {
     return raw.startsWith("http://") || raw.startsWith("https://") ? raw : undefined;
 }
 
-// A path is a candidate for a freshly-installed L4 container if it does NOT
-// contain /wiki/ (which is always in DEFAULT_WIKI_TYPE_INDEX). This avoids
-// refreshing the Type Index on every unknown /wiki/-adjacent path.
-function couldBeL4Container(url: string): boolean {
-    return !url.includes("/wiki/");
+// The wiki-memory L3 layout segment (mirrors typeIndexLookup.WIKI_SEGMENT). The
+// segment is the profile's own layout constant; the storage root comes from config.
+const WIKI_SEGMENT = "wiki";
+
+// A path is a candidate for a freshly-installed L4 container when it is OUTSIDE
+// the wiki-memory layout (<storageBase>/wiki/…), since every wiki container is
+// already in the default Type Index. L4 overlays register containers elsewhere
+// under the storage root and need a Type-Index refresh-on-miss. Derived from the
+// listener's injected storageBase, not a literal /wiki/ substring (R4 / D107).
+function couldBeL4Container(url: string, storageBase: string): boolean {
+    return !url.startsWith(`${storageBase}/${WIKI_SEGMENT}/`);
 }
 
 // ------------------------------------------------------------------
@@ -360,7 +366,7 @@ export class MarkdownProjectionListener extends Initializer {
         if (thingClass === undefined) {
             // Refresh-on-miss: the resource may belong to a freshly-installed L4
             // overlay whose Type Index entry isn't in the cache yet. Try once.
-            if (fmType !== undefined || couldBeL4Container(target.path)) {
+            if (fmType !== undefined || couldBeL4Container(target.path, storageBase)) {
                 typeIndex = await this.typeIndexLoader.refresh();
                 thingClass = resolveThingClass(
                     new URL(target.path).pathname,
@@ -374,7 +380,7 @@ export class MarkdownProjectionListener extends Initializer {
             }
         }
 
-        const triples = await projectionPipeline.run(target.path, body, typeIndex, this.routingMap ?? undefined);
+        const triples = await projectionPipeline.run(target.path, body, typeIndex, this.routingMap ?? undefined, undefined, storageBase);
 
         const cls = detectClass(triples);
         if (!cls) {

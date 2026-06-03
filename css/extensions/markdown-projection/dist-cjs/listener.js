@@ -130,11 +130,16 @@ function extractFrontmatterType(body) {
     // handled by projectionPipeline's resolveCURIE path.
     return raw.startsWith("http://") || raw.startsWith("https://") ? raw : undefined;
 }
-// A path is a candidate for a freshly-installed L4 container if it does NOT
-// contain /wiki/ (which is always in DEFAULT_WIKI_TYPE_INDEX). This avoids
-// refreshing the Type Index on every unknown /wiki/-adjacent path.
-function couldBeL4Container(url) {
-    return !url.includes("/wiki/");
+// The wiki-memory L3 layout segment (mirrors typeIndexLookup.WIKI_SEGMENT). The
+// segment is the profile's own layout constant; the storage root comes from config.
+const WIKI_SEGMENT = "wiki";
+// A path is a candidate for a freshly-installed L4 container when it is OUTSIDE
+// the wiki-memory layout (<storageBase>/wiki/…), since every wiki container is
+// already in the default Type Index. L4 overlays register containers elsewhere
+// under the storage root and need a Type-Index refresh-on-miss. Derived from the
+// listener's injected storageBase, not a literal /wiki/ substring (R4 / D107).
+function couldBeL4Container(url, storageBase) {
+    return !url.startsWith(`${storageBase}/${WIKI_SEGMENT}/`);
 }
 // ------------------------------------------------------------------
 // Path resolution — mirrors MementoCommitListener's fsPathFromUrl
@@ -293,7 +298,7 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
         if (thingClass === undefined) {
             // Refresh-on-miss: the resource may belong to a freshly-installed L4
             // overlay whose Type Index entry isn't in the cache yet. Try once.
-            if (fmType !== undefined || couldBeL4Container(target.path)) {
+            if (fmType !== undefined || couldBeL4Container(target.path, storageBase)) {
                 typeIndex = await this.typeIndexLoader.refresh();
                 thingClass = resolveThingClass(new URL(target.path).pathname, typeIndex, fmType);
             }
@@ -302,7 +307,7 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
                 return;
             }
         }
-        const triples = await projectionPipeline.run(target.path, body, typeIndex, this.routingMap ?? undefined);
+        const triples = await projectionPipeline.run(target.path, body, typeIndex, this.routingMap ?? undefined, undefined, storageBase);
         const cls = detectClass(triples);
         if (!cls) {
             debug(`no rdf:type projected for ${target.path} — resource may lack type frontmatter`);

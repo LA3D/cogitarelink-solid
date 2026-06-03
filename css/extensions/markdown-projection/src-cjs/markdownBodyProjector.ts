@@ -125,6 +125,8 @@ export class MarkdownBodyProjector {
             body,
             typeIndex,
             this.routingMap ?? undefined,
+            undefined,
+            storageBase,
         );
 
         // After Bug-F filtering, the wiki: class is removed from the page resource
