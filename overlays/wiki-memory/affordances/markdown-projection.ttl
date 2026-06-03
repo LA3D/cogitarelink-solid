@@ -20,6 +20,9 @@
     sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
     sub:governs rdf:type ,
         dct:title ,
+        skos:prefLabel ,
+        skos:altLabel ,
+        skos:definition ,
         dct:identifier ,
         dct:created ,
         dct:modified ,
@@ -42,5 +45,9 @@
         "aliases" ,
         "identifier" ,
         "citekey" ;
+    sub:projectsFromBody
+        "literal axis: [text]{.prefLabel} / {.altLabel} / {.definition} → skos: literals on <#this>" ,
+        "edge axis: [[Target]]{.broader} / {.related} / {.cites} / {.source} / {.author} → resource edges" ,
+        "type axis: frontmatter type: → rdf:type on <#this> (dispatched to the container's shape)" ;
     sub:classHintTable <../context.jsonld> ;
     sh:agentInstruction "Substrate writes the predicates listed in sub:governs. To express any of those, edit the body+frontmatter; do not PATCH .meta directly. Other predicates are agent-extensible." .
