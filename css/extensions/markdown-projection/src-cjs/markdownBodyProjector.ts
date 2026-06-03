@@ -53,25 +53,35 @@ function getPipeline(): Promise<any> {
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
 export class MarkdownBodyProjector {
+    private readonly baseUrl: string;
+    // Accepted for Components.js constructor-argument alignment with listener.ts;
+    // unused here because project() receives body as a string, not a filesystem path.
+    private readonly dataDir: string;
+    // Pod storage root path under baseUrl, injected via Components.js (default "/vault").
+    private readonly storagePath: string;
     private routingMap: Record<string, string> | null = null;
     // Typed as any — TypeIndexLoader is loaded from ESM at runtime.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private typeIndexLoader: any = null;
 
     public constructor(
-        private readonly baseUrl: string,
-        private readonly dataDir: string,
-        private readonly storagePath = "/vault",
+        baseUrl: string,
+        dataDir: string,
+        storagePath = "/vault",
     ) {
         this.baseUrl = baseUrl.replace(/\/$/, "");
+        this.dataDir = dataDir;
+        // Normalise: leading "/", no trailing "/" — mirrors listener.ts constructor
+        // (lines 176-177) so storageBase = baseUrl + storagePath joins cleanly.
+        const sp = storagePath.startsWith("/") ? storagePath : `/${storagePath}`;
+        this.storagePath = sp.replace(/\/$/, "");
     }
 
     // Storage root URL = baseUrl + storagePath. TypeIndexLoader and loadRoutingMap
     // both require this base (not the server root) to find publicTypeIndex and
-    // meta/routing.jsonld. Mirrors listener.ts's storageBase getter.
+    // meta/routing.jsonld. Mirrors listener.ts's storageBase getter exactly.
     private get storageBase(): string {
-        const sp = this.storagePath.startsWith("/") ? this.storagePath : `/${this.storagePath}`;
-        return `${this.baseUrl}${sp.replace(/\/$/, "")}`;
+        return `${this.baseUrl}${this.storagePath}`;
     }
 
     public canProject(representation: Representation): boolean {
