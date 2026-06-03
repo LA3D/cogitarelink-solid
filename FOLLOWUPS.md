@@ -34,8 +34,21 @@ two-subject `<>`/`<#this>`, two-stage commit, SHACL 422). Two gaps to act on:
    vs `/vault/wiki/people/` (schema:Person notes) — plus `bridge-card-to-wiki.ttl`, but the relationship
    (dedup? federation? when to use which?) wasn't legible from a read. Needs a design pass.
 
-Also: the `pod-discover` skill (solid-agent-skills) is **drifted** — still references `wiki:typeIndex`,
-`/wiki/{pages,sources,…}/`, and `:3000` (all pre-D107/D98). Re-sync when touched.
+Also: the `pod-discover` skill (solid-agent-skills) was **drifted** (pre-D107/D98) — **RESYNCED
+2026-06-03** against the live chain (`sub:` pointers not `wiki:`; 7 containers; 8 mostly-standard-vocab
+classes — `skos:Concept`/`schema:{Person,Place,Event,Organization,HowTo}` + `wiki:{Source,WorkingNote}`;
+Type Index migrated + working; 20 affordances / 18 shapes; `sub:agentGuide`). **Two substrate gaps
+surfaced during the resync** (both feed the in-band teaching quick-win above):
+- (a) **The `concepts`/`places`/`events`/`organizations` containers carry NO class-level
+  `sh:agentInstruction` or `sub:shape` pointer** in their `.meta` — only `people`/`procedures`/`working`
+  do. The SKOS-backbone container (`concepts`) is the single most important one, and it's missing its
+  instruction. A cold agent landing on `/wiki/concepts/` gets no container-level write hint; it must
+  reach the shape via the Type Index. Backfill these container instructions.
+- (b) **`markdown-projection.ttl`'s `sub:governs` omits the literal axis** (`skos:prefLabel`,
+  `skos:altLabel`, `skos:definition`) that the shipped RQ-Grammar-1 projector now writes. So the
+  affordance descriptor *under-declares* what the substrate governs AND never teaches the literal
+  `[text]{.prefLabel}` syntax — exactly the discoverability hole the cold probe found. Add the literal
+  axis to `sub:governs` + a `sub:projectsFromBody` (or equivalent) description of the three grammar axes.
 
 **Graph-view dimension (the *second* view — verified live 2026-06-02 via the `solid-pod sparql`
 Comunica CLI).** The cold probes tested only the **document view** (GET + reading `.meta` as *text*);
