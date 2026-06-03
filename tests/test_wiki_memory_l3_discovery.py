@@ -14,7 +14,9 @@ import httpx
 import pytest
 from rdflib import Graph, Namespace
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
+from tests.conftest import _pod_base
+
+POD = _pod_base()
 WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
 SUB = Namespace("https://pod.vardeman.me/vault/ontology/substrate#")
 SOLID = Namespace("http://www.w3.org/ns/solid/terms#")

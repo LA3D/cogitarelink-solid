@@ -21,37 +21,47 @@ from datetime import datetime, timezone
 
 import httpx
 import pytest
+from rdflib import Graph
+from rdflib.namespace import RDF
 
+from tests.conftest import _pod_base, resolve_ca
 
-POD = "https://pod.vardeman.me/vault/"
-CONCEPTS = f"{POD}wiki/concepts/"
-CONTACTS_PERSON = f"{POD}contacts/Person/"
-EVENTS = f"{POD}wiki/.events/"
+_POD = _pod_base() + "/vault/"
+CONCEPTS = f"{_POD}wiki/concepts/"
+CONTACTS_PERSON = f"{_POD}contacts/Person/"
+EVENTS = f"{_POD}wiki/.events/"
+# Keep module-level alias for existing code
+POD = _POD
 
-CLIENT = httpx.Client(verify=False, timeout=15)
+_ca = resolve_ca()
+CLIENT = httpx.Client(verify=_ca if _ca else False, timeout=15)
 
 
 def _list_events() -> list[str]:
-    """Return absolute URLs of all resources currently in /.events/."""
+    """Return absolute URLs of all resources currently in /.events/ (parse-based)."""
+    from rdflib import URIRef
     r = CLIENT.get(EVENTS, headers={"Accept": "text/turtle"})
     r.raise_for_status()
-    members = re.findall(r"<([^>]+\.ttl)>", r.text)
-    out: list[str] = []
-    for m in members:
-        if m.startswith("http"):
-            out.append(m)
-        elif m.startswith("/"):
-            out.append(f"https://pod.vardeman.me{m}")
-        else:
-            # relative — join against EVENTS
-            out.append(f"{EVENTS}{m}")
-    return list(dict.fromkeys(out))  # de-dupe preserving order
+    g = Graph().parse(data=r.text, format="turtle", publicID=EVENTS)
+    LDP_CONTAINS = URIRef("http://www.w3.org/ns/ldp#contains")
+    members = [str(o) for o in g.objects(predicate=LDP_CONTAINS)]
+    return list(dict.fromkeys(members))  # de-dupe preserving order
 
 
 def _find_events_about(target_uri: str, mem_subclass: str) -> list[str]:
-    """Fetch each event resource and return URLs whose Turtle mentions both
-    the target_uri (as as:object) and the mem:<Subclass>.
+    """Fetch each event resource and return URLs whose Turtle contains both
+    target_uri as an as:object and the mem:<Subclass> as a rdf:type (parse-based).
     """
+    from rdflib import URIRef as _URIRef
+    AS_OBJECT  = _URIRef("https://www.w3.org/ns/activitystreams#object")
+    RDF_TYPE   = _URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+    # Expand mem_subclass CURIE to IRI (mem_subclass may be "mem:BoundExceeded")
+    if mem_subclass.startswith("mem:"):
+        local = mem_subclass[4:]
+        mem_iri = _URIRef(f"{_POD}ontology/mem#{local}")
+    else:
+        mem_iri = _URIRef(mem_subclass)
+    target_ref = _URIRef(target_uri)
     matches: list[str] = []
     for url in _list_events():
         try:
@@ -60,8 +70,10 @@ def _find_events_about(target_uri: str, mem_subclass: str) -> list[str]:
             continue
         if r.status_code != 200:
             continue
-        body = r.text
-        if target_uri in body and mem_subclass in body:
+        g = Graph().parse(data=r.text, format="turtle", publicID=url)
+        has_object = (None, AS_OBJECT, target_ref) in g
+        has_type   = (None, RDF_TYPE, mem_iri) in g
+        if has_object and has_type:
             matches.append(url)
     return matches
 
@@ -137,9 +149,15 @@ def test_bound_exceeded_emits_event():
             "BoundExceededDetector.flappingProtectionMs."
         )
 
-    event_body = CLIENT.get(matches[0], headers={"Accept": "text/turtle"}).text
-    assert "mem:childCount" in event_body
-    assert "mem:threshold" in event_body
+    event_url = matches[0]
+    event_resp = CLIENT.get(event_url, headers={"Accept": "text/turtle"})
+    from rdflib import URIRef as _URIRef
+    eg = Graph().parse(data=event_resp.text, format="turtle", publicID=event_url)
+    MEM_NS = f"{_POD}ontology/mem#"
+    child_count_triples = list(eg.triples((None, _URIRef(MEM_NS + "childCount"), None)))
+    threshold_triples   = list(eg.triples((None, _URIRef(MEM_NS + "threshold"), None)))
+    assert child_count_triples, f"mem:childCount triple not found in event {event_url}"
+    assert threshold_triples,   f"mem:threshold triple not found in event {event_url}"
 
 
 def test_unprocessable_write_emits_event():
@@ -177,10 +195,23 @@ def test_unprocessable_write_emits_event():
     )
 
     # Archived event must carry the full validation report content.
-    event_body = CLIENT.get(matches[0], headers={"Accept": "text/turtle"}).text
-    assert "sh:ValidationReport" in event_body, \
-        f"Archived event missing sh:ValidationReport. Body: {event_body[:500]}"
-    assert "sh:conforms" in event_body or "sh:Violation" in event_body
+    from rdflib import URIRef as _URIRef
+    SH = "http://www.w3.org/ns/shacl#"
+    ev_url = matches[0]
+    ev_resp = CLIENT.get(ev_url, headers={"Accept": "text/turtle"})
+    eg2 = Graph().parse(data=ev_resp.text, format="turtle", publicID=ev_url)
+    report_nodes = list(eg2.subjects(
+        predicate=_URIRef(f"{SH}conforms"),
+    ))
+    if not report_nodes:
+        report_nodes = list(eg2.subjects(
+            predicate=_URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+            object=_URIRef(f"{SH}ValidationReport"),
+        ))
+    assert report_nodes, (
+        f"Archived event missing sh:ValidationReport or sh:conforms. "
+        f"Body: {ev_resp.text[:500]}"
+    )
 
 
 def test_contradiction_detected_emits_event():
@@ -225,12 +256,20 @@ def test_contradiction_detected_emits_event():
         f"Events in /.events/: {_list_events()}"
     )
 
-    # Verify the event carries both contradicting predicates.
-    event_body = CLIENT.get(matches[0], headers={"Accept": "text/turtle"}).text
-    assert "cito:agreesWith" in event_body or "agreesWith" in event_body, \
-        f"Event missing agreesWith predicate: {event_body[:500]}"
-    assert "cito:disagreesWith" in event_body or "disagreesWith" in event_body, \
-        f"Event missing disagreesWith predicate: {event_body[:500]}"
+    # Verify the event carries both contradicting predicates (parse-based).
+    from rdflib import URIRef as _URIRef
+    CITO = "http://purl.org/spar/cito/"
+    ev_url3 = matches[0]
+    ev_resp3 = CLIENT.get(ev_url3, headers={"Accept": "text/turtle"})
+    eg3 = Graph().parse(data=ev_resp3.text, format="turtle", publicID=ev_url3)
+    agrees_triples    = list(eg3.triples((None, _URIRef(f"{CITO}agreesWith"), None)))
+    disagrees_triples = list(eg3.triples((None, _URIRef(f"{CITO}disagreesWith"), None)))
+    assert agrees_triples, (
+        f"Event missing cito:agreesWith predicate: {ev_resp3.text[:500]}"
+    )
+    assert disagrees_triples, (
+        f"Event missing cito:disagreesWith predicate: {ev_resp3.text[:500]}"
+    )
 
 
 @pytest.mark.skip(

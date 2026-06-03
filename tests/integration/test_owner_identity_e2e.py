@@ -3,13 +3,16 @@ import httpx
 import pytest
 from rdflib import Graph, Namespace, URIRef
 
-POD = "https://pod.vardeman.me/vault/"
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+POD = _pod_base() + "/vault/"
 DCT  = Namespace("http://purl.org/dc/terms/")
 LDP  = Namespace("http://www.w3.org/ns/ldp#")
-TMPL = Namespace("https://pod.vardeman.me/vault/ontology/template#")
-CAP  = Namespace("https://pod.vardeman.me/vault/ontology/capability#")
+TMPL = Namespace(f"{_pod_base()}/vault/ontology/template#")
+CAP  = Namespace(f"{_pod_base()}/vault/ontology/capability#")
 
-CLIENT = httpx.Client(verify=False, timeout=10)
+_CA = _resolve_ca() or False
+CLIENT = httpx.Client(verify=_CA, timeout=10)
 
 
 def _fetch_ttl(url: str) -> Graph:

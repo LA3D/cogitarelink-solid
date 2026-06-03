@@ -10,7 +10,9 @@ import httpx
 import pytest
 from rdflib import Graph
 
-CSS = "https://pod.vardeman.me"
+from tests.conftest import _pod_base
+
+CSS = _pod_base()
 SPARQL = "http://localhost:8080/sparql"
 CONCEPTS = f"{CSS}/vault/resources/concepts/"
 

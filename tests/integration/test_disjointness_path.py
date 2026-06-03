@@ -12,7 +12,10 @@ import os
 import pytest
 import httpx
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me/vault")
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+POD = _pod_base() + "/vault"
+_CA = _resolve_ca() or False
 
 def test_mem_event_rejected_at_content_events_path_with_error_message():
     """mem:Event PUT to /wiki/events/ returns 422 with clear disjointness message."""
@@ -23,7 +26,7 @@ def test_mem_event_rejected_at_content_events_path_with_error_message():
     schema:name "wrong" ;
     schema:mainEntityOfPage <#page> .
 """
-    with httpx.Client(verify=False, base_url=POD) as client:
+    with httpx.Client(verify=_CA, base_url=POD) as client:
         resp = client.put(
             "/wiki/events/test-disjoint.ttl",
             content=body,
@@ -48,7 +51,7 @@ def test_mem_action_rejected_at_procedures_path_with_error_message():
     schema:name "wrong" ;
     schema:mainEntityOfPage <#page> .
 """
-    with httpx.Client(verify=False, base_url=POD) as client:
+    with httpx.Client(verify=_CA, base_url=POD) as client:
         resp = client.put(
             "/wiki/procedures/test-disjoint.ttl",
             content=body,

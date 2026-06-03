@@ -142,14 +142,16 @@ def test_profile_descriptor_declares_conformsTo_prof(name):
     assert (profile, DCT.conformsTo, PROF_SPEC) in g
 
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+_CA = _resolve_ca() or False
+POD = _pod_base()
 
 
 @pytest.mark.integration
 def test_context_jsonld_meta_declares_conformsTo_jsonld11():
     """Requires a running Pod with the overlay applied."""
     import httpx
-    r = httpx.get(f"{POD}/vault/meta/context.jsonld.meta", timeout=5, verify=False)
+    r = httpx.get(f"{POD}/vault/meta/context.jsonld.meta", timeout=5, verify=_CA)
     assert r.status_code == 200, f"unexpected status: {r.status_code}, body: {r.text[:200]}"
     g = Graph()
     g.parse(data=r.text, format="turtle",
@@ -234,7 +236,7 @@ def test_storage_description_advertises_wikirole_and_profiles():
     """
     import httpx
     sd_url = f"{POD}/vault/.well-known/solid"
-    r = httpx.get(sd_url, headers={"Accept": "text/turtle"}, timeout=5, verify=False)
+    r = httpx.get(sd_url, headers={"Accept": "text/turtle"}, timeout=5, verify=_CA)
     assert r.status_code == 200
     g = Graph()
     g.parse(data=r.text, format="turtle", publicID=sd_url)
@@ -260,7 +262,7 @@ def test_storage_description_advertises_wikirole_and_profiles():
 
 @pytest.mark.integration
 def test_shape_response_carries_shacl_profile_link():
-    r = httpx.get(f"{POD}/vault/meta/shapes/page.shacl.ttl", timeout=5, verify=False)
+    r = httpx.get(f"{POD}/vault/meta/shapes/page.shacl.ttl", timeout=5, verify=_CA)
     assert r.status_code == 200
     link = r.headers.get("link", "")
     assert '<https://www.w3.org/TR/shacl/>; rel="profile"' in link, \
@@ -269,7 +271,7 @@ def test_shape_response_carries_shacl_profile_link():
 
 @pytest.mark.integration
 def test_affordance_response_carries_prof_profile_link():
-    r = httpx.get(f"{POD}/vault/meta/affordances/markdown-projection.ttl", timeout=5, verify=False)
+    r = httpx.get(f"{POD}/vault/meta/affordances/markdown-projection.ttl", timeout=5, verify=_CA)
     assert r.status_code == 200
     link = r.headers.get("link", "")
     assert '<http://www.w3.org/TR/dx-prof/>; rel="profile"' in link, \
@@ -278,7 +280,7 @@ def test_affordance_response_carries_prof_profile_link():
 
 @pytest.mark.integration
 def test_profile_descriptor_response_carries_prof_profile_link():
-    r = httpx.get(f"{POD}/vault/meta/profiles/page", timeout=5, verify=False)
+    r = httpx.get(f"{POD}/vault/meta/profiles/page", timeout=5, verify=_CA)
     assert r.status_code == 200
     link = r.headers.get("link", "")
     assert '<http://www.w3.org/TR/dx-prof/>; rel="profile"' in link, \
@@ -287,7 +289,7 @@ def test_profile_descriptor_response_carries_prof_profile_link():
 
 @pytest.mark.integration
 def test_wikirole_scheme_is_dereferenceable_and_has_five_roles():
-    r = httpx.get(f"{POD}/vault/ontology/wikirole", timeout=5, verify=False)
+    r = httpx.get(f"{POD}/vault/ontology/wikirole", timeout=5, verify=_CA)
     assert r.status_code == 200
     g = Graph()
     g.parse(data=r.text, format="turtle", publicID=f"{POD}/vault/ontology/wikirole")
@@ -300,7 +302,7 @@ def test_profile_link_composes_with_memento_link():
     """A regular vault resource should carry rel=timegate (Memento)
     even if no profile is declared. This verifies profile-link writer
     does not clobber memento's Link header."""
-    r = httpx.get(f"{POD}/vault/wiki/pages/", timeout=5, verify=False)
+    r = httpx.get(f"{POD}/vault/wiki/pages/", timeout=5, verify=_CA)
     if r.status_code != 200:
         pytest.skip(f"container not present (status {r.status_code})")
     link = r.headers.get("link", "")

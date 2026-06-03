@@ -19,7 +19,9 @@ from pathlib import Path
 import httpx
 import pytest
 
-POD = "https://pod.vardeman.me"
+from tests.conftest import _pod_base
+
+POD = _pod_base()
 COMUNICA = "http://localhost:8080/sparql"
 QUERIES = Path(__file__).parent / "fixtures" / "wiki-memory-l3" / "traversal-queries"
 

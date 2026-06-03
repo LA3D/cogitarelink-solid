@@ -15,11 +15,14 @@ import httpx
 import pytest
 from rdflib import Graph, URIRef, Namespace
 
-POD    = "https://pod.vardeman.me/vault"
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+POD    = _pod_base() + "/vault"
 SCHEMA = Namespace("https://schema.org/")
 SKOS   = Namespace("http://www.w3.org/2004/02/skos/core#")
 
-CLIENT = httpx.Client(verify=False, timeout=10)
+_CA = _resolve_ca() or False
+CLIENT = httpx.Client(verify=_CA, timeout=10)
 
 
 def _working_url(slug: str) -> str:

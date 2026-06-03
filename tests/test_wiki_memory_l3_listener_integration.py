@@ -19,11 +19,13 @@ import httpx
 import pytest
 from rdflib import Graph, URIRef
 
+from tests.conftest import _pod_base
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
+POD = _pod_base()
 FIX = Path(__file__).parent / "fixtures" / "wiki-memory-l3"
 
 DCT_MODIFIED = URIRef("http://purl.org/dc/terms/modified")

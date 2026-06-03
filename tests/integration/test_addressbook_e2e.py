@@ -17,17 +17,19 @@ import httpx
 import pytest
 from rdflib import Graph, Namespace, URIRef
 
-POD   = "https://pod.vardeman.me/vault/"
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+_CA   = _resolve_ca() or False
+POD   = _pod_base() + "/vault/"
 VCARD = Namespace("http://www.w3.org/2006/vcard/ns#")
 OWL   = Namespace("http://www.w3.org/2002/07/owl#")
 FOAF  = Namespace("http://xmlns.com/foaf/0.1/")
 SOLID = Namespace("http://www.w3.org/ns/solid/terms#")
 SH    = Namespace("http://www.w3.org/ns/shacl#")
 
-# inAddressBook value the shape requires — absolute vault-root IRI (D1 fix)
-ADDRESSBOOK_IRI = "https://pod.vardeman.me/vault/contacts/index.ttl#this"
+ADDRESSBOOK_IRI = f"{_pod_base()}/vault/contacts/index.ttl#this"
 
-CLIENT = httpx.Client(verify=False, timeout=10)
+CLIENT = httpx.Client(verify=_CA, timeout=10)
 
 
 def _card_url(contact_uuid: str) -> str:

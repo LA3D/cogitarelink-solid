@@ -28,7 +28,11 @@ import pytest
 from rdflib import Graph, URIRef, Namespace
 from rdflib.namespace import RDF
 
-POD        = "https://pod.vardeman.me/vault/"
+import os as _os
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+_POD        = _pod_base() + "/vault/"
+POD        = _POD
+_CA         = _resolve_ca() or False
 WORKING    = f"{POD}wiki/working/"
 PAGES      = f"{POD}wiki/concepts/"
 SOURCES    = f"{POD}wiki/concepts/"
@@ -53,7 +57,7 @@ def slug():
 
 def _put(url, body):
     r = httpx.put(url, content=body,
-                  headers={"Content-Type": "text/markdown"}, verify=False)
+                  headers={"Content-Type": "text/markdown"}, verify=_CA)
     # CSS returns 201 for create, 205 Reset Content for update (overwrite).
     assert r.status_code in (201, 204, 205), f"PUT {url}: {r.status_code} {r.text[:200]}"
     return r
@@ -68,7 +72,7 @@ def _patch_meta(resource_url, triples_nt):
         f"   solid:inserts {{ {triples_nt} }} .\n"
     )
     r = httpx.patch(meta_url, content=patch,
-                    headers={"Content-Type": "text/n3"}, verify=False)
+                    headers={"Content-Type": "text/n3"}, verify=_CA)
     assert r.status_code in (200, 201, 204, 205), (
         f"PATCH {meta_url}: {r.status_code} {r.text[:300]}"
     )
@@ -76,14 +80,14 @@ def _patch_meta(resource_url, triples_nt):
 
 
 def _delete(url):
-    r = httpx.delete(url, verify=False)
+    r = httpx.delete(url, verify=_CA)
     # CSS returns 205 Reset Content on successful DELETE (observed in probe sessions).
     assert r.status_code in (200, 204, 205, 404), f"DELETE {url}: {r.status_code}"
     return r
 
 
 def _meta_graph(url):
-    r = httpx.get(url + ".meta", headers={"Accept": "text/turtle"}, verify=False)
+    r = httpx.get(url + ".meta", headers={"Accept": "text/turtle"}, verify=_CA)
     assert r.status_code == 200, f"GET {url}.meta: {r.status_code}"
     return Graph().parse(data=r.text, format="turtle", publicID=url)
 
@@ -109,7 +113,7 @@ def _setup_page(url, title):
 def _discover_memento_uri(url):
     """Return the first Memento version URI from the TimeMap, or None."""
     timemap_url = url + "?ext=timemap"
-    r = httpx.get(timemap_url, headers={"Accept": "text/turtle"}, verify=False)
+    r = httpx.get(timemap_url, headers={"Accept": "text/turtle"}, verify=_CA)
     if r.status_code != 200:
         return None
     g = Graph().parse(data=r.text, format="turtle", publicID=timemap_url)
@@ -137,7 +141,7 @@ def _announce(action_class_iri, subject_url):
         f'    as:published "{iso_now}"^^xsd:dateTime .\n'
     )
     r = httpx.put(ann_url, content=body,
-                  headers={"Content-Type": "text/turtle"}, verify=False)
+                  headers={"Content-Type": "text/turtle"}, verify=_CA)
     assert r.status_code in (201, 204, 205), (
         f"PUT announcement {ann_url}: {r.status_code} {r.text[:200]}"
     )
@@ -146,7 +150,7 @@ def _announce(action_class_iri, subject_url):
 
 def _assert_announced(ann_url, ann_subject, action_class_iri, subject_url):
     """GET the announcement resource, parse, assert action type + object on its <> subject."""
-    r = httpx.get(ann_url, headers={"Accept": "text/turtle"}, verify=False)
+    r = httpx.get(ann_url, headers={"Accept": "text/turtle"}, verify=_CA)
     assert r.status_code == 200, f"GET announcement {ann_url}: {r.status_code}"
     g = Graph().parse(data=r.text, format="turtle", publicID=ann_url)
     ann = URIRef(ann_subject)
@@ -205,13 +209,13 @@ def test_crystallize_e2e(slug):
 
     try:
         # Verify 1: durable exists
-        r = httpx.get(durable_url, headers={"Accept": "text/markdown"}, verify=False)
+        r = httpx.get(durable_url, headers={"Accept": "text/markdown"}, verify=_CA)
         assert r.status_code == 200, f"Durable not found: {r.status_code}"
 
         # Verify 2: working note is gone.
         # CSS Memento returns 410 Gone (not 404) for deleted resources that had
         # Memento history captured — this is correct RFC 7089 tombstone behaviour (D64).
-        r = httpx.get(working_url, verify=False)
+        r = httpx.get(working_url, verify=_CA)
         assert r.status_code in (404, 410), (
             f"Working note should be deleted (404) or tombstoned (410); got {r.status_code}"
         )
@@ -278,7 +282,7 @@ def test_supersede_e2e(slug):
         _patch_meta(page_url, refined_triples)
 
         # Verify 1: page returns the refined body
-        r = httpx.get(page_url, headers={"Accept": "text/markdown"}, verify=False)
+        r = httpx.get(page_url, headers={"Accept": "text/markdown"}, verify=_CA)
         assert r.status_code == 200
         assert "v2" in r.text or slug in r.text
 
@@ -353,13 +357,13 @@ def test_merge_e2e(slug):
             _delete(inp)
 
         # Verify 1: merged resource exists
-        r = httpx.get(merged_url, headers={"Accept": "text/markdown"}, verify=False)
+        r = httpx.get(merged_url, headers={"Accept": "text/markdown"}, verify=_CA)
         assert r.status_code == 200
 
         # Verify 2: all inputs are gone.
         # CSS Memento returns 410 Gone for Memento-tracked deleted resources (D64).
         for inp in input_urls:
-            r = httpx.get(inp, verify=False)
+            r = httpx.get(inp, verify=_CA)
             assert r.status_code in (404, 410), (
                 f"Input {inp} should be gone (404) or tombstoned (410); got {r.status_code}"
             )
@@ -428,12 +432,12 @@ def test_demote_e2e(slug):
         _delete(durable_url)
 
         # Verify 1: working note exists
-        r = httpx.get(working_url, headers={"Accept": "text/markdown"}, verify=False)
+        r = httpx.get(working_url, headers={"Accept": "text/markdown"}, verify=_CA)
         assert r.status_code == 200
 
         # Verify 2: durable is gone.
         # CSS Memento returns 410 Gone for Memento-tracked deleted resources (D64).
-        r = httpx.get(durable_url, verify=False)
+        r = httpx.get(durable_url, verify=_CA)
         assert r.status_code in (404, 410), (
             f"Durable should be gone (404) or tombstoned (410); got {r.status_code}"
         )
@@ -491,7 +495,7 @@ def test_archive_e2e(slug):
         ann_url, ann_subject = _announce(str(MEM.ArchiveAction), page_url)
 
         # Verify 1: body still accessible (soft delete)
-        r = httpx.get(page_url, headers={"Accept": "text/markdown"}, verify=False)
+        r = httpx.get(page_url, headers={"Accept": "text/markdown"}, verify=_CA)
         assert r.status_code == 200, f"Archived resource should still return 200; got {r.status_code}"
 
         # Verify 2: .meta carries as:Tombstone (substrate preserves this via PATCH — no projection overwrite)

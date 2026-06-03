@@ -6,15 +6,18 @@ other, the dual-view model (Verborgh) is broken — the diagnostic-most signal.
 Exercises the D71 body->.meta projection listener.
 
 Live-Pod integration test. Needs the Pod up + SSL_CERT_FILE set (mkcert CA), or
-verify=False (acceptable for local mkcert dev).
+verify=_CA (acceptable for local mkcert dev).
 """
 import os
 import httpx
 import pytest
 from rdflib import Graph, URIRef, RDF
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+POD = _pod_base()
 WORKING = f"{POD}/vault/wiki/working/"
+_CA = _resolve_ca() or False
 WIKI = "https://pod.vardeman.me/vault/ontology/wiki#"
 SKOS = "http://www.w3.org/2004/02/skos/core#"
 SCHEMA = "https://schema.org/"
@@ -29,15 +32,15 @@ BODY = "Round-trip probe. See [[Roundtrip Target]]{.related}.\n"
 def authored_doc():
     # Document-view write.
     r = httpx.put(DOC_URL, content=BODY,
-                  headers={"Content-Type": "text/markdown"}, verify=False)
+                  headers={"Content-Type": "text/markdown"}, verify=_CA)
     assert r.status_code in (201, 205, 200), f"PUT failed: {r.status_code}"
     yield
-    httpx.delete(DOC_URL, verify=False)
+    httpx.delete(DOC_URL, verify=_CA)
 
 
 def test_document_view_roundtrips_to_graph_view(authored_doc):
     """An entity authored via the document view is retrievable via the graph view."""
-    r = httpx.get(META_URL, headers={"Accept": "text/turtle"}, verify=False)
+    r = httpx.get(META_URL, headers={"Accept": "text/turtle"}, verify=_CA)
     assert r.status_code == 200, f"graph-view (.meta) GET failed: {r.status_code}"
     g = Graph().parse(data=r.text, format="turtle", publicID=DOC_URL)
 

@@ -21,7 +21,9 @@ import httpx
 import pytest
 from rdflib import Graph
 
-CSS = "https://pod.vardeman.me"
+from tests.conftest import _pod_base
+
+CSS = _pod_base()
 MEMENTO = "http://mementoweb.org/ns#"
 LDES = "https://w3id.org/ldes#"
 TEST_PATH = "/test-memento.txt"

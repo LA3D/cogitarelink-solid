@@ -9,7 +9,10 @@ import os
 import pytest
 import httpx
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me/vault")
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+POD = _pod_base() + "/vault"
+_CA = _resolve_ca() or False
 
 def test_substrate_mem_event_at_events_ephemeral_path_skipped():
     """Substrate should POST mem:Event to /wiki/.events/ (ephemeral layer).
@@ -30,7 +33,7 @@ def test_schema_event_at_content_events_path_accepted():
     schema:name "allowed event" ;
     schema:startDate "2026-06-01" .
 """
-    with httpx.Client(verify=False, base_url=POD) as client:
+    with httpx.Client(verify=_CA, base_url=POD) as client:
         resp = client.put(
             "/wiki/events/nd-visit-2026.ttl",
             content=body,
@@ -56,7 +59,7 @@ def test_schema_howto_at_procedures_path_accepted():
         schema:text "PUT draft"
     ] .
 """
-    with httpx.Client(verify=False, base_url=POD) as client:
+    with httpx.Client(verify=_CA, base_url=POD) as client:
         resp = client.put(
             "/wiki/procedures/crystallize-test.ttl",
             content=body,

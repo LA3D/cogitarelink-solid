@@ -15,12 +15,11 @@ import httpx
 import pytest
 from rdflib import Graph, Namespace
 
-POD = "https://pod.vardeman.me/vault/"
-# page.shacl.ttl: requires dct:title (minCount 1) for wiki:Page instances.
-# Live pod has 6 deployed shapes: resource, page, source, person, procedure, working
-# (see /vault/meta/shapes/). page.shacl.ttl is used here because it has a simple
-# minCount-1 required predicate (dct:title) that makes violations easy to trigger.
-SHAPE_URL = "https://pod.vardeman.me/vault/meta/shapes/page.shacl.ttl"
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+_CA = _resolve_ca() or False
+POD = _pod_base() + "/vault/"
+SHAPE_URL = f"{_pod_base()}/vault/meta/shapes/page.shacl.ttl"
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 # Resource that violates wiki:PageShape — wiki:Page without dct:title (minCount 1).
@@ -45,7 +44,7 @@ PATCH_CONSTRAINED_BY = """\
 
 def _put_container(url: str) -> httpx.Response:
     return httpx.put(
-        url, content="", headers={"Content-Type": "text/turtle"}, verify=False
+        url, content="", headers={"Content-Type": "text/turtle"}, verify=_CA
     )
 
 
@@ -57,18 +56,18 @@ def _patch_meta(meta_url: str, container_url: str, shape_url: str) -> httpx.Resp
         meta_url,
         content=patch_body,
         headers={"Content-Type": "text/n3"},
-        verify=False,
+        verify=_CA,
     )
 
 
 def _put_resource(url: str, body: str) -> httpx.Response:
     return httpx.put(
-        url, content=body, headers={"Content-Type": "text/turtle"}, verify=False
+        url, content=body, headers={"Content-Type": "text/turtle"}, verify=_CA
     )
 
 
 def _delete(url: str) -> None:
-    httpx.delete(url, verify=False)
+    httpx.delete(url, verify=_CA)
 
 
 def test_shacl_violation_returns_readable_report():
@@ -98,7 +97,7 @@ def test_shacl_violation_returns_readable_report():
         )
 
         # Step 3: verify constrainedBy is now present
-        r = httpx.head(scratch_ctr, verify=False)
+        r = httpx.head(scratch_ctr, verify=_CA)
         link_header = r.headers.get("link", "")
         assert "constrainedBy" in link_header, (
             f"Expected ldp:constrainedBy in Link header after PATCH, got: {link_header}"

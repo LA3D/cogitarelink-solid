@@ -12,16 +12,19 @@ import httpx
 import pytest
 from rdflib import Graph, URIRef
 
-POD = "https://pod.vardeman.me/vault/"
-SYNTH = "https://pod.vardeman.me/vault/wiki/index.md"
-WIKI_NS = "https://pod.vardeman.me/vault/ontology/wiki#"
-SUB_NS = "https://pod.vardeman.me/vault/ontology/substrate#"
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+_CA = _resolve_ca() or False
+POD = _pod_base() + "/vault/"
+SYNTH = f"{_pod_base()}/vault/wiki/index.md"
+WIKI_NS = f"{_pod_base()}/vault/ontology/wiki#"
+SUB_NS = f"{_pod_base()}/vault/ontology/substrate#"
 
 
 def test_pod_root_advertises_profile_document():
     """A GET on /vault/.well-known/solid emits sub:profileDocument → synthesis page."""
     well_known = f"{POD}.well-known/solid"
-    r = httpx.get(well_known, headers={"Accept": "text/turtle"}, verify=False)
+    r = httpx.get(well_known, headers={"Accept": "text/turtle"}, verify=_CA)
     assert r.status_code == 200
     # Parse with the response URL as publicID so relative IRIs in the
     # storage description (e.g. <../wiki/index.md>) resolve correctly
@@ -36,7 +39,7 @@ def test_pod_root_advertises_profile_document():
 
 def test_synthesis_page_markdown_body_has_required_sections():
     """GET /vault/wiki/index.md with Accept: text/markdown returns the synthesis body."""
-    r = httpx.get(SYNTH, headers={"Accept": "text/markdown"}, verify=False)
+    r = httpx.get(SYNTH, headers={"Accept": "text/markdown"}, verify=_CA)
     assert r.status_code == 200
     body = r.text
     assert "Wiki-Memory L3" in body
@@ -60,7 +63,7 @@ def test_synthesis_page_markdown_body_has_required_sections():
 def test_synthesis_page_meta_has_bootstrap_pointers():
     """The synthesis page's .meta carries the sub:bootstrapResource pointers."""
     r = httpx.get(f"{SYNTH}.meta",
-                  headers={"Accept": "text/turtle"}, verify=False)
+                  headers={"Accept": "text/turtle"}, verify=_CA)
     assert r.status_code == 200
     g = Graph().parse(data=r.text, format="turtle", publicID=SYNTH)
     bootstrap = list(g.objects(predicate=URIRef(f"{SUB_NS}bootstrapResource")))
@@ -75,7 +78,7 @@ def test_synthesis_page_meta_has_bootstrap_pointers():
 
 def test_synthesis_page_html_embeds_jsonld_script():
     """The synthesis page's HTML representation embeds JSON-LD in a <script> tag."""
-    r = httpx.get(SYNTH, headers={"Accept": "text/html"}, verify=False)
+    r = httpx.get(SYNTH, headers={"Accept": "text/html"}, verify=_CA)
     assert r.status_code == 200, f"HTML conversion failed: {r.status_code} {r.text[:200]}"
     html = r.text
     assert '<script type="application/ld+json">' in html, (
@@ -104,7 +107,7 @@ def test_all_wiki_memory_shape_agent_instructions_reference_synthesis():
     }
 
     r = httpx.get(f"{POD}meta/shapes/",
-                  headers={"Accept": "text/turtle"}, verify=False)
+                  headers={"Accept": "text/turtle"}, verify=_CA)
     assert r.status_code == 200
     container = Graph().parse(data=r.text, format="turtle", publicID=f"{POD}meta/shapes/")
     all_shape_urls = list(container.objects(predicate=LDP_CONTAINS))
@@ -117,7 +120,7 @@ def test_all_wiki_memory_shape_agent_instructions_reference_synthesis():
 
     for shape_url in wiki_memory_shapes:
         rr = httpx.get(str(shape_url),
-                       headers={"Accept": "text/turtle"}, verify=False)
+                       headers={"Accept": "text/turtle"}, verify=_CA)
         assert rr.status_code == 200, f"Failed to GET shape {shape_url}: {rr.status_code}"
         sg = Graph().parse(data=rr.text, format="turtle", publicID=str(shape_url))
         instructions = list(sg.objects(predicate=SHACL_AI))

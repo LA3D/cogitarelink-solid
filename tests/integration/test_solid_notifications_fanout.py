@@ -16,11 +16,14 @@ Substrate note (discovered during probe 2026-05-18):
 import httpx
 import pytest
 
-POD        = "https://pod.vardeman.me/vault/"
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+_CA        = _resolve_ca() or False
+POD        = _pod_base() + "/vault/"
 OPERATIONS = f"{POD}wiki/.operations/"
 EVENTS     = f"{POD}wiki/.events/"
 
-NOTIF_BASE    = "https://pod.vardeman.me/.notifications/"
+NOTIF_BASE    = f"{_pod_base().rsplit('/vault', 1)[0]}/.notifications/"
 WEBHOOK_EP    = f"{NOTIF_BASE}WebhookChannel2023/"
 WEBHOOK_TYPE  = "http://www.w3.org/ns/solid/notifications#WebhookChannel2023"
 NOTIF_CONTEXT = "https://www.w3.org/ns/solid/notification/v1"
@@ -35,7 +38,7 @@ def _subscribe(topic):
         "sendTo": "https://example.com/test-webhook",
     }
     r = httpx.post(WEBHOOK_EP, json=body,
-                   headers={"Content-Type": "application/ld+json"}, verify=False)
+                   headers={"Content-Type": "application/ld+json"}, verify=_CA)
     return r.status_code, r.json() if r.status_code in (200, 201) else {}
 
 
@@ -63,7 +66,7 @@ def test_subscribe_to_events_container():
 def test_webhook_channel_type_endpoint_exists():
     """GET /.notifications/WebhookChannel2023/ returns 200 with channel-type metadata."""
     r = httpx.get(WEBHOOK_EP,
-                  headers={"Accept": "application/ld+json"}, verify=False)
+                  headers={"Accept": "application/ld+json"}, verify=_CA)
     assert r.status_code == 200, (
         f"Channel-type endpoint not found: {r.status_code}"
     )

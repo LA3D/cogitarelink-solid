@@ -12,17 +12,12 @@ import rdflib
 import pytest
 from pyshacl import validate
 
-POD = "https://pod.vardeman.me/vault"
+from tests.conftest import _pod_base, _pod_up, resolve_ca as _resolve_ca
+
+_CA  = _resolve_ca() or False
+POD  = _pod_base() + "/vault"
 REPO = __file__.rsplit("/tests/", 1)[0]
 SKOS_PREFLABEL = "http://www.w3.org/2004/02/skos/core#prefLabel"
-
-
-def _pod_up():
-    try:
-        return httpx.get(POD + "/", verify=False, timeout=3).status_code < 500
-    except Exception:
-        return False
-
 
 pytestmark = pytest.mark.skipif(not _pod_up(), reason="Pod not running")
 
@@ -46,12 +41,12 @@ def test_inline_authored_concept_conforms_without_patch():
     url = POD + "/wiki/concepts/rqg1-photosynthesis.md"
     try:
         httpx.put(url, content=body, headers={"Content-Type": "text/markdown"},
-                  verify=False, timeout=10).raise_for_status()
+                  verify=_CA, timeout=10).raise_for_status()
 
         # poll the post-commit projection until prefLabel is materialised in .meta
         meta = ""
         for _ in range(20):
-            r = httpx.get(url + ".meta", headers={"Accept": "text/turtle"}, verify=False, timeout=10)
+            r = httpx.get(url + ".meta", headers={"Accept": "text/turtle"}, verify=_CA, timeout=10)
             if r.status_code == 200 and SKOS_PREFLABEL in r.text:
                 meta = r.text
                 break
@@ -63,4 +58,4 @@ def test_inline_authored_concept_conforms_without_patch():
         conforms, _g, report = validate(data, shacl_graph=_load_shapes(), inference="none")
         assert conforms, f"projected .meta does not conform to the wiki shapes:\n{report}"
     finally:
-        httpx.delete(url, verify=False, timeout=10)
+        httpx.delete(url, verify=_CA, timeout=10)

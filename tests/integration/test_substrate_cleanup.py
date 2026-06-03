@@ -95,10 +95,13 @@ def test_capability_catalog_lists_three_primitives():
     catalog_url = POD_URL + "meta/capabilities/"
     r = httpx.get(catalog_url, headers={"Accept": "text/turtle"}, timeout=5)
     assert r.status_code == 200
-    text = r.text
-    for descriptor in ["markdown-content-projection",
-                       "time-travel", "derived-view"]:
-        assert descriptor in text, f"Capability catalog missing {descriptor}"
+    LDP_NS = Namespace("http://www.w3.org/ns/ldp#")
+    g = Graph().parse(data=r.text, format="turtle", publicID=catalog_url)
+    member_strs = [str(o) for o in g.objects(predicate=LDP_NS.contains)]
+    for descriptor in ["markdown-content-projection", "time-travel", "derived-view"]:
+        assert any(descriptor in m for m in member_strs), (
+            f"Capability catalog missing {descriptor}; members: {member_strs}"
+        )
 
 
 def test_capability_descriptors_are_well_formed():
@@ -173,9 +176,18 @@ def test_affordance_descriptors_present():
 
 def test_no_sparql_endpoint_claimed():
     """Affordance descriptors don't claim /sparql endpoint anymore."""
-    hub = httpx.get(POD_URL + "meta/affordances/hub-view.ttl", timeout=5).text
-    assert "wiki:invokedAt" not in hub, "hub-view should not have wiki:invokedAt"
-    assert "sub:requiresCapability" in hub, "hub-view should declare cap requirement"
+    hub_url = POD_URL + "meta/affordances/hub-view.ttl"
+    r = httpx.get(hub_url, timeout=5)
+    assert r.status_code == 200
+    g = Graph().parse(data=r.text, format="turtle", publicID=hub_url)
+    WIKI_NS = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
+    SUB_NS  = Namespace("https://pod.vardeman.me/vault/ontology/substrate#")
+    invoked_at_triples = list(g.triples((None, WIKI_NS.invokedAt, None)))
+    assert not invoked_at_triples, (
+        f"hub-view should not have wiki:invokedAt; found: {invoked_at_triples}"
+    )
+    requires_cap_triples = list(g.triples((None, SUB_NS.requiresCapability, None)))
+    assert requires_cap_triples, "hub-view should declare sub:requiresCapability"
 
 
 def test_type_index_has_wiki_registrations():

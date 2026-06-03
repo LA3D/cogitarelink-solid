@@ -13,23 +13,30 @@ import httpx
 import pytest
 from rdflib import Graph, URIRef
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
+from tests.conftest import _pod_base, _pod_up, resolve_ca as _resolve_ca
+
+_CA  = _resolve_ca() or False
+POD  = _pod_base()
 SKOS = "http://www.w3.org/2004/02/skos/core#"
-STAMP = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash"
-
-
-def _pod_up():
-    try:
-        return httpx.get(f"{POD}/vault/", timeout=3).status_code < 500
-    except Exception:
-        return False
-
+STAMP = f"{_pod_base()}/vault/ontology/substrate#bodyHash"
 
 pytestmark = pytest.mark.skipif(not _pod_up(), reason="Pod not running")
 
 
+def _get(path, **kwargs):
+    return httpx.get(f"{POD}{path}", verify=_CA, **kwargs)
+
+
 def _put(path, body, ct="text/markdown"):
-    return httpx.put(f"{POD}{path}", content=body, headers={"Content-Type": ct})
+    return httpx.put(f"{POD}{path}", content=body, headers={"Content-Type": ct}, verify=_CA)
+
+
+def _patch(path, body, ct):
+    return httpx.patch(f"{POD}{path}", content=body, headers={"Content-Type": ct}, verify=_CA)
+
+
+def _delete(path):
+    return httpx.delete(f"{POD}{path}", verify=_CA)
 
 
 def test_preflabel_less_concept_rejected_422_with_report():
@@ -42,8 +49,8 @@ def test_preflabel_less_concept_rejected_422_with_report():
 def test_rejected_write_leaves_no_artifacts():
     body = "---\ntype: Concept\n---\n# NoLabel2\n\nno prefLabel\n"
     _put("/vault/wiki/concepts/e2e-floor-nolabel2.md", body)
-    assert httpx.get(f"{POD}/vault/wiki/concepts/e2e-floor-nolabel2.md").status_code == 404
-    assert httpx.get(f"{POD}/vault/wiki/concepts/e2e-floor-nolabel2.md.meta").status_code == 404
+    assert _get("/vault/wiki/concepts/e2e-floor-nolabel2.md").status_code == 404
+    assert _get("/vault/wiki/concepts/e2e-floor-nolabel2.md.meta").status_code == 404
 
 
 def test_valid_concept_commits_with_synchronous_stamped_meta():
@@ -52,7 +59,7 @@ def test_valid_concept_commits_with_synchronous_stamped_meta():
     r = _put("/vault/wiki/concepts/e2e-floor-valid.md", body)
     assert r.status_code in (201, 205)
     # synchronous: read .meta immediately, NO polling
-    m = httpx.get(f"{POD}/vault/wiki/concepts/e2e-floor-valid.md.meta", headers={"Accept": "text/turtle"})
+    m = _get("/vault/wiki/concepts/e2e-floor-valid.md.meta", headers={"Accept": "text/turtle"})
     assert m.status_code == 200
     g = Graph()
     g.parse(data=m.text, format="turtle", publicID=f"{POD}/vault/wiki/concepts/e2e-floor-valid.md")
@@ -78,8 +85,7 @@ def test_direct_meta_patch_dropping_preflabel_rejected():
         f'<{POD}/vault/wiki/concepts/e2e-floor-patch.md#this> skos:prefLabel "E2E Patch Target" . '
         '} .'
     )
-    r2 = httpx.patch(f"{POD}/vault/wiki/concepts/e2e-floor-patch.md.meta", content=patch,
-                     headers={"Content-Type": "text/n3"})
+    r2 = _patch("/vault/wiki/concepts/e2e-floor-patch.md.meta", patch, "text/n3")
     assert r2.status_code == 422, (
         f"D108-Floor-Bug-1: dropping prefLabel via .meta PATCH must be floored (expected 422), "
         f"got {r2.status_code}: {r2.text[:200]}"
@@ -97,15 +103,14 @@ def test_direct_meta_patch_agent_enrichment_accepted():
         f'<{POD}/vault/wiki/concepts/e2e-floor-enrich.md#this> <http://example.org/agentOwned> "anything" . '
         '} .'
     )
-    r2 = httpx.patch(f"{POD}/vault/wiki/concepts/e2e-floor-enrich.md.meta", content=patch,
-                     headers={"Content-Type": "text/n3"})
+    r2 = _patch("/vault/wiki/concepts/e2e-floor-enrich.md.meta", patch, "text/n3")
     assert r2.status_code in (200, 204, 205), (
         f"agent-owned enrichment must pass (sh:closed false), got {r2.status_code}: {r2.text[:200]}"
     )
 
 
 def test_rdf_body_contacts_path_unchanged():
-    r = httpx.get(f"{POD}/vault/contacts/", headers={"Accept": "text/turtle"})
+    r = _get("/vault/contacts/", headers={"Accept": "text/turtle"})
     assert r.status_code in (200, 404)   # smoke: floor didn't break the RDF-body substrate
 
 
@@ -116,5 +121,5 @@ def _cleanup():
                                     "e2e-floor-patch", "e2e-floor-enrich"]),
                      ("working", ["e2e-floor-draft"])):
         for n in names:
-            httpx.delete(f"{POD}/vault/wiki/{c}/{n}.md")
-            httpx.delete(f"{POD}/vault/wiki/{c}/{n}.md.meta")
+            _delete(f"/vault/wiki/{c}/{n}.md")
+            _delete(f"/vault/wiki/{c}/{n}.md.meta")

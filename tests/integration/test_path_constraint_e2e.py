@@ -8,7 +8,10 @@ import os
 import pytest
 import httpx
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me/vault")
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+POD = _pod_base() + "/vault"
+_CA = _resolve_ca() or False
 
 
 def test_mem_event_rejected_at_content_events_path():
@@ -21,7 +24,7 @@ def test_mem_event_rejected_at_content_events_path():
     schema:name "wrong-place" ;
     schema:mainEntityOfPage <#page> .
 """
-    with httpx.Client(verify=False) as client:
+    with httpx.Client(verify=_CA) as client:
         resp = client.put(
             f"{POD}/wiki/events/test-disjoint.ttl",
             content=body,
@@ -41,7 +44,7 @@ def test_schema_event_accepted_at_content_events_path():
 <#this> a schema:Event ;
     schema:name "allowed event" .
 """
-    with httpx.Client(verify=False) as client:
+    with httpx.Client(verify=_CA) as client:
         resp = client.put(
             f"{POD}/wiki/events/test-allowed.ttl",
             content=body,
@@ -61,7 +64,7 @@ def test_mem_event_accepted_at_events_ephemeral_path():
 <#this> a mem:Event ;
     schema:name "ephemeral event" .
 """
-    with httpx.Client(verify=False) as client:
+    with httpx.Client(verify=_CA) as client:
         resp = client.put(
             f"{POD}/wiki/.events/test-mem-event.ttl",
             content=body,

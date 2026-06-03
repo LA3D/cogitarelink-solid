@@ -197,17 +197,19 @@ def test_void_declares_entrypoint_literal_agent_instruction():
     for token in ("SKOS", "three", "prefLabel"):
         assert token in body, f"entry-point literal omits {token!r}"
 
-POD_WK = "https://pod.vardeman.me/vault/.well-known/solid"
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+_CA = _resolve_ca() or False
+POD_WK = f"{_pod_base()}/vault/.well-known/solid"
 
 def _pod_up():
     try:
-        return httpx.get(POD_WK, verify=False, timeout=3).status_code == 200
+        return httpx.get(POD_WK, verify=_CA, timeout=3).status_code == 200
     except Exception:
         return False
 
 @pytest.mark.skipif(not _pod_up(), reason="live Pod unavailable")
 def test_entrypoint_serves_literal_agent_instruction_live():
-    txt = httpx.get(POD_WK, verify=False, headers={"Accept": "text/turtle"}).text
+    txt = httpx.get(POD_WK, verify=_CA, headers={"Accept": "text/turtle"}).text
     g = Graph(); g.parse(data=txt, format="turtle")
     SH = Namespace("http://www.w3.org/ns/shacl#")
     lits = [o for o in g.objects(None, SH.agentInstruction) if isinstance(o, Literal)]

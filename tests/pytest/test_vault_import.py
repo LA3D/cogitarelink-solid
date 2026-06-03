@@ -3,7 +3,9 @@ import httpx
 import pytest
 from rdflib import Graph
 
-BASE = "https://pod.vardeman.me"
+from tests.conftest import _pod_base
+
+BASE = _pod_base()
 
 
 @pytest.mark.integration

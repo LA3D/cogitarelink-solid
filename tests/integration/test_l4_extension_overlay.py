@@ -12,7 +12,10 @@ import subprocess
 import pytest
 import httpx
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me/vault")
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+POD = _pod_base() + "/vault"
+_CA = _resolve_ca() or False
 PYTHON = os.environ.get("VENV_PYTHON", os.path.expanduser("~/uvws/.venv/bin/python"))
 
 def test_biz_overlay_applies_and_validates_equipment():
@@ -33,7 +36,7 @@ type: https://chuck.example/biz/Equipment
 ---
 
 # HP LaserJet"""
-    with httpx.Client(verify=False, base_url=POD) as client:
+    with httpx.Client(verify=_CA, base_url=POD) as client:
         resp = client.put("/biz/equipment/hp-laserjet.md",
                           content=body,
                           headers={"Content-Type": "text/markdown"})

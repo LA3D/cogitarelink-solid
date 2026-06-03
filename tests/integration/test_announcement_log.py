@@ -12,11 +12,14 @@ import pytest
 from rdflib import Graph, URIRef, Namespace
 from rdflib.namespace import RDF
 
-POD        = "https://pod.vardeman.me/vault/"
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+_CA        = _resolve_ca() or False
+POD        = _pod_base() + "/vault/"
 OPERATIONS = f"{POD}wiki/.operations/"
 EVENTS     = f"{POD}wiki/.events/"
 
-MEM = Namespace("https://pod.vardeman.me/vault/ontology/mem#")
+MEM = Namespace(f"{_pod_base()}/vault/ontology/mem#")
 AS  = Namespace("https://www.w3.org/ns/activitystreams#")
 DCT = Namespace("http://purl.org/dc/terms/")
 
@@ -42,11 +45,11 @@ def test_operations_log_accepts_announcement(slug):
     as:published "{time.strftime('%Y-%m-%dT%H:%M:%SZ')}"^^xsd:dateTime .
 """
     r = httpx.put(url, content=body,
-                  headers={"Content-Type": "text/turtle"}, verify=False)
+                  headers={"Content-Type": "text/turtle"}, verify=_CA)
     assert r.status_code in (201, 204, 205), (
         f"PUT failed: {r.status_code} {r.text[:200]}"
     )
-    httpx.delete(url, verify=False)
+    httpx.delete(url, verify=_CA)
 
 
 def test_operations_log_listing(slug):
@@ -58,9 +61,9 @@ def test_operations_log_listing(slug):
     as:actor <https://pod.vardeman.me/profile/card#me> .
 """
     httpx.put(url, content=body,
-              headers={"Content-Type": "text/turtle"}, verify=False)
+              headers={"Content-Type": "text/turtle"}, verify=_CA)
 
-    r = httpx.get(OPERATIONS, headers={"Accept": "text/turtle"}, verify=False)
+    r = httpx.get(OPERATIONS, headers={"Accept": "text/turtle"}, verify=_CA)
     assert r.status_code == 200
     g = Graph().parse(data=r.text, format="turtle", publicID=OPERATIONS)
     LDP_CONTAINS = URIRef("http://www.w3.org/ns/ldp#contains")
@@ -68,13 +71,13 @@ def test_operations_log_listing(slug):
     assert url in entries, (
         f"Posted announcement not in container's ldp:contains: {entries}"
     )
-    httpx.delete(url, verify=False)
+    httpx.delete(url, verify=_CA)
 
 
 def test_operations_log_meta_advertises_purpose():
     """.operations/ container .meta carries dct:title 'Wiki-memory operation log'."""
     r = httpx.get(f"{OPERATIONS}.meta",
-                  headers={"Accept": "text/turtle"}, verify=False)
+                  headers={"Accept": "text/turtle"}, verify=_CA)
     assert r.status_code == 200
     g = Graph().parse(data=r.text, format="turtle", publicID=OPERATIONS)
     DCT_TITLE = URIRef("http://purl.org/dc/terms/title")

@@ -5,8 +5,9 @@ from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import RDF, SKOS, XSD
 
 from scripts.lib.ldp_client import put_resource, patch_meta, get_meta
+from tests.conftest import _pod_base
 
-BASE = "https://pod.vardeman.me"
+BASE = _pod_base()
 
 
 @pytest.mark.integration

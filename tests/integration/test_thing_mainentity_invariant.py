@@ -3,10 +3,13 @@ import pytest
 import httpx
 from rdflib import Graph, URIRef
 
-POD = "https://pod.vardeman.me/vault"
+from tests.conftest import _pod_base, resolve_ca as _resolve_ca
+
+POD = _pod_base() + "/vault"
 SCHEMA = "https://schema.org/"
 
-CLIENT = httpx.Client(verify=False, timeout=10)
+_CA = _resolve_ca() or False
+CLIENT = httpx.Client(verify=_CA, timeout=10)
 
 
 def test_substrate_emits_main_entity_pair():

@@ -17,7 +17,9 @@ from urllib.parse import quote
 import httpx
 import pytest
 
-BASE_URL = "https://pod.vardeman.me"
+from tests.conftest import _pod_base
+
+BASE_URL = _pod_base()
 WIKI_BASE = f"{BASE_URL}/vault/wiki/"
 
 # Fixtures use the dev-allow-all config (no auth); private/public WAC

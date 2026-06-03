@@ -1,11 +1,15 @@
-"""Shared fixtures for cogitarelink-solid tests."""
+"""Shared fixtures for cogitarelink-solid tests (pytest/ subdirectory).
+
+Delegates URL resolution to the root conftest so all fixtures honour POD_URL.
+"""
 import pytest
+from tests.conftest import _pod_base
 
 
 @pytest.fixture
 def css_url():
-    """Base URL for Community Solid Server."""
-    return "https://pod.vardeman.me"
+    """Base URL for Community Solid Server (honours POD_URL env var)."""
+    return _pod_base()
 
 
 @pytest.fixture
