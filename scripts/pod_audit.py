@@ -27,8 +27,13 @@ import rdflib
 from rdflib import Graph, RDF, URIRef
 from pyshacl import validate
 
-WIKI   = "https://pod.vardeman.me/vault/ontology/wiki#"
-SUB    = "https://pod.vardeman.me/vault/ontology/substrate#"
+# The Pod that mints the substrate VOCAB namespaces (wiki:/sub:). These are STABLE
+# vocabulary IRIs — they identify terms, not network locations, and do NOT vary with
+# the Pod the audit runs against (that base is discovered live, see canon_base/pod_base
+# in audit()). Hoisted to one constant so the vocab host can't drift across the IRIs.
+CANONICAL_NS_HOST = "https://pod.vardeman.me"
+WIKI   = f"{CANONICAL_NS_HOST}/vault/ontology/wiki#"
+SUB    = f"{CANONICAL_NS_HOST}/vault/ontology/substrate#"
 SOLID  = "http://www.w3.org/ns/solid/terms#"
 LDP    = "http://www.w3.org/ns/ldp#"
 SH     = "http://www.w3.org/ns/shacl#"
@@ -320,10 +325,15 @@ async def audit_interop_registration(client, pod_base, findings):
     registrations = []
     for dr in data_regs:
         registrations += list(g.objects(dr, URIRef(INTEROP + "hasDataRegistration")))
-    if len(registrations) != 7:
-        findings.append(finding("ERROR", registry_url, "interop:registration-count",
-            f"Expected 7 DataRegistrations, found {len(registrations)}.",
-            "Add or remove DataRegistration nodes until exactly 7 exist."))
+    # No magic count: registrations just have to be non-empty here; the real check
+    # is set-equality against the container trees declared in the deployed tree doc
+    # (computed below, once tree_g is fetched) — so substrate growth can't produce a
+    # spurious "expected N" ERROR.
+    if not registrations:
+        findings.append(finding("ERROR", registry_url, "interop:no-registrations",
+            "No interop:DataRegistration found on any DataRegistry.",
+            "Add a DataRegistration per governed container tree."))
+        return
 
     # Collect the registeredShapeTree IRIs.
     reg_trees = {}  # registration IRI → tree IRI
@@ -345,12 +355,28 @@ async def audit_interop_registration(client, pod_base, findings):
         return
     tree_g = Graph().parse(data=trees_r.text, format="turtle", publicID=trees_url)
     defined_trees = {str(s) for s in tree_g.subjects(RDF.type, URIRef(ST + "ShapeTree"))}
+    # Container trees = ShapeTrees that expect an st:Container (one per governed container).
+    # The registrations must register exactly these — derive the expected set from the data,
+    # never a hardcoded count, so adding a container can't trigger a false ERROR.
+    container_trees = {str(s) for s in tree_g.subjects(
+        URIRef(ST + "expectsType"), URIRef(ST + "Container"))}
 
     for reg_iri, tree_iri in reg_trees.items():
         if tree_iri not in defined_trees:
             findings.append(finding("ERROR", reg_iri, "interop:dangling-shape-tree",
                 f"registeredShapeTree {tree_iri} is not defined (a st:ShapeTree) in {trees_url}.",
                 "Define the missing ShapeTree in wiki-memory.tree or correct the registration."))
+
+    # Set-equality: every container tree must have a registration, and no registration
+    # may point at a non-container tree. This is the magic-7 replacement.
+    registered_trees = set(reg_trees.values())
+    unregistered = container_trees - registered_trees
+    coverage_ok = (registered_trees == container_trees)
+    for tree_iri in sorted(unregistered):
+        findings.append(finding("ERROR", tree_iri, "interop:registration-coverage",
+            f"Container tree {tree_iri} is declared in the ShapeTree doc but has no "
+            f"DataRegistration.",
+            "Add an interop:DataRegistration with registeredShapeTree pointing at it."))
 
     # 3. Collect all st:shape IRIs from the tree doc; resolve each against the shape catalog.
     tree_shapes = {str(o) for o in tree_g.objects(None, URIRef(ST + "shape"))}
@@ -385,11 +411,12 @@ async def audit_interop_registration(client, pod_base, findings):
             f"st:shape {iri} referenced in the tree doc is not a sh:NodeShape in the shape catalog.",
             "Define the missing NodeShape in the appropriate shape file under /meta/shapes/."))
 
-    trees_all_defined = len(reg_trees) == 7 and all(t in defined_trees for t in reg_trees.values())
-    if not dangling_shapes and len(registrations) == 7 and trees_all_defined:
+    trees_all_defined = all(t in defined_trees for t in reg_trees.values())
+    if not dangling_shapes and coverage_ok and trees_all_defined:
         findings.append(finding("INFO", registry_url, "interop:registration-ok",
-            f"Interop registration graph: {len(registrations)} DataRegistrations, "
-            f"all shape trees defined, all st:shape IRIs resolve in the catalog.", ""))
+            f"Interop registration graph: {len(registrations)} DataRegistrations covering "
+            f"{len(container_trees)} container trees, all shape trees defined, all st:shape "
+            f"IRIs resolve in the catalog.", ""))
 
 
 async def walk_affordances(client, cat_url, canon_base, pod_base, shapes_g, role_members, findings):
@@ -456,7 +483,7 @@ def to_markdown(pod_url, findings):
 
 def main():
     ap = argparse.ArgumentParser(description="Audit a Pod's substrate self-description.")
-    ap.add_argument("pod_url", nargs="?", default="https://pod.vardeman.me/vault/")
+    ap.add_argument("pod_url", nargs="?", default=f"{CANONICAL_NS_HOST}/vault/")
     ap.add_argument("--shapes-dir", default="shapes/substrate/")
     ap.add_argument("--out-format", choices=["json", "markdown"], default="markdown")
     ap.add_argument("--out")

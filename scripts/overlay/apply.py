@@ -18,13 +18,26 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import httpx
-from rdflib import Graph
+from rdflib import Graph, URIRef
+from rdflib.namespace import DCTERMS, RDF
 
 from .common import (
     Manifest, parse_manifest, fetch_capability_catalog, put_file,
-    ensure_container, n3_patch_inserts, version_at_least, ContainerMetaPatch,
-    ExtensionGuide,
+    ensure_container, n3_patch_inserts, n3_patch_inserts_nt, version_at_least,
+    ContainerMetaPatch, ExtensionGuide,
 )
+
+SCHEMA   = "https://schema.org/"
+SHACL_SPEC = URIRef("https://www.w3.org/TR/shacl/")
+PROF_SPEC  = URIRef("http://www.w3.org/TR/dx-prof/")
+JSONLD_SPEC = URIRef("https://www.w3.org/TR/json-ld11/")
+
+
+def _conforms_graph(subject: str, spec: URIRef) -> Graph:
+    "Tiny Graph: <subject> dct:conformsTo <spec>."
+    g = Graph()
+    g.add((URIRef(subject), DCTERMS.conformsTo, spec))
+    return g
 
 
 def check_capabilities(client: httpx.Client, pod_url: str, manifest: Manifest) -> None:
@@ -69,17 +82,13 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
 
         # 3. Upload shape files + patch .meta with dct:conformsTo SHACL spec
         #    so ProfileLinkMetadataWriter emits Link: rel="profile" per D86.
-        DCT = "http://purl.org/dc/terms/"
-        SHACL_SPEC = "https://www.w3.org/TR/shacl/"
-        PROF_SPEC = "http://www.w3.org/TR/dx-prof/"
         for shape_url in manifest.shape_urls:
             local = overlay_dir / "shapes" / Path(shape_url).name
             url = absolutize(pod_url, shape_url)
             put_file(client, url, local, "text/turtle")
             print(f"  shape → {url}")
             meta_url = f"{url}.meta"
-            n3_patch_inserts(client, meta_url,
-                             f"<{url}> <{DCT}conformsTo> <{SHACL_SPEC}> .")
+            n3_patch_inserts(client, meta_url, _conforms_graph(url, SHACL_SPEC))
             print(f"  shape.meta → dct:conformsTo SHACL")
 
         # 4. Upload affordance descriptors + patch .meta with dct:conformsTo PROF spec
@@ -89,8 +98,7 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             put_file(client, url, local, "text/turtle")
             print(f"  aff   → {url}")
             meta_url = f"{url}.meta"
-            n3_patch_inserts(client, meta_url,
-                             f"<{url}> <{DCT}conformsTo> <{PROF_SPEC}> .")
+            n3_patch_inserts(client, meta_url, _conforms_graph(url, PROF_SPEC))
             print(f"  aff.meta  → dct:conformsTo PROF")
 
         # 5. Upload PROF profile descriptors (after affordances; refs are IRIs not dereferences)
@@ -101,8 +109,7 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             put_file(client, url, local, "text/turtle")
             print(f"  prof  → {url}")
             meta_url = f"{url}.meta"
-            n3_patch_inserts(client, meta_url,
-                             f"<{url}> <{DCT}conformsTo> <{PROF_SPEC}> .")
+            n3_patch_inserts(client, meta_url, _conforms_graph(url, PROF_SPEC))
             print(f"  prof.meta → dct:conformsTo PROF")
 
         # 6. Upload provided capabilities to the catalog
@@ -142,7 +149,7 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
                 mg.parse(meta_local, format="turtle", publicID=container_url)
                 inserts = mg.serialize(format="nt").strip()
                 if inserts:
-                    n3_patch_inserts(client, meta_url, inserts)
+                    n3_patch_inserts_nt(client, meta_url, inserts)
                     print(f"  meta  → {meta_url}")
 
         # 9. Merge JSON-LD context fragment
@@ -174,14 +181,13 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             mg.parse(source=str(page.meta_path), format="turtle", publicID=body_url)
             inserts = mg.serialize(format="nt").strip()
             if inserts:
-                n3_patch_inserts(client, meta_url, inserts)
+                n3_patch_inserts_nt(client, meta_url, inserts)
                 print(f"  page meta → {meta_url}")
 
         # 10. PATCH Type Index with structured registrations
         if manifest.type_registrations:
             ti_url = pod_url.rstrip("/") + "/settings/publicTypeIndex"
-            inserts = build_type_index_inserts(manifest)
-            n3_patch_inserts(client, ti_url, inserts)
+            n3_patch_inserts(client, ti_url, build_type_index_graph(manifest, ti_url))
             print(f"  type index → {len(manifest.type_registrations)} registrations patched in")
 
         # 11. PATCH .meta on typed subcontainers (e.g., ldp:constrainedBy for shape validation)
@@ -211,7 +217,7 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             mg.parse(data=rp.patch_body, format="turtle", publicID=rp.target_resource)
             inserts = mg.serialize(format="nt").strip()
             if inserts:
-                n3_patch_inserts(client, meta_url, inserts)
+                n3_patch_inserts_nt(client, meta_url, inserts)
                 print(f"  resource meta → {meta_url}")
 
         # 12. PATCH storage description with this overlay's conformsTo + rdfs:seeAlso + vocab
@@ -220,7 +226,7 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             sd_url = pod_url.rstrip("/") + "/.well-known/solid"
             try:
                 inserts = extract_inserts_block(storage_patch.read_text())
-                n3_patch_inserts(client, sd_url, inserts)
+                n3_patch_inserts_nt(client, sd_url, inserts)
                 print(f"  storage description patched")
             except RuntimeError as e:
                 # DEFERRED SUBSTRATE BUG: CSS v8-alpha.3 returns 405/501 on
@@ -246,7 +252,6 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
         # /vault/wiki/* paths only, so /meta/*.md resources never get listener-emitted triples;
         # we emit them here instead.
         WIKI_NS = "https://pod.vardeman.me/vault/ontology/wiki#"
-        SCHEMA_NS = "https://schema.org/"
         for guide in manifest.extension_guides:
             source_path = manifest.overlay_dir / guide.document
             if not source_path.exists():
@@ -267,14 +272,14 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             print(f"  guide → {target_url}")
             # Patch .meta with substrate invariants the listener would have emitted
             # for /wiki/* resources but won't for /meta/* resources.
-            thing_iri = target_url + "#this"
+            thing = URIRef(target_url + "#this")
+            page = URIRef(target_url)
             meta_url = target_url + ".meta"
-            ntriples = "\n".join([
-                f"<{thing_iri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{WIKI_NS}ExtensionGuide> .",
-                f"<{thing_iri}> <{SCHEMA_NS}mainEntityOfPage> <{target_url}> .",
-                f"<{target_url}> <{SCHEMA_NS}mainEntity> <{thing_iri}> .",
-            ])
-            n3_patch_inserts(client, meta_url, ntriples)
+            gg = Graph()
+            gg.add((thing, RDF.type, URIRef(WIKI_NS + "ExtensionGuide")))
+            gg.add((thing, URIRef(SCHEMA + "mainEntityOfPage"), page))
+            gg.add((page, URIRef(SCHEMA + "mainEntity"), thing))
+            n3_patch_inserts(client, meta_url, gg)
             print(f"  guide.meta → wiki:ExtensionGuide typed")
 
     print(f"Applied overlay {manifest.name} successfully.")
@@ -344,35 +349,30 @@ def patch_context_meta(client: httpx.Client, pod_url: str) -> None:
     """
     ctx_url = pod_url.rstrip("/") + "/meta/context.jsonld"
     meta_url = ctx_url + ".meta"
-    DCT = "http://purl.org/dc/terms/"
-    ntriples = (
-        f"<{ctx_url}> <{DCT}conformsTo> <https://www.w3.org/TR/json-ld11/> ."
-    )
-    n3_patch_inserts(client, meta_url, ntriples)
+    n3_patch_inserts(client, meta_url, _conforms_graph(ctx_url, JSONLD_SPEC))
 
 
-def build_type_index_inserts(manifest: Manifest) -> str:
-    """Emit N-Triples (absolute IRIs) suitable as the body of solid:inserts { ... }.
+def build_type_index_graph(manifest: Manifest, ti_url: str) -> Graph:
+    """Build the Type-Index registration triples as a Graph.
 
-    Per Solid N3 Patch grammar, prefix declarations belong at the patch envelope's
-    outer scope, not inside the inserts formula. This function returns one
-    N-Triple per line using absolute IRIs only.
+    Registration subjects are `{ti_url}#reg{i}-{name}` (the old code emitted the
+    `<#reg...>` fragment relative to the Type Index resource; resolving it here
+    against ti_url keeps the deployed triples byte-identical).
 
     Emits solid:instance when tr.instance is set; solid:instanceContainer otherwise.
     Exactly one of the two must be non-None (enforced by parse_manifest).
     """
-    SOLID_NS = "http://www.w3.org/ns/solid/terms#"
-    RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-    lines = []
+    SOLID = lambda t: URIRef("http://www.w3.org/ns/solid/terms#" + t)
+    g = Graph()
     for i, tr in enumerate(manifest.type_registrations):
-        reg = f"<#reg{i}-{manifest.name}>"
-        lines.append(f"{reg} <{RDF_TYPE}> <{SOLID_NS}TypeRegistration> .")
-        lines.append(f"{reg} <{SOLID_NS}forClass> <{tr.for_class}> .")
+        reg = URIRef(f"{ti_url}#reg{i}-{manifest.name}")
+        g.add((reg, RDF.type, SOLID("TypeRegistration")))
+        g.add((reg, SOLID("forClass"), URIRef(tr.for_class)))
         if tr.instance is not None:
-            lines.append(f"{reg} <{SOLID_NS}instance> <{tr.instance}> .")
+            g.add((reg, SOLID("instance"), URIRef(tr.instance)))
         else:
-            lines.append(f"{reg} <{SOLID_NS}instanceContainer> <{tr.instance_container}> .")
-    return "\n".join(lines)
+            g.add((reg, SOLID("instanceContainer"), URIRef(tr.instance_container)))
+    return g
 
 
 def extract_inserts_block(patch_text: str) -> str:

@@ -1,10 +1,11 @@
 """Backfill content-level dct:conformsTo on already-imported wiki-memory L3 resources.
 
-Iterates LDP containers /vault/wiki/{pages,sources,people,procedures,working}/ ,
-reads each resource's .meta, checks rdf:type, and PATCHes in dct:conformsTo if
-the type maps to a known profile and the conformsTo triple isn't already there.
+Walks the live Type Index to discover the governed containers (the pod_audit
+walker pattern), reads each resource's .meta, checks rdf:type, and PATCHes in
+dct:conformsTo if the type maps to a known profile and the conformsTo triple
+isn't already there.
 
-Idempotent. Safe to re-run.
+Idempotent. Safe to re-run. One-shot D98 migration helper.
 """
 import argparse
 import asyncio
@@ -12,21 +13,50 @@ import sys
 
 import httpx
 from rdflib import Graph, URIRef
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, DCTERMS
 
-DCT_CONFORMS_TO = URIRef("http://purl.org/dc/terms/conformsTo")
-WIKI = "https://pod.vardeman.me/vault/ontology/wiki#"
+SOLID = "http://www.w3.org/ns/solid/terms#"
+LDP   = "http://www.w3.org/ns/ldp#"
+SCHEMA = "https://schema.org/"
+SKOS   = "http://www.w3.org/2004/02/skos/core#"
+WIKI   = "https://pod.vardeman.me/vault/ontology/wiki#"
+PROFILE = "https://pod.vardeman.me/vault/meta/profiles/"
+
+# D98 class → PROF profile. Classes match the live Type Index registrations
+# (skos:Concept / schema:Person|Place|Event|Organization|HowTo / wiki:Source|WorkingNote).
 TYPE_TO_PROFILE = {
-    URIRef(f"{WIKI}Concept"):     "https://pod.vardeman.me/vault/meta/profiles/concept",
-    URIRef(f"{WIKI}Source"):      "https://pod.vardeman.me/vault/meta/profiles/source",
-    URIRef(f"{WIKI}Person"):      "https://pod.vardeman.me/vault/meta/profiles/person",
-    URIRef(f"{WIKI}Procedure"):   "https://pod.vardeman.me/vault/meta/profiles/procedure",
-    URIRef(f"{WIKI}WorkingNote"): "https://pod.vardeman.me/vault/meta/profiles/working",
+    URIRef(f"{SKOS}Concept"):        f"{PROFILE}concept",
+    URIRef(f"{WIKI}Source"):         f"{PROFILE}source",
+    URIRef(f"{SCHEMA}Person"):       f"{PROFILE}person",
+    URIRef(f"{SCHEMA}Place"):        f"{PROFILE}place",
+    URIRef(f"{SCHEMA}Event"):        f"{PROFILE}event",
+    URIRef(f"{SCHEMA}Organization"): f"{PROFILE}organization",
+    URIRef(f"{SCHEMA}HowTo"):        f"{PROFILE}howto",
+    URIRef(f"{WIKI}WorkingNote"):    f"{PROFILE}working",
 }
-CONTAINERS = [
-    "/vault/wiki/pages/", "/vault/wiki/sources/", "/vault/wiki/people/",
+
+# Fallback if the Type Index is unreachable. These are the D98 containers
+# (pre-D98 used pages/sources/people/procedures/working — that list is RETIRED).
+FALLBACK_CONTAINERS = [
+    "/vault/wiki/concepts/", "/vault/wiki/people/", "/vault/wiki/places/",
+    "/vault/wiki/events/", "/vault/wiki/organizations/",
     "/vault/wiki/procedures/", "/vault/wiki/working/",
 ]
+
+
+async def discover_containers(client: httpx.AsyncClient, base: str) -> list[str]:
+    "Container paths from the live Type Index (instanceContainer set). Fallback on failure."
+    ti_url = f"{base}/vault/settings/publicTypeIndex"
+    try:
+        r = await client.get(ti_url, headers={"Accept": "text/turtle"})
+        r.raise_for_status()
+        g = Graph().parse(data=r.text, format="turtle", publicID=ti_url)
+        ctrs = sorted({str(o) for o in g.objects(None, URIRef(f"{SOLID}instanceContainer"))})
+        return [c[len(base):] if c.startswith(base) else c for c in ctrs] or FALLBACK_CONTAINERS
+    except (httpx.HTTPError, ValueError):
+        print(f"WARN type index unreachable at {ti_url}; using fallback container list",
+              file=sys.stderr)
+        return FALLBACK_CONTAINERS
 
 
 async def list_container(client: httpx.AsyncClient, base: str, path: str) -> list[str]:
@@ -35,7 +65,7 @@ async def list_container(client: httpx.AsyncClient, base: str, path: str) -> lis
     g = Graph()
     g.parse(data=r.text, format="turtle", publicID=f"{base}{path}")
     return [str(o) for o in g.objects(URIRef(f"{base}{path}"),
-            URIRef("http://www.w3.org/ns/ldp#contains"))]
+            URIRef(f"{LDP}contains"))]
 
 
 async def backfill_one(client: httpx.AsyncClient, resource_url: str, dry_run: bool) -> str:
@@ -49,17 +79,22 @@ async def backfill_one(client: httpx.AsyncClient, resource_url: str, dry_run: bo
     types = set(g.objects(res, RDF.type))
     profile = next((TYPE_TO_PROFILE[t] for t in types if t in TYPE_TO_PROFILE), None)
     if not profile:
-        return f"SKIP {resource_url} (no recognized wiki:* type)"
-    if (res, DCT_CONFORMS_TO, URIRef(profile)) in g:
+        return f"SKIP {resource_url} (no recognized type)"
+    if (res, DCTERMS.conformsTo, URIRef(profile)) in g:
         return f"SKIP {resource_url} (already has conformsTo)"
     if dry_run:
         return f"DRY {resource_url} → conformsTo {profile}"
-    patch = (
-        "PREFIX dct: <http://purl.org/dc/terms/>\n"
-        f"INSERT DATA {{ <{resource_url}> dct:conformsTo <{profile}> . }}"
+    # Build the insert as a Graph → N3 Patch (rdflib serializes inside; no
+    # hand-built Turtle/SPARQL — the injection class is impossible).
+    patch_g = Graph()
+    patch_g.add((res, DCTERMS.conformsTo, URIRef(profile)))
+    inserts = patch_g.serialize(format="nt").strip()
+    n3 = (
+        "@prefix solid: <http://www.w3.org/ns/solid/terms#>.\n\n"
+        f"_:patch a solid:InsertDeletePatch ;\n   solid:inserts {{ {inserts} }} .\n"
     )
-    pr = await client.patch(meta_url, content=patch,
-                            headers={"Content-Type": "application/sparql-update"})
+    pr = await client.patch(meta_url, content=n3.encode("utf-8"),
+                            headers={"Content-Type": "text/n3"})
     pr.raise_for_status()
     return f"OK   {resource_url} → conformsTo {profile}"
 
@@ -67,12 +102,13 @@ async def backfill_one(client: httpx.AsyncClient, resource_url: str, dry_run: bo
 async def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pod", default="https://pod.vardeman.me")
-    ap.add_argument("--containers", nargs="+", default=CONTAINERS,
-                    help="LDP container paths to scan (default: vault/wiki/* hierarchy)")
+    ap.add_argument("--containers", nargs="+", default=None,
+                    help="LDP container paths to scan (default: derive from live Type Index)")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     async with httpx.AsyncClient(timeout=10, verify=False) as client:
-        for path in args.containers:
+        containers = args.containers or await discover_containers(client, args.pod)
+        for path in containers:
             try:
                 resources = await list_container(client, args.pod, path)
             except httpx.HTTPStatusError as e:

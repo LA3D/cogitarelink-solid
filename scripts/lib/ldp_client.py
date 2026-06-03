@@ -11,6 +11,9 @@ def put_resource(url: str, content: bytes, content_type: str) -> int:
 
 
 def patch_meta(url: str, g: Graph) -> int:
+    # Graph in, rdflib serializes to nt inside: `inserts` is never hand-built,
+    # so a literal containing '>' or a newline can't break the envelope (the
+    # injection class). Same contract as overlay.common.n3_patch_inserts.
     inserts = g.serialize(format="nt").strip()
     if not inserts: return 200
     n3 = (

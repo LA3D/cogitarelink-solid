@@ -385,13 +385,30 @@ def ensure_container(client: httpx.Client, container_url: str) -> None:
         raise RuntimeError(f"Container create {container_url} failed: HTTP {r2.status_code}: {r2.text[:300]}")
 
 
-def n3_patch_inserts(client: httpx.Client, target_url: str, ntriples: str) -> None:
-    """Apply an N3 Patch to target_url that inserts the given N-Triples.
+def n3_patch_inserts(client: httpx.Client, target_url: str, g: Graph) -> None:
+    """Apply an N3 Patch to target_url inserting the triples in Graph `g`.
 
-    The `ntriples` string must contain only fully-qualified IRI triples
-    (no @prefix directives, no prefixed names). Prefix declarations belong
-    at the patch envelope's outer scope, not inside solid:inserts { ... }.
+    Takes a Graph (not a hand-built string): rdflib serializes to N-Triples
+    inside the helper, so callers never construct Turtle/N3 by f-string —
+    the injection class (a literal containing '>' or a newline would break a
+    hand-built triple) is structurally impossible. For callers that already
+    hold N-Triples produced BY rdflib (apply.py's structural patches do the
+    Graph→serialize round-trip themselves), use n3_patch_inserts_nt.
     """
+    ntriples = g.serialize(format="nt").strip()
+    n3_patch_inserts_nt(client, target_url, ntriples)
+
+
+def n3_patch_inserts_nt(client: httpx.Client, target_url: str, ntriples: str) -> None:
+    """N3 Patch escape-hatch for callers already holding rdflib-serialized N-Triples.
+
+    The `ntriples` string MUST have been produced by rdflib (Graph.serialize(nt)),
+    never hand-built — that is the contract that keeps the injection guarantee.
+    Prefix declarations belong at the envelope's outer scope, not inside
+    solid:inserts { ... }.
+    """
+    if not ntriples.strip():
+        return
     patch_body = f"""@prefix solid: <http://www.w3.org/ns/solid/terms#>.
 
 _:patch a solid:InsertDeletePatch ;

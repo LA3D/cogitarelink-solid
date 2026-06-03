@@ -10,8 +10,10 @@ import time
 from pathlib import Path
 
 import httpx
+from rdflib import Graph, URIRef
 
 POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
+OSLC_TOTAL = URIRef("http://open-services.net/ns/core#totalCount")
 FIX = Path(__file__).parent.parent / "tests" / "fixtures" / "wiki-memory-l3" / "pilot" / "bodies"
 
 CONTAINERS = ("concepts", "people", "procedures")
@@ -44,10 +46,9 @@ def verify_search(client: httpx.Client, query: str, expected_min: int) -> bool:
     if r.status_code != 200:
         print(f"  FAIL search {query!r}: HTTP {r.status_code}", file=sys.stderr)
         return False
-    body = r.text
-    import re
-    m = re.search(r"oslc:totalCount\s+(\d+)", body)
-    count = int(m.group(1)) if m else 0
+    g = Graph().parse(data=r.text, format="turtle", publicID=url)
+    total = next(g.objects(None, OSLC_TOTAL), None)
+    count = int(total) if total is not None else 0
     ok = count >= expected_min
     mark = "OK  " if ok else "FAIL"
     print(f"  {mark} search {query!r}: {count} hits (expected ≥ {expected_min})")

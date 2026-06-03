@@ -1,6 +1,7 @@
 @prefix st: <http://www.w3.org/ns/shapetrees#> .
 
-<> a st:Manager ; st:hasAssignment <#a1> .
-<#a1>
-    st:assigns <https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree#PlaceContainerTree> ;
+<> a st:Manager ;
+    st:hasAssignment <#a1> .
+
+<#a1> st:assigns <https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree#PlaceContainerTree> ;
     st:manages <https://pod.vardeman.me/vault/wiki/places/> .
