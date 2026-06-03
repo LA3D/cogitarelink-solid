@@ -14,15 +14,13 @@ import {
   readableToQuads,
 } from '@solid/community-server';
 import { getLoggerFor } from 'global-logger-factory';
-import type { Quad } from '@rdfjs/types';
 import type { Store } from 'n3';
-import { Writer } from 'n3';
-import SHACLValidator from 'rdf-validate-shacl';
 import { ShaclValidationError } from '../../error/ShaclValidationError';
 import { NoOpUnprocessableWriteHook } from '../../NoOpUnprocessableWriteHook';
 import { LDP, SH } from '../../util/Vocabularies';
 import type { ShapeValidatorInput } from './ShapeValidator';
 import { ShapeValidator } from './ShapeValidator';
+import { validateQuadsAgainstShape } from './validateQuadsAgainstShape.js';
 
 // Hook interface for SHACL rejection callbacks.
 // Declared as a local type alias for structural typing — NOT exported as a
@@ -118,12 +116,10 @@ export class ShaclValidator extends ShapeValidator {
     const shapeStore = await readableToQuads(shape.data);
     this.targetClassCheck(shapeStore, dataStore, shapeURL);
 
-    const validator = new SHACLValidator(shapeStore);
-    const report = await validator.validate(dataStore);
-    this.logger.debug(`Validation: ${report.conforms ? 'success' : 'failure'}`);
-    if (!report.conforms) {
-      const reportTurtle = await this.serializeReport(report.dataset);
-      await this.invokeHookAndThrow(representation.metadata.identifier.value, reportTurtle, shapeURL);
+    const result = await validateQuadsAgainstShape(dataStore, shapeStore);
+    this.logger.debug(`Validation: ${result.conforms ? 'success' : 'failure'}`);
+    if (!result.conforms) {
+      await this.invokeHookAndThrow(representation.metadata.identifier.value, result.reportTurtle!, shapeURL);
     }
   }
 
@@ -151,27 +147,6 @@ export class ShaclValidator extends ShapeValidator {
       this.logger.warn(`UnprocessableWrite hook error (substrate event archival failed; 422 still returned to agent): ${msg}`);
     }
     throw new ShaclValidationError(shapeURL, reportTurtle);
-  }
-
-  private serializeReport(dataset: Iterable<Quad>): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      const writer = new Writer({
-        prefixes: {
-          sh: 'http://www.w3.org/ns/shacl#',
-          xsd: 'http://www.w3.org/2001/XMLSchema#',
-        },
-      });
-      for (const quad of dataset) {
-        writer.addQuad(quad);
-      }
-      writer.end((err: Error | null, result: string) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
-    });
   }
 
   public async handleSafe(input: ShapeValidatorInput): Promise<void> {
