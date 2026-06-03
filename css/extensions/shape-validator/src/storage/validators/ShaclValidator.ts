@@ -17,6 +17,7 @@ import { getLoggerFor } from 'global-logger-factory';
 import type { Store } from 'n3';
 import { ShaclValidationError } from '../../error/ShaclValidationError';
 import { NoOpUnprocessableWriteHook } from '../../NoOpUnprocessableWriteHook';
+import { RDF_CONTENT_TYPES } from '../../util/ContentTypes';
 import { LDP, SH } from '../../util/Vocabularies';
 import type { ShapeValidatorInput } from './ShapeValidator';
 import { ShapeValidator } from './ShapeValidator';
@@ -69,11 +70,7 @@ export class ShaclValidator extends ShapeValidator {
     // A SHACL validator validates RDF. Non-RDF bodies (e.g. text/markdown) are projected
     // into their .meta graph by the AdmissionFloorStore + a BodyProjector and validated there.
     const ct = representation.metadata.contentType;
-    const RDF_TYPES = new Set([
-      'text/turtle', 'application/ld+json', 'application/n-triples',
-      'application/n-quads', 'application/trig', 'text/n3', 'application/rdf+xml',
-    ]);
-    if (ct && !RDF_TYPES.has(ct)) {
+    if (ct && !RDF_CONTENT_TYPES.has(ct)) {
       throw new NotImplementedHttpError(`No shape validation on non-RDF content-type ${ct}.`);
     }
 

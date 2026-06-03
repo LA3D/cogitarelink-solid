@@ -22,6 +22,9 @@
           },
           "storagePath": {
             "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_storagePath"
+          },
+          "stampPredicate": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_stampPredicate"
           }
         }
       },

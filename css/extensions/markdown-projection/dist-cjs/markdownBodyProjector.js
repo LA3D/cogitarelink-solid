@@ -54,6 +54,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MarkdownBodyProjector = void 0;
 const path = __importStar(require("path"));
+const listener_1 = require("./listener");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const runtimeImport = new Function("specifier", "return import(specifier)");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,20 +72,8 @@ function getPipeline() {
     return pipelineCache;
 }
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-// fsPathFromUrl — replicates listener.ts's private helper (NOT exported from the
-// ESM index). Maps an HTTP resource URL to its on-disk path so MetaWriter can write
-// the .meta sidecar. Same logic as listener.ts lines 122-131.
-function trimSlash(s) {
-    return s.replace(/\/$/, "");
-}
-function fsPathFromUrl(url, baseUrl, dataDir) {
-    const base = trimSlash(baseUrl);
-    if (!url.startsWith(base))
-        throw new Error(`URL outside pod base: ${url}`);
-    const noQuery = url.split("?")[0];
-    const relative = decodeURIComponent(noQuery.slice(base.length).replace(/^\//, ""));
-    return path.join(dataDir, relative);
-}
+// fsPathFromUrl is imported from listener.ts (same package) — was a private
+// replica here; de-duped so the URL→fs-path mapping has one definition.
 class MarkdownBodyProjector {
     baseUrl;
     // Filesystem root the Pod stores resources under; used by materialize() to
@@ -154,7 +143,7 @@ class MarkdownBodyProjector {
     // via the runtime pipeline import) and the floor must stay profile-agnostic.
     async materialize(identifier, quads, governed) {
         const { MetaWriter } = await getPipeline();
-        const fsPath = fsPathFromUrl(identifier.path, this.baseUrl, this.dataDir);
+        const fsPath = (0, listener_1.fsPathFromUrl)(identifier.path, this.baseUrl, this.dataDir);
         await new MetaWriter().replaceGoverned(fsPath, quads, governed, identifier.path);
     }
 }

@@ -5,7 +5,7 @@ import { join } from "path";
 describe("AdmissionFloorStore layering (anti-contamination)", () => {
   it("contains no profile symbols — stays L1/L2-general", () => {
     const src = readFileSync(join(__dirname, "../src/storage/AdmissionFloorStore.ts"), "utf8");
-    for (const banned of ["markdown-projection", "skos", "wiki:", "ConceptShape", "projectionPipeline", "prefLabel"]) {
+    for (const banned of ["markdown-projection", "skos", "wiki:", "ConceptShape", "projectionPipeline", "prefLabel", "pod.vardeman.me"]) {
       expect(src.toLowerCase()).not.toContain(banned.toLowerCase());
     }
   });

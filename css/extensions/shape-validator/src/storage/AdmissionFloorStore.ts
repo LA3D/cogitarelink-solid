@@ -35,6 +35,7 @@ import {
   readableToString,
   readableToQuads,
   fetchDataset,
+  isContainerIdentifier,
   NotFoundHttpError,
   INTERNAL_QUADS,
   AS,
@@ -45,14 +46,20 @@ import type { Quad } from '@rdfjs/types';
 import { Store, Parser, DataFactory } from 'n3';
 import { createHash } from 'crypto';
 import { getLoggerFor } from 'global-logger-factory';
+import { RDF_CONTENT_TYPES } from '../util/ContentTypes';
+import { DEFAULT_STAMP_PRED } from '../util/StampPredicate';
 import { LDP } from '../util/Vocabularies';
 import type { BodyProjector } from './BodyProjector';
 import { validateQuadsAgainstShape } from './validators/validateQuadsAgainstShape.js';
 import { ShaclValidationError } from '../error/ShaclValidationError';
 
-// Body-hash stamp predicate. Recorded on the resource subject in .meta so the
-// substrate can detect post-admission body edits that bypassed the floor.
-export const STAMP_PRED = 'https://pod.vardeman.me/vault/ontology/substrate#bodyHash';
+// Default body-hash stamp predicate. Recorded on the resource subject in .meta so
+// the substrate can detect post-admission body edits that bypassed the floor. The
+// deployment IRI lives in util (host out of THIS source — a layering test bans the
+// host here) and is wired via config (the stampPredicate constructor param, like
+// storagePath). Re-exported as STAMP_PRED so importers keep one import site; the
+// stampAgreement test asserts config == this constant on both sides.
+export const STAMP_PRED = DEFAULT_STAMP_PRED;
 
 export class AdmissionFloorStore extends PassthroughStore {
   protected readonly logger = getLoggerFor(this);
@@ -70,6 +77,10 @@ export class AdmissionFloorStore extends PassthroughStore {
     private readonly identifierStrategy: IdentifierStrategy,
     private readonly auxiliaryStrategy: AuxiliaryStrategy,
     projector: unknown,
+    // Body-hash stamp predicate. LAST param + defaulted to STAMP_PRED so existing
+    // unit tests stay green; the deployment IRI is supplied via config (like
+    // storagePath) so this profile-agnostic store names no host.
+    private readonly stampPredicate: string = STAMP_PRED,
   ) {
     super(source);
     this.projector = projector as BodyProjector;
@@ -93,7 +104,7 @@ export class AdmissionFloorStore extends PassthroughStore {
     // a governed resource's .meta is floored.
     if (this.auxiliaryStrategy.isAuxiliaryIdentifier(id)) {
       const subject = this.auxiliaryStrategy.getSubjectIdentifier(id);
-      const subjectIsContainer = subject.path.endsWith('/');
+      const subjectIsContainer = isContainerIdentifier(subject);
       const shapeForMeta = subjectIsContainer ? undefined : await this.constrainedByFor(subject);
       // A governed resource's .meta is RDF by definition: validate internal/quads (the
       // patched-graph path), any textual RDF serialisation (the raw-PUT path), or a missing
@@ -227,7 +238,7 @@ export class AdmissionFloorStore extends PassthroughStore {
     body: string,
   ): Promise<void> {
     const stamped = [ ...projected.quads, this.stampQuad(id, body) ];
-    await this.projector.materialize(id, stamped, [ ...projected.governed, STAMP_PRED ]);
+    await this.projector.materialize(id, stamped, [ ...projected.governed, this.stampPredicate ]);
   }
 
   /** ldp:constrainedBy of the parent container, or undefined if unconstrained/root/missing. */
@@ -267,15 +278,7 @@ export class AdmissionFloorStore extends PassthroughStore {
     const ct = representation.metadata.contentType;
     if (!ct) return true;
     if (ct === INTERNAL_QUADS) return true;
-    return [
-      'text/turtle',
-      'application/ld+json',
-      'application/n-triples',
-      'application/n-quads',
-      'application/trig',
-      'text/n3',
-      'application/rdf+xml',
-    ].includes(ct);
+    return RDF_CONTENT_TYPES.has(ct);
   }
 
   // Read a .meta representation into a quad Store, handling both runtime shapes:
@@ -295,7 +298,7 @@ export class AdmissionFloorStore extends PassthroughStore {
     const hash = createHash('sha256').update(body).digest('hex');
     return DataFactory.quad(
       DataFactory.namedNode(id.path),
-      DataFactory.namedNode(STAMP_PRED),
+      DataFactory.namedNode(this.stampPredicate),
       DataFactory.literal(hash),
     );
   }

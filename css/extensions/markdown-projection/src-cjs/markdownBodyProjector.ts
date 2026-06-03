@@ -22,6 +22,7 @@ import type { Representation } from "@solid/community-server/dist/http/represent
 import type { ResourceIdentifier } from "@solid/community-server/dist/http/representation/ResourceIdentifier";
 import type { Quad } from "n3";
 import * as path from "path";
+import { fsPathFromUrl } from "./listener";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const runtimeImport = new Function("specifier", "return import(specifier)") as (s: string) => Promise<any>;
@@ -52,20 +53,8 @@ function getPipeline(): Promise<any> {
 
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
-// fsPathFromUrl — replicates listener.ts's private helper (NOT exported from the
-// ESM index). Maps an HTTP resource URL to its on-disk path so MetaWriter can write
-// the .meta sidecar. Same logic as listener.ts lines 122-131.
-function trimSlash(s: string): string {
-    return s.replace(/\/$/, "");
-}
-
-function fsPathFromUrl(url: string, baseUrl: string, dataDir: string): string {
-    const base = trimSlash(baseUrl);
-    if (!url.startsWith(base)) throw new Error(`URL outside pod base: ${url}`);
-    const noQuery = url.split("?")[0];
-    const relative = decodeURIComponent(noQuery.slice(base.length).replace(/^\//, ""));
-    return path.join(dataDir, relative);
-}
+// fsPathFromUrl is imported from listener.ts (same package) — was a private
+// replica here; de-duped so the URL→fs-path mapping has one definition.
 
 export class MarkdownBodyProjector {
     private readonly baseUrl: string;

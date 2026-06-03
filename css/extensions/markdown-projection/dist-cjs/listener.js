@@ -46,8 +46,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MarkdownProjectionListener = exports.MarkdownBodyProjector = exports.NoOpPostProjectionHook = void 0;
+exports.MarkdownProjectionListener = exports.DEFAULT_STAMP_PRED = exports.MarkdownBodyProjector = exports.NoOpPostProjectionHook = void 0;
 exports.shouldReproject = shouldReproject;
+exports.trimSlash = trimSlash;
+exports.fsPathFromUrl = fsPathFromUrl;
 const Initializer_1 = require("@solid/community-server/dist/init/Initializer");
 const Vocabularies_1 = require("@solid/community-server/dist/util/Vocabularies");
 const path = __importStar(require("path"));
@@ -68,22 +70,25 @@ function debug(...args) {
 // ------------------------------------------------------------------
 // Backstop: stamp-based skip (D108 Front-2 §5.7)
 // ------------------------------------------------------------------
-// Matches STAMP_PRED in AdmissionFloorStore — the in-band floor writes this
-// predicate on success, so the listener can skip re-projection when the stamp
-// is current (= the floor already wrote a conformant .meta).
-const STAMP_PRED = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash";
+// Default body-hash stamp predicate — must match the AdmissionFloorStore's
+// stampPredicate (the in-band floor writes this predicate on success, so the
+// listener can skip re-projection when the stamp is current). The deployment
+// IRI is wired via config (the stampPredicate constructor param, like
+// storagePath); this default keeps the unit tests green. The stampAgreement
+// test asserts both config files == the floor's exported default.
+exports.DEFAULT_STAMP_PRED = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash";
 /**
- * Returns false (skip) when existingMetaTtl already contains a bodyHash stamp
+ * Returns false (skip) when existingMetaTtl already contains a stamp on stampPred
  * that matches sha256(body). Returns true (re-project) in all other cases:
  * absent .meta, missing stamp, stale stamp, or parse error.
  */
-function shouldReproject(body, existingMetaTtl) {
+function shouldReproject(body, existingMetaTtl, stampPred = exports.DEFAULT_STAMP_PRED) {
     if (!existingMetaTtl)
         return true;
     const want = (0, crypto_1.createHash)("sha256").update(body).digest("hex");
     try {
         const quads = new n3_1.Parser().parse(existingMetaTtl);
-        const stamp = quads.find((q) => q.predicate.value === STAMP_PRED);
+        const stamp = quads.find((q) => q.predicate.value === stampPred);
         return !stamp || stamp.object.value !== want;
     }
     catch {
@@ -135,6 +140,8 @@ function couldBeL4Container(url) {
 // Path resolution — mirrors MementoCommitListener's fsPathFromUrl
 // ------------------------------------------------------------------
 function trimSlash(s) { return s.replace(/\/$/, ""); }
+// Map an HTTP resource URL to its on-disk path so MetaWriter can write the .meta
+// sidecar. Exported so MarkdownBodyProjector reuses the same helper (same package).
 function fsPathFromUrl(url, baseUrl, dataDir) {
     const base = trimSlash(baseUrl);
     if (!url.startsWith(base))
@@ -152,6 +159,10 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
     // (markdown-projection.json), default "/vault". Was a hardcoded literal in
     // project() before RQ-Substrate-4 Phase 3 (FOLLOWUPS contamination item 1).
     storagePath;
+    // Body-hash stamp predicate, injected via Components.js (default
+    // DEFAULT_STAMP_PRED). Must equal the AdmissionFloorStore's stampPredicate so
+    // the backstop's stamp-match skip recognises floor-written .meta.
+    stampPredicate;
     postProjectionHook;
     // Serialise concurrent writes per the D68 chain pattern
     chain = Promise.resolve();
@@ -162,7 +173,7 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
     // Cached routing map (predicate IRI → class IRI) loaded from /meta/routing.jsonld.
     // Null until first project() call; falls back to BOOTSTRAP_PREDICATE_TO_CLASS on error.
     routingMap = null;
-    constructor(store, baseUrl, dataDir, postProjectionHook, storagePath = "/vault") {
+    constructor(store, baseUrl, dataDir, postProjectionHook, storagePath = "/vault", stampPredicate = exports.DEFAULT_STAMP_PRED) {
         super();
         this.store = store;
         this.baseUrl = baseUrl.replace(/\/$/, "");
@@ -171,6 +182,7 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
         // trimmed, so storageBase = baseUrl + storagePath joins cleanly.
         const sp = storagePath.startsWith("/") ? storagePath : `/${storagePath}`;
         this.storagePath = sp.replace(/\/$/, "");
+        this.stampPredicate = stampPredicate;
         this.postProjectionHook = postProjectionHook ?? new NoOpPostProjectionHook_1.NoOpPostProjectionHook();
     }
     // Storage root URL = baseUrl + injected storagePath. The live Type Index
@@ -243,7 +255,7 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
                 existingMeta = (0, fs_1.readFileSync)(metaPath, "utf8");
         }
         catch { /* treat as absent */ }
-        if (!shouldReproject(body, existingMeta)) {
+        if (!shouldReproject(body, existingMeta, this.stampPredicate)) {
             debug(`backstop: stamp current for ${target.path}, skipping re-projection`);
             return;
         }

@@ -72,7 +72,8 @@
       "source": { "@id": "urn:shape-validation:default:ResourceStore_Shape" },
       "identifierStrategy": { "@id": "urn:solid-server:default:IdentifierStrategy" },
       "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" },
-      "projector": { "@id": "urn:cogitarelink:MarkdownBodyProjector" }
+      "projector": { "@id": "urn:cogitarelink:MarkdownBodyProjector" },
+      "stampPredicate": "https://pod.vardeman.me/vault/ontology/substrate#bodyHash"
     },
     {
       "comment": "Default no-op hook for ShaclValidator. Swapped for MemTriggerUnprocessableWriteHook by mem-trigger.json Override when mem-trigger is installed.",

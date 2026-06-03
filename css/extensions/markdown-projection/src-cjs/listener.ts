@@ -58,22 +58,29 @@ function debug(...args: unknown[]): void {
 // ------------------------------------------------------------------
 // Backstop: stamp-based skip (D108 Front-2 §5.7)
 // ------------------------------------------------------------------
-// Matches STAMP_PRED in AdmissionFloorStore — the in-band floor writes this
-// predicate on success, so the listener can skip re-projection when the stamp
-// is current (= the floor already wrote a conformant .meta).
-const STAMP_PRED = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash";
+// Default body-hash stamp predicate — must match the AdmissionFloorStore's
+// stampPredicate (the in-band floor writes this predicate on success, so the
+// listener can skip re-projection when the stamp is current). The deployment
+// IRI is wired via config (the stampPredicate constructor param, like
+// storagePath); this default keeps the unit tests green. The stampAgreement
+// test asserts both config files == the floor's exported default.
+export const DEFAULT_STAMP_PRED = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash";
 
 /**
- * Returns false (skip) when existingMetaTtl already contains a bodyHash stamp
+ * Returns false (skip) when existingMetaTtl already contains a stamp on stampPred
  * that matches sha256(body). Returns true (re-project) in all other cases:
  * absent .meta, missing stamp, stale stamp, or parse error.
  */
-export function shouldReproject(body: string, existingMetaTtl: string): boolean {
+export function shouldReproject(
+    body: string,
+    existingMetaTtl: string,
+    stampPred: string = DEFAULT_STAMP_PRED,
+): boolean {
     if (!existingMetaTtl) return true;
     const want = createHash("sha256").update(body).digest("hex");
     try {
         const quads = new Parser().parse(existingMetaTtl);
-        const stamp = quads.find((q) => q.predicate.value === STAMP_PRED);
+        const stamp = quads.find((q) => q.predicate.value === stampPred);
         return !stamp || stamp.object.value !== want;
     } catch {
         return true;
@@ -152,9 +159,11 @@ function couldBeL4Container(url: string): boolean {
 // Path resolution — mirrors MementoCommitListener's fsPathFromUrl
 // ------------------------------------------------------------------
 
-function trimSlash(s: string): string { return s.replace(/\/$/, ""); }
+export function trimSlash(s: string): string { return s.replace(/\/$/, ""); }
 
-function fsPathFromUrl(url: string, baseUrl: string, dataDir: string): string {
+// Map an HTTP resource URL to its on-disk path so MetaWriter can write the .meta
+// sidecar. Exported so MarkdownBodyProjector reuses the same helper (same package).
+export function fsPathFromUrl(url: string, baseUrl: string, dataDir: string): string {
     const base = trimSlash(baseUrl);
     if (!url.startsWith(base)) throw new Error(`URL outside pod base: ${url}`);
     // Strip query string (Memento uses ?version= / ?ext=timemap)
@@ -172,6 +181,7 @@ export interface MarkdownProjectionListenerArgs {
     baseUrl: string;
     dataDir: string;
     storagePath?: string;
+    stampPredicate?: string;
 }
 
 export class MarkdownProjectionListener extends Initializer {
@@ -182,6 +192,10 @@ export class MarkdownProjectionListener extends Initializer {
     // (markdown-projection.json), default "/vault". Was a hardcoded literal in
     // project() before RQ-Substrate-4 Phase 3 (FOLLOWUPS contamination item 1).
     private readonly storagePath: string;
+    // Body-hash stamp predicate, injected via Components.js (default
+    // DEFAULT_STAMP_PRED). Must equal the AdmissionFloorStore's stampPredicate so
+    // the backstop's stamp-match skip recognises floor-written .meta.
+    private readonly stampPredicate: string;
     private readonly postProjectionHook: IPostProjectionHook;
     // Serialise concurrent writes per the D68 chain pattern
     private chain: Promise<void> = Promise.resolve();
@@ -199,6 +213,7 @@ export class MarkdownProjectionListener extends Initializer {
         dataDir: string,
         postProjectionHook?: IPostProjectionHook,
         storagePath = "/vault",
+        stampPredicate: string = DEFAULT_STAMP_PRED,
     ) {
         super();
         this.store = store;
@@ -208,6 +223,7 @@ export class MarkdownProjectionListener extends Initializer {
         // trimmed, so storageBase = baseUrl + storagePath joins cleanly.
         const sp = storagePath.startsWith("/") ? storagePath : `/${storagePath}`;
         this.storagePath = sp.replace(/\/$/, "");
+        this.stampPredicate = stampPredicate;
         this.postProjectionHook = postProjectionHook ?? new NoOpPostProjectionHook();
     }
 
@@ -292,7 +308,7 @@ export class MarkdownProjectionListener extends Initializer {
         const metaPath = `${fsPath}.meta`;
         let existingMeta = "";
         try { if (existsSync(metaPath)) existingMeta = readFileSync(metaPath, "utf8"); } catch { /* treat as absent */ }
-        if (!shouldReproject(body, existingMeta)) {
+        if (!shouldReproject(body, existingMeta, this.stampPredicate)) {
             debug(`backstop: stamp current for ${target.path}, skipping re-projection`);
             return;
         }

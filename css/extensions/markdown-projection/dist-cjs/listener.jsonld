@@ -33,6 +33,11 @@
           "comment": "Pod storage root path under baseUrl (e.g. /vault). Injected so the storage segment lives in one declared config location, not a TS source literal (RQ-Substrate-4 Phase 3 / D107 §4.4). Optional — the constructor defaults to /vault.",
           "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_storagePath",
           "range": "xsd:string"
+        },
+        {
+          "comment": "Body-hash stamp predicate. Injected so the deployment IRI lives in config (not a TS source literal); must equal the AdmissionFloorStore stampPredicate so the backstop skip recognises floor-written .meta. Optional — the constructor defaults to DEFAULT_STAMP_PRED.",
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_stampPredicate",
+          "range": "xsd:string"
         }
       ],
       "constructorArguments": [
@@ -40,7 +45,8 @@
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_baseUrl" },
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_dataDir" },
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_postProjectionHook" },
-        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_storagePath" }
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_storagePath" },
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_stampPredicate" }
       ]
     },
     {
