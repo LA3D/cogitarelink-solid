@@ -18,14 +18,17 @@ vi.mock("../src/storage/validators/validateQuadsAgainstShape.js", () => ({
   validateQuadsAgainstShape: (...args: unknown[]) => validateMock(...args),
 }));
 
-// Stub fetchDataset + readableToQuads so shapeStore() resolves without HTTP.
-// Keep everything else from @solid/community-server real (PassthroughStore, helpers, AS…).
+// Stub fetchDataset so shapeStore() resolves without HTTP — but return a REAL
+// empty quad representation so the floor's real readableToQuads(shape.data) works.
+// We deliberately do NOT stub readableToQuads / the N3 parser: the .meta-graph
+// reading path is exactly what D108-Floor-Bug-1 masked, so it must run for real.
+// validateQuadsAgainstShape is still mocked (the conformance verdict is the seam).
 vi.mock("@solid/community-server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@solid/community-server")>();
+  const { BasicRepresentation } = actual;
   return {
     ...actual,
-    fetchDataset: vi.fn(async () => ({ data: "shape-stream" })),
-    readableToQuads: vi.fn(async () => new (await import("n3")).Store()),
+    fetchDataset: vi.fn(async () => new BasicRepresentation([], "internal/quads")),
   };
 });
 
@@ -238,14 +241,63 @@ const CONTAINER_META = CONTAINER + ".meta";
 const WORKING_RESOURCE = "https://pod.example.org/wiki/working/draft.md";
 const WORKING_META = WORKING_RESOURCE + ".meta";
 
-// A turtle representation that looks like a post-patch .meta graph.
+// A turtle representation that looks like a raw-PUT .meta graph (textual RDF path).
 function metaTtl(path: string, body = "<#this> a <urn:T> .") {
   const meta = new RepresentationMetadata({ path }, "text/turtle");
   return new BasicRepresentation(body, meta);
 }
 
+// An internal/quads representation — the REAL runtime path: PatchingStore → N3Patcher
+// hands the floor a patched graph as a quad-object stream (contentType internal/quads),
+// NOT textual RDF. This is the content-type that D108-Floor-Bug-1 silently skipped.
+// data is a Quad[] (CSS BasicRepresentation accepts an object array for internal/quads),
+// which the floor's real readableToQuads() reads back into a Store.
+function metaQuadsRep(path: string, quads: any[] = [quad(namedNode(RESOURCE + "#this"), namedNode(RDF_TYPE), namedNode(SKOS_CONCEPT))]) {
+  const meta = new RepresentationMetadata({ path }, "internal/quads");
+  return new BasicRepresentation(quads, meta);
+}
+
 describe("AdmissionFloorStore.setRepresentation — direct .meta write path", () => {
-  it("fails validation: throws ShaclValidationError and does NOT commit", async () => {
+  // REGRESSION test for D108-Floor-Bug-1: the patched graph arrives as internal/quads.
+  // Pre-fix, isRdfRepresentation() returned false for internal/quads, so validation was
+  // SKIPPED and a non-conforming .meta committed (205). The fix gates on internal/quads
+  // and reads the quad stream, so a failing graph now throws. This case would PASS-through
+  // (no throw, source.setRepresentation called once) against the pre-fix code.
+  it("internal/quads graph that fails validation: throws ShaclValidationError and does NOT commit (regression for D108-Floor-Bug-1)", async () => {
+    validateMock.mockResolvedValue({ conforms: false, reportTurtle: "@prefix sh: <#> . _:r a sh:ValidationReport ." });
+    const { identifierStrategy, auxiliaryStrategy } = makeStrategies();
+    const projector = makeProjector(conceptProjection());
+    const source = makeSource();
+    const store = new AdmissionFloorStore(source as any, identifierStrategy, auxiliaryStrategy, projector as any);
+
+    await expect(
+      store.setRepresentation({ path: RESOURCE_META }, metaQuadsRep(RESOURCE_META)),
+    ).rejects.toBeInstanceOf(ShaclValidationError);
+
+    expect(source.setRepresentation).not.toHaveBeenCalled();
+    expect(validateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("internal/quads graph that conforms: commits the .meta graph", async () => {
+    validateMock.mockResolvedValue({ conforms: true });
+    const { identifierStrategy, auxiliaryStrategy } = makeStrategies();
+    const projector = makeProjector(conceptProjection());
+    const source = makeSource();
+    const store = new AdmissionFloorStore(source as any, identifierStrategy, auxiliaryStrategy, projector as any);
+
+    await store.setRepresentation(
+      { path: RESOURCE_META },
+      metaQuadsRep(RESOURCE_META, [
+        quad(namedNode(RESOURCE + "#this"), namedNode(RDF_TYPE), namedNode(SKOS_CONCEPT)),
+        quad(namedNode(RESOURCE + "#this"), namedNode(SKOS_PREFLABEL), literal("Photosynthesis")),
+      ]),
+    );
+
+    expect(source.setRepresentation).toHaveBeenCalledTimes(1);
+    expect(validateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("textual text/turtle .meta that fails validation: parses the text and throws (raw-PUT path)", async () => {
     validateMock.mockResolvedValue({ conforms: false, reportTurtle: "@prefix sh: <#> . _:r a sh:ValidationReport ." });
     const { identifierStrategy, auxiliaryStrategy } = makeStrategies();
     const projector = makeProjector(conceptProjection());
@@ -260,7 +312,7 @@ describe("AdmissionFloorStore.setRepresentation — direct .meta write path", ()
     expect(validateMock).toHaveBeenCalledTimes(1);
   });
 
-  it("passes validation: commits the .meta graph", async () => {
+  it("textual text/turtle .meta that conforms: parses the text and commits", async () => {
     validateMock.mockResolvedValue({ conforms: true });
     const { identifierStrategy, auxiliaryStrategy } = makeStrategies();
     const projector = makeProjector(conceptProjection());

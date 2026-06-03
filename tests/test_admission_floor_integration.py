@@ -66,23 +66,6 @@ def test_working_container_is_permissive():
     assert r.status_code in (201, 205), f"working/ must accept incomplete drafts, got {r.status_code}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "D108-Floor-Bug-1: the .meta PATCH path bypasses floor validation. "
-        "PatchingStore.modifyResource falls through to the N3Patcher which reads "
-        "the current .meta as internal/quads, applies the patch, and calls "
-        "AdmissionFloorStore.setRepresentation with content-type 'internal/quads'. "
-        "isRdfRepresentation() returns False for that type, so the floor exits the "
-        "auxiliary-branch early and passes through. Fix: include 'internal/quads' in "
-        "isRdfRepresentation() OR treat missing/internal content-types as RDF for "
-        "auxiliary identifiers (a .meta write is always a quads write by definition). "
-        "The agent-enrichment PATCH (adds triples without dropping governed ones) "
-        "coincidentally passes because the resulting graph still has prefLabel; "
-        "this bug surface only when governed triples are deleted. "
-        "Tracked as D108-Floor-Bug-1; must be fixed before RQ-View-2 full re-eval."
-    ),
-)
 def test_direct_meta_patch_dropping_preflabel_rejected():
     body = "---\ntype: Concept\n---\n# E2E Patch Target\n\n[E2E Patch Target]{.prefLabel} here.\n"
     r = _put("/vault/wiki/concepts/e2e-floor-patch.md", body)

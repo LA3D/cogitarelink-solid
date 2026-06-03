@@ -36,12 +36,13 @@ import {
   readableToQuads,
   fetchDataset,
   NotFoundHttpError,
+  INTERNAL_QUADS,
   AS,
   SOLID_AS,
   find,
 } from '@solid/community-server';
 import type { Quad } from '@rdfjs/types';
-import { Store, DataFactory } from 'n3';
+import { Store, Parser, DataFactory } from 'n3';
 import { createHash } from 'crypto';
 import { getLoggerFor } from 'global-logger-factory';
 import { LDP } from '../util/Vocabularies';
@@ -83,18 +84,25 @@ export class AdmissionFloorStore extends PassthroughStore {
   ): Promise<ChangeMap> {
     // --- Direct .meta write path (Task 8) ---
     // A PATCH/PUT to a governed resource's .meta must be validated so the conformance
-    // target (the .meta graph) is gated regardless of the write path. PatchingStore
-    // applies the N3 patch and calls setRepresentation with the resulting RDF graph.
+    // target (the .meta graph) is gated regardless of the write path. The REAL runtime
+    // path is PatchingStore → N3Patcher: it reads the current .meta as internal/quads,
+    // applies the N3 patch, and calls this setRepresentation with the patched graph whose
+    // contentType is 'internal/quads' (NOT a textual RDF type). A raw PUT of text/turtle
+    // to a governed .meta reaches the same branch with TEXT data. Both must be floored.
     // Scope guard: the container's own .meta (ldp:contains listing) is exempt — only
     // a governed resource's .meta is floored.
     if (this.auxiliaryStrategy.isAuxiliaryIdentifier(id)) {
       const subject = this.auxiliaryStrategy.getSubjectIdentifier(id);
       const subjectIsContainer = subject.path.endsWith('/');
       const shapeForMeta = subjectIsContainer ? undefined : await this.constrainedByFor(subject);
-      if (shapeForMeta && this.isRdfRepresentation(representation) && !this.isPermissive(subject)) {
+      // A governed resource's .meta is RDF by definition: validate internal/quads (the
+      // patched-graph path), any textual RDF serialisation (the raw-PUT path), or a missing
+      // content-type. We do not silently skip — if a bizarre non-RDF type ever arrives for a
+      // .meta, validating-by-parse fails loudly below, which is the correct outcome.
+      if (shapeForMeta && this.isMetaRdfWrite(representation) && !this.isPermissive(subject)) {
         // Clone before consuming the stream — the original must still flow to super.
         const cloned = await cloneRepresentation(representation);
-        const dataStore = await readableToQuads(cloned.data);
+        const dataStore = await this.metaQuads(cloned, id);
         const result = await validateQuadsAgainstShape(dataStore, await this.shapeStore(shapeForMeta));
         if (!result.conforms) {
           throw new ShaclValidationError(shapeForMeta, result.reportTurtle!);
@@ -250,11 +258,15 @@ export class AdmissionFloorStore extends PassthroughStore {
     return id.path.includes('/working/');
   }
 
-  // True if the representation's content-type is a recognised RDF serialisation.
-  // A .meta write is RDF by definition; treat a missing content-type as RDF.
-  private isRdfRepresentation(representation: Representation): boolean {
+  // True when a .meta write should be validated as RDF. A governed resource's .meta is
+  // RDF by definition, so this accepts CSS's internal quad-object stream (internal/quads —
+  // the PatchingStore → N3Patcher runtime path), any textual RDF serialisation (the raw-PUT
+  // path), and a missing content-type. A non-RDF content-type is still admitted here and
+  // fails loudly at parse time in metaQuads(), rather than being silently skipped.
+  private isMetaRdfWrite(representation: Representation): boolean {
     const ct = representation.metadata.contentType;
     if (!ct) return true;
+    if (ct === INTERNAL_QUADS) return true;
     return [
       'text/turtle',
       'application/ld+json',
@@ -264,6 +276,19 @@ export class AdmissionFloorStore extends PassthroughStore {
       'text/n3',
       'application/rdf+xml',
     ].includes(ct);
+  }
+
+  // Read a .meta representation into a quad Store, handling both runtime shapes:
+  //   - internal/quads (PatchingStore → N3Patcher): data IS a stream of quad objects.
+  //   - textual RDF (raw PUT of text/turtle): data is TEXT — parse with N3. Base IRI is the
+  //     .meta document's own URL (id.path) so relative IRIs resolve as the projection produces
+  //     them (MetaWriter uses the same `${resourceUrl}.meta` base for its read cycle).
+  private async metaQuads(representation: Representation, id: ResourceIdentifier): Promise<Store> {
+    if (representation.metadata.contentType === INTERNAL_QUADS) {
+      return await readableToQuads(representation.data);
+    }
+    const text = await readableToString(representation.data);
+    return new Store(new Parser({ baseIRI: id.path }).parse(text));
   }
 
   private stampQuad(id: ResourceIdentifier, body: string) {
