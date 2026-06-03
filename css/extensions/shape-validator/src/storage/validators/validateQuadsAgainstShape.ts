@@ -41,5 +41,5 @@ export async function validateQuadsAgainstShape(
   const validator = new SHACLValidator(shapeStore);
   const report = await validator.validate(dataStore);
   if (report.conforms) return { conforms: true };
-  return { conforms: false, reportTurtle: await serialize(report.dataset) };
+  return { conforms: false, reportTurtle: await serialize(report.dataset as Iterable<Quad>) };
 }
