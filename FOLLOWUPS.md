@@ -2,6 +2,33 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## 🔬 Agentic-fragility audit (2026-06-03) — R1/R2 correctness items OPEN
+
+Holistic 4-slice sweep of all agent-written code (Chuck's lenses: hardcodes / RDF-model bypass /
+fragile regex / + agreement-tests & mock-masked seams). **Canonical report:
+`docs/plans/2026-06-03-agentic-fragility-audit.md`** (5 systemic patterns, R1–R6 remediation).
+Highest-urgency (silently wrong on the live Pod today, or security-test gaps):
+
+1. **Render↔projection URL identity split** — `HardcodedResolver` (`resolver.ts:62-65`) still mints
+   pre-D98 `/vault/resources/concepts/` hrefs while projection mints `/wiki/{ctr}/`; document view
+   and graph view identify DIFFERENT resources for the same wikilink (breaks the dual-view claim;
+   also the source of the known `test_no_para_residue` 200).
+2. **Live Type Index overruled** — `typeIndexLoader.ts:46` merges `{...live, ...DEFAULT}` so the
+   hardcoded `/vault/wiki/` map wins over actual `publicTypeIndex` registrations. Flip the merge.
+3. **`subjectFrame.PAGE_PREDICATES` ↔ `PAGE_GOVERNED_PREDICATES` diverge on `identifier`** —
+   projected subject vs governed-delete subject mismatch → stale/duplicate triples.
+4. **wiki-search WAC gate mock-masked** — the real CSS-v8 `IdentifierMap` permission branch (the
+   "a bug here is a data leak" path) has zero test coverage; `handle()` never exercised.
+5. **f-string N3/SPARQL patch builders in Python** (`common.n3_patch_inserts` callers,
+   `ldp_client.patch_meta`, `backfill_conformsTo`'s second dialect) — Turtle-injection class;
+   unify on the Graph→nt path `apply.py` already uses for the hard patches.
+
+R3 (agreement-test sweep over the ~9 unguarded mirrors — `CURIE_PREFIXES`↔served-context and the
+page-frame split are ALREADY diverged), R4 (D107 completion sweep: wiki-search `WIKI_PREFIX`,
+`mem-trigger.json` literal IRIs, render `podBase`, `DEFAULT_WIKI_TYPE_INDEX` keys), R5 (unify
+projection parsing on the render AST — retires the maskCodeSpans gap class), R6 (hygiene batch) —
+see the report.
+
 ## ⚙ D108 Front-2 SHIPPED (2026-06-03, branch `d108-front2-admission-floor`) — final-review follow-ups
 
 The in-band admission floor is live (12-task plan complete; e2e 7/7; audit 0 ERROR / 0 WARN; final
