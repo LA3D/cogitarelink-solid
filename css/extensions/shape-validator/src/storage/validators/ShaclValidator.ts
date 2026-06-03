@@ -68,6 +68,17 @@ export class ShaclValidator extends ShapeValidator {
       throw new NotImplementedHttpError('No shape validation executed on auxiliary files.');
     }
 
+    // A SHACL validator validates RDF. Non-RDF bodies (e.g. text/markdown) are projected
+    // into their .meta graph by the AdmissionFloorStore + a BodyProjector and validated there.
+    const ct = representation.metadata.contentType;
+    const RDF_TYPES = new Set([
+      'text/turtle', 'application/ld+json', 'application/n-triples',
+      'application/n-quads', 'application/trig', 'text/n3', 'application/rdf+xml',
+    ]);
+    if (ct && !RDF_TYPES.has(ct)) {
+      throw new NotImplementedHttpError(`No shape validation on non-RDF content-type ${ct}.`);
+    }
+
     const shapeURL = parentRepresentation.metadata.get(LDP.terms.constrainedBy)?.value;
     if (!shapeURL) {
       throw new NotImplementedHttpError('No ldp:constrainedBy predicate.');
