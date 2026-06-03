@@ -1,0 +1,14 @@
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:    <https://pod.vardeman.me/vault/ontology/substrate#> .
+@prefix solid:  <http://www.w3.org/ns/solid/terms#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix ldp:    <http://www.w3.org/ns/ldp#> .
+@prefix schema: <https://schema.org/> .
+
+<> a ldp:Container, ldp:BasicContainer ;
+   dct:title "Wiki Organizations" ;
+   solid:forClass schema:Organization ;
+   sub:shape </vault/meta/shapes/organization.shacl.ttl> ;
+   sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+   sh:agentInstruction "Organization records. Typed schema:Organization on <#this>. schema:name is the entity name (Thing frame)." .
