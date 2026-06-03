@@ -56,13 +56,22 @@ export const STAMP_PRED = 'https://pod.vardeman.me/vault/ontology/substrate#body
 export class AdmissionFloorStore extends PassthroughStore {
   protected readonly logger = getLoggerFor(this);
 
+  // Duck-typed BodyProjector. The constructor parameter is typed `unknown` so
+  // componentsjs-generator emits ParameterRangeWildcard (mirrors ShaclValidator's
+  // unprocessableHook) — this lets a structurally-compatible MarkdownBodyProjector
+  // from the @cogitarelink/markdown-projection bundle be injected without a nominal
+  // cross-bundle range mismatch (BodyProjector is an interface declared in THIS
+  // bundle; the impl lives in another). Internal usage narrows via the cast below.
+  private readonly projector: BodyProjector;
+
   public constructor(
     source: ResourceStore,
     private readonly identifierStrategy: IdentifierStrategy,
     private readonly auxiliaryStrategy: AuxiliaryStrategy,
-    private readonly projector: BodyProjector,
+    projector: unknown,
   ) {
     super(source);
+    this.projector = projector as BodyProjector;
   }
 
   // PUT path. The resource identifier is known up-front, so we project + validate

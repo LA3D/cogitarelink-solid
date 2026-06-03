@@ -27,6 +27,21 @@
       },
       "NoOpPostProjectionHook": {
         "@id": "mpl:dist-cjs/listener.jsonld#NoOpPostProjectionHook"
+      },
+      "MarkdownBodyProjector": {
+        "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector",
+        "@prefix": true,
+        "@context": {
+          "baseUrl": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_baseUrl"
+          },
+          "dataDir": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_dataDir"
+          },
+          "storagePath": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_storagePath"
+          }
+        }
       }
     }
   ]

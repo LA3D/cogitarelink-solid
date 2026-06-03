@@ -56,13 +56,23 @@
       }
     },
     {
+      "comment": "Insert the AdmissionFloorStore (D108 Front-2) BELOW MonitoringStore. Resolved chain (top→bottom): MonitoringStore → BinarySlice → Index → Locking → PatchingStore → AdmissionFloor → ShapeValidationStore → Converting → backend. The floor must sit below MonitoringStore so a rejected POST (which commits-then-rolls-back internally) emits no 'changed' events — no orphaned .meta/Memento/event residue (Task 7 review).",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:ResourceStore_Patching" },
       "overrideParameters": {
         "@type": "PatchingStore",
-        "source": { "@id": "urn:shape-validation:default:ResourceStore_Shape" },
+        "source": { "@id": "urn:shape-validation:default:ResourceStore_AdmissionFloor" },
         "patchHandler": { "@id": "urn:solid-server:default:PatchHandler" }
       }
+    },
+    {
+      "comment": "D108 Front-2 admission floor. Gates writes to ldp:constrainedBy containers: projects a non-RDF body to its candidate .meta graph, SHACL-validates THAT against the container shape, rejects non-conforming writes with a 422 (ShaclValidationError → Turtle report), and on success materializes the admitted graph + a body-hash stamp in-band (RQ-Enforce-1). RDF bodies pass through to the ShapeValidationStore below. The projector param has a wildcard range (constructor typed `unknown`, mirrors ShaclValidator.unprocessableHook) so the structurally-compatible MarkdownBodyProjector from the markdown-projection bundle injects across bundles.",
+      "@id": "urn:shape-validation:default:ResourceStore_AdmissionFloor",
+      "@type": "AdmissionFloorStore",
+      "source": { "@id": "urn:shape-validation:default:ResourceStore_Shape" },
+      "identifierStrategy": { "@id": "urn:solid-server:default:IdentifierStrategy" },
+      "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" },
+      "projector": { "@id": "urn:cogitarelink:MarkdownBodyProjector" }
     },
     {
       "comment": "Default no-op hook for ShaclValidator. Swapped for MemTriggerUnprocessableWriteHook by mem-trigger.json Override when mem-trigger is installed.",

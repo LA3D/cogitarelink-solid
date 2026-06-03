@@ -23,12 +23,18 @@ import { readFileSync, existsSync } from "fs";
 import { createHash } from "crypto";
 import { Parser } from "n3";
 import { NoOpPostProjectionHook } from "./NoOpPostProjectionHook";
+import { MarkdownBodyProjector } from "./markdownBodyProjector";
 
 // Re-export NoOpPostProjectionHook so Components.js can construct it via the
 // `@type: "NoOpPostProjectionHook"` declaration in markdown-projection.json.
 // Components.js requires the class to be reachable through the package's main
 // entry point (dist-cjs/listener.js).
 export { NoOpPostProjectionHook };
+
+// Re-export MarkdownBodyProjector for the same reason — the AdmissionFloorStore
+// (D108 Front-2) injects it via `@type: "MarkdownBodyProjector"`, and Components.js
+// resolves requireElement through this package's main entry (dist-cjs/listener.js).
+export { MarkdownBodyProjector };
 
 // Hook contract — structurally compatible with mem-trigger's IPostProjectionHook.
 // Inline type avoids cross-package import (mem-trigger's dist may not be present

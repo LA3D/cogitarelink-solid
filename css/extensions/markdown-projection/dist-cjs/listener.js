@@ -46,7 +46,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MarkdownProjectionListener = exports.NoOpPostProjectionHook = void 0;
+exports.MarkdownProjectionListener = exports.MarkdownBodyProjector = exports.NoOpPostProjectionHook = void 0;
 exports.shouldReproject = shouldReproject;
 const Initializer_1 = require("@solid/community-server/dist/init/Initializer");
 const Vocabularies_1 = require("@solid/community-server/dist/util/Vocabularies");
@@ -56,6 +56,8 @@ const crypto_1 = require("crypto");
 const n3_1 = require("n3");
 const NoOpPostProjectionHook_1 = require("./NoOpPostProjectionHook");
 Object.defineProperty(exports, "NoOpPostProjectionHook", { enumerable: true, get: function () { return NoOpPostProjectionHook_1.NoOpPostProjectionHook; } });
+const markdownBodyProjector_1 = require("./markdownBodyProjector");
+Object.defineProperty(exports, "MarkdownBodyProjector", { enumerable: true, get: function () { return markdownBodyProjector_1.MarkdownBodyProjector; } });
 // ------------------------------------------------------------------
 // Simple stderr logger (same approach as markdown-render/converter.ts)
 // ------------------------------------------------------------------
