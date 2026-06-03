@@ -145,6 +145,7 @@ export class MemTriggerListener extends Initializer {
         lastEmitted,
         lastActivity,
         now,
+        eventsContainer: this.eventsContainer,
       });
       if (turtle !== null) {
         await this.emitter.emit(turtle);
@@ -299,6 +300,7 @@ export class MemTriggerListener extends Initializer {
       childCount,
       lastEmittedForContainer: lastEmitted,
       now,
+      eventsContainer: this.eventsContainer,
     });
     if (turtle !== null) {
       await this.emitter.emit(turtle);

@@ -3,14 +3,13 @@
 Each test should fail BEFORE its corresponding cleanup step, pass AFTER.
 Run individually with: pytest tests/integration/test_substrate_cleanup.py::<test_name> -v
 """
-import os
 import pytest
 import httpx
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
+from tests.conftest import _pod_base
 
-POD = os.environ.get("POD_URL", "https://pod.vardeman.me")
-POD_URL = f"{POD}/vault/"
+POD_URL = _pod_base() + "/vault/"
 
 
 def test_no_para_residue():

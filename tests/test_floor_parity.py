@@ -34,7 +34,7 @@ MANAGERS   = OVERLAY / "interop" / "managers"
 TREE_BASE  = "https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree"
 
 # The 7 governed containers (working/ included — its constrainedBy is the
-# permissive working-note shape; the floor's isPermissive suppresses the 422).
+# working shape conforms trivially for drafts (D73 — the data model carries the policy)).
 GOVERNED = ["concepts", "people", "places", "events", "organizations", "procedures", "working"]
 
 

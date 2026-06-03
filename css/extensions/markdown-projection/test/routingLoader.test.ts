@@ -48,4 +48,30 @@ describe("parseRoutingDoc (JSON-LD → predicate→class map, CURIE-expanded)", 
     it("returns empty map for a malformed doc", () => {
         expect(parseRoutingDoc({} as any)).toEqual({});
     });
+
+    // Fix 5 (audit R6): object-form context terms ({"@id": "..."}) must expand
+    // identically to plain-string terms. Previously they were silently dropped,
+    // so predicates using object-form entries (e.g. routesToClass itself) fell
+    // back to the bootstrap kernel without warning.
+    it("expands object-form context terms (@id) identically to string terms", () => {
+        const mixed = {
+            "@context": {
+                "wiki": "https://pod.vardeman.me/vault/ontology/wiki#",
+                "schema": "https://schema.org/",
+                // object-form: only @id matters for prefix collection
+                "routesToClass": { "@id": "wiki:routesToClass", "@type": "@id" },
+                // another object-form prefix (unusual but valid JSON-LD)
+                "ex": { "@id": "https://example.org/", "@type": "@id" },
+            },
+            "@graph": [
+                // @id expands using string prefix "schema" → string form
+                { "@id": "schema:name", "routesToClass": "wiki:Concept" },
+                // @id expands using object-form prefix "ex"
+                { "@id": "ex:custom", "routesToClass": "wiki:Source" },
+            ],
+        };
+        const map = parseRoutingDoc(mixed);
+        expect(map["https://schema.org/name"]).toBe("https://pod.vardeman.me/vault/ontology/wiki#Concept");
+        expect(map["https://example.org/custom"]).toBe("https://pod.vardeman.me/vault/ontology/wiki#Source");
+    });
 });

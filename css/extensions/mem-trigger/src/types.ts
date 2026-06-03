@@ -13,6 +13,10 @@ export const XSD = "http://www.w3.org/2001/XMLSchema#";
 // Named URN (NOT a blank node) — N3 Patch rejects blank nodes in solid:inserts.
 export const SUBSTRATE_ACTOR = "urn:substrate:mem-trigger-listener";
 
-// Default events container under wiki-memory L3.
+// @deprecated fallback — MemTriggerListener now derives and threads eventsContainer
+// through every detector call-site. This constant remains ONLY so detectors
+// constructed directly in unit tests (without a listener) still compile; it must
+// never appear in a running Pod's emitted event body (the listener threads the
+// derived value). Vocab IRIs (MEM/WIKI above) are a separate concern (D84).
 export const DEFAULT_EVENTS_CONTAINER =
   "https://pod.vardeman.me/vault/wiki/.events/";

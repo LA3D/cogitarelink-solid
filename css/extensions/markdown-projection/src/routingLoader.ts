@@ -20,6 +20,8 @@ export function parseRoutingDoc(doc: RoutingDoc): Record<string, string> {
     const prefixes: Record<string, string> = {};
     for (const [k, v] of Object.entries(ctx)) {
         if (typeof v === "string") prefixes[k] = v;
+        else if (typeof v === "object" && v !== null && typeof (v as Record<string, unknown>)["@id"] === "string")
+            prefixes[k] = (v as Record<string, string>)["@id"];
     }
     const out: Record<string, string> = {};
     for (const node of doc["@graph"] ?? []) {
