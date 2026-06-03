@@ -52,10 +52,25 @@ function getPipeline(): Promise<any> {
 
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
+// fsPathFromUrl — replicates listener.ts's private helper (NOT exported from the
+// ESM index). Maps an HTTP resource URL to its on-disk path so MetaWriter can write
+// the .meta sidecar. Same logic as listener.ts lines 122-131.
+function trimSlash(s: string): string {
+    return s.replace(/\/$/, "");
+}
+
+function fsPathFromUrl(url: string, baseUrl: string, dataDir: string): string {
+    const base = trimSlash(baseUrl);
+    if (!url.startsWith(base)) throw new Error(`URL outside pod base: ${url}`);
+    const noQuery = url.split("?")[0];
+    const relative = decodeURIComponent(noQuery.slice(base.length).replace(/^\//, ""));
+    return path.join(dataDir, relative);
+}
+
 export class MarkdownBodyProjector {
     private readonly baseUrl: string;
-    // Accepted for Components.js constructor-argument alignment with listener.ts;
-    // unused here because project() receives body as a string, not a filesystem path.
+    // Filesystem root the Pod stores resources under; used by materialize() to
+    // resolve the on-disk path of a resource so MetaWriter can write its .meta.
     private readonly dataDir: string;
     // Pod storage root path under baseUrl, injected via Components.js (default "/vault").
     private readonly storagePath: string;
@@ -146,5 +161,19 @@ export class MarkdownBodyProjector {
             quads,
             governed: [...new Set([...pageGoverned, ...thingGoverned])],
         };
+    }
+
+    // Write `quads` to the resource's .meta sidecar, replacing only `governed`
+    // predicates (D81 Model A — agent-owned triples outside the governed set are
+    // preserved). The floor delegates here because MetaWriter is ESM-only (loaded
+    // via the runtime pipeline import) and the floor must stay profile-agnostic.
+    public async materialize(
+        identifier: ResourceIdentifier,
+        quads: Quad[],
+        governed: string[],
+    ): Promise<void> {
+        const { MetaWriter } = await getPipeline();
+        const fsPath = fsPathFromUrl(identifier.path, this.baseUrl, this.dataDir);
+        await new MetaWriter().replaceGoverned(fsPath, quads, governed, identifier.path);
     }
 }

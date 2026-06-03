@@ -12,4 +12,9 @@ export interface ProjectionResult {
 export interface BodyProjector {
   canProject(representation: Representation): boolean;
   project(identifier: ResourceIdentifier, body: string): Promise<ProjectionResult | null>;
+  // Write the given quads to the resource's .meta, replacing only `governed` predicates
+  // (preserving agent-owned triples, D81). The projector owns this because MetaWriter is
+  // ESM-only and the floor must stay profile-agnostic (no markdown/SKOS/wiki/pipeline
+  // symbols may appear in the floor source).
+  materialize(identifier: ResourceIdentifier, quads: Quad[], governed: string[]): Promise<void>;
 }
