@@ -58,10 +58,10 @@ export class AdmissionFloorStore extends PassthroughStore {
 
   // Duck-typed BodyProjector. The constructor parameter is typed `unknown` so
   // componentsjs-generator emits ParameterRangeWildcard (mirrors ShaclValidator's
-  // unprocessableHook) — this lets a structurally-compatible MarkdownBodyProjector
-  // from the @cogitarelink/markdown-projection bundle be injected without a nominal
-  // cross-bundle range mismatch (BodyProjector is an interface declared in THIS
-  // bundle; the impl lives in another). Internal usage narrows via the cast below.
+  // unprocessableHook) — this lets a structurally-compatible BodyProjector impl
+  // injected from a sibling bundle without a nominal cross-bundle range mismatch
+  // (BodyProjector is an interface declared in THIS bundle; the impl lives in
+  // another). Internal usage narrows via the cast below.
   private readonly projector: BodyProjector;
 
   public constructor(
