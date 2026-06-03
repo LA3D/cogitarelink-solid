@@ -47,6 +47,31 @@
       "@id": "mpl:dist-cjs/listener.jsonld#NoOpPostProjectionHook",
       "@type": "Class",
       "requireElement": "NoOpPostProjectionHook"
+    },
+    {
+      "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector",
+      "@type": "Class",
+      "requireElement": "MarkdownBodyProjector",
+      "parameters": [
+        {
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_baseUrl",
+          "range": "xsd:string"
+        },
+        {
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_dataDir",
+          "range": "xsd:string"
+        },
+        {
+          "comment": "Pod storage root path under baseUrl (e.g. /vault). Optional — the constructor defaults to /vault.",
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_storagePath",
+          "range": "xsd:string"
+        }
+      ],
+      "constructorArguments": [
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_baseUrl" },
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_dataDir" },
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_storagePath" }
+      ]
     }
   ]
 }

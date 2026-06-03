@@ -1,0 +1,140 @@
+// MarkdownBodyProjector — CJS wrapper implementing the BodyProjector interface
+// for text/markdown resources (D108 Front-2 §5.2).
+//
+// Mirrors listener.ts's getPipeline() runtime-import pattern EXACTLY:
+//   - Same eval-wrapped runtimeImport to avoid TS CJS→ESM transpilation of import()
+//   - Same __dirname-relative ESM path resolution (this file compiles to dist-cjs/)
+//   - Same lazy pipelineCache singleton
+//   - Same TypeIndexLoader + loadRoutingMap call shapes (confirmed from listener.ts lines 275-283)
+//
+// TypeIndexLoader: new TypeIndexLoader(storageBase) → .getTypeIndex()
+// loadRoutingMap:  loadRoutingMap(storageBase, fetch, BOOTSTRAP_PREDICATE_TO_CLASS)
+//   (three-arg form — fetchFn is the global fetch, bootstrap is BOOTSTRAP_PREDICATE_TO_CLASS)
+//
+// Governed-predicate resolution: uses getThingGovernedPredicates(thingClass) and
+// PAGE_GOVERNED_PREDICATES directly, because after the Bug-F filter the wiki: class
+// is not present in the quad array when invariants are emitted — only the page
+// (wiki:Page) and thing (skos:Concept / schema:Person …) rdf:type triples remain.
+// resolveGovernedForWikiClass expects a wiki: class IRI, which is no longer in the
+// projected quad set; direct resolution via the thing class is correct.
+
+import type { Representation } from "@solid/community-server/dist/http/representation/Representation";
+import type { ResourceIdentifier } from "@solid/community-server/dist/http/representation/ResourceIdentifier";
+import type { Quad } from "n3";
+import * as path from "path";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const runtimeImport = new Function("specifier", "return import(specifier)") as (s: string) => Promise<any>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pipelineCache: Promise<any> | null = null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getPipeline(): Promise<any> {
+    if (pipelineCache === null) {
+        // At runtime this file is at dist-cjs/markdownBodyProjector.js.
+        // tsconfig.json rootDir=../.. puts ESM output under
+        // dist/extensions/markdown-projection/src/index.js.
+        // Path mirrors listener.ts getPipeline() exactly (same __dirname depth).
+        const esmPath = path.resolve(
+            __dirname,
+            "..",
+            "dist",
+            "extensions",
+            "markdown-projection",
+            "src",
+            "index.js",
+        );
+        pipelineCache = runtimeImport("file://" + esmPath);
+    }
+    return pipelineCache;
+}
+
+const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+
+export class MarkdownBodyProjector {
+    private routingMap: Record<string, string> | null = null;
+    // Typed as any — TypeIndexLoader is loaded from ESM at runtime.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private typeIndexLoader: any = null;
+
+    public constructor(
+        private readonly baseUrl: string,
+        private readonly dataDir: string,
+        private readonly storagePath = "/vault",
+    ) {
+        this.baseUrl = baseUrl.replace(/\/$/, "");
+    }
+
+    // Storage root URL = baseUrl + storagePath. TypeIndexLoader and loadRoutingMap
+    // both require this base (not the server root) to find publicTypeIndex and
+    // meta/routing.jsonld. Mirrors listener.ts's storageBase getter.
+    private get storageBase(): string {
+        const sp = this.storagePath.startsWith("/") ? this.storagePath : `/${this.storagePath}`;
+        return `${this.baseUrl}${sp.replace(/\/$/, "")}`;
+    }
+
+    public canProject(representation: Representation): boolean {
+        return representation.metadata.contentType === "text/markdown";
+    }
+
+    public async project(
+        identifier: ResourceIdentifier,
+        body: string,
+    ): Promise<{ quads: Quad[]; governed: string[] } | null> {
+        const {
+            projectionPipeline,
+            TypeIndexLoader,
+            BOOTSTRAP_PREDICATE_TO_CLASS,
+            loadRoutingMap,
+            PAGE_GOVERNED_PREDICATES,
+            getThingGovernedPredicates,
+        } = await getPipeline();
+
+        const storageBase = this.storageBase;
+
+        // Lazy-init TypeIndexLoader (mirrors listener.ts lines 275-277)
+        if (this.typeIndexLoader === null) {
+            this.typeIndexLoader = new TypeIndexLoader(storageBase);
+        }
+
+        // Lazy-load routing map (mirrors listener.ts lines 280-283).
+        // Falls back to BOOTSTRAP_PREDICATE_TO_CLASS on any error (404 / pre-deploy / parse).
+        if (this.routingMap === null) {
+            this.routingMap = await loadRoutingMap(storageBase, fetch, BOOTSTRAP_PREDICATE_TO_CLASS);
+        }
+
+        const typeIndex = await this.typeIndexLoader.getTypeIndex();
+
+        const quads: Quad[] = await projectionPipeline.run(
+            identifier.path,
+            body,
+            typeIndex,
+            this.routingMap ?? undefined,
+        );
+
+        // After Bug-F filtering, the wiki: class is removed from the page resource
+        // triples when invariants are emitted. The thing class (skos:Concept,
+        // schema:Person, …) is only on <#this>. We resolve governed predicates using
+        // the thing class directly rather than going through resolveGovernedForWikiClass,
+        // which expects the wiki: class IRI. Both PAGE_GOVERNED_PREDICATES and
+        // getThingGovernedPredicates are exported from the ESM module.
+        const thingIri = identifier.path + "#this";
+        const thingTypeQuad = quads.find(
+            q => q.predicate.value === RDF_TYPE && q.subject.value === thingIri,
+        );
+
+        // No thing class in quads → resource is not substrate-governed
+        if (!thingTypeQuad) return null;
+
+        const thingClass: string = thingTypeQuad.object.value;
+        const thingGoverned: string[] = (getThingGovernedPredicates(thingClass) as Array<{ value: string }>)
+            .map(n => n.value);
+        const pageGoverned: string[] = (PAGE_GOVERNED_PREDICATES as Array<{ value: string }>)
+            .map(n => n.value);
+        return {
+            quads,
+            governed: [...new Set([...pageGoverned, ...thingGoverned])],
+        };
+    }
+}
