@@ -9,12 +9,12 @@
   ],
   "@graph": [
     {
-      "comment": "MemTriggerListener — subscribes to MonitoringStore 'changed' events on /vault/wiki/*, runs cross-resource detectors (BoundExceeded, ContradictionDetected, ReflectionDue, UnprocessableWrite), and emits mem:Event activities to /vault/wiki/.events/. v1 attaches the listener + filter pipeline; only the BoundExceeded path is wired (currently a stub). The other three detectors are instantiated for future use. See FOLLOWUPS.md ('Phase C.10 — MemTrigger v1 wiring').",
+      "comment": "MemTriggerListener — subscribes to MonitoringStore 'changed' events on the wiki-memory containers, runs cross-resource detectors (BoundExceeded, ContradictionDetected, ReflectionDue, UnprocessableWrite), and emits mem:Event activities to <storageBase>/wiki/.events/. eventsContainer + typeIndexUri are DERIVED in the listener from baseUrl + storagePath (R-T4 / audit M1) — empty string here means derive; a non-empty value would override. v1 attaches the listener + filter pipeline; only the BoundExceeded path is wired (currently a stub). The other three detectors are instantiated for future use. See FOLLOWUPS.md ('Phase C.10 — MemTrigger v1 wiring').",
       "@id": "urn:cogitarelink:MemTriggerListener",
       "@type": "MemTriggerListener",
       "monitoringStore": { "@id": "urn:solid-server:default:ResourceStore" },
       "store": { "@id": "urn:solid-server:default:ResourceStore" },
-      "eventsContainer": "https://pod.vardeman.me/vault/wiki/.events/",
+      "eventsContainer": "",
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
       "boundThreshold": 12,
       "reflectionIntervalMs": 86400000,
@@ -25,7 +25,8 @@
           "http://purl.org/spar/cito/disagreesWith"
         ]
       ],
-      "typeIndexUri": "https://pod.vardeman.me/vault/settings/publicTypeIndex"
+      "typeIndexUri": "",
+      "storagePath": "/vault"
     },
     {
       "comment": "Standalone UnprocessableWriteDetector for MemTriggerUnprocessableWriteHook. Stateless — no concurrency concern with MemTriggerListener's internal instance.",

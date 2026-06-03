@@ -6,7 +6,7 @@ export const WIKI = "https://pod.vardeman.me/vault/ontology/wiki#";
 export const CITO = "http://purl.org/spar/cito/";
 export const AS_NS = "https://www.w3.org/ns/activitystreams#";
 export const PROV = "http://www.w3.org/ns/prov#";
-export const SH = "http://www.w3.org/ns/shacl#";
+// SH (shacl#) export removed in R-T4 ns-dedupe — nothing imported it (audit M5).
 export const XSD = "http://www.w3.org/2001/XMLSchema#";
 
 // Substrate identity used as as:actor on substrate-emitted events.

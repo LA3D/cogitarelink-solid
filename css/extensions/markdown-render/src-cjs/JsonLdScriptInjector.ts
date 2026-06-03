@@ -9,15 +9,51 @@
 // Used by the markdown-render converter (src-cjs/converter.ts) after the
 // rehype pipeline produces HTML — injected before </head>.
 
-import { Quad } from "n3";
+import { Quad, Term } from "n3";
 
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+const XSD_STRING = "http://www.w3.org/2001/XMLSchema#string";
+const RDF_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString";
+
+// A single JSON-LD object-value node. NamedNodes become {@id} references
+// (a relationship IRI), typed literals become {@value,@type}, language
+// literals become {@value,@language}, and plain/string literals become bare
+// strings (the JSON-LD convention: xsd:string carries no @type).
+type JsonLdValue = string | { "@id": string } | { "@value": string; "@type"?: string; "@language"?: string };
+
+// termType-aware projection of an object term (audit M3 / R1.4). The prior
+// code pushed q.object.value for EVERY object, collapsing NamedNode (an IRI
+// relationship) and Literal (a string value) into indistinguishable bare
+// strings — so the injected JSON-LD couldn't tell a link from a literal.
+function termToJsonLdValue(term: Term): JsonLdValue {
+  if (term.termType === "NamedNode") {
+    return { "@id": term.value };
+  }
+  // Literal (and, defensively, anything else) → value-shaped node.
+  // n3 exposes datatype + language on Literal terms.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lit = term as any;
+  const datatype: string | undefined = lit.datatype?.value;
+  const language: string | undefined = lit.language && lit.language.length > 0 ? lit.language : undefined;
+  if (language !== undefined && datatype === RDF_LANG_STRING) {
+    return { "@value": term.value, "@language": language };
+  }
+  if (datatype !== undefined && datatype !== XSD_STRING) {
+    return { "@value": term.value, "@type": datatype };
+  }
+  // Plain / xsd:string literal → bare string (no @type, per JSON-LD).
+  return term.value;
+}
 
 // Compact prefix set chosen to match the canonical context at
 // /vault/meta/context.jsonld (D79). We emit them inline rather than
 // referencing the external context so the JSON-LD is self-contained for
 // agents that haven't fetched the context yet.
-const DEFAULT_CONTEXT: Record<string, string> = {
+// Exported so the context-agreement test (audit L2) can assert every prefix
+// here maps to the SAME IRI the canonical served context (assembled from
+// overlays/wiki-memory/context-fragment.jsonld) declares — i.e. this inline
+// copy can't silently drift from the D79 source of truth.
+export const DEFAULT_CONTEXT: Record<string, string> = {
   wiki: "https://pod.vardeman.me/vault/ontology/wiki#",
   dct:  "http://purl.org/dc/terms/",
   prof: "http://www.w3.org/ns/dx/prof/",
@@ -36,10 +72,14 @@ export class JsonLdScriptInjector {
 
     // Group object values by predicate IRI so multi-valued predicates round-trip
     // to JSON arrays. (e.g. dct:hasPart with N children → JSON list.)
-    const byPredicate = new Map<string, string[]>();
+    // rdf:type is special: JSON-LD requires @type values to be bare IRI/CURIE
+    // strings (NOT {@id} nodes), so type objects keep their bare .value.
+    const byPredicate = new Map<string, JsonLdValue[]>();
     for (const q of subjectTriples) {
+      const isType = q.predicate.value === RDF_TYPE;
+      const value: JsonLdValue = isType ? q.object.value : termToJsonLdValue(q.object);
       const list = byPredicate.get(q.predicate.value) ?? [];
-      list.push(q.object.value);
+      list.push(value);
       byPredicate.set(q.predicate.value, list);
     }
 

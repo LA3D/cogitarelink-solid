@@ -1,4 +1,31 @@
+import { DataFactory, Writer } from "n3";
 import { buildPagingUrl } from "./uri";
+
+const { namedNode, literal, quad } = DataFactory;
+
+// Namespaces (mirrors memento/timemap.ts — the in-repo N3 Writer exemplar).
+const RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+const XSD = "http://www.w3.org/2001/XMLSchema#";
+const OSLC = "http://open-services.net/ns/core#";
+const LDP = "http://www.w3.org/ns/ldp#";
+const DCT = "http://purl.org/dc/terms/";
+const VAULT = "https://pod.vardeman.me/vault/ontology/wiki#";
+
+const aType = namedNode(`${RDF}type`);
+const aBasicContainer = namedNode(`${LDP}BasicContainer`);
+const aResponseInfo = namedNode(`${OSLC}ResponseInfo`);
+const pContains = namedNode(`${LDP}contains`);
+const pTitle = namedNode(`${DCT}title`);
+const pTotalCount = namedNode(`${OSLC}totalCount`);
+const pNextPage = namedNode(`${OSLC}nextPage`);
+const pScore = namedNode(`${OSLC}score`);
+const pMatchedLine = namedNode(`${VAULT}matchedLine`);
+const pMatchedContext = namedNode(`${VAULT}matchedContext`);
+const xsdInteger = namedNode(`${XSD}integer`);
+
+function intLit(n: number) {
+  return literal(String(n), xsdInteger);
+}
 
 export interface ScoredResult {
   url: string;
@@ -7,22 +34,17 @@ export interface ScoredResult {
   snippet: string;
 }
 
-/** Escape a string for a Turtle "..."-delimited literal (RFC 6906 / SPARQL 1.1 §19.7). */
-function escapeTurtleLiteral(s: string): string {
-  return s
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, "\\n")
-    .replace(/\r/g, "\\r")
-    .replace(/\t/g, "\\t");
-}
-
 /**
- * Build the Turtle response body. Per OSLC Query 3.0 §6, the response is
- * an LDP BasicContainer carrying a typed oslc:ResponseInfo with paging
- * metadata. Members are ordered by score descending in the serialization
- * (RDF unordered, but the linear text order carries rank for clients
- * that don't parse).
+ * Build the Turtle response body via the n3 Writer (DataFactory quads), the
+ * in-repo exemplar being memento/src/timemap.ts. Replaces the prior
+ * string-concatenation + hand escaper + ";"-sentinel punctuation (audit M2):
+ * literal escaping and statement punctuation are now the serializer's job, so
+ * snippets with quotes/newlines/backslashes can't break the Turtle.
+ *
+ * Per OSLC Query 3.0 §6, the response is an LDP BasicContainer carrying a
+ * typed oslc:ResponseInfo with paging metadata. ldp:contains members are
+ * ordered by score descending in the serialization (RDF is unordered, but the
+ * linear text order carries rank for clients that don't parse).
  */
 export function buildTurtleResponse(
   requestUrl: string,
@@ -32,53 +54,43 @@ export function buildTurtleResponse(
   pageSize: number,
   termsDescription: string,
 ): string {
-  const prefixes = [
-    "@prefix oslc:  <http://open-services.net/ns/core#> .",
-    "@prefix ldp:   <http://www.w3.org/ns/ldp#> .",
-    "@prefix dct:   <http://purl.org/dc/terms/> .",
-    "@prefix vault: <https://pod.vardeman.me/vault/ontology/wiki#> .",
-    "",
-  ].join("\n");
-
-  const sortedResults = [...results].sort((a, b) => b.score - a.score);
-  const memberList = sortedResults.length > 0
-    ? sortedResults.map((r) => `        <${r.url}>`).join(" ,\n")
-    : null;
-
-  const hasNextPage = startIndex + pageSize < totalCount;
-  const nextPageTriple = hasNextPage
-    ? `    oslc:nextPage <${buildPagingUrl(requestUrl, startIndex + pageSize)}> ;\n`
-    : "";
-
-  const containsTriple = memberList
-    ? `    ldp:contains\n${memberList} ;\n`
-    : "";
-
-  const head = [
-    `<${requestUrl}>`,
-    "    a ldp:BasicContainer, oslc:ResponseInfo ;",
-    `    dct:title "Search results for: ${escapeTurtleLiteral(termsDescription)}" ;`,
-    `    oslc:totalCount ${totalCount} ;`,
-    nextPageTriple.trimEnd(),
-    containsTriple ? containsTriple.trimEnd() : "    .",
-  ]
-    .filter((line) => line.length > 0)
-    .join("\n");
-
-  // If we have contains/nextPage, the head doesn't end with " ." — add it now.
-  // The simplest sentinel is whether the last printed line ends with " ;".
-  const headFinal = head.endsWith(";")
-    ? head.slice(0, -1) + "."
-    : head;
-
-  const perResultBlocks = sortedResults.map((r) => {
-    return [
-      `<${r.url}>`,
-      `    oslc:score ${r.score} ;`,
-      `    vault:matchedLine ${r.line} ;`,
-      `    vault:matchedContext "${escapeTurtleLiteral(r.snippet)}" .`,
-    ].join("\n");
+  const writer = new Writer({
+    prefixes: { oslc: OSLC, ldp: LDP, dct: DCT, vault: VAULT, xsd: XSD },
   });
 
-  return [prefixes, headFinal, "", ...perResultBlocks].join("\n") + "\n";
+  const subject = namedNode(requestUrl);
+  const sorted = [...results].sort((a, b) => b.score - a.score);
+
+  writer.addQuad(quad(subject, aType, aBasicContainer));
+  writer.addQuad(quad(subject, aType, aResponseInfo));
+  writer.addQuad(
+    quad(subject, pTitle, literal(`Search results for: ${termsDescription}`)),
+  );
+  writer.addQuad(quad(subject, pTotalCount, intLit(totalCount)));
+
+  if (startIndex + pageSize < totalCount) {
+    writer.addQuad(
+      quad(subject, pNextPage, namedNode(buildPagingUrl(requestUrl, startIndex + pageSize))),
+    );
+  }
+
+  // ldp:contains members, in score-descending order.
+  for (const r of sorted) {
+    writer.addQuad(quad(subject, pContains, namedNode(r.url)));
+  }
+
+  // Per-result score/line/context.
+  for (const r of sorted) {
+    const m = namedNode(r.url);
+    writer.addQuad(quad(m, pScore, intLit(r.score)));
+    writer.addQuad(quad(m, pMatchedLine, intLit(r.line)));
+    writer.addQuad(quad(m, pMatchedContext, literal(r.snippet)));
+  }
+
+  let out = "";
+  writer.end((err, result) => {
+    if (err) throw err;
+    out = result;
+  });
+  return out;
 }

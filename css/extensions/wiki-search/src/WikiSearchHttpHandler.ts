@@ -15,7 +15,7 @@ import { walkContainer } from "./walker";
 import { computeScore } from "./score";
 import { snippet } from "./snippet";
 import { buildTurtleResponse, type ScoredResult } from "./ResponseBuilder";
-import { isInWikiSubtree } from "./uri";
+import { isInWikiSubtree, wikiPrefix } from "./uri";
 
 interface PerResource {
   url: string;
@@ -30,6 +30,10 @@ export class WikiSearchHttpHandler extends HttpHandler {
   private readonly permissionReader: PermissionReader;
   private readonly credentialsExtractor: CredentialsExtractor;
   private readonly baseUrl: string;
+  // Derived wiki-subtree prefix "<storagePath>/wiki/" — gates which container
+  // paths can dispatch search-grep. Derived from the injected storagePath
+  // (default "/vault"), not a baked literal (R-T4 / audit H1 / D107).
+  private readonly wikiPrefix: string;
 
   // DataAccessor is the only storage dependency: it sits below
   // LockingResourceStore in the CSS chain, so reads are lockless. The
@@ -49,6 +53,7 @@ export class WikiSearchHttpHandler extends HttpHandler {
     permissionReader: PermissionReader,
     credentialsExtractor: CredentialsExtractor,
     baseUrl: string,
+    storagePath = "/vault",
   ) {
     super();
     this.engine = engine;
@@ -56,6 +61,7 @@ export class WikiSearchHttpHandler extends HttpHandler {
     this.permissionReader = permissionReader;
     this.credentialsExtractor = credentialsExtractor;
     this.baseUrl = baseUrl.replace(/\/$/, "");
+    this.wikiPrefix = wikiPrefix(storagePath);
   }
 
   public async canHandle(input: HttpHandlerInput): Promise<void> {
@@ -72,8 +78,8 @@ export class WikiSearchHttpHandler extends HttpHandler {
     if (!pathOnly.endsWith("/")) {
       throw new NotImplementedHttpError("search-grep targets containers");
     }
-    if (!isInWikiSubtree(fullUrl)) {
-      throw new NotImplementedHttpError("search-grep is /vault/wiki/-scoped");
+    if (!isInWikiSubtree(fullUrl, this.wikiPrefix)) {
+      throw new NotImplementedHttpError(`search-grep is ${this.wikiPrefix}-scoped`);
     }
   }
 

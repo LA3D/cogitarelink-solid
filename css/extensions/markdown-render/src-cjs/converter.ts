@@ -130,6 +130,18 @@ export class MarkdownRdfaConverter extends BaseTypedRepresentationConverter {
   //   - falls back to appending at the end of the string if neither is
   //     present (e.g. fragment renders)
   //
+  // R-T4 item 8 (audit L3) — string-splice vs rehype plugin: SKIPPED, not a
+  // clean change. The .meta quads (representation.metadata) are a CSS
+  // request-time concern available ONLY here on the CJS side; the rehype
+  // pipeline lives behind the ESM `renderMarkdown(markdown, opts)` boundary
+  // (src/render.ts) and is deliberately isolated from CSS types (the whole
+  // CJS-wrapper architecture, lines 1-23, exists to keep the ESM pipeline
+  // CSS-free). Moving injection into rehype would mean serializing the quads
+  // across the ESM import boundary AND relocating the injector + n3 dependency
+  // ESM-side — well past ~30 lines and re-coupling the pipeline to the .meta
+  // model it was built to avoid. The lastIndexOf("</head>") splice below is on
+  // rehype-document output we control, so it is robust in practice.
+  //
   // Empty-metadata case: injector returns "" and the HTML is returned
   // unchanged. Idempotence: the marker substring already-injected check
   // guards against double-emit if the converter is re-invoked.

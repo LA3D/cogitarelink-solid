@@ -1,12 +1,10 @@
 import { randomUUID } from "crypto";
 import { Writer, DataFactory } from "n3";
-import { MEM, SUBSTRATE_ACTOR, DEFAULT_EVENTS_CONTAINER } from "../types";
+import { MEM, AS_NS, PROV, SUBSTRATE_ACTOR, DEFAULT_EVENTS_CONTAINER } from "../types";
 
 const { namedNode, literal, quad } = DataFactory;
 
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-const AS_NS = "https://www.w3.org/ns/activitystreams#";
-const PROV = "http://www.w3.org/ns/prov#";
 const XSD_DT = "http://www.w3.org/2001/XMLSchema#dateTime";
 
 export interface ReflectionDueOpts {

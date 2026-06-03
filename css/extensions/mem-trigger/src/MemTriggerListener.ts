@@ -57,22 +57,42 @@ export class MemTriggerListener extends Initializer {
   public constructor(
     monitoringStore: MonitoringStore,
     store: ResourceStore,
+    // Optional explicit override. Empty string (the config default) ⇒ derive
+    // from baseUrl + storagePath + the wiki-memory layout, so the deployment
+    // IRIs are not hardcoded in config (R-T4 / audit M1). Components.js can't
+    // concatenate strings, so derivation happens here. Passing a non-empty
+    // value (e.g. in tests) overrides the derivation.
     eventsContainer: string,
     baseUrl: string,
     boundThreshold: number,
     reflectionIntervalMs: number,
     reflectionTickRateMs: number,
     contradictoryPairs: Array<[string, string]>,
+    // Optional explicit override — same derive-when-empty rule as eventsContainer.
     typeIndexUri: string,
+    // Pod storage root path under baseUrl (default "/vault"). Mirrors
+    // MarkdownProjectionListener's storagePath param exactly (same normalisation).
+    storagePath = "/vault",
   ) {
     super();
     this.monitoringStore = monitoringStore;
     this.store = store;
-    this.eventsContainer = eventsContainer.endsWith("/")
-      ? eventsContainer
-      : `${eventsContainer}/`;
     this.baseUrl = baseUrl.replace(/\/$/, "");
-    this.typeIndexUri = typeIndexUri;
+    // Normalise storagePath: leading "/", no trailing "/" — mirrors the
+    // projection listener so storageBase = baseUrl + storagePath joins cleanly.
+    const sp = storagePath.startsWith("/") ? storagePath : `/${storagePath}`;
+    const storageBase = `${this.baseUrl}${sp.replace(/\/$/, "")}`;
+
+    // Derive the events container + Type Index URIs from storageBase unless an
+    // explicit value was supplied (non-empty). The wiki-memory L3 layout puts
+    // the events log at <storageBase>/wiki/.events/ and the Type Index at
+    // <storageBase>/settings/publicTypeIndex.
+    const derivedEvents = `${storageBase}/wiki/.events/`;
+    const derivedTypeIndex = `${storageBase}/settings/publicTypeIndex`;
+    const ec = eventsContainer && eventsContainer.length > 0 ? eventsContainer : derivedEvents;
+    this.eventsContainer = ec.endsWith("/") ? ec : `${ec}/`;
+    this.typeIndexUri =
+      typeIndexUri && typeIndexUri.length > 0 ? typeIndexUri : derivedTypeIndex;
     this.reflectionTickRateMs = reflectionTickRateMs;
 
     this.emitter = new EventEmitter({ store, eventsContainer: this.eventsContainer });
