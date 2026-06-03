@@ -3,6 +3,7 @@ export * from './http/error/ShaclErrorHandler';
 export * from './NoOpUnprocessableWriteHook';
 export * from './pathConstraint';
 export * from './storage/BodyProjector';
+export * from './storage/AdmissionFloorStore';
 export * from './storage/ShapeValidationStore';
 export * from './storage/validators/ShapeValidator';
 export * from './storage/validators/ShaclValidator';
