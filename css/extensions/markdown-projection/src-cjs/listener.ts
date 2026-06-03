@@ -20,6 +20,8 @@ import type { RepresentationMetadata } from "@solid/community-server/dist/http/r
 import type { VocabularyTerm } from "rdf-vocabulary";
 import * as path from "path";
 import { readFileSync, existsSync } from "fs";
+import { createHash } from "crypto";
+import { Parser } from "n3";
 import { NoOpPostProjectionHook } from "./NoOpPostProjectionHook";
 
 // Re-export NoOpPostProjectionHook so Components.js can construct it via the
@@ -45,6 +47,31 @@ interface IPostProjectionHook {
 function debug(...args: unknown[]): void {
     // eslint-disable-next-line no-console
     console.error("[markdown-projection]", ...args);
+}
+
+// ------------------------------------------------------------------
+// Backstop: stamp-based skip (D108 Front-2 §5.7)
+// ------------------------------------------------------------------
+// Matches STAMP_PRED in AdmissionFloorStore — the in-band floor writes this
+// predicate on success, so the listener can skip re-projection when the stamp
+// is current (= the floor already wrote a conformant .meta).
+const STAMP_PRED = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash";
+
+/**
+ * Returns false (skip) when existingMetaTtl already contains a bodyHash stamp
+ * that matches sha256(body). Returns true (re-project) in all other cases:
+ * absent .meta, missing stamp, stale stamp, or parse error.
+ */
+export function shouldReproject(body: string, existingMetaTtl: string): boolean {
+    if (!existingMetaTtl) return true;
+    const want = createHash("sha256").update(body).digest("hex");
+    try {
+        const quads = new Parser().parse(existingMetaTtl);
+        const stamp = quads.find((q) => q.predicate.value === STAMP_PRED);
+        return !stamp || stamp.object.value !== want;
+    } catch {
+        return true;
+    }
 }
 
 // ------------------------------------------------------------------
@@ -252,6 +279,15 @@ export class MarkdownProjectionListener extends Initializer {
             body = readFileSync(fsPath, "utf8");
         } catch (err) {
             debug(`read failed: ${(err as Error).message}`);
+            return;
+        }
+
+        // Backstop: skip if the in-band floor already wrote a current .meta (stamp matches body).
+        const metaPath = `${fsPath}.meta`;
+        let existingMeta = "";
+        try { if (existsSync(metaPath)) existingMeta = readFileSync(metaPath, "utf8"); } catch { /* treat as absent */ }
+        if (!shouldReproject(body, existingMeta)) {
+            debug(`backstop: stamp current for ${target.path}, skipping re-projection`);
             return;
         }
 

@@ -47,10 +47,13 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MarkdownProjectionListener = exports.NoOpPostProjectionHook = void 0;
+exports.shouldReproject = shouldReproject;
 const Initializer_1 = require("@solid/community-server/dist/init/Initializer");
 const Vocabularies_1 = require("@solid/community-server/dist/util/Vocabularies");
 const path = __importStar(require("path"));
 const fs_1 = require("fs");
+const crypto_1 = require("crypto");
+const n3_1 = require("n3");
 const NoOpPostProjectionHook_1 = require("./NoOpPostProjectionHook");
 Object.defineProperty(exports, "NoOpPostProjectionHook", { enumerable: true, get: function () { return NoOpPostProjectionHook_1.NoOpPostProjectionHook; } });
 // ------------------------------------------------------------------
@@ -59,6 +62,31 @@ Object.defineProperty(exports, "NoOpPostProjectionHook", { enumerable: true, get
 function debug(...args) {
     // eslint-disable-next-line no-console
     console.error("[markdown-projection]", ...args);
+}
+// ------------------------------------------------------------------
+// Backstop: stamp-based skip (D108 Front-2 §5.7)
+// ------------------------------------------------------------------
+// Matches STAMP_PRED in AdmissionFloorStore — the in-band floor writes this
+// predicate on success, so the listener can skip re-projection when the stamp
+// is current (= the floor already wrote a conformant .meta).
+const STAMP_PRED = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash";
+/**
+ * Returns false (skip) when existingMetaTtl already contains a bodyHash stamp
+ * that matches sha256(body). Returns true (re-project) in all other cases:
+ * absent .meta, missing stamp, stale stamp, or parse error.
+ */
+function shouldReproject(body, existingMetaTtl) {
+    if (!existingMetaTtl)
+        return true;
+    const want = (0, crypto_1.createHash)("sha256").update(body).digest("hex");
+    try {
+        const quads = new n3_1.Parser().parse(existingMetaTtl);
+        const stamp = quads.find((q) => q.predicate.value === STAMP_PRED);
+        return !stamp || stamp.object.value !== want;
+    }
+    catch {
+        return true;
+    }
 }
 // ------------------------------------------------------------------
 // ESM pipeline loader
@@ -203,6 +231,18 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
         }
         catch (err) {
             debug(`read failed: ${err.message}`);
+            return;
+        }
+        // Backstop: skip if the in-band floor already wrote a current .meta (stamp matches body).
+        const metaPath = `${fsPath}.meta`;
+        let existingMeta = "";
+        try {
+            if ((0, fs_1.existsSync)(metaPath))
+                existingMeta = (0, fs_1.readFileSync)(metaPath, "utf8");
+        }
+        catch { /* treat as absent */ }
+        if (!shouldReproject(body, existingMeta)) {
+            debug(`backstop: stamp current for ${target.path}, skipping re-projection`);
             return;
         }
         // Load ESM projection pipeline lazily
