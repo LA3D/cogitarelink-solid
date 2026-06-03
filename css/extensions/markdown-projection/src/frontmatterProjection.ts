@@ -8,8 +8,22 @@ import { DataFactory, Quad } from "n3";
 
 const { namedNode, literal, quad } = DataFactory;
 
-// CURIE prefix map — mirrors the JSON-LD context at overlays/wiki-memory/context-fragment.jsonld
-// and the vault ontology. Supports 'skos:Concept', 'schema:Person', etc. in frontmatter type: fields.
+// CURIE prefix map — the projection-side half of a mirror with the SERVED
+// JSON-LD context at overlays/wiki-memory/context-fragment.jsonld (D79: the
+// served context is the agents' source of truth). Reconciliation (R-T7): the
+// invariant is set EQUALITY of the prefix-declaration terms across the two
+// sides. Rationale — a frontmatter `type:` CURIE that resolves for an agent
+// reading the served context MUST resolve here in projection, OR a CURIE this
+// map can expand must be one the agent can find documented in the context.
+// One-directional superset is too weak: a context-only prefix (sub/vann/td/xsd)
+// silently fails to project; a projection-only prefix (prov/as/mem/owl/rdfs/
+// vcard) that lands in .meta output has no published expansion an agent can
+// look up. So both sides carry the union. context-fragment.jsonld was the wrong
+// side for sub/vann/td/xsd (already declared there) AND for skos/dct (used by
+// its term-CURIEs but never declared as prefixes — a latent JSON-LD defect this
+// reconciliation fixes by adding the declarations there). Agreement test:
+// css/extensions/markdown-projection/test/curiePrefixAgreement.test.ts (reads
+// the fragment JSON + the maps sidecar, asserts equality).
 const CURIE_PREFIXES: Record<string, string> = {
     "skos":   "http://www.w3.org/2004/02/skos/core#",
     "schema": "https://schema.org/",
@@ -17,13 +31,21 @@ const CURIE_PREFIXES: Record<string, string> = {
     "dct":    "http://purl.org/dc/terms/",
     "cito":   "http://purl.org/spar/cito/",
     "wiki":   "https://pod.vardeman.me/vault/ontology/wiki#",
+    "sub":    "https://pod.vardeman.me/vault/ontology/substrate#",
     "mem":    "https://pod.vardeman.me/vault/ontology/mem#",
     "owl":    "http://www.w3.org/2002/07/owl#",
     "rdfs":   "http://www.w3.org/2000/01/rdf-schema#",
     "vcard":  "http://www.w3.org/2006/vcard/ns#",
     "prov":   "http://www.w3.org/ns/prov#",
     "as":     "https://www.w3.org/ns/activitystreams#",
+    "vann":   "http://purl.org/vocab/vann/",
+    "td":     "https://www.w3.org/2019/wot/td#",
+    "xsd":    "http://www.w3.org/2001/XMLSchema#",
 };
+
+// Exported so the maps-sidecar emitter (scripts/emitMaps.ts) and the agreement
+// test can read the canonical prefix map without re-scraping the source.
+export const CURIE_PREFIX_MAP: Readonly<Record<string, string>> = CURIE_PREFIXES;
 
 /**
  * Resolve a CURIE or absolute IRI string to a full IRI.
@@ -45,7 +67,13 @@ export function resolveCURIE(s: string): string | undefined {
     return undefined;
 }
 
-// Vault L4 → wiki-memory L3 shape-class mapping (D77 + MEMORY.md audit table)
+// Vault L4 → wiki-memory L3 shape-class mapping (D77 + MEMORY.md audit table).
+// Exported (TYPE_MAP_TOKENS) for the maps sidecar + the cross-language TYPE_MAP
+// agreement test (R-T7): the TS projection map and scripts/lib/rdf_gen.py's map
+// intentionally differ in COVERAGE (projection maps wiki types; the importer
+// maps vault types), so the invariant is NOT full equality — it is (a) where
+// BOTH maps define a token they agree on the class IRI, and (b) every class IRI
+// here is governed by a shape in the deployed catalog (sh:targetClass set).
 const TYPE_MAP: Record<string, string> = {
     "concept":           "https://pod.vardeman.me/vault/ontology/wiki#Concept",
     "concept-note":      "https://pod.vardeman.me/vault/ontology/wiki#Concept",
@@ -64,6 +92,9 @@ const TYPE_MAP: Record<string, string> = {
     "working-note":      "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote",
     "fleeting-note":     "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote",
 };
+
+// Exported for the maps sidecar + cross-language agreement test.
+export const TYPE_MAP_TOKENS: Readonly<Record<string, string>> = TYPE_MAP;
 
 const XSD_DT  = "http://www.w3.org/2001/XMLSchema#dateTime";
 const DCT     = "http://purl.org/dc/terms/";

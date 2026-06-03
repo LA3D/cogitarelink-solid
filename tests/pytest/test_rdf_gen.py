@@ -6,6 +6,7 @@ from rdflib.namespace import RDF, DCTERMS, XSD, SKOS
 from scripts.lib.rdf_gen import frontmatter_to_graph, slug
 
 VAULT = Namespace("https://pod.vardeman.me/vault/ontology#")
+WIKI  = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
 BASE = "https://pod.vardeman.me/vault/resources/concepts/"
 
 
@@ -28,7 +29,8 @@ def test_concept_note():
     g = frontmatter_to_graph(fm, "Contextual Retrieval", BASE)
     subj = URIRef(f"{BASE}contextual-retrieval.md")
 
-    assert (subj, RDF.type, SKOS.Concept) in g
+    # R-T7: TYPE_MAP reconciled to L3 wiki: classes (was bare skos:Concept).
+    assert (subj, RDF.type, WIKI.Concept) in g
     assert (subj, SKOS.prefLabel, Literal("Contextual Retrieval", datatype=XSD.string)) in g
     assert (subj, DCTERMS.created, Literal("2026-03-09", datatype=XSD.date)) in g
 
@@ -40,12 +42,13 @@ def test_concept_note():
 
 
 def test_theory_note():
-    """Theory notes get vault:TheoryNote type."""
+    """Theory notes map to the L3 wiki:Concept class (R-T7: reconciled from the
+    pre-D70 legacy vault:TheoryNote, which no deployed shape governed)."""
     fm = {"type": "theory-note", "up": "[[Agentic Memory Systems MOC]]"}
     g = frontmatter_to_graph(fm, "Progressive Disclosure", BASE)
     subj = URIRef(f"{BASE}progressive-disclosure.md")
 
-    assert (subj, RDF.type, VAULT.TheoryNote) in g
+    assert (subj, RDF.type, WIKI.Concept) in g
     assert (subj, SKOS.prefLabel, Literal("Progressive Disclosure", datatype=XSD.string)) in g
 
 
@@ -55,7 +58,7 @@ def test_minimal_note():
     g = frontmatter_to_graph(fm, "Test Note", BASE)
     subj = URIRef(f"{BASE}test-note.md")
 
-    assert (subj, RDF.type, SKOS.Concept) in g
+    assert (subj, RDF.type, WIKI.Concept) in g
     assert (subj, SKOS.prefLabel, Literal("Test Note", datatype=XSD.string)) in g
     assert len(g) >= 2
 
@@ -73,4 +76,5 @@ def test_serializes_to_turtle():
     fm = {"type": "concept-note", "created": "2026-01-01"}
     g = frontmatter_to_graph(fm, "Test", BASE)
     ttl = g.serialize(format="turtle")
-    assert "skos:Concept" in ttl or "skos/core#Concept" in ttl
+    # R-T7: concept-note now maps to the L3 wiki:Concept (was skos:Concept).
+    assert "wiki:Concept" in ttl or "ontology/wiki#Concept" in ttl

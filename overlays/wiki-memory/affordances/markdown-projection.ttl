@@ -10,6 +10,9 @@
 @prefix cap:      <https://pod.vardeman.me/vault/ontology/capability#> .
 @prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+@prefix schema:   <https://schema.org/> .
+@prefix foaf:     <http://xmlns.com/foaf/0.1/> .
+@prefix org:      <http://www.w3.org/ns/org#> .
 
 <> a sub:WriteAffordance ,
        prof:ResourceDescriptor ;
@@ -18,26 +21,81 @@
     rdfs:label "Markdown projection listener" ;
     sub:requiresCapability <https://pod.vardeman.me/vault/meta/capabilities/markdown-content-projection.ttl> ;
     sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    # sub:governs is the agent-facing declaration of the predicates the substrate
+    # writes on a regovern (D108-final-review item 2). RECONCILED (R-T7, audit R3):
+    # this list was hand-maintained and had drifted from what the runtime actually
+    # replaces. The data-model truth is the runtime governed set — exactly what
+    # MetaWriter.replaceGoverned() owns: PAGE_GOVERNED_PREDICATES ∪
+    # getThingGovernedPredicates(class) across every Thing class
+    # (resolveGovernedFromQuads), PLUS rdf:type (the type axis: the substrate
+    # dispatches rdf:type from frontmatter type:; an agent must not author it).
+    # The substrate-internal stamp sub:bodyHash is deliberately EXCLUDED (written
+    # by the admission floor, never advertised). Single-sourced from the maps
+    # sidecar (css/extensions/markdown-projection/maps.json :: governedUnion);
+    # agreement test tests/test_markdown_projection_descriptor.py asserts
+    # sub:governs == governedUnion ∪ {rdf:type} and that sub:bodyHash is absent.
+    # Drift here means the descriptor advertises a different contract than the
+    # listener enforces — the bug the test exists to catch.
     sub:governs rdf:type ,
-        dct:title ,
-        skos:prefLabel ,
-        skos:altLabel ,
-        skos:definition ,
-        dct:identifier ,
+        dct:contributor ,
         dct:created ,
         dct:modified ,
-        dct:references ,
         dct:source ,
-        dct:subject ,
-        dct:contributor ,
-        dct:creator ,
-        skos:broader ,
-        skos:related ,
-        cito:extends ,
+        dct:title ,
         cito:agreesWith ,
+        cito:cites ,
         cito:disagreesWith ,
+        cito:extends ,
+        skos:altLabel ,
+        skos:broader ,
+        skos:closeMatch ,
+        skos:definition ,
+        skos:exactMatch ,
+        skos:narrower ,
+        skos:prefLabel ,
+        skos:related ,
+        org:hasMembership ,
+        prov:wasGeneratedBy ,
+        foaf:nick ,
+        wiki:embeds ,
         wiki:maturity ,
-        prov:wasGeneratedBy ;
+        schema:about ,
+        schema:address ,
+        schema:affiliation ,
+        schema:attendee ,
+        schema:containedInPlace ,
+        schema:containsPlace ,
+        schema:dateCreated ,
+        schema:description ,
+        schema:dissolutionDate ,
+        schema:email ,
+        schema:endDate ,
+        schema:familyName ,
+        schema:foundingDate ,
+        schema:geo ,
+        schema:givenName ,
+        schema:identifier ,
+        schema:image ,
+        schema:keywords ,
+        schema:latitude ,
+        schema:legalName ,
+        schema:location ,
+        schema:longitude ,
+        schema:mainEntity ,
+        schema:mainEntityOfPage ,
+        schema:member ,
+        schema:name ,
+        schema:organizer ,
+        schema:parentOrganization ,
+        schema:sameAs ,
+        schema:startDate ,
+        schema:step ,
+        schema:subEvent ,
+        schema:subOrganization ,
+        schema:superEvent ,
+        schema:supply ,
+        schema:tool ,
+        schema:totalTime ;
     sub:projectsFromFrontmatter "type" ,
         "created" ,
         "modified" ,

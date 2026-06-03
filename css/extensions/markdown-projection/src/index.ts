@@ -6,7 +6,7 @@ export {
     resolveGovernedForWikiClass,
 } from "./governedPredicates.js";
 export type { TwoSubjectPredicates } from "./governedPredicates.js";
-export { projectFrontmatter, resolveCURIE } from "./frontmatterProjection.js";
+export { projectFrontmatter, resolveCURIE, CURIE_PREFIX_MAP, TYPE_MAP_TOKENS } from "./frontmatterProjection.js";
 export type { Frontmatter } from "./frontmatterProjection.js";
 export { projectWikilinks, projectWikilink, HINT_TO_PROJECTION, BOOTSTRAP_PREDICATE_TO_CLASS } from "./wikilinkProjection.js";
 export type { Projection, ProjectionSubject, ProjectWikilinkArgs } from "./wikilinkProjection.js";

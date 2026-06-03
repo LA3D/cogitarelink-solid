@@ -8,46 +8,24 @@ Guards the three-way agreement between:
 Migration guard for the sub: namespace migration (RQ-Substrate-4 Phase 0).
 routing.jsonld is the runtime SoT; every entry it declares must agree with the
 others where present.
+
+R-T7 (audit R3, F8-python): the TS leg previously REGEX-SCRAPED wikilinkProjection.ts
+(computed-key string concatenation), which the fragility audit flagged as brittle.
+It now reads the committed maps sidecar (css/extensions/markdown-projection/maps.json
+:: bootstrapPredicateToClass), emitted from the live TS constant by `npm run
+emit-maps` and guarded against drift by test/mapsSidecar.test.ts.
 """
-import pathlib, re
+import json, pathlib
 import rdflib
 from scripts.pod_audit import ROUTES_TO_CLASS, PUBLISHED_RANGE
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+_MAPS = json.loads((ROOT / "css/extensions/markdown-projection/maps.json").read_text())
 
 
 def _bootstrap_from_ts() -> dict[str, str]:
-    """Parse BOOTSTRAP_PREDICATE_TO_CLASS from wikilinkProjection.ts.
-
-    The block uses computed property keys with string concatenation:
-        [SCHEMA + "affiliation"]: SCHEMA + "Organization",
-    so we first extract the namespace prefix constants (SCHEMA, DCT, etc.),
-    then expand each computed key and value.
-    """
-    txt = (ROOT / "css/extensions/markdown-projection/src/wikilinkProjection.ts").read_text()
-
-    # Extract top-level IRI prefix constants: const SCHEMA = "https://schema.org/";
-    prefix_map: dict[str, str] = {}
-    for m in re.finditer(r'^const\s+(\w+)\s*=\s*"([^"]+[#/])"\s*;', txt, re.MULTILINE):
-        prefix_map[m.group(1)] = m.group(2)
-
-    # Isolate the BOOTSTRAP_PREDICATE_TO_CLASS block: { ... }
-    m = re.search(r"BOOTSTRAP_PREDICATE_TO_CLASS[^{]*\{(.*?)\};", txt, re.S)
-    assert m, "BOOTSTRAP_PREDICATE_TO_CLASS block not found in wikilinkProjection.ts"
-    block = m.group(1)
-
-    # Parse lines of the form:  [PREFIX + "suffix"]: VALUE_PREFIX + "value_suffix",
-    result: dict[str, str] = {}
-    for line in re.finditer(
-        r'\[\s*(\w+)\s*\+\s*"([^"]+)"\s*\]\s*:\s*(\w+)\s*\+\s*"([^"]+)"',
-        block
-    ):
-        key_pfx, key_sfx, val_pfx, val_sfx = line.groups()
-        key_base = prefix_map.get(key_pfx, "")
-        val_base = prefix_map.get(val_pfx, "")
-        result[key_base + key_sfx] = val_base + val_sfx
-
-    return result
+    """BOOTSTRAP_PREDICATE_TO_CLASS via the maps sidecar (JSON, not TS scraping)."""
+    return dict(_MAPS["bootstrapPredicateToClass"])
 
 
 def _routing_jsonld() -> dict[str, str]:

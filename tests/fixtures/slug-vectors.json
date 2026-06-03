@@ -1,0 +1,21 @@
+{
+  "_comment": "Cross-language golden vectors for the wiki-memory L3 URL slug (R-T7, audit R3). The TS minter wikiUrl.ts:slug() is canonical (R-T2 made it THE live substrate minter); scripts/lib/rdf_gen.py:slug() is RECONCILED to match it. Both a vitest test (shared/markdown-parsing) and a pytest (tests/test_slug_golden_vectors.py) run their slug over these vectors and assert `expected`. The `applyCitekeyStrip` cases run slug(stripCitekeyMarker(input)) — the URL-minting path (targetUrlFor / _resolve), not bare slug. Divergences these vectors lock (TS side won each): heading-anchor strip, folder-prefix strip, ASCII-only \\w, double-hyphen preservation.",
+  "vectors": [
+    { "input": "Context Graphs", "expected": "context-graphs", "note": "basic spaces" },
+    { "input": "CamelCase Title", "expected": "camelcase-title", "note": "case lowering" },
+    { "input": "Research & Scholarship", "expected": "research-scholarship", "note": "ampersand stripped, adjacent spaces merged (order-sensitive)" },
+    { "input": "foo & bar / baz", "expected": "baz", "note": "folder prefix wins over ampersand handling (last segment only)" },
+    { "input": "café résumé naïve", "expected": "caf-rsum-nave", "note": "ASCII-only \\w: diacritics dropped (JS \\w semantics, Python re.ASCII)" },
+    { "input": "Folder/Sub/Note", "expected": "note", "note": "folder prefix: keep only the last path segment" },
+    { "input": "External Resources/Husain Evals", "expected": "husain-evals", "note": "folder prefix with space" },
+    { "input": "Judge Memory#Multi-Hop", "expected": "judge-memory", "note": "heading anchor stripped" },
+    { "input": "#leading-heading", "expected": "", "note": "pure heading anchor → empty slug" },
+    { "input": "multiple   spaces", "expected": "multiple-spaces", "note": "whitespace run collapses to one hyphen" },
+    { "input": "a--b", "expected": "a--b", "note": "existing hyphens preserved verbatim (no collapse)" },
+    { "input": "  leading trailing  ", "expected": "leading-trailing", "note": "leading/trailing whitespace trimmed" }
+  ],
+  "citekeyVectors": [
+    { "input": "@zhang-2025-rlm", "expected": "zhang-2025-rlm", "note": "citekey @-marker stripped (slug strips @ anyway; URL path uses stripCitekeyMarker)" },
+    { "input": "@hu-2026-beyond-rag", "expected": "hu-2026-beyond-rag", "note": "citekey @-strip" }
+  ]
+}
