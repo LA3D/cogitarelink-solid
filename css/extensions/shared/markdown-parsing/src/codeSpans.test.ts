@@ -22,4 +22,19 @@ describe("maskCodeSpans", () => {
     const src = "plain [a]{.x} and [[B]]{.y}";
     expect(maskCodeSpans(src)).toBe(src);
   });
+
+  it("masks a fenced block with CRLF line endings (preserving length)", () => {
+    const src = "a\r\n```\r\n[[Z]]{.broader}\r\n```\r\nb [[W]]{.broader}";
+    const out = maskCodeSpans(src);
+    expect(out.length).toBe(src.length);     // invariant preserved
+    expect(out).not.toContain("[[Z]]");      // fenced token masked
+    expect(out).toContain("[[W]]{.broader}"); // live token survives
+  });
+
+  it("masks a fenced block that ends the file with no trailing newline", () => {
+    const src = "intro\n```\n[[Z]]{.broader}\n```";
+    const out = maskCodeSpans(src);
+    expect(out).not.toContain("[[Z]]");
+    expect(out.length).toBe(src.length);
+  });
 });

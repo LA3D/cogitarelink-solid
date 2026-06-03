@@ -2,7 +2,9 @@
 // don't project example syntax shown inside `inline code` or fenced ``` blocks.
 // Replaces code-region characters with spaces — preserves total length AND every
 // non-code offset, so callers can keep using the same indices.
-const FENCE = /(^|\n)(```|~~~)[^\n]*\n[\s\S]*?\n\2[ \t]*(?=\n|$)/g;
+// CRLF-tolerant: \r?\n matches both LF-only (Unix) and CRLF (Windows) line endings.
+// blank() keeps \n but replaces \r (a non-\n char) with a space, so length is unchanged.
+const FENCE = /(^|\n)(```|~~~)[^\n]*\r?\n[\s\S]*?\r?\n\2[ \t]*(?=\r?\n|$)/g;
 const INLINE = /(`+)(?:(?!\1).)*\1/g;
 
 function blank(match: string): string {
