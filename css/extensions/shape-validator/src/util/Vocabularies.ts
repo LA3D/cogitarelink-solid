@@ -1,6 +1,20 @@
 /**
- * Self-contained vocabulary definitions for shape validation.
- * Replaces the CSS v5 createUriAndTermNamespace which was removed in v8.
+ * Local vocabulary terms for shape validation (audit F10).
+ *
+ * Coverage check against @solid/community-server's own exports (v8):
+ *   - CSS exports `LDP` with: contains, BasicContainer, Container, Resource —
+ *     but NOT `ldp:constrainedBy`, which the floor + validator need.
+ *   - CSS exports NO `SH` vocabulary at all (no `sh:targetClass`).
+ *
+ * So the genuinely-missing terms (`ldp:constrainedBy`, the whole `SH` namespace)
+ * must be minted locally. We keep `LDP.contains` here too — even though CSS exports
+ * it — so the two LDP terms this extension uses live behind a single import symbol
+ * rather than splitting one predicate set across two `LDP` objects (a worse readability
+ * trap than one small local table). Predicates are compared by IRI value (NamedNode
+ * .equals), so a locally-minted term interoperates with CSS-emitted metadata.
+ *
+ * Unused-redundant terms (BasicContainer/Container/Resource) were dropped — this table
+ * now carries ONLY what the extension references.
  */
 import { DataFactory } from 'n3';
 
@@ -16,14 +30,13 @@ function createVocab<T extends string>(baseUri: string, ...localNames: T[]) {
   return ns;
 }
 
+// Entirely absent from CSS's exports — must be local.
 export const SH = createVocab('http://www.w3.org/ns/shacl#',
   'targetClass',
 );
 
+// `contains` IS in CSS's LDP; `constrainedBy` is NOT. Kept together (see header).
 export const LDP = createVocab('http://www.w3.org/ns/ldp#',
   'contains',
-  'BasicContainer',
-  'Container',
-  'Resource',
   'constrainedBy',
 );

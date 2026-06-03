@@ -91,6 +91,30 @@ describe("isTimemapRequest", () => {
   it("recognizes ext=timemap when combined with other params", () => {
     expect(isTimemapRequest("http://pod/note.md?lang=en&ext=timemap")).toBe(true);
   });
+
+  // Guard-equivalence: the MementoHttpHandler tombstone probe used to sniff
+  // `url.includes("?ext=timemap")` / `"&ext=timemap"`. These are the cases
+  // where the substring sniff said "timemap" but the parser (correctly) does
+  // not — the proper parser must NOT false-positive on them. (audit L4)
+  it("does not false-positive on ext=timemap as a value prefix", () => {
+    // substring `?ext=timemap` matches, but the real param value is `timemapX`
+    expect(isTimemapRequest("http://pod/note.md?ext=timemapX")).toBe(false);
+  });
+
+  it("does not false-positive on ext=timemap embedded in another param's value", () => {
+    expect(isTimemapRequest("http://pod/note.md?other=ext=timemap")).toBe(false);
+    expect(isTimemapRequest("http://pod/note.md?xext=timemap")).toBe(false);
+  });
+});
+
+describe("getMementoStringFromUri — guard-equivalence (audit L4)", () => {
+  // substring `?version=` matched inside another param's value; the parser
+  // reads `version` as absent, so the tombstone probe is NOT suppressed.
+  it("does not treat a ?version= substring inside another value as a Memento signal", () => {
+    expect(
+      getMementoStringFromUri("http://pod/note.md?notes=see%20?version=20260101000000"),
+    ).toBeNull();
+  });
 });
 
 describe("buildAbsoluteUrl", () => {

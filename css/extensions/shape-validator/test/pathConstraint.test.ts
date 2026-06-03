@@ -8,7 +8,11 @@
  * - Paths with no matching constraint pass through
  */
 import { describe, it, expect } from "vitest";
-import { evaluatePathConstraint, type PathConstraintConfig } from "../src/pathConstraint";
+import {
+  evaluatePathConstraint,
+  PathConstraintConfig as PathConstraintConfigClass,
+  type PathConstraintConfig,
+} from "../src/pathConstraint";
 
 describe("evaluatePathConstraint (D99 Layer 2)", () => {
   const config: PathConstraintConfig[] = [
@@ -128,5 +132,29 @@ describe("evaluatePathConstraint (D99 Layer 2)", () => {
       config,
     );
     expect(result.violation?.pathPrefix).toBe("/wiki/events/");
+  });
+
+  // Boundary case (audit F2): a sibling container whose name extends the prefix
+  // string ("events-archive" vs "events") must NOT inherit the events constraint.
+  // Because every configured prefix ends in "/", startsWith() can't bleed across
+  // the container boundary — the forbidden mem:Event is admitted at /wiki/events-archive/.
+  it("does NOT apply the /wiki/events/ constraint to the sibling /wiki/events-archive/", () => {
+    const result = evaluatePathConstraint(
+      "/wiki/events-archive/foo.md",
+      ["https://pod.vardeman.me/vault/ontology/mem#Event"],
+      config,
+    );
+    expect(result.ok).toBe(true);
+    expect(result.violation).toBeUndefined();
+  });
+});
+
+describe("PathConstraintConfig construction guard (audit F2)", () => {
+  it("throws when a pathPrefix does not end in '/' (not a container prefix)", () => {
+    expect(() => new PathConstraintConfigClass("/wiki/events", [], [])).toThrow(/must end with "\/"/);
+  });
+
+  it("accepts a pathPrefix ending in '/'", () => {
+    expect(() => new PathConstraintConfigClass("/wiki/events/", [], [])).not.toThrow();
   });
 });

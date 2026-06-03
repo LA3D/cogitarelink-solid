@@ -1,10 +1,12 @@
 {
+  "comment": "DEAD CONFIG (audit F1). This file's former inline ShapeValidationStore declaration duplicated solid-config.json's live wiring (the same pathConstraints + tboxPaths, byte-identical) and self-described as 'a reference'. The active wiring is solid-config.json's inline ShapeValidationStore + AdmissionFloor + its own PatchingStore override. Nothing in the live import chain (docker-compose loads /config/solid-config.json) imports this file's parent (shape-validation/shape-validation.json) — verified during R-T5. The duplicated ShapeValidationStore block was removed so the live config is the single source of truth. The PatchingStore override below is the legacy CSS-v5-style chain (no AdmissionFloor); it is retained only as a structural record of where shape-validation slotted before the v8 floor and is NOT loaded.",
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld"
   ],
   "@graph": [
     {
+      "comment": "Legacy (unloaded) PatchingStore override — the live equivalent, which wires the AdmissionFloor into the chain, lives in solid-config.json.",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:ResourceStore_Patching" },
       "overrideParameters": {
@@ -12,54 +14,6 @@
         "source": { "@id": "urn:shape-validation:default:ResourceStore_Shape" },
         "patchHandler": { "@id": "urn:solid-server:default:PatchHandler" }
       }
-    },
-    {
-      "comment": "Validates resources when parent container has ldp:constrainedBy in its metadata. Also enforces D99 Layer 2 path-based class disjointness via pathConstraints. NOTE: this file is a reference — the active wiring is in solid-config.json's inline ShapeValidationStore declaration.",
-      "@id": "urn:shape-validation:default:ResourceStore_Shape",
-      "@type": "ShapeValidationStore",
-      "identifierStrategy": { "@id": "urn:solid-server:default:IdentifierStrategy" },
-      "metadataStrategy": { "@id": "urn:solid-server:default:MetadataStrategy" },
-      "converter": { "@id": "urn:solid-server:default:RepresentationConverter" },
-      "source": { "@id": "urn:solid-server:default:ResourceStore_Converting" },
-      "validator": {
-        "@id": "urn:shape-validation:default:ShaclValidator",
-        "@type": "ShaclValidator",
-        "converter": { "@id": "urn:solid-server:default:RepresentationConverter" },
-        "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" }
-      },
-      "pathConstraints": [
-        {
-          "@type": "PathConstraintConfig",
-          "pathPrefix": "/vault/wiki/.events/",
-          "allowedClasses": ["https://pod.vardeman.me/vault/ontology/mem#Event"],
-          "forbiddenClasses": []
-        },
-        {
-          "@type": "PathConstraintConfig",
-          "pathPrefix": "/vault/wiki/.operations/",
-          "allowedClasses": ["https://www.w3.org/ns/activitystreams#Activity"],
-          "forbiddenClasses": []
-        },
-        {
-          "@type": "PathConstraintConfig",
-          "pathPrefix": "/vault/wiki/events/",
-          "allowedClasses": [],
-          "forbiddenClasses": [
-            "https://pod.vardeman.me/vault/ontology/mem#Event",
-            "https://pod.vardeman.me/vault/ontology/mem#Action"
-          ]
-        },
-        {
-          "@type": "PathConstraintConfig",
-          "pathPrefix": "/vault/wiki/procedures/",
-          "allowedClasses": [],
-          "forbiddenClasses": ["https://pod.vardeman.me/vault/ontology/mem#Action"]
-        }
-      ],
-      "tboxPaths": [
-        "/community-server/extensions/shape-validator/data/as-subclass-axioms.ttl",
-        "/community-server/extensions/shape-validator/data/mem.ttl"
-      ]
     }
   ]
 }

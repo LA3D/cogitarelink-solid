@@ -1,3 +1,6 @@
+// Canonical Memento URI toolkit. profile-link carries a trimmed copy of
+// `isUnderBaseUrl` only (see profile-link/src/uri.ts header + audit M4).
+
 const MEMENTO_DT_RE = /^\d{14}$/;
 
 function splitQuery(uri: string): { base: string; params: URLSearchParams } {

@@ -36,6 +36,18 @@ export class PathConstraintConfig {
     allowedClasses: string[],
     forbiddenClasses: string[],
   ) {
+    // A pathPrefix is a CONTAINER prefix: it must end with "/". Without this,
+    // `startsWith(pathPrefix)` matches across container boundaries — e.g.
+    // "/vault/wiki/events-archive/" startsWith "/vault/wiki/events" — silently
+    // applying the events constraint to a different container (audit F2). Fail
+    // loud at construction (config wiring time) rather than mis-route at write
+    // time. Components.js instantiates this from the JSON config, so a
+    // mis-configured prefix surfaces at server boot, not on a stray request.
+    if (!pathPrefix.endsWith('/')) {
+      throw new Error(
+        `PathConstraintConfig.pathPrefix must end with "/" (container prefix), got: "${pathPrefix}"`,
+      );
+    }
     this.pathPrefix = pathPrefix;
     this.allowedClasses = allowedClasses;
     this.forbiddenClasses = forbiddenClasses;

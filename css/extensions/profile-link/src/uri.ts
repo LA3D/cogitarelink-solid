@@ -1,72 +1,17 @@
-const MEMENTO_DT_RE = /^\d{14}$/;
-
-function splitQuery(uri: string): { base: string; params: URLSearchParams } {
-  const hashIdx = uri.indexOf("#");
-  if (hashIdx >= 0) {
-    return splitQuery(uri.slice(0, hashIdx));
-  }
-  const qIdx = uri.indexOf("?");
-  if (qIdx < 0) return { base: uri, params: new URLSearchParams() };
-  return { base: uri.slice(0, qIdx), params: new URLSearchParams(uri.slice(qIdx + 1)) };
-}
-
-function rebuild(base: string, params: URLSearchParams): string {
-  const s = params.toString();
-  return s ? `${base}?${s}` : base;
-}
-
-export function withVersion(original: string, mementoStr: string): string {
-  const { base, params } = splitQuery(original);
-  params.set("version", mementoStr);
-  return rebuild(base, params);
-}
-
-export function withTimemap(original: string): string {
-  const { base, params } = splitQuery(original);
-  params.set("ext", "timemap");
-  return rebuild(base, params);
-}
-
-export function stripMementoQuery(uri: string): string {
-  const { base, params } = splitQuery(uri);
-  params.delete("version");
-  params.delete("ext");
-  return rebuild(base, params);
-}
-
-export function getMementoStringFromUri(uri: string): string | null {
-  const { params } = splitQuery(uri);
-  const v = params.get("version");
-  if (v === null) return null;
-  return MEMENTO_DT_RE.test(v) ? v : null;
-}
-
-export function isTimemapRequest(uri: string): boolean {
-  return splitQuery(uri).params.get("ext") === "timemap";
-}
+// URL-under-base predicate. The full Memento URI toolkit (withVersion,
+// timemap helpers, fsPathFromUrl, …) lives in the canonical original at
+// `css/extensions/memento/src/uri.ts`; profile-link needs only this one
+// function, so it carries a trimmed copy rather than depending on the
+// memento package (these CJS extensions have no shared-module path — the
+// only `shared/` module in the repo, shared/markdown-parsing, is ESM and
+// inlined into ESM consumers via rootDir, which would break these
+// CommonJS extensions' Components.js dist wiring). See audit M4.
 
 function trimSlash(s: string): string {
   return s.replace(/\/$/, "");
 }
 
-export function buildAbsoluteUrl(requestUrl: string | undefined, baseUrl: string): string {
-  const base = trimSlash(baseUrl);
-  if (!requestUrl) return `${base}/`;
-  if (/^https?:\/\//i.test(requestUrl)) return requestUrl;
-  return `${base}${requestUrl.startsWith("/") ? "" : "/"}${requestUrl}`;
-}
-
 export function isUnderBaseUrl(url: string, baseUrl: string): boolean {
   const base = trimSlash(baseUrl);
   return url === base || url === `${base}/` || url.startsWith(`${base}/`);
-}
-
-export function fsPathFromUrl(url: string, baseUrl: string): string {
-  if (!isUnderBaseUrl(url, baseUrl)) {
-    throw new Error(`URL outside pod base: ${url}`);
-  }
-  const base = trimSlash(baseUrl);
-  const stripped = url.slice(base.length).replace(/^\//, "");
-  const { base: pathOnly } = splitQuery(stripped);
-  return decodeURIComponent(pathOnly);
 }

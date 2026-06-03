@@ -56,6 +56,21 @@ export class ShapeValidationStore extends PassthroughStore {
     this.identifierStrategy = identifierStrategy;
     this.converter = converter;
     this.validator = validator;
+    // Enforce that every configured pathPrefix is a CONTAINER prefix ending in
+    // "/" (audit F2). Components.js sets PathConstraintConfig member fields
+    // directly (no constructorArguments in the descriptor), so the config arrives
+    // here as plain objects — this constructor is the boot-time gate. A prefix
+    // without a trailing slash makes `startsWith(pathPrefix)` match across
+    // container boundaries (e.g. "/vault/wiki/events-archive/" startsWith
+    // "/vault/wiki/events"), silently applying one container's constraint to
+    // another. Fail loud at boot, not silently at write time.
+    for (const c of pathConstraints) {
+      if (!c.pathPrefix.endsWith('/')) {
+        throw new Error(
+          `ShapeValidationStore: pathConstraint pathPrefix must end with "/" (container prefix), got: "${c.pathPrefix}"`,
+        );
+      }
+    }
     this.pathConstraints = pathConstraints;
     this.tboxPaths = tboxPaths;
   }
@@ -64,8 +79,20 @@ export class ShapeValidationStore extends PassthroughStore {
     if (!this.subClassClosure) {
       const quads: Quad[] = [];
       for (const p of this.tboxPaths) {
-        try { quads.push(...new Parser().parse(readFileSync(p, 'utf8'))); }
-        catch (e) { this.logger.warn(`TBox load failed for ${p}: ${String(e)}`); }
+        // THROW on a failed read (audit F5). A configured tboxPath that can't be
+        // read is a deployment error: silently warning + building an EMPTY closure
+        // means subclass expansion stops working (every subtype write gets the
+        // wrong 422), and because writes still "work" for the apex classes this
+        // regression hides for weeks. A typo in tboxPaths must break loudly at the
+        // first governed write, not degrade silently. (The agreement test in
+        // tboxPathsExist.test.ts also guards the config↔data basenames.)
+        let text: string;
+        try {
+          text = readFileSync(p, 'utf8');
+        } catch (e) {
+          throw new Error(`ShapeValidationStore: configured tboxPath could not be read: ${p} (${String(e)})`);
+        }
+        quads.push(...new Parser().parse(text));
       }
       this.subClassClosure = buildSubClassClosure(quads);
     }
@@ -210,7 +237,17 @@ export class ShapeValidationStore extends PassthroughStore {
     // (ldp:Container, ldp:BasicContainer, etc.) that would false-positive against
     // substrate-only allow-lists. See FOLLOWUPS.md for primary-topic-only
     // rdf:type extraction (Option 2).
-    if (resourcePath.endsWith('.meta') || resourcePath.endsWith('.meta/')) {
+    //
+    // Use the injected AuxiliaryStrategy rather than a `.endsWith('.meta')`
+    // string heuristic (audit F3) — it is the platform's own auxiliary-identifier
+    // predicate (the `.meta` suffix is the strategy's, not ours to hardcode). The
+    // string check also matched a trailing-slash `.meta/` edge case that
+    // isAuxiliaryIdentifier (suffix endsWith '.meta') does not, so that nuance is
+    // preserved explicitly below.
+    if (
+      this.metadataStrategy.isAuxiliaryIdentifier(identifier) ||
+      resourcePath.endsWith('.meta/')
+    ) {
       return;
     }
 

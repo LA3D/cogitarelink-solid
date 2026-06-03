@@ -10,7 +10,14 @@ import { decide, type MementoDecision } from "./router";
 import { toMementoString, fromMementoString, toRFC7231 } from "./datetime";
 import { gitLogBefore, gitShow, gitLogForPath, gitLatestOpForPath } from "./git";
 import { serializeTimemap } from "./timemap";
-import { withVersion, buildAbsoluteUrl, isUnderBaseUrl, fsPathFromUrl } from "./uri";
+import {
+  withVersion,
+  buildAbsoluteUrl,
+  isUnderBaseUrl,
+  fsPathFromUrl,
+  getMementoStringFromUri,
+  isTimemapRequest,
+} from "./uri";
 
 export class MementoHttpHandler extends HttpHandler {
   private readonly logger = getLoggerFor(this);
@@ -57,10 +64,11 @@ export class MementoHttpHandler extends HttpHandler {
     // If the file exists in the worktree, it cannot be tombstoned, period.
     let isTombstoned = false;
     const isContainerUrl = url.endsWith("/");
+    const hasMementoSignal =
+      getMementoStringFromUri(url) !== null || isTimemapRequest(url);
     if (
       method === "GET" && !isContainerUrl && !acceptDatetime &&
-      !url.includes("?version=") &&
-      !url.includes("?ext=timemap") && !url.includes("&ext=timemap")
+      !hasMementoSignal
     ) {
       try {
         const fsRel = fsPathFromUrl(url, this.baseUrl);

@@ -169,28 +169,11 @@ describe("AdmissionFloorStore.setRepresentation — markdown body path", () => {
     expect(projector.materialize).not.toHaveBeenCalled();
   });
 
-  it("permissive /working/ path: admits + materializes a non-conforming body without throwing", async () => {
-    validateMock.mockResolvedValue({ conforms: false, reportTurtle: "report" });
-    const WORKING = "https://pod.example.org/wiki/working/draft.md";
-    const projector = makeProjector({ quads: [
-      quad(namedNode(WORKING + "#this"), namedNode(RDF_TYPE), namedNode(SKOS_CONCEPT)),
-    ], governed: [SKOS_PREFLABEL] });
-    const source = makeSource();
-    // parent for /working/ also constrained
-    source.getRepresentation = vi.fn(async () => parentRep(true)) as any;
-    const identifierStrategy = {
-      isRootContainer: () => false,
-      getParentContainer: () => ({ path: "https://pod.example.org/wiki/working/" }),
-    } as any;
-    const auxiliaryStrategy = { isAuxiliaryIdentifier: (id: any) => id.path.endsWith(".meta") } as any;
-    const store = new AdmissionFloorStore(source as any, identifierStrategy, auxiliaryStrategy, projector as any);
-
-    await expect(
-      store.setRepresentation({ path: WORKING }, md(WORKING, "draft")),
-    ).resolves.toBeDefined();
-    expect(source.setRepresentation).toHaveBeenCalledTimes(1);
-    expect(projector.materialize).toHaveBeenCalledTimes(1);
-  });
+  // NOTE: the former "permissive /working/ path" test, which relied on the deleted
+  // isPermissive('/working/') substring bypass + a MOCKED conforms:false verdict, has
+  // moved to AdmissionFloorPermissive.test.ts — where the REAL working.shacl.ttl runs.
+  // The data-model-carries-the-policy claim (audit FOLLOWUPS #5) must be tested against
+  // the real permissive shape, not a mocked conformance verdict, so it lives there.
 
   it("auxiliary (.meta) writes pass straight through", async () => {
     const { identifierStrategy, auxiliaryStrategy } = makeStrategies();
@@ -347,8 +330,13 @@ describe("AdmissionFloorStore.setRepresentation — direct .meta write path", ()
     expect(validateMock).not.toHaveBeenCalled();
   });
 
-  it("permissive /working/ resource .meta: passes straight through even if validation would fail", async () => {
-    validateMock.mockResolvedValue({ conforms: false, reportTurtle: "report" });
+  // The isPermissive('/working/') .meta bypass was deleted (audit FOLLOWUPS #5):
+  // a working resource's .meta is now validated like any other governed .meta. With
+  // a CONFORMING verdict it commits — there is no path-substring shortcut. (The
+  // "non-conforming draft is admitted under the permissive WORKING shape" behavior is
+  // covered for real in AdmissionFloorPermissive.test.ts.)
+  it("working /working/ resource .meta is validated (no bypass) and commits when conforming", async () => {
+    validateMock.mockResolvedValue({ conforms: true });
     const identifierStrategy = {
       isRootContainer: () => false,
       getParentContainer: () => ({ path: "https://pod.example.org/wiki/working/" }),
@@ -358,7 +346,6 @@ describe("AdmissionFloorStore.setRepresentation — direct .meta write path", ()
       getSubjectIdentifier: (_id: any) => ({ path: WORKING_RESOURCE }),
     } as any;
     const source = makeSource();
-    // working/ container also has constrainedBy so the shape lookup returns a URL
     source.getRepresentation = vi.fn(async () => parentRep(true)) as any;
     const projector = makeProjector(conceptProjection());
     const store = new AdmissionFloorStore(source as any, identifierStrategy, auxiliaryStrategy, projector as any);
@@ -368,10 +355,8 @@ describe("AdmissionFloorStore.setRepresentation — direct .meta write path", ()
     ).resolves.toBeDefined();
 
     expect(source.setRepresentation).toHaveBeenCalledTimes(1);
-    // validate was called (the code calls it to get the result) — but the permissive
-    // path bypasses the throw. Actually, per the implementation, isPermissive() is
-    // checked BEFORE calling validateQuadsAgainstShape — validate is NOT called.
-    expect(validateMock).not.toHaveBeenCalled();
+    // The .meta is now validated (not bypassed by a path substring).
+    expect(validateMock).toHaveBeenCalledTimes(1);
   });
 });
 

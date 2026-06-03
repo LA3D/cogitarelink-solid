@@ -16,8 +16,13 @@
  * bodies are validated by the existing ShapeValidationStore / ShaclValidator path; this
  * store passes them through.
  *
- * Permissive containers (D73 two-stage commit, e.g. /working/) skip the reject but
- * still project + materialize, so the candidate graph is observable before crystallize.
+ * D73 two-stage commit (e.g. /working/) needs NO special case here (audit FOLLOWUPS #5):
+ * the permissive tier is carried by the DATA MODEL, not a path substring. A working
+ * container's ldp:constrainedBy points at a permissive shape (sh:closed false, no
+ * mandatory predicates) that any draft conforms to trivially — so validating the
+ * projected graph against the container shape IS the policy. The former
+ * isPermissive('/working/') substring bypass was empirically redundant and has been
+ * removed; the shape decides, uniformly, for every container.
  */
 import type {
   ResourceStore,
@@ -110,7 +115,7 @@ export class AdmissionFloorStore extends PassthroughStore {
       // patched-graph path), any textual RDF serialisation (the raw-PUT path), or a missing
       // content-type. We do not silently skip — if a bizarre non-RDF type ever arrives for a
       // .meta, validating-by-parse fails loudly below, which is the correct outcome.
-      if (shapeForMeta && this.isMetaRdfWrite(representation) && !this.isPermissive(subject)) {
+      if (shapeForMeta && this.isMetaRdfWrite(representation)) {
         // Clone before consuming the stream — the original must still flow to super.
         const cloned = await cloneRepresentation(representation);
         const dataStore = await this.metaQuads(cloned, id);
@@ -145,8 +150,9 @@ export class AdmissionFloorStore extends PassthroughStore {
     }
 
     // Reject BEFORE committing — a non-conforming PUT never reaches the backend.
-    // conformsOrPermissive throws ShaclValidationError on a non-permissive failure.
-    await this.conformsOrPermissive(id, projected.quads, shapeUrl);
+    // conformsOrReject throws ShaclValidationError on a shape failure. (A working
+    // container's permissive shape conforms trivially, so drafts pass here.)
+    await this.conformsOrReject(projected.quads, shapeUrl);
 
     // Commit the body first (so the resource exists on disk before MetaWriter
     // resolves its path), then materialize the admitted graph + body-hash stamp.
@@ -204,7 +210,7 @@ export class AdmissionFloorStore extends PassthroughStore {
     }
 
     try {
-      await this.conformsOrPermissive(created, projected.quads, shapeUrl);
+      await this.conformsOrReject(projected.quads, shapeUrl);
     } catch (error: unknown) {
       // Roll back the just-created resource so a rejected POST leaves no residue.
       await this.source.deleteResource(created);
@@ -214,16 +220,16 @@ export class AdmissionFloorStore extends PassthroughStore {
     return changes;
   }
 
-  // Validate the projected graph against the container shape. Resolves on conformance
-  // OR when the target is a permissive (D73 /working/) container; throws
-  // ShaclValidationError (→ 422 + Turtle report) for a non-permissive non-conformance.
-  private async conformsOrPermissive(
-    id: ResourceIdentifier,
+  // Validate the projected graph against the container shape. Resolves on conformance;
+  // throws ShaclValidationError (→ 422 + Turtle report) otherwise. Permissive (D73
+  // /working/) containers need no special case: their constrainedBy shape conforms
+  // trivially for drafts, so the shape verdict IS the policy (audit FOLLOWUPS #5).
+  private async conformsOrReject(
     quads: Quad[],
     shapeUrl: string,
   ): Promise<void> {
     const result = await validateQuadsAgainstShape(new Store(quads), await this.shapeStore(shapeUrl));
-    if (result.conforms || this.isPermissive(id)) {
+    if (result.conforms) {
       return;
     }
     throw new ShaclValidationError(shapeUrl, result.reportTurtle!);
@@ -261,12 +267,6 @@ export class AdmissionFloorStore extends PassthroughStore {
   private async shapeStore(shapeUrl: string): Promise<Store> {
     const shape = await fetchDataset(shapeUrl);
     return await readableToQuads(shape.data);
-  }
-
-  // D73 two-stage commit: writes under a permissive (working) container are admitted
-  // even when non-conforming, then crystallized into a durable container later.
-  private isPermissive(id: ResourceIdentifier): boolean {
-    return id.path.includes('/working/');
   }
 
   // True when a .meta write should be validated as RDF. A governed resource's .meta is
