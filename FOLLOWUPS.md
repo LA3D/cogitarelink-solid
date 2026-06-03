@@ -2,6 +2,37 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## ⚙ D108 Front-2 SHIPPED (2026-06-03, branch `d108-front2-admission-floor`) — final-review follow-ups
+
+The in-band admission floor is live (12-task plan complete; e2e 7/7; audit 0 ERROR / 0 WARN; final
+cross-batch review APPROVED-with-followups). Spec: `docs/superpowers/specs/2026-06-03-d108-front2-inband-admission-floor-design.md`.
+Non-blocking items from the final adversarial review:
+
+1. **Listener-backstop governed-set bug (pre-existing, NOT introduced by Front-2).** `listener.ts`'s
+   `project()` resolves governed predicates via `detectClass(triples)` → first `rdf:type` = `wiki:Page`
+   (post-Bug-F ordering) → falls back to the `schema:Thing` set (15 predicates, **no skos axis**). The
+   floor's `MarkdownBodyProjector.project()` resolves correctly (reads the `<#this>` type → 29 incl.
+   `skos:prefLabel/broader`). Impact bounded to the BACKSTOP path only: a *changed* prefLabel on a
+   backstop re-projection leaves the stale value as a duplicate (insert happens; replace of the skos
+   axis doesn't). Fix: mirror the projector's `<#this>`-type resolution in `listener.ts` (same fix
+   Task 6 applied to the projector). Low urgency — the in-band fast path is correct and the backstop
+   only fires on stamp-miss.
+2. **Descriptor `sub:governs` ↔ `governedPredicates.ts` drift.** `markdown-projection.ttl` lists
+   predicates not in the runtime governed set (`dct:references/subject/creator`, …) and omits some
+   that are (`skos:narrower/exactMatch/closeMatch`, `schema:name/description`, …). Not a runtime
+   contract violation (the descriptor is agent-facing declaration), but no test asserts agreement —
+   add a parametric descriptor↔governedPredicates test or reconcile the lists.
+3. **`sub:bodyHash` is deliberately NOT in `sub:governs`** — it's substrate-internal (the backstop
+   stamp; passed to `replaceGoverned` at runtime so it's cleanly replaced) and intentionally not
+   advertised as agent-relevant. Recorded so a future audit doesn't flag the stamp as "ungoverned."
+4. **`make audit` rdflib traceback noise** from template placeholder IRIs (`[YOUR VOCABULARY IRI]`,
+   `[YYYY-MM-DD]`) in the extension-guide template — pre-existing, non-fatal (0 ERROR), cosmetic.
+
+**Unblocked by this ship:** D109 sub-C (curation loop) and the **RQ-View-2 FULL re-eval** (the floor
++ grammar are both live; per the 2026-06-03 reorder, in-band *teaching* (deferred skill-over-build
+agenda / Knob 1) follows once the structure has settled — the 422+ValidationReport is itself the
+runtime teaching signal in the meantime).
+
 ## 🔍 Cold-probe findings (n=3, 2026-06-02) — in-band grammar teaching + URI opacity
 
 Three independent cold-probe agents (HTTP-only, no repo/skills/hints) interpreting the live pod.
