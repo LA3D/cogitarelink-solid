@@ -20,4 +20,8 @@ describe("parseSpanLiterals", () => {
     expect(parseSpanLiterals("[2026-06-02]{.startDate^^xsd:date}"))
       .toEqual([{ text: "2026-06-02", pred: "startDate", lang: undefined, datatype: "xsd:date" }]);
   });
+  it("does not parse span-literals inside code spans", () => {
+    const spans = parseSpanLiterals("[live]{.prefLabel} `[ex]{.prefLabel}`");
+    expect(spans.map(s => s.text)).toEqual(["live"]);
+  });
 });

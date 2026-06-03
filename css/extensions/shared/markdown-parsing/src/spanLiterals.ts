@@ -1,3 +1,5 @@
+import { maskCodeSpans } from "./codeSpans.js";
+
 export interface SpanLiteral { text: string; pred: string; lang?: string; datatype?: string; }
 
 // [text]{.pred} | [text]{.pred@lang} | [text]{.pred^^prefix:local}
@@ -6,8 +8,9 @@ export interface SpanLiteral { text: string; pred: string; lang?: string; dataty
 const RE = /(?<!\[)\[([^\[\]]+?)\]\{\.([a-zA-Z][\w-]*)(?:@([a-zA-Z-]+)|\^\^([a-zA-Z][\w-]*:[a-zA-Z][\w-]*))?\}/g;
 
 export function parseSpanLiterals(text: string): SpanLiteral[] {
+  const masked = maskCodeSpans(text);
   const out: SpanLiteral[] = [];
-  for (const m of text.matchAll(RE)) {
+  for (const m of masked.matchAll(RE)) {
     out.push({ text: m[1], pred: m[2], lang: m[3], datatype: m[4] });
   }
   return out;

@@ -15,6 +15,7 @@ import type { Plugin } from "unified";
 import type { Root, Text, Link, PhrasingContent } from "mdast";
 import { visit, SKIP } from "unist-util-visit";
 import type { WikilinkResolver } from "./resolver.js";
+import { maskCodeSpans } from "./codeSpans.js";
 
 // Pattern: [[target]] or [[target|alias]] optionally followed by {.class}
 const WIKILINK_RE =
@@ -38,8 +39,9 @@ export interface WikilinkRef {
  * Does not resolve URIs — returns title + optional class hint only.
  */
 export function extractWikilinks(body: string): WikilinkRef[] {
+  const masked = maskCodeSpans(body);
   const out: WikilinkRef[] = [];
-  for (const m of body.matchAll(WIKILINK_RE)) {
+  for (const m of masked.matchAll(WIKILINK_RE)) {
     const [, target, , klass] = m;
     out.push({ title: target.trim(), classHint: klass ?? undefined });
   }
