@@ -28,6 +28,28 @@ Non-blocking items from the final adversarial review:
 4. **`make audit` rdflib traceback noise** from template placeholder IRIs (`[YOUR VOCABULARY IRI]`,
    `[YYYY-MM-DD]`) in the extension-guide template — pre-existing, non-fatal (0 ERROR), cosmetic.
 
+Anti-fragility review (Chuck's three lenses: hardcodes / RDF-model bypass / fragile regex) fixed four
+items pre-merge (`4ca0751`: stampPredicate→config, `isContainerIdentifier`, shared `RDF_CONTENT_TYPES`,
+de-duped `fsPathFromUrl`); the deferable findings:
+
+5. **`isPermissive('/working/')` is empirically redundant** — pyshacl confirms `working.shacl.ttl`
+   conforms trivially for drafts (targets `wiki:WorkingNote`; zero focus nodes for a draft Concept;
+   only optional properties), so the D73 permissive policy is ALREADY carried by the data model via
+   `constrainedBy`. The substring check also over-matches any path containing `/working/`. Fix when
+   touched: delete it (trusting the shape) or replace with a `sub:permissive` container-meta marker —
+   data-driven either way.
+6. **`test_floor_parity.py` filename-equality hop** — the constrainedBy→NodeShape link is matched by
+   shape FILENAME, not by dereferencing the constrainedBy doc and reading its `sh:NodeShape` IRI.
+   Loud-fail (not silent) if a shape moves files, but the ~10-line RDF-resolving version is cleaner.
+7. **`maskCodeSpans` gaps: indented (4-space) code blocks and fences inside blockquotes are NOT
+   masked** (4+-backtick fences also). Render/projection asymmetry: the render path (remark AST)
+   handles all of these natively. Durable direction: hoist the projection parsers
+   (wikilinks/spanLiterals) onto the same remark/micromark AST the render path uses, eliminating the
+   regex/AST divergence class. Until then the gaps are narrow (teaching docs use fenced blocks).
+8. **`listener ⇄ markdownBodyProjector` circular import** (from the `fsPathFromUrl` de-dupe) — safe
+   today (call happens at request time, not module init; live-verified), but hoist the fs-path
+   helpers to a small shared module within the package when next touched.
+
 **Unblocked by this ship:** D109 sub-C (curation loop) and the **RQ-View-2 FULL re-eval** (the floor
 + grammar are both live; per the 2026-06-03 reorder, in-band *teaching* (deferred skill-over-build
 agenda / Knob 1) follows once the structure has settled — the 422+ValidationReport is itself the
