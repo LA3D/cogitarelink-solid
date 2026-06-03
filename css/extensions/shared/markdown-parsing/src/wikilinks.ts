@@ -15,7 +15,7 @@ import type { Plugin } from "unified";
 import type { Root, Text, Link, PhrasingContent } from "mdast";
 import { visit, SKIP } from "unist-util-visit";
 import type { WikilinkResolver } from "./resolver.js";
-import { maskCodeSpans } from "./codeSpans.js";
+import { collectTokens } from "./textNodes.js";
 
 // Pattern: [[target]] or [[target|alias]] optionally followed by {.class}
 const WIKILINK_RE =
@@ -23,9 +23,13 @@ const WIKILINK_RE =
 
 // ---------------------------------------------------------------------------
 // Light-weight extraction — used by MarkdownProjectionListener (D58/D71) to
-// pull wikilink targets + class hints from a raw markdown string WITHOUT
-// running the full remark AST pipeline. No resolver is needed; the caller
-// (wikilinkProjection.ts) applies the S3a slug algorithm and container routing.
+// pull wikilink targets + class hints from a markdown body. Parses with the
+// SAME remark stack the render path uses and walks `text` nodes (audit R5 /
+// R-T3) so the projection and the render document view recognise EXACTLY the
+// same live tokens: code, link destinations, HTML blocks, and autolinks are
+// structurally excluded by the AST, not by a length-preserving mask. No resolver
+// is needed; the caller (wikilinkProjection.ts) applies the slug algorithm and
+// container routing.
 // ---------------------------------------------------------------------------
 export interface WikilinkRef {
   /** Raw wikilink target text, e.g. "Agentic Memory Systems MOC" or "@zhang-2025-rlm" */
@@ -35,14 +39,13 @@ export interface WikilinkRef {
 }
 
 /**
- * Extract all wikilink references from a raw markdown body string.
+ * Extract all wikilink references from a markdown body string.
  * Does not resolve URIs — returns title + optional class hint only.
  */
 export function extractWikilinks(body: string): WikilinkRef[] {
-  const masked = maskCodeSpans(body);
   const out: WikilinkRef[] = [];
-  for (const m of masked.matchAll(WIKILINK_RE)) {
-    const [, target, , klass] = m;
+  for (const { match } of collectTokens(body, WIKILINK_RE)) {
+    const [, target, , klass] = match;
     out.push({ title: target.trim(), classHint: klass ?? undefined });
   }
   return out;

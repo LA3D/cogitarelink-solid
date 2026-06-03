@@ -17,7 +17,10 @@
   },
   "dependencies": {
     "unified": "^11.0.5",
-    "unist-util-visit": "^5.0.0"
+    "unist-util-visit": "^5.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-frontmatter": "^5.0.0"
   },
   "devDependencies": {
     "@types/mdast": "^4.0.4",

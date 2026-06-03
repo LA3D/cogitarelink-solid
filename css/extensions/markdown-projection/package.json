@@ -30,7 +30,11 @@
   "dependencies": {
     "@solid/community-server": "^8.0.0-alpha.3",
     "n3": "^1.17.0",
+    "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-frontmatter": "^5.0.0",
     "yaml": "^2.3.0"
   },
   "devDependencies": {
