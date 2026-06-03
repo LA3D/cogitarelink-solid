@@ -25,12 +25,13 @@
       "comment": "TODO (Phase 6): serve css/extensions/markdown-render/static/wikilinks.css at /static/wikilinks.css. CSS v8 StaticAssetsHandler or RouterHandler pattern needed. metadata-card extension uses inline <style> instead, so no existing precedent in this codebase. The rendered HTML links to /static/wikilinks.css already (rehype-document css option); without this wiring the browser falls back to unstyled but functional wikilinks."
     },
     {
-      "comment": "Replace the default MarkdownToHtmlConverter with our MarkdownRdfaConverter. The Override changes the @type of the existing instance (keeping its @id so the ChainedConverter's converters list still references it) and swaps the templateEngine parameter for our single podBase parameter. Our converter emits a complete HTML document itself — no CSS template wrapping.",
+      "comment": "Replace the default MarkdownToHtmlConverter with our MarkdownRdfaConverter. The Override changes the @type of the existing instance (keeping its @id so the ChainedConverter's converters list still references it) and swaps the templateEngine parameter for our podBase + storagePath parameters. podBase is the server baseUrl variable (NOT a literal — R-T2 / D107: the resolver mints wikilink hrefs under podBase+storagePath+/wiki/ and that root must follow the deployment), storagePath defaults to /vault. Our converter emits a complete HTML document itself — no CSS template wrapping.",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:MarkdownToHtmlConverter" },
       "overrideParameters": {
         "@type": "MarkdownRdfaConverter",
-        "podBase": "https://pod.vardeman.me"
+        "podBase": { "@id": "urn:solid-server:default:variable:baseUrl" },
+        "storagePath": "/vault"
       }
     },
     {

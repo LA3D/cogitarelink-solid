@@ -39,7 +39,7 @@ const TEXT_HTML = "text/html";
 // exports from other modules — only classes/interfaces).
 type RenderMarkdownFn = (
   source: string,
-  opts?: { podBase?: string; title?: string },
+  opts?: { podBase?: string; storagePath?: string; title?: string },
 ) => Promise<string>;
 
 // Hide dynamic import from TypeScript's CJS compiler. With `module: CommonJS`,
@@ -81,13 +81,19 @@ function getRenderMarkdown(): Promise<RenderMarkdownFn> {
 
 export class MarkdownRdfaConverter extends BaseTypedRepresentationConverter {
   private readonly podBase?: string;
+  // Storage root path under podBase (e.g. "/vault"), injected via Components.js
+  // (default "/vault"). Threaded to the render pipeline so the wikilink resolver
+  // mints target hrefs under podBase + storagePath + "/wiki/..." — the SAME root
+  // the projection mints .meta edges under (D107 storagePath; dual-view R1.1).
+  private readonly storagePath: string;
   private readonly injector: JsonLdScriptInjector;
 
-  public constructor(podBase?: string) {
+  public constructor(podBase?: string, storagePath = "/vault") {
     super(TEXT_MARKDOWN, TEXT_HTML);
     this.podBase = podBase;
+    this.storagePath = storagePath;
     this.injector = new JsonLdScriptInjector();
-    debug(`initialised (podBase=${podBase ?? "none"})`);
+    debug(`initialised (podBase=${podBase ?? "none"}, storagePath=${storagePath})`);
   }
 
   public async handle({ representation, identifier }: RepresentationConverterArgs): Promise<Representation> {
@@ -97,7 +103,7 @@ export class MarkdownRdfaConverter extends BaseTypedRepresentationConverter {
       debug(`read ${markdown.length} bytes of markdown`);
       const renderMarkdown = await getRenderMarkdown();
       debug(`renderMarkdown loaded`);
-      const html = await renderMarkdown(markdown, { podBase: this.podBase });
+      const html = await renderMarkdown(markdown, { podBase: this.podBase, storagePath: this.storagePath });
       debug(`rendered ${html.length} bytes of HTML`);
 
       const enriched = this.injectJsonLd(html, identifier.path, representation.metadata);

@@ -46,10 +46,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MarkdownProjectionListener = exports.DEFAULT_STAMP_PRED = exports.MarkdownBodyProjector = exports.NoOpPostProjectionHook = void 0;
+exports.MarkdownProjectionListener = exports.fsPathFromUrl = exports.trimSlash = exports.DEFAULT_STAMP_PRED = exports.MarkdownBodyProjector = exports.NoOpPostProjectionHook = void 0;
 exports.shouldReproject = shouldReproject;
-exports.trimSlash = trimSlash;
-exports.fsPathFromUrl = fsPathFromUrl;
 const Initializer_1 = require("@solid/community-server/dist/init/Initializer");
 const Vocabularies_1 = require("@solid/community-server/dist/util/Vocabularies");
 const path = __importStar(require("path"));
@@ -113,21 +111,18 @@ function getPipeline() {
     return pipelineCache;
 }
 // ------------------------------------------------------------------
-// Lightweight frontmatter type extractor (no YAML dep needed — just grep)
+// Frontmatter type extractor — R-T2 / audit P3.
 // ------------------------------------------------------------------
-function extractFrontmatterType(body) {
-    if (!body.startsWith("---\n"))
+// Was a private `^type:` regex over the raw frontmatter block, which DISAGREES
+// with the pipeline's YAML.parse on the same body (a `type:` key nested under an
+// earlier mapping, multi-line/quoted values, etc.). Now takes the YAML-parsed
+// fm.type value from the pipeline's splitFrontmatter so dispatch and projection
+// read the SAME field. Returns only absolute-IRI forms; short names (concept,
+// person, …) fall through to projectionPipeline's resolveCURIE / TYPE_MAP path.
+function frontmatterTypeIRI(fmType) {
+    if (typeof fmType !== "string")
         return undefined;
-    const end = body.indexOf("\n---\n", 4);
-    if (end < 0)
-        return undefined;
-    const fm = body.slice(4, end);
-    const m = fm.match(/^type:\s*(.+)$/m);
-    if (!m)
-        return undefined;
-    const raw = m[1].trim().replace(/^["']|["']$/g, "");
-    // Return only absolute IRI forms; short names (concept, person, etc.) are
-    // handled by projectionPipeline's resolveCURIE path.
+    const raw = fmType.trim();
     return raw.startsWith("http://") || raw.startsWith("https://") ? raw : undefined;
 }
 // The wiki-memory L3 layout segment (mirrors typeIndexLookup.WIKI_SEGMENT). The
@@ -142,20 +137,14 @@ function couldBeL4Container(url, storageBase) {
     return !url.startsWith(`${storageBase}/${WIKI_SEGMENT}/`);
 }
 // ------------------------------------------------------------------
-// Path resolution — mirrors MementoCommitListener's fsPathFromUrl
+// Path resolution — hoisted to fsPaths.ts (R-T2 / FOLLOWUPS item 8) to break the
+// listener ↔ markdownBodyProjector circular import. Re-exported here so existing
+// `import { fsPathFromUrl } from "./listener"` callers keep working.
 // ------------------------------------------------------------------
-function trimSlash(s) { return s.replace(/\/$/, ""); }
-// Map an HTTP resource URL to its on-disk path so MetaWriter can write the .meta
-// sidecar. Exported so MarkdownBodyProjector reuses the same helper (same package).
-function fsPathFromUrl(url, baseUrl, dataDir) {
-    const base = trimSlash(baseUrl);
-    if (!url.startsWith(base))
-        throw new Error(`URL outside pod base: ${url}`);
-    // Strip query string (Memento uses ?version= / ?ext=timemap)
-    const noQuery = url.split("?")[0];
-    const relative = decodeURIComponent(noQuery.slice(base.length).replace(/^\//, ""));
-    return path.join(dataDir, relative);
-}
+var fsPaths_1 = require("./fsPaths");
+Object.defineProperty(exports, "trimSlash", { enumerable: true, get: function () { return fsPaths_1.trimSlash; } });
+Object.defineProperty(exports, "fsPathFromUrl", { enumerable: true, get: function () { return fsPaths_1.fsPathFromUrl; } });
+const fsPaths_2 = require("./fsPaths");
 class MarkdownProjectionListener extends Initializer_1.Initializer {
     store;
     baseUrl;
@@ -233,7 +222,7 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
         // Resolve filesystem path — needed for MetaWriter
         let fsPath;
         try {
-            fsPath = fsPathFromUrl(target.path, this.baseUrl, this.dataDir);
+            fsPath = (0, fsPaths_2.fsPathFromUrl)(target.path, this.baseUrl, this.dataDir);
         }
         catch (err) {
             debug(`path resolution failed: ${err.message}`);
@@ -265,7 +254,7 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
             return;
         }
         // Load ESM projection pipeline lazily
-        const { projectionPipeline, resolveGovernedForWikiClass, detectClass, MetaWriter, resolveThingClass, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap } = await getPipeline();
+        const { projectionPipeline, resolveGovernedFromQuads, detectClass, MetaWriter, resolveThingClass, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap, splitFrontmatter } = await getPipeline();
         // Storage root = baseUrl + storagePath (injected via Components.js,
         // default "/vault" — no longer hardcoded; RQ-Substrate-4 Phase 3 / D107 §4.4).
         // Both TypeIndexLoader and loadRoutingMap require the storage-inclusive base —
@@ -290,9 +279,9 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
         // doesn't map to any known class — substrate doesn't govern them.
         //
         // Parse frontmatter type for the resolver (frontmatter type wins over
-        // container path). We do a lightweight YAML parse here rather than
-        // re-running the full pipeline just to get the type field.
-        const fmType = extractFrontmatterType(body);
+        // container path). Reuse the pipeline's YAML splitter so dispatch reads
+        // the SAME type field projection does (R-T2 / audit P3) — no private regex.
+        const fmType = frontmatterTypeIRI(splitFrontmatter(body).fm.type);
         let typeIndex = await this.typeIndexLoader.getTypeIndex();
         let thingClass = resolveThingClass(new URL(target.path).pathname, typeIndex, fmType);
         if (thingClass === undefined) {
@@ -308,26 +297,31 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
             }
         }
         const triples = await projectionPipeline.run(target.path, body, typeIndex, this.routingMap ?? undefined, undefined, storageBase);
-        const cls = detectClass(triples);
-        if (!cls) {
+        if (!detectClass(triples)) {
             debug(`no rdf:type projected for ${target.path} — resource may lack type frontmatter`);
             return;
         }
-        // Resolve per-subject governed predicates (D81 Model A + D98 two-subject).
-        // resolveGovernedForWikiClass falls back to COMMON_THING_PREDICATES for
-        // unknown classes, so non-wiki: type IRIs are handled safely.
-        const { page: pageGoverned, thing: thingGoverned } = resolveGovernedForWikiClass(cls);
-        // Flatten page + thing for MetaWriter.replaceGoverned, which works
-        // across all subjects uniformly (D81 Model A: governed set per resource).
-        const governed = [...new Set([...pageGoverned, ...thingGoverned])];
+        // Resolve per-subject governed predicates (D81 Model A + D98 two-subject)
+        // by reading the <#this> rdf:type — NOT detectClass's FIRST rdf:type. After
+        // the Bug-F filter the first rdf:type is the page's wiki:Page; routing the
+        // governed set off THAT dropped the skos/cito axis for concepts (the
+        // governed set fell back to COMMON_THING_PREDICATES). resolveGovernedFromQuads
+        // keys off <#this> so a concept's skos:prefLabel/broader/… ARE governed
+        // (R-T2 / audit R1.3). Same helper the MarkdownBodyProjector uses.
+        const thisIri = `${target.path}#this`;
+        const governed = resolveGovernedFromQuads(triples, thisIri);
+        if (governed === undefined) {
+            debug(`no <#this> rdf:type for ${target.path} — not substrate-governed`);
+            return;
+        }
         const writer = new MetaWriter();
         await writer.replaceGoverned(fsPath, triples, governed, target.path);
-        debug(`wrote .meta for ${target.path} (class=${cls}, ${triples.length} triples, ${governed.length} governed predicates)`);
+        debug(`wrote .meta for ${target.path} (${triples.length} triples, ${governed.length} governed predicates)`);
         // After .meta is written, surface <#this>-subject edges to the
         // post-projection hook (consumed by mem-trigger's ContradictionDetector).
         // No-op default when mem-trigger absent. Hook errors are swallowed —
-        // substrate event archival must not block .meta writes.
-        const thisIri = `${target.path}#this`;
+        // substrate event archival must not block .meta writes. (thisIri computed
+        // above for the governed-set resolution.)
         const thingEdges = triples
             .filter((q) => q.subject.value === thisIri)
             .map((q) => ({ predicate: q.predicate.value, object: q.object.value }));

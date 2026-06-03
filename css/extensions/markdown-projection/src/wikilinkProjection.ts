@@ -21,8 +21,8 @@
 import { DataFactory } from "n3";
 import type { NamedNode, Quad } from "n3";
 import { extractWikilinks } from "../../shared/markdown-parsing/src/wikilinks.js";
-import { slug } from "../../shared/markdown-parsing/src/resolver.js";
-import { DEFAULT_WIKI_TYPE_INDEX, WIKI_SEGMENT } from "./typeIndexLookup.js";
+import { targetUrlFor, WIKI_SEGMENT, DEFAULT_CONTENT_CONTAINER } from "../../shared/markdown-parsing/src/wikiUrl.js";
+import { DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
 
 const { namedNode, quad } = DataFactory;
 
@@ -144,12 +144,10 @@ function isCitekey(title: string): boolean {
     return title.startsWith("@");
 }
 
-// S3a rule (D76): strip leading `@` before slugifying
-function applyS3a(title: string): string {
-    return title.startsWith("@") ? title.slice(1) : title;
-}
-
-const DEFAULT_CONTENT_CONTAINER = "concepts";
+// S3a rule (D76): the leading-`@` strip is now applied inside the shared minter
+// (targetUrlFor → stripCitekeyMarker) so render and projection strip identically.
+// DEFAULT_CONTENT_CONTAINER ("concepts") is imported from the shared minter so
+// the projection's fall-through default and the render path share one source.
 
 // D106: hint → predicate → entailed class (predicateToClass) → container via the
 // inverted Type Index. Defaults to concepts/ when the predicate entails no class
@@ -224,10 +222,18 @@ export function projectWikilinks(
     const root = (wikiRoot ?? baseRoot(baseUri)).replace(/\/$/, "");
 
     for (const link of extractWikilinks(body)) {
-        const stripped = applyS3a(link.title);
-        const slugged  = slug(stripped);
-        const ctr      = targetContainer(link.classHint, link.title, typeIndex, predicateToClass);
-        const targetPageURL = `${root}/${WIKI_SEGMENT}/${ctr}/${slugged}.md`;
+        // Resolve the container via the richer routing (live Type Index +
+        // predicate→class entailment), then mint through the SINGLE shared URL
+        // minter so render (default routing) and projection (this richer
+        // routing, falling through to the same defaults) agree by construction
+        // wherever the live index is silent (audit R1.1 dual-view identity).
+        const ctr = targetContainer(link.classHint, link.title, typeIndex, predicateToClass);
+        const targetPageURL = targetUrlFor({
+            title: link.title,
+            classHint: link.classHint,
+            wikiRoot: root,
+            container: ctr,
+        });
         const proj     = projectionFor(link.classHint, link.title);
 
         const subject = proj.subject === "PAGE" ? pageIRI : thingIRI;

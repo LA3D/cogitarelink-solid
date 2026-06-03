@@ -9,25 +9,31 @@ fragile regex / + agreement-tests & mock-masked seams). **Canonical report:
 `docs/plans/2026-06-03-agentic-fragility-audit.md`** (5 systemic patterns, R1–R6 remediation).
 Highest-urgency (silently wrong on the live Pod today, or security-test gaps):
 
-1. **Render↔projection URL identity split** — `HardcodedResolver` (`resolver.ts:62-65`) still mints
-   pre-D98 `/vault/resources/concepts/` hrefs while projection mints `/wiki/{ctr}/`; document view
-   and graph view identify DIFFERENT resources for the same wikilink (breaks the dual-view claim;
-   also the source of the known `test_no_para_residue` 200).
-2. **Live Type Index overruled** — `typeIndexLoader.ts:46` merges `{...live, ...DEFAULT}` so the
-   hardcoded `/vault/wiki/` map wins over actual `publicTypeIndex` registrations. Flip the merge.
-3. **`subjectFrame.PAGE_PREDICATES` ↔ `PAGE_GOVERNED_PREDICATES` diverge on `identifier`** —
-   projected subject vs governed-delete subject mismatch → stale/duplicate triples.
+1. ✅ **Render↔projection URL identity split — FIXED (R-T2).** Single URL minter `targetUrlFor`
+   (`shared/markdown-parsing/src/wikiUrl.ts`); `HardcodedResolver` is now a thin adapter; the
+   projection mints through the same function (richer live-index routing overlaid on the shared
+   defaults). The stale `/vault/resources/concepts/` path is gone from source. Agreement locked by
+   `markdown-projection/test/renderProjectionAgreement.test.ts` (13 golden vectors, real pipeline).
+   Render config `podBase` is now `variable:baseUrl` + `storagePath` (no literal).
+2. ✅ **Live Type Index overruled — FIXED (R-T1, commit `efed9a2`).** Merge flipped to
+   `{...defaultIndex, ...live}`; deterministic per-container parse.
+3. ✅ **`subjectFrame` ↔ `PAGE_GOVERNED_PREDICATES` `identifier` divergence — FIXED (R-T2).** The
+   page/thing partition is now DERIVED from `PAGE_GOVERNED_PREDICATES` via the token→IRI binding
+   (`subjectFrame.ts`); `identifier`→`dct:identifier` is not page-governed (it's the Source shape's
+   `<#this>` property), so the token frames to `<#this>`. Agreement test in `subjectFrame.test.ts`.
 4. **wiki-search WAC gate mock-masked** — the real CSS-v8 `IdentifierMap` permission branch (the
    "a bug here is a data leak" path) has zero test coverage; `handle()` never exercised.
 5. **f-string N3/SPARQL patch builders in Python** (`common.n3_patch_inserts` callers,
    `ldp_client.patch_meta`, `backfill_conformsTo`'s second dialect) — Turtle-injection class;
    unify on the Graph→nt path `apply.py` already uses for the hard patches.
 
-R3 (agreement-test sweep over the ~9 unguarded mirrors — `CURIE_PREFIXES`↔served-context and the
-page-frame split are ALREADY diverged), R4 (D107 completion sweep: wiki-search `WIKI_PREFIX`,
-`mem-trigger.json` literal IRIs, render `podBase`, `DEFAULT_WIKI_TYPE_INDEX` keys), R5 (unify
-projection parsing on the render AST — retires the maskCodeSpans gap class), R6 (hygiene batch) —
-see the report.
+R3 (agreement-test sweep over the ~9 unguarded mirrors — `CURIE_PREFIXES`↔served-context still
+diverged; the page-frame split + render≡projection minter are now guarded by R-T2), R4 (D107
+completion sweep: render `podBase`→`variable:baseUrl` and `DEFAULT_WIKI_TYPE_INDEX` keys DONE in
+R-T1/R-T2; wiki-search `WIKI_PREFIX` + `mem-trigger.json` literal IRIs still OPEN), R5 (unify
+projection parsing on the render AST — retires the maskCodeSpans gap class — still OPEN), R6
+(hygiene batch — the listener frontmatter `^type:` regex→pipeline `splitFrontmatter` DONE in R-T2;
+rest still OPEN) — see the report.
 
 ## ⚙ D108 Front-2 SHIPPED (2026-06-03, branch `d108-front2-admission-floor`) — final-review follow-ups
 
@@ -35,15 +41,12 @@ The in-band admission floor is live (12-task plan complete; e2e 7/7; audit 0 ERR
 cross-batch review APPROVED-with-followups). Spec: `docs/superpowers/specs/2026-06-03-d108-front2-inband-admission-floor-design.md`.
 Non-blocking items from the final adversarial review:
 
-1. **Listener-backstop governed-set bug (pre-existing, NOT introduced by Front-2).** `listener.ts`'s
-   `project()` resolves governed predicates via `detectClass(triples)` → first `rdf:type` = `wiki:Page`
-   (post-Bug-F ordering) → falls back to the `schema:Thing` set (15 predicates, **no skos axis**). The
-   floor's `MarkdownBodyProjector.project()` resolves correctly (reads the `<#this>` type → 29 incl.
-   `skos:prefLabel/broader`). Impact bounded to the BACKSTOP path only: a *changed* prefLabel on a
-   backstop re-projection leaves the stale value as a duplicate (insert happens; replace of the skos
-   axis doesn't). Fix: mirror the projector's `<#this>`-type resolution in `listener.ts` (same fix
-   Task 6 applied to the projector). Low urgency — the in-band fast path is correct and the backstop
-   only fires on stamp-miss.
+1. ✅ **Listener-backstop governed-set bug — FIXED (R-T2).** Both `listener.ts` and
+   `markdownBodyProjector.ts` now resolve the governed set via the single helper
+   `resolveGovernedFromQuads(quads, <#this>)` (`src/resolveGoverned.ts`) — keyed off the `<#this>`
+   rdf:type, not `detectClass`'s first (`wiki:Page`). The concept skos/cito axis is governed on both
+   paths. Unit test: `test/listenerGovernedSet.test.ts` asserts the listener-path governed set for a
+   concept body includes `skos:prefLabel`.
 2. **Descriptor `sub:governs` ↔ `governedPredicates.ts` drift.** `markdown-projection.ttl` lists
    predicates not in the runtime governed set (`dct:references/subject/creator`, …) and omits some
    that are (`skos:narrower/exactMatch/closeMatch`, `schema:name/description`, …). Not a runtime
@@ -73,9 +76,9 @@ de-duped `fsPathFromUrl`); the deferable findings:
    handles all of these natively. Durable direction: hoist the projection parsers
    (wikilinks/spanLiterals) onto the same remark/micromark AST the render path uses, eliminating the
    regex/AST divergence class. Until then the gaps are narrow (teaching docs use fenced blocks).
-8. **`listener ⇄ markdownBodyProjector` circular import** (from the `fsPathFromUrl` de-dupe) — safe
-   today (call happens at request time, not module init; live-verified), but hoist the fs-path
-   helpers to a small shared module within the package when next touched.
+8. ✅ **`listener ⇄ markdownBodyProjector` circular import — FIXED (R-T2).** `trimSlash` +
+   `fsPathFromUrl` hoisted to `src-cjs/fsPaths.ts`; both modules import from there (`listener.ts`
+   re-exports for back-compat callers). No behavior change.
 
 **Unblocked by this ship:** D109 sub-C (curation loop) and the **RQ-View-2 FULL re-eval** (the floor
 + grammar are both live; per the 2026-06-03 reorder, in-band *teaching* (deferred skill-over-build

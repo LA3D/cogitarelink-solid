@@ -63,7 +63,10 @@ export function emitSubstrateInvariants(args: SubstrateInvariantsArgs): Quad[] {
 // Frontmatter splitting
 // ---------------------------------------------------------------------------
 
-function splitFrontmatter(body: string): { fm: Frontmatter; rest: string } {
+// Exported so the CJS listener's dispatch can extract the frontmatter type via
+// the SAME YAML parse the pipeline uses (R-T2 / audit P3) instead of a private
+// `^type:` regex that disagrees with YAML on nested/quoted/multi-key frontmatter.
+export function splitFrontmatter(body: string): { fm: Frontmatter; rest: string } {
     if (!body.startsWith("---\n")) return { fm: {}, rest: body };
     const end = body.indexOf("\n---\n", 4);
     if (end < 0) return { fm: {}, rest: body };

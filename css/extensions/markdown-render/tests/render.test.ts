@@ -26,7 +26,9 @@ describe("renderMarkdown", () => {
     expect(html).toContain("class=\"wikilink\"");
     // D75: no RDFa properties in rendered HTML
     expect(html).not.toContain("property=");
-    expect(html).toContain("href=\"https://pod.vardeman.me/vault/resources/concepts/context-graphs.md\"");
+    // R-T2: render mints the D98 /wiki/concepts/ path (single URL minter), not
+    // the stale pre-D98 /vault/resources/concepts/ PARA path (audit R1.1).
+    expect(html).toContain("href=\"https://pod.vardeman.me/vault/wiki/concepts/context-graphs.md\"");
     expect(html).toContain(">Context Graphs</a>");
   });
 

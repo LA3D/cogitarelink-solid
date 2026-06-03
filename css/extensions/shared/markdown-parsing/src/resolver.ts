@@ -6,63 +6,63 @@
 // without a live pod. Swap in a live resolver by implementing the same
 // interface.
 
+import { targetUrlFor } from "./wikiUrl.js";
+
+// slug lives in wikiUrl.ts (the minting primitives module) so wikiUrl.ts is
+// self-contained and resolver.ts depends on it one-way (no import cycle).
+// Re-exported here for the existing `import { slug } from "./resolver.js"`
+// callers (wikilinkProjection.ts, markdown-render).
+export { slug } from "./wikiUrl.js";
+
 export interface WikilinkResolver {
-  resolve(target: string): string | null;
+  // classHint (the [[..]]{.hint} class, without the dot) is optional so the
+  // resolver can route typed links to the right container — author→people,
+  // location→places, etc. — exactly as the projection routes the .meta edge.
+  // Passing it is what keeps the rendered <a href> and the projected edge IRI
+  // identifying the SAME resource (audit R1.1 dual-view agreement).
+  resolve(target: string, classHint?: string): string | null;
 }
 
-// Slugify the same way the vault importer does (scripts/lib/rdf_gen.py:slug).
+// Render-path wikilink resolver — a THIN ADAPTER over the single URL minter
+// (targetUrlFor, wikiUrl.ts). The rendered <a href> and the projected .meta
+// edge object IRI are now minted by ONE function so the document view and the
+// graph view identify the SAME resource for a given [[wikilink]] (audit R1.1).
 //
-// CRITICAL: the operation order must match the Python importer exactly.
-// Python's slug does (strip non-[\w\s-]) → (collapse whitespace) → (lowercase),
-// in that order. Doing it in a different order gives different results for
-// titles containing special characters adjacent to spaces:
+// Before R-T2 this minted a stale pre-D98 PARA path
+// (/vault/resources/concepts/<slug>.md) — a different resource from the D98
+// /<storagePath>/wiki/<container>/<slug>.md the projection minted. That path is
+// gone; the resolver delegates default routing to targetUrlFor.
 //
-//   Title:     "Research & Scholarship"
-//   Python:    strip → "Research  Scholarship" → collapse → "Research-Scholarship" → lower → "research-scholarship"
-//   Wrong:     lower → "research & scholarship" → collapse → "research-&-scholarship" → strip → "research--scholarship"
-//
-// The Python order merges the adjacent spaces after removing the `&`. The
-// wrong order removes the `&` between the space-hyphens, leaving a double
-// hyphen. Matching Python exactly is the only way the resolver and importer
-// agree on URLs.
-//
-// Also handles two wikilink-target quirks before slugifying:
-// 1. Heading anchors: `Note Title#Some Section` → `Note Title` (drops #...)
-// 2. Folder prefixes: `External Resources/Note Title` → `Note Title`
-//
-// The importer writes everything into one flat container (see the --container
-// flag in vault_import.py), so the folder prefix is informational — it tells
-// the author where the note *used to live* in the vault, but the pod URL
-// doesn't mirror the folder hierarchy.
-export function slug(title: string): string {
-  // Drop any heading-anchor suffix first: [[Note#Heading]] → "Note"
-  const hashIdx = title.indexOf("#");
-  let bare = hashIdx >= 0 ? title.substring(0, hashIdx) : title;
-  // Then drop any folder prefix: "Folder/Sub/Note" → "Note"
-  const slashIdx = bare.lastIndexOf("/");
-  if (slashIdx >= 0) bare = bare.substring(slashIdx + 1);
-  return bare
-    .trim()
-    // \w in JavaScript regex = [A-Za-z0-9_], same as Python. Strip anything
-    // that isn't word, whitespace, or hyphen. Must run BEFORE whitespace
-    // collapse so special chars disappear before adjacent spaces merge.
-    .replace(/[^\w\s-]/g, "")
-    // Collapse whitespace runs into a single hyphen.
-    .replace(/\s+/g, "-")
-    // Lowercase last to match Python's .lower() at the end.
-    .toLowerCase();
-}
-
-// Hardcoded resolver for the sample. Maps a small set of known concept-note
-// titles to their pod URIs. Anything not in the table falls through to a
-// generated URI under /vault/resources/concepts/.
+// The render path has NO live Type Index, so it always uses the DEFAULT hint→
+// container routing (defaultContainerFor): author→people, affiliation→
+// organizations, location→places, everything else→concepts. The projection's
+// live-index routing only DEVIATES from these defaults when a deployer's
+// publicTypeIndex actually registers a different container — which the render
+// path (being a pure converter with no Pod fetch) cannot see. Wherever the live
+// index is silent the two agree by construction.
 export class HardcodedResolver implements WikilinkResolver {
-  constructor(
-    private readonly base: string = "https://pod.vardeman.me",
-    private readonly defaultContainer: string = "/vault/resources/concepts/",
-  ) {}
+  private readonly wikiRoot: string;
 
-  resolve(target: string): string {
-    return `${this.base}${this.defaultContainer}${slug(target)}.md`;
+  // base = pod base URL (e.g. "https://pod.vardeman.me"); storagePath = the
+  // storage root under it (e.g. "/vault"). wikiRoot = base + storagePath is the
+  // root targetUrlFor mints the /<WIKI_SEGMENT>/<container>/ layout under. Both
+  // come from config (variable:baseUrl + the storagePath param) — see
+  // markdown-projection.json for the D107 wiring pattern this mirrors.
+  constructor(
+    base: string = "https://pod.vardeman.me",
+    storagePath: string = "/vault",
+  ) {
+    const b = base.replace(/\/$/, "");
+    const sp = storagePath.startsWith("/") ? storagePath : `/${storagePath}`;
+    this.wikiRoot = `${b}${sp.replace(/\/$/, "")}`;
+  }
+
+  // classHint routes the href to the same default container the projection
+  // routes the .meta edge to (author→people, affiliation→organizations,
+  // location→places, else concepts). With no live Type Index the render path
+  // uses the default routing; the projection only deviates when a live
+  // publicTypeIndex registration overrides — invisible to the render converter.
+  resolve(target: string, classHint?: string): string {
+    return targetUrlFor({ title: target, classHint, wikiRoot: this.wikiRoot });
   }
 }

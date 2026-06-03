@@ -22,7 +22,7 @@ import type { Representation } from "@solid/community-server/dist/http/represent
 import type { ResourceIdentifier } from "@solid/community-server/dist/http/representation/ResourceIdentifier";
 import type { Quad } from "n3";
 import * as path from "path";
-import { fsPathFromUrl } from "./listener";
+import { fsPathFromUrl } from "./fsPaths";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const runtimeImport = new Function("specifier", "return import(specifier)") as (s: string) => Promise<any>;
@@ -51,10 +51,9 @@ function getPipeline(): Promise<any> {
     return pipelineCache;
 }
 
-const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-
-// fsPathFromUrl is imported from listener.ts (same package) — was a private
-// replica here; de-duped so the URL→fs-path mapping has one definition.
+// fsPathFromUrl is imported from fsPaths.ts (same package) — hoisted there from
+// listener.ts to break the listener↔projector circular import (R-T2). One
+// definition for the URL→fs-path mapping.
 
 export class MarkdownBodyProjector {
     private readonly baseUrl: string;
@@ -101,8 +100,7 @@ export class MarkdownBodyProjector {
             TypeIndexLoader,
             BOOTSTRAP_PREDICATE_TO_CLASS,
             loadRoutingMap,
-            PAGE_GOVERNED_PREDICATES,
-            getThingGovernedPredicates,
+            resolveGovernedFromQuads,
         } = await getPipeline();
 
         const storageBase = this.storageBase;
@@ -131,27 +129,15 @@ export class MarkdownBodyProjector {
 
         // After Bug-F filtering, the wiki: class is removed from the page resource
         // triples when invariants are emitted. The thing class (skos:Concept,
-        // schema:Person, …) is only on <#this>. We resolve governed predicates using
-        // the thing class directly rather than going through resolveGovernedForWikiClass,
-        // which expects the wiki: class IRI. Both PAGE_GOVERNED_PREDICATES and
-        // getThingGovernedPredicates are exported from the ESM module.
+        // schema:Person, …) is only on <#this>. Governed-predicate resolution
+        // (read the <#this> rdf:type → getThingGovernedPredicates + PAGE_GOVERNED)
+        // is single-sourced in resolveGovernedFromQuads (the listener calls the
+        // SAME helper — R-T2 / audit R1.3). Returns undefined when <#this> has no
+        // rdf:type → resource is not substrate-governed.
         const thingIri = identifier.path + "#this";
-        const thingTypeQuad = quads.find(
-            q => q.predicate.value === RDF_TYPE && q.subject.value === thingIri,
-        );
-
-        // No thing class in quads → resource is not substrate-governed
-        if (!thingTypeQuad) return null;
-
-        const thingClass: string = thingTypeQuad.object.value;
-        const thingGoverned: string[] = (getThingGovernedPredicates(thingClass) as Array<{ value: string }>)
-            .map(n => n.value);
-        const pageGoverned: string[] = (PAGE_GOVERNED_PREDICATES as Array<{ value: string }>)
-            .map(n => n.value);
-        return {
-            quads,
-            governed: [...new Set([...pageGoverned, ...thingGoverned])],
-        };
+        const governed: string[] | undefined = resolveGovernedFromQuads(quads, thingIri);
+        if (governed === undefined) return null;
+        return { quads, governed };
     }
 
     // Write `quads` to the resource's .meta sidecar, replacing only `governed`

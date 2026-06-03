@@ -77,7 +77,9 @@ export const remarkTypedWikilinks: Plugin<[WikilinkOptions], Root> = (
           out.push({ type: "text", value: node.value.slice(cursor, start) });
         }
 
-        const url = resolver.resolve(target);
+        // Pass the class hint so the href routes to the same container the
+        // projection routes the .meta edge to (dual-view agreement, R1.1).
+        const url = resolver.resolve(target, klass ?? undefined);
         const label = (alias ?? target).trim();
         const link: Link = {
           type: "link",

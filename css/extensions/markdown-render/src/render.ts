@@ -31,13 +31,17 @@ export interface RenderOptions {
   resolver?: WikilinkResolver;
   title?: string;
   podBase?: string;
+  // Storage root path under podBase (default "/vault"). The wikilink resolver
+  // mints hrefs under podBase + storagePath + "/wiki/..." so the rendered href
+  // identifies the same resource as the projected .meta edge (dual-view R1.1).
+  storagePath?: string;
 }
 
 export async function renderMarkdown(
   source: string,
   opts: RenderOptions = {},
 ): Promise<string> {
-  const resolver = opts.resolver ?? new HardcodedResolver(opts.podBase);
+  const resolver = opts.resolver ?? new HardcodedResolver(opts.podBase, opts.storagePath);
   const title = opts.title ?? "Pod Resource";
 
   const file = await unified()

@@ -13,10 +13,15 @@ export type TypeIndex = Record<string, string>;
 // The wiki-memory L3 profile's own container-layout segment. This is a profile
 // constant (the L3 layout names its sub-containers /wiki/{concepts,…}/), NOT a
 // deployment/storage-root literal. The STORAGE ROOT (e.g. /vault) is always
-// supplied by the caller (D107 storagePath parameterization). Keeping the
-// segment here is the only baked-in path string permitted by the banned-literal
-// guard — see test/bannedLiterals.test.ts.
-export const WIKI_SEGMENT = "wiki";
+// supplied by the caller (D107 storagePath parameterization).
+//
+// Single-sourced in the shared minter (wikiUrl.ts) so the projection's Type
+// Index keys and the render/projection URL minter share ONE segment constant
+// (R-T2: the segment was duplicated in typeIndexLookup.ts, listener.ts, and the
+// wikilinkProjection regexes). Re-exported here so existing
+// `import { WIKI_SEGMENT } from "./typeIndexLookup.js"` callers keep working.
+export { WIKI_SEGMENT } from "../../shared/markdown-parsing/src/wikiUrl.js";
+import { WIKI_SEGMENT } from "../../shared/markdown-parsing/src/wikiUrl.js";
 
 // The seven wiki-memory L3 container names → Thing class IRI. The container
 // path (key in the TypeIndex) is built per-deployment from the storage base;

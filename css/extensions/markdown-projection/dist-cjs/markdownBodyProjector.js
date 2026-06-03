@@ -54,7 +54,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MarkdownBodyProjector = void 0;
 const path = __importStar(require("path"));
-const listener_1 = require("./listener");
+const fsPaths_1 = require("./fsPaths");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const runtimeImport = new Function("specifier", "return import(specifier)");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,9 +71,9 @@ function getPipeline() {
     }
     return pipelineCache;
 }
-const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-// fsPathFromUrl is imported from listener.ts (same package) — was a private
-// replica here; de-duped so the URL→fs-path mapping has one definition.
+// fsPathFromUrl is imported from fsPaths.ts (same package) — hoisted there from
+// listener.ts to break the listener↔projector circular import (R-T2). One
+// definition for the URL→fs-path mapping.
 class MarkdownBodyProjector {
     baseUrl;
     // Filesystem root the Pod stores resources under; used by materialize() to
@@ -103,7 +103,7 @@ class MarkdownBodyProjector {
         return representation.metadata.contentType === "text/markdown";
     }
     async project(identifier, body) {
-        const { projectionPipeline, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap, PAGE_GOVERNED_PREDICATES, getThingGovernedPredicates, } = await getPipeline();
+        const { projectionPipeline, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap, resolveGovernedFromQuads, } = await getPipeline();
         const storageBase = this.storageBase;
         // Lazy-init TypeIndexLoader (mirrors listener.ts lines 275-277)
         if (this.typeIndexLoader === null) {
@@ -118,24 +118,16 @@ class MarkdownBodyProjector {
         const quads = await projectionPipeline.run(identifier.path, body, typeIndex, this.routingMap ?? undefined, undefined, storageBase);
         // After Bug-F filtering, the wiki: class is removed from the page resource
         // triples when invariants are emitted. The thing class (skos:Concept,
-        // schema:Person, …) is only on <#this>. We resolve governed predicates using
-        // the thing class directly rather than going through resolveGovernedForWikiClass,
-        // which expects the wiki: class IRI. Both PAGE_GOVERNED_PREDICATES and
-        // getThingGovernedPredicates are exported from the ESM module.
+        // schema:Person, …) is only on <#this>. Governed-predicate resolution
+        // (read the <#this> rdf:type → getThingGovernedPredicates + PAGE_GOVERNED)
+        // is single-sourced in resolveGovernedFromQuads (the listener calls the
+        // SAME helper — R-T2 / audit R1.3). Returns undefined when <#this> has no
+        // rdf:type → resource is not substrate-governed.
         const thingIri = identifier.path + "#this";
-        const thingTypeQuad = quads.find(q => q.predicate.value === RDF_TYPE && q.subject.value === thingIri);
-        // No thing class in quads → resource is not substrate-governed
-        if (!thingTypeQuad)
+        const governed = resolveGovernedFromQuads(quads, thingIri);
+        if (governed === undefined)
             return null;
-        const thingClass = thingTypeQuad.object.value;
-        const thingGoverned = getThingGovernedPredicates(thingClass)
-            .map(n => n.value);
-        const pageGoverned = PAGE_GOVERNED_PREDICATES
-            .map(n => n.value);
-        return {
-            quads,
-            governed: [...new Set([...pageGoverned, ...thingGoverned])],
-        };
+        return { quads, governed };
     }
     // Write `quads` to the resource's .meta sidecar, replacing only `governed`
     // predicates (D81 Model A — agent-owned triples outside the governed set are
@@ -143,7 +135,7 @@ class MarkdownBodyProjector {
     // via the runtime pipeline import) and the floor must stay profile-agnostic.
     async materialize(identifier, quads, governed) {
         const { MetaWriter } = await getPipeline();
-        const fsPath = (0, listener_1.fsPathFromUrl)(identifier.path, this.baseUrl, this.dataDir);
+        const fsPath = (0, fsPaths_1.fsPathFromUrl)(identifier.path, this.baseUrl, this.dataDir);
         await new MetaWriter().replaceGoverned(fsPath, quads, governed, identifier.path);
     }
 }
