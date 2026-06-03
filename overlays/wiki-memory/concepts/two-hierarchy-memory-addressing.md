@@ -1,12 +1,12 @@
 ---
-skos:prefLabel: "Two-Hierarchy Memory Addressing"
+title: Two-Hierarchy Memory Addressing
 ---
 
 # Two-Hierarchy Memory Addressing
 
 > **Note on these URLs:** the `wiki` path segment names the **wiki-memory profile** (an L3 reference profile in this Pod's L1/L2/L3 stratification), **not** a wiki application. This Pod is a general Solid/LDP substrate; wiki-memory is one profile built on it. `/vault/wiki/` is the wiki-memory profile's **document view** over the shared contextualized graph (Verborgh) — each entity also has a **graph view** (its `.meta` triples, queryable via SPARQL). Read `concepts/` etc. as *profile* containers, and resolve a resource's `<#this> a …` for its actual class.
 
-A memory about how this memory works. When you write a typed link in a page, two
+[Two-Hierarchy Memory Addressing]{.prefLabel} is a memory about how this memory works. When you write a typed link in a page, two
 different hierarchies are doing two different jobs — and conflating them is the most
 common way agents misread the substrate.
 

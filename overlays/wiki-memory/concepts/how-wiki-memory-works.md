@@ -4,8 +4,9 @@ type: Concept
 ---
 # How Wiki-Memory Works
 
-This Pod's memory is a **SKOS concept scheme**. Concepts are the backbone; notes/pages are
-memories that attach to concepts via typed edges. Read this before writing.
+[How Wiki-Memory Works]{.prefLabel} — this Pod's memory is a **SKOS concept scheme**. Concepts
+are the backbone; notes/pages are memories that attach to concepts via typed edges. Read this
+before writing.
 
 ## The model in 30 seconds
 

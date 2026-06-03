@@ -10,5 +10,6 @@
    dct:title "Wiki Places" ;
    solid:forClass schema:Place ;
    sub:shape </vault/meta/shapes/place.shacl.ttl> ;
+   ldp:constrainedBy </vault/meta/shapes/place.shacl.ttl> ;
    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
    sh:agentInstruction "Place records. Typed schema:Place on <#this>. schema:name is the entity name (Thing frame), not skos:prefLabel." .

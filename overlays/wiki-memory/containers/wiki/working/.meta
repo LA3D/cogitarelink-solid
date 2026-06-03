@@ -9,5 +9,6 @@
    dct:title "Wiki Working Memory" ;
    solid:forClass wiki:WorkingNote ;
    sub:shape </vault/meta/shapes/working.shacl.ttl> ;
+   ldp:constrainedBy </vault/meta/shapes/working.shacl.ttl> ;
    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
    sh:agentInstruction "Low-ceremony working memory for transient notes (D73). Permissive shape. Promotable to durable container via mem:Crystallize (deferred)." .
