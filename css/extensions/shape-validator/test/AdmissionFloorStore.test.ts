@@ -72,6 +72,8 @@ function makeStrategies() {
   } as any;
   const auxiliaryStrategy = {
     isAuxiliaryIdentifier: (id: { path: string }) => id.path.endsWith(".meta"),
+    // Strip the .meta suffix to obtain the subject resource.
+    getSubjectIdentifier: (id: { path: string }) => ({ path: id.path.replace(/\.meta$/, "") }),
   } as any;
   return { identifierStrategy, auxiliaryStrategy };
 }
@@ -224,6 +226,100 @@ describe("AdmissionFloorStore.setRepresentation — markdown body path", () => {
     expect(validateMock).not.toHaveBeenCalled();
     expect(source.setRepresentation).toHaveBeenCalledTimes(1);
     expect(projector.materialize).not.toHaveBeenCalled();
+  });
+});
+
+// --- Direct .meta PATCH/PUT path (Task 8) -----------------------------------
+// PatchingStore applies the N3 patch to the current .meta and calls setRepresentation
+// with the RESULTING .meta graph (already RDF). The floor must validate that graph.
+
+const RESOURCE_META = RESOURCE + ".meta";
+const CONTAINER_META = CONTAINER + ".meta";
+const WORKING_RESOURCE = "https://pod.example.org/wiki/working/draft.md";
+const WORKING_META = WORKING_RESOURCE + ".meta";
+
+// A turtle representation that looks like a post-patch .meta graph.
+function metaTtl(path: string, body = "<#this> a <urn:T> .") {
+  const meta = new RepresentationMetadata({ path }, "text/turtle");
+  return new BasicRepresentation(body, meta);
+}
+
+describe("AdmissionFloorStore.setRepresentation — direct .meta write path", () => {
+  it("fails validation: throws ShaclValidationError and does NOT commit", async () => {
+    validateMock.mockResolvedValue({ conforms: false, reportTurtle: "@prefix sh: <#> . _:r a sh:ValidationReport ." });
+    const { identifierStrategy, auxiliaryStrategy } = makeStrategies();
+    const projector = makeProjector(conceptProjection());
+    const source = makeSource();
+    const store = new AdmissionFloorStore(source as any, identifierStrategy, auxiliaryStrategy, projector as any);
+
+    await expect(
+      store.setRepresentation({ path: RESOURCE_META }, metaTtl(RESOURCE_META)),
+    ).rejects.toBeInstanceOf(ShaclValidationError);
+
+    expect(source.setRepresentation).not.toHaveBeenCalled();
+    expect(validateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes validation: commits the .meta graph", async () => {
+    validateMock.mockResolvedValue({ conforms: true });
+    const { identifierStrategy, auxiliaryStrategy } = makeStrategies();
+    const projector = makeProjector(conceptProjection());
+    const source = makeSource();
+    const store = new AdmissionFloorStore(source as any, identifierStrategy, auxiliaryStrategy, projector as any);
+
+    await store.setRepresentation({ path: RESOURCE_META }, metaTtl(RESOURCE_META, "<#this> a <urn:T> . <#this> <" + SKOS_PREFLABEL + "> \"Photosynthesis\" ."));
+
+    expect(source.setRepresentation).toHaveBeenCalledTimes(1);
+    expect(validateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("container's own .meta (subject path ends with /): passes straight through, no validation", async () => {
+    validateMock.mockResolvedValue({ conforms: false, reportTurtle: "report" });
+    // auxiliaryStrategy.getSubjectIdentifier for ".../concepts/.meta" → ".../concepts/"
+    const identifierStrategy = {
+      isRootContainer: () => false,
+      getParentContainer: () => ({ path: CONTAINER }),
+    } as any;
+    const auxiliaryStrategy = {
+      isAuxiliaryIdentifier: () => true,
+      // subject ends with "/" → container's own .meta
+      getSubjectIdentifier: (_id: any) => ({ path: CONTAINER }),
+    } as any;
+    const projector = makeProjector(conceptProjection());
+    const source = makeSource();
+    const store = new AdmissionFloorStore(source as any, identifierStrategy, auxiliaryStrategy, projector as any);
+
+    await store.setRepresentation({ path: CONTAINER_META }, metaTtl(CONTAINER_META));
+
+    expect(source.setRepresentation).toHaveBeenCalledTimes(1);
+    expect(validateMock).not.toHaveBeenCalled();
+  });
+
+  it("permissive /working/ resource .meta: passes straight through even if validation would fail", async () => {
+    validateMock.mockResolvedValue({ conforms: false, reportTurtle: "report" });
+    const identifierStrategy = {
+      isRootContainer: () => false,
+      getParentContainer: () => ({ path: "https://pod.example.org/wiki/working/" }),
+    } as any;
+    const auxiliaryStrategy = {
+      isAuxiliaryIdentifier: () => true,
+      getSubjectIdentifier: (_id: any) => ({ path: WORKING_RESOURCE }),
+    } as any;
+    const source = makeSource();
+    // working/ container also has constrainedBy so the shape lookup returns a URL
+    source.getRepresentation = vi.fn(async () => parentRep(true)) as any;
+    const projector = makeProjector(conceptProjection());
+    const store = new AdmissionFloorStore(source as any, identifierStrategy, auxiliaryStrategy, projector as any);
+
+    await expect(
+      store.setRepresentation({ path: WORKING_META }, metaTtl(WORKING_META)),
+    ).resolves.toBeDefined();
+
+    expect(source.setRepresentation).toHaveBeenCalledTimes(1);
+    // validate was called (the code calls it to get the result) — but the permissive
+    // path bypasses the throw. Actually, per the implementation, isPermissive() is
+    // checked BEFORE calling validateQuadsAgainstShape — validate is NOT called.
+    expect(validateMock).not.toHaveBeenCalled();
   });
 });
 

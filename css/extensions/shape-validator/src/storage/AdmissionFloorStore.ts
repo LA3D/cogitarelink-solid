@@ -31,6 +31,7 @@ import type {
 import {
   PassthroughStore,
   BasicRepresentation,
+  cloneRepresentation,
   readableToString,
   readableToQuads,
   fetchDataset,
@@ -71,13 +72,34 @@ export class AdmissionFloorStore extends PassthroughStore {
     representation: Representation,
     conditions?: Conditions,
   ): Promise<ChangeMap> {
+    // --- Direct .meta write path (Task 8) ---
+    // A PATCH/PUT to a governed resource's .meta must be validated so the conformance
+    // target (the .meta graph) is gated regardless of the write path. PatchingStore
+    // applies the N3 patch and calls setRepresentation with the resulting RDF graph.
+    // Scope guard: the container's own .meta (ldp:contains listing) is exempt — only
+    // a governed resource's .meta is floored.
+    if (this.auxiliaryStrategy.isAuxiliaryIdentifier(id)) {
+      const subject = this.auxiliaryStrategy.getSubjectIdentifier(id);
+      const subjectIsContainer = subject.path.endsWith('/');
+      const shapeForMeta = subjectIsContainer ? undefined : await this.constrainedByFor(subject);
+      if (shapeForMeta && this.isRdfRepresentation(representation) && !this.isPermissive(subject)) {
+        // Clone before consuming the stream — the original must still flow to super.
+        const cloned = await cloneRepresentation(representation);
+        const dataStore = await readableToQuads(cloned.data);
+        const result = await validateQuadsAgainstShape(dataStore, await this.shapeStore(shapeForMeta));
+        if (!result.conforms) {
+          throw new ShaclValidationError(shapeForMeta, result.reportTurtle!);
+        }
+      }
+      return super.setRepresentation(id, representation, conditions);
+    }
+
     const shapeUrl = await this.constrainedByFor(id);
-    // Not a constrained container, an auxiliary (.meta) write, or a content-type the
-    // projector doesn't handle (RDF bodies) → pass straight through. RDF bodies are
-    // validated by the existing ShapeValidationStore path.
+    // Not a constrained container, or a content-type the projector doesn't handle
+    // (RDF bodies) → pass straight through. RDF bodies are validated by the existing
+    // ShapeValidationStore path.
     if (
       !shapeUrl ||
-      this.auxiliaryStrategy.isAuxiliaryIdentifier(id) ||
       !this.projector.canProject(representation)
     ) {
       return super.setRepresentation(id, representation, conditions);
@@ -217,6 +239,22 @@ export class AdmissionFloorStore extends PassthroughStore {
   // even when non-conforming, then crystallized into a durable container later.
   private isPermissive(id: ResourceIdentifier): boolean {
     return id.path.includes('/working/');
+  }
+
+  // True if the representation's content-type is a recognised RDF serialisation.
+  // A .meta write is RDF by definition; treat a missing content-type as RDF.
+  private isRdfRepresentation(representation: Representation): boolean {
+    const ct = representation.metadata.contentType;
+    if (!ct) return true;
+    return [
+      'text/turtle',
+      'application/ld+json',
+      'application/n-triples',
+      'application/n-quads',
+      'application/trig',
+      'text/n3',
+      'application/rdf+xml',
+    ].includes(ct);
   }
 
   private stampQuad(id: ResourceIdentifier, body: string) {
