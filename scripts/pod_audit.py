@@ -22,6 +22,7 @@ catalog pointers).
 """
 import argparse, asyncio, json, os, subprocess, sys
 from pathlib import Path
+from urllib.parse import urlparse
 import httpx
 import rdflib
 from rdflib import Graph, RDF, URIRef
@@ -345,6 +346,11 @@ async def audit_type_index(client, sd_g, storage, canon_base, pod_base, findings
         ctr_iri = str(ctr_node)
 
         # Check the container is under the storage root.
+        # D100 (L4 extension contract) explicitly allows Type-Index registrations at ANY
+        # container path on the same origin — the agent may register e.g. /biz/equipment/
+        # outside /vault/ and the substrate honors it. So:
+        #   off-origin (different host)   → ERROR  (integrity violation)
+        #   same-origin, outside root     → WARN   (notable per D100, not a violation)
         # We compare against canon_base (the pim:Storage IRI) and also against pod_base
         # (the reachable equivalent) so the check passes regardless of which host was used.
         canon_root = canon_base if canon_base.endswith("/") else canon_base + "/"
@@ -352,9 +358,20 @@ async def audit_type_index(client, sd_g, storage, canon_base, pod_base, findings
         reachable_ctr = rewrite(ctr_iri, canon_base, pod_base)
         if not ctr_iri.startswith(canon_root) and not ctr_iri.startswith(pod_root) \
                 and not reachable_ctr.startswith(pod_root):
-            findings.append(finding("ERROR", reg_iri, "typeindex:container-outside-root",
-                f"instanceContainer {ctr_iri} is not under the storage root {canon_root}.",
-                "Registration must point only at containers within this Pod's storage root."))
+            # Distinguish off-origin (different host) from same-origin-outside-root.
+            canon_origin = urlparse(canon_root).netloc
+            ctr_origin   = urlparse(ctr_iri).netloc
+            if ctr_origin and ctr_origin != canon_origin:
+                findings.append(finding("ERROR", reg_iri, "typeindex:container-outside-root",
+                    f"instanceContainer {ctr_iri} is on a different origin ({ctr_origin}) "
+                    f"from the storage root ({canon_origin}). This is an integrity violation.",
+                    "Registration must point only at containers on this Pod's origin."))
+            else:
+                findings.append(finding("WARN", reg_iri, "typeindex:container-outside-root",
+                    f"instanceContainer {ctr_iri} is not under the storage root {canon_root} "
+                    f"(D100: same-origin L4 extension — notable, not a violation).",
+                    "Confirm this is an intentional L4 extension registration (D100). "
+                    "If unintentional, move the container under the storage root."))
             continue
 
         # 4. Accumulate per-container class list (for dup-container check after the loop)

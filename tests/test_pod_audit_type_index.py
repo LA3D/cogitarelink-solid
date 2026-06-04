@@ -1,9 +1,12 @@
 """Unit tests for audit_type_index — offline, fixture graphs only.
 
-Four scenarios:
+Five scenarios:
   A. 8-container valid Type Index → no findings.
   B. forClass is a literal → WARN typeindex:forClass-literal.
-  C. instanceContainer outside storage root → ERROR typeindex:container-outside-root.
+  C. instanceContainer same-origin but outside storage root → WARN typeindex:container-outside-root
+     (D100: L4 extension contract allows any same-origin path; this is notable, not a violation).
+  C2. instanceContainer on a different origin → ERROR typeindex:container-outside-root
+      (off-origin IS an integrity violation).
   D. Dup-container conflict (same container, two classes) → WARN typeindex:dup-container-conflict.
 """
 import asyncio
@@ -128,13 +131,37 @@ def test_forclass_literal_warns():
 
 
 # ---------------------------------------------------------------------------
-# C — instanceContainer outside storage root
+# C — instanceContainer same-origin but outside storage root → WARN (D100)
 # ---------------------------------------------------------------------------
-def test_container_outside_root_errors():
+def test_container_outside_root_same_origin_warns():
+    """D100: L4 extension contract allows any same-origin path. WARN, not ERROR."""
     body = _ti_ttl(
         '<#reg1> a solid:TypeRegistration ;\n'
         '  solid:forClass <https://pod.vardeman.me/vault/ontology/wiki#Concept> ;\n'
-        '  solid:instanceContainer <https://evil.example.org/containers/stolen/> .'  # outside
+        '  solid:instanceContainer <https://pod.vardeman.me/biz/equipment/> .'  # same host, outside /vault/
+    )
+    client = _mock_client_returning(TI_URL, body, container_code=200)
+    findings = []
+    asyncio.run(audit_type_index(client, SD_G, STORAGE, CANON_BASE, POD_BASE, findings))
+    assert any(
+        f["severity"] == "WARN" and "container-outside-root" in f["constraint"]
+        for f in findings
+    ), f"Expected WARN typeindex:container-outside-root (D100), got: {findings}"
+    assert not any(
+        f["severity"] == "ERROR" and "container-outside-root" in f["constraint"]
+        for f in findings
+    ), f"Expected no ERROR for same-origin outside-root (D100 allows it), got: {findings}"
+
+
+# ---------------------------------------------------------------------------
+# C2 — instanceContainer on a different origin → ERROR (integrity violation)
+# ---------------------------------------------------------------------------
+def test_container_outside_root_off_origin_errors():
+    """Off-origin registration IS an integrity violation — ERROR."""
+    body = _ti_ttl(
+        '<#reg1> a solid:TypeRegistration ;\n'
+        '  solid:forClass <https://pod.vardeman.me/vault/ontology/wiki#Concept> ;\n'
+        '  solid:instanceContainer <https://evil.example.org/containers/stolen/> .'  # different host
     )
     client = _mock_client_returning(TI_URL, body, container_code=200)
     findings = []
@@ -142,7 +169,7 @@ def test_container_outside_root_errors():
     assert any(
         f["severity"] == "ERROR" and "container-outside-root" in f["constraint"]
         for f in findings
-    ), f"Expected ERROR typeindex:container-outside-root, got: {findings}"
+    ), f"Expected ERROR typeindex:container-outside-root (off-origin), got: {findings}"
 
 
 # ---------------------------------------------------------------------------

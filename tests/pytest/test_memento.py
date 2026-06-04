@@ -106,18 +106,31 @@ def test_live_state_unchanged_by_memento():
 @pytest.mark.integration
 @pytest.mark.memento
 def test_timemap_returns_parseable_turtle():
-    """GET ?ext=timemap returns Turtle with N memento:Memento subjects."""
-    r = httpx.get(
-        f"{CSS}{TEST_PATH}?ext=timemap",
-        headers={"Host": "pod.vardeman.me", "Accept": "text/turtle"},
-        timeout=10,
-    )
-    assert r.status_code == 200, r.text
-    assert "turtle" in r.headers.get("content-type", "").lower()
-    g = Graph()
-    g.parse(data=r.text, format="turtle")
-    mementos = list(g.subjects(predicate=None, object=rdf_type(f"{MEMENTO}Memento")))
-    timemaps = list(g.subjects(predicate=None, object=rdf_type(f"{MEMENTO}TimeMap")))
+    """GET ?ext=timemap returns Turtle with N memento:Memento subjects.
+
+    Memento git commits are processed by an async MonitoringStore listener —
+    under load the second version's commit may not yet be reflected in the
+    timemap response when the test runs immediately after the seed fixture.
+    Poll up to 10s (100ms intervals) until >=2 Mementos appear, matching the
+    _wait_for_commits / _wait_for_projection polling pattern used elsewhere.
+    """
+    deadline = time.monotonic() + 10.0
+    mementos, timemaps = [], []
+    while True:
+        r = httpx.get(
+            f"{CSS}{TEST_PATH}?ext=timemap",
+            headers={"Host": "pod.vardeman.me", "Accept": "text/turtle"},
+            timeout=10,
+        )
+        assert r.status_code == 200, r.text
+        assert "turtle" in r.headers.get("content-type", "").lower()
+        g = Graph()
+        g.parse(data=r.text, format="turtle")
+        mementos = list(g.subjects(predicate=None, object=rdf_type(f"{MEMENTO}Memento")))
+        timemaps = list(g.subjects(predicate=None, object=rdf_type(f"{MEMENTO}TimeMap")))
+        if len(mementos) >= 2 or time.monotonic() >= deadline:
+            break
+        time.sleep(0.1)
     assert len(timemaps) == 1, f"expected 1 TimeMap subject, got {len(timemaps)}"
     assert len(mementos) >= 2, f"expected >=2 Mementos, got {len(mementos)}"
 
@@ -243,18 +256,25 @@ class TestTombstones:
         link = r4.headers.get("link", "")
         assert 'rel="timemap"' in link, f"410 response missing Link rel=timemap, got: {link}"
 
-        # 5. TimeMap surfaces the tombstone
-        r5 = httpx.get(
-            f"{CSS}{self.PATH}?ext=timemap",
-            headers={"Host": "pod.vardeman.me", "Accept": "text/turtle"},
-            timeout=10,
-        )
-        assert r5.status_code == 200, r5.text
-        g = Graph()
-        g.parse(data=r5.text, format="turtle")
+        # 5. TimeMap surfaces the tombstone — poll until ldes:DeletedLDPResource appears
+        #    (same async listener race as test_timemap_returns_parseable_turtle).
         from rdflib import URIRef
-        tombstone_types = list(g.triples((None, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                                          URIRef(f"{LDES}DeletedLDPResource"))))
+        deadline5 = time.monotonic() + 10.0
+        tombstone_types = []
+        while True:
+            r5 = httpx.get(
+                f"{CSS}{self.PATH}?ext=timemap",
+                headers={"Host": "pod.vardeman.me", "Accept": "text/turtle"},
+                timeout=10,
+            )
+            assert r5.status_code == 200, r5.text
+            g = Graph()
+            g.parse(data=r5.text, format="turtle")
+            tombstone_types = list(g.triples((None, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                                              URIRef(f"{LDES}DeletedLDPResource"))))
+            if tombstone_types or time.monotonic() >= deadline5:
+                break
+            time.sleep(0.1)
         assert len(tombstone_types) >= 1, "TimeMap missing ldes:DeletedLDPResource for the deletion"
 
     def test_accept_datetime_before_delete_returns_prior_content(self):
