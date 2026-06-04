@@ -143,6 +143,31 @@ type: concept
 A concept.
 `;
 
+describe("dct:identifier subject framing (C-T2 / option C)", () => {
+  const DCT_ID = "http://purl.org/dc/terms/identifier";
+  // type: wiki:Source so invariants emit (<#this> a wiki:Source); the page lives
+  // in concepts/ per D98. The frontmatter citekey is the entity's external id.
+  const SRC_URI = "https://pod.vardeman.me/vault/wiki/concepts/zhang-2025.md";
+  const SRC_BODY = `---\ntype: wiki:Source\ncitekey: zhang-2025\n---\n# Zhang 2025\n\nA source.\n`;
+
+  it("rebinds frontmatter citekey to <#this> dct:identifier (not the page <>)", async () => {
+    const triples = await projectionPipeline.run(SRC_URI, SRC_BODY);
+    const ids = triples.filter((q) => q.predicate.value === DCT_ID);
+    expect(ids).toHaveLength(1);
+    expect(ids[0].subject.value).toBe(SRC_URI + "#this");
+    expect(ids[0].object.value).toBe("zhang-2025");
+    // never on the page subject
+    expect(triples.find((q) => q.predicate.value === DCT_ID && q.subject.value === SRC_URI)).toBeUndefined();
+  });
+
+  it("emits NO derived dct:identifier slug when frontmatter carries none (the URI is the id)", async () => {
+    const body = `---\ntype: concept\n---\n# Decay Theory\n\n[Decay Theory]{.prefLabel}\n`;
+    const triples = await projectionPipeline.run(
+      "https://pod.vardeman.me/vault/wiki/concepts/decay-theory.md", body);
+    expect(triples.find((q) => q.predicate.value === DCT_ID)).toBeUndefined();
+  });
+});
+
 describe("provenance placement (RQ-Listener-1 collapse)", () => {
   it("does NOT stamp the affordance URI on the resource subject anymore", async () => {
     const triples = await projectionPipeline.run(RES, BODY);

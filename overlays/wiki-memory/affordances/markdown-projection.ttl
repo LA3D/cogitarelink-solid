@@ -39,6 +39,7 @@
     sub:governs rdf:type ,
         dct:contributor ,
         dct:created ,
+        dct:identifier ,
         dct:modified ,
         dct:source ,
         dct:title ,

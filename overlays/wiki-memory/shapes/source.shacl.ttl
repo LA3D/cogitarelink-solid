@@ -25,6 +25,8 @@ wiki:SourceShape
     sh:property [
         sh:path dct:identifier ;
         sh:minCount 1 ;
-        sh:datatype xsd:string ;
+        # No sh:datatype pin: identifier literals will later carry scheme datatypes
+        # (e.g. "10.0/x"^^<…/identifier-schemes/doi>), so the shape must accept any
+        # literal — only presence (minCount 1) is the judgment-metadata floor (C-T2).
         rdfs:label "External identifier (DOI, arXiv ID, or citekey)"
     ] .

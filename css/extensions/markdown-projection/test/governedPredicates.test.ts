@@ -88,6 +88,28 @@ describe("THING_GOVERNED_PREDICATES (per Thing class)", () => {
         }
     });
 
+    it("Source class governs dct:identifier (concept axis + the external-id), Concept does NOT (C-T2)", () => {
+        const wikiSource = "https://pod.vardeman.me/vault/ontology/wiki#Source";
+        const skosConcept = "http://www.w3.org/2004/02/skos/core#Concept";
+        const DCT_ID = "http://purl.org/dc/terms/identifier";
+        const sourceIris = (THING_GOVERNED_PREDICATES[wikiSource] || []).map((p) => p.value);
+        const conceptIris = (THING_GOVERNED_PREDICATES[skosConcept] || []).map((p) => p.value);
+        // Source inherits the full concept axis…
+        expect(sourceIris).toContain("http://www.w3.org/2004/02/skos/core#prefLabel");
+        // …and adds dct:identifier (SourceShape's judgment-metadata floor).
+        expect(sourceIris).toContain(DCT_ID);
+        // Concept does NOT govern dct:identifier — only SourceShape constrains it.
+        expect(conceptIris).not.toContain(DCT_ID);
+    });
+
+    it("wiki:Source resolves to its own governed set carrying dct:identifier", () => {
+        const { thing } = resolveGovernedForWikiClass(
+            "https://pod.vardeman.me/vault/ontology/wiki#Source",
+        );
+        expect(thing).toContain("http://purl.org/dc/terms/identifier");
+        expect(thing).toContain("http://www.w3.org/2004/02/skos/core#prefLabel");
+    });
+
     it("getThingGovernedPredicates returns common set for unknown class (L4 fallback)", () => {
         const preds = getThingGovernedPredicates("https://chuck.example/biz/Equipment");
         const iris = preds.map((p) => p.value);

@@ -43,7 +43,7 @@
   },
   "wikiClassToThingClass": {
     "https://pod.vardeman.me/vault/ontology/wiki#Concept": "http://www.w3.org/2004/02/skos/core#Concept",
-    "https://pod.vardeman.me/vault/ontology/wiki#Source": "https://schema.org/Thing",
+    "https://pod.vardeman.me/vault/ontology/wiki#Source": "https://pod.vardeman.me/vault/ontology/wiki#Source",
     "https://pod.vardeman.me/vault/ontology/wiki#Person": "https://schema.org/Person",
     "https://pod.vardeman.me/vault/ontology/wiki#Procedure": "https://schema.org/HowTo",
     "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote": "https://schema.org/Thing",
@@ -82,6 +82,31 @@
       "http://purl.org/spar/cito/cites",
       "http://purl.org/dc/terms/source",
       "http://purl.org/dc/terms/contributor"
+    ],
+    "https://pod.vardeman.me/vault/ontology/wiki#Source": [
+      "https://schema.org/name",
+      "https://schema.org/mainEntityOfPage",
+      "https://schema.org/identifier",
+      "https://schema.org/sameAs",
+      "https://schema.org/description",
+      "https://schema.org/image",
+      "https://schema.org/keywords",
+      "https://schema.org/dateCreated",
+      "http://www.w3.org/2004/02/skos/core#prefLabel",
+      "http://www.w3.org/2004/02/skos/core#altLabel",
+      "http://www.w3.org/2004/02/skos/core#definition",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2004/02/skos/core#narrower",
+      "http://www.w3.org/2004/02/skos/core#related",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://www.w3.org/2004/02/skos/core#closeMatch",
+      "http://purl.org/spar/cito/extends",
+      "http://purl.org/spar/cito/agreesWith",
+      "http://purl.org/spar/cito/disagreesWith",
+      "http://purl.org/spar/cito/cites",
+      "http://purl.org/dc/terms/source",
+      "http://purl.org/dc/terms/contributor",
+      "http://purl.org/dc/terms/identifier"
     ],
     "https://schema.org/Person": [
       "https://schema.org/name",
@@ -177,6 +202,7 @@
   "governedUnion": [
     "http://purl.org/dc/terms/contributor",
     "http://purl.org/dc/terms/created",
+    "http://purl.org/dc/terms/identifier",
     "http://purl.org/dc/terms/modified",
     "http://purl.org/dc/terms/source",
     "http://purl.org/dc/terms/title",

@@ -80,6 +80,16 @@ const concept: NamedNode[] = [
     namedNode(DCT  + "contributor"),
 ];
 
+// wiki:Source ⊑ skos:Concept; SourceShape sh:node ConceptShape (inherits the skos
+// + cito axis) and ADDS dct:identifier (minCount 1) — the agent-authored external
+// identifier (DOI / arXiv / citekey / ORCID) on <#this>. So the Source governed set
+// is the concept set + dct:identifier. dct:identifier is NOT added to COMMON or to
+// concept: only SourceShape constrains it (C-T2 / option C).
+const source: NamedNode[] = [
+    ...concept,
+    namedNode(DCT + "identifier"),
+];
+
 const person: NamedNode[] = [
     ...COMMON_THING_PREDICATES,
     namedNode(SCHEMA + "givenName"),
@@ -136,6 +146,7 @@ const howto: NamedNode[] = [
 
 export const THING_GOVERNED_PREDICATES: Record<string, NamedNode[]> = {
     [SKOS   + "Concept"]:      concept,
+    [WIKI   + "Source"]:       source,
     [SCHEMA + "Person"]:       person,
     [SCHEMA + "Place"]:        place,
     [SCHEMA + "Event"]:        event,
@@ -156,7 +167,7 @@ export function getThingGovernedPredicates(thingClassIRI: string): NamedNode[] {
 // wiki: class IRI → Thing class IRI (for THING_GOVERNED_PREDICATES lookup)
 export const WIKI_CLASS_TO_THING_CLASS: Record<string, string> = {
     [WIKI + "Concept"]:     SKOS   + "Concept",
-    [WIKI + "Source"]:      SCHEMA + "Thing",    // no dedicated source class yet
+    [WIKI + "Source"]:      WIKI   + "Source",   // own governed set: concept axis + dct:identifier (C-T2)
     [WIKI + "Person"]:      SCHEMA + "Person",
     [WIKI + "Procedure"]:   SCHEMA + "HowTo",
     [WIKI + "WorkingNote"]: SCHEMA + "Thing",

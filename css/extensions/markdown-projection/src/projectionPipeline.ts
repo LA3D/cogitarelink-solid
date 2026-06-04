@@ -5,7 +5,9 @@
 //
 // Additional derivations beyond the individual projection modules:
 //   - dct:title — extracted from the first H1 heading when not in frontmatter
-//   - dct:identifier — derived from the URI slug when not in frontmatter
+//   - dct:identifier — NOT derived (the page's identifier IS its URI); when present
+//     in frontmatter (identifier:/citekey:) it is the entity's external id and
+//     rebinds to <#this> (C-T2 / option C)
 //   - prov:wasGeneratedBy — on the <>.meta document subject only (the projector
 //     audit stamp). NOT on the resource: memory-operation provenance is canonical
 //     in /vault/wiki/.operations/, not denormalized here (RQ-Listener-1 collapse).
@@ -17,11 +19,11 @@ import { projectFrontmatter, Frontmatter, resolveCURIE } from "./frontmatterProj
 import { projectWikilinks, BOOTSTRAP_PREDICATE_TO_CLASS } from "./wikilinkProjection.js";
 import { resolveThingClass, TypeIndex, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
 import { projectSpanLiteralsFramed, DEFAULT_LITERAL_BINDING } from "./spanLiteralProjection.js";
+import { PAGE_GOVERNED_PREDICATES } from "./governedPredicates.js";
 
 const { namedNode, literal, quad } = DataFactory;
 
 const DCT_TITLE                = "http://purl.org/dc/terms/title";
-const DCT_IDENTIFIER           = "http://purl.org/dc/terms/identifier";
 const PROV_GEN_BY              = "http://www.w3.org/ns/prov#wasGeneratedBy";
 const AFFORDANCE_PATH          = "/meta/affordances/markdown-projection";
 const RDF_TYPE                 = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
@@ -120,10 +122,31 @@ function podRoot(uri: string): string {
 // Subject rebinding (placeholder → real URI)
 // ---------------------------------------------------------------------------
 
-function rebindSubject(triples: Quad[], realSubject: string): Quad[] {
-    const real = namedNode(realSubject);
+// Frontmatter quads project against a placeholder subject; the pipeline rebinds
+// them to the real subject. Most land on the Page <> (document metadata: title,
+// created, modified, maturity, type). dct:identifier is the exception: it is the
+// agent-authored external identifier of the *entity* (DOI / arXiv / citekey /
+// ORCID), governed on the Thing <#this> by SourceShape — so it rebinds to <#this>,
+// matching where governance deletes/replaces it (C-T2 / option C; same partition
+// the subjectFrame literal axis enforces — dct:identifier is NOT page-governed).
+const DCT_IDENTIFIER_IRI = "http://purl.org/dc/terms/identifier";
+
+// Sanity: keep the rebind in lockstep with the governance partition. If
+// dct:identifier ever became page-governed, the <#this> rebind would be wrong.
+const _PAGE_GOVERNED_IDENTIFIER =
+    PAGE_GOVERNED_PREDICATES.some((n) => n.value === DCT_IDENTIFIER_IRI);
+
+function rebindSubject(triples: Quad[], pageSubject: string): Quad[] {
+    const page  = namedNode(pageSubject);
+    const thing = namedNode(`${pageSubject}#this`);
     return triples.map(t =>
-        quad(real, t.predicate as any, t.object as any),
+        quad(
+            t.predicate.value === DCT_IDENTIFIER_IRI && !_PAGE_GOVERNED_IDENTIFIER
+                ? thing
+                : page,
+            t.predicate as any,
+            t.object as any,
+        ),
     );
 }
 
@@ -179,13 +202,12 @@ export const projectionPipeline = {
             }
         }
 
-        // Derived: dct:identifier from URI slug when frontmatter carries no identifier/citekey
-        if (!fm.identifier && !fm.citekey) {
-            const id = uriSlug(resourceUri);
-            if (id) {
-                derived.push(quad(namedNode(resourceUri), namedNode(DCT_IDENTIFIER), literal(id)));
-            }
-        }
+        // dct:identifier is NOT derived: the page's identifier IS its URI; a slug
+        // literal is RDF noise (C-T2 / option C). dct:identifier means ONE thing —
+        // the agent-authored external identifier (DOI / arXiv / citekey / ORCID) on
+        // <#this>, projected from frontmatter identifier:/citekey:. SourceShape
+        // requires it (minCount 1, judgment metadata D108 §1.4); a derived fallback
+        // would mask that 422.
 
         // Metadata-provenance audit stamp: the projector generated the *metadata
         // document*, not the resource. Attach it to the .meta-document subject —
