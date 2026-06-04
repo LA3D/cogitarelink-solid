@@ -141,12 +141,14 @@ Tier dispositions (§2/§3):
   `cito:agreesWith`+`disagreesWith` correctly — only the hook invocation is disconnected.
   Restoring the floor→hook wiring is D108/D109 substrate work, out of scope here.
 
-- `test_l4_extension_overlay.py` — STABILIZED: a cold-start race (apply.py returns before
-  the overlay container/shape registration is fully live on a freshly restarted Pod, so the
-  immediately-following PUT raced the install — a rare flake, ~1 in 4 full runs, only right
-  after `docker compose start`). Fix = a bounded readiness poll on `/biz/equipment/` after
-  apply.py, before the PUT. Not an assertion change; the genuine-install-failure path still
-  surfaces (the poll is bounded and asserted).
+- `test_l4_extension_overlay.py` — STABILIZED: the real issue was projection lag, not the
+  install. The projection listener only projects writes to DURABLE containers and reloads
+  that set from the Type Index lazily, so the FIRST write to the just-registered /biz/
+  container doesn't project until the listener re-reads the Type Index (after its ~15s
+  startup grace on a freshly restarted Pod). Fix = poll the `.meta` for the projected
+  `biz:Equipment` type with a budget that covers the grace window, re-PUTting periodically
+  to drive the listener's durable-container reload. Verified green even in the worst-case
+  `docker compose start` + immediate `make test` cold window. Not an assertion change.
 - `test_wiki_search_perf.py::test_p95_latency_under_500ms` — SKIPPED-with-reason: the D87
   p95<500ms ceiling is defined against a REALISTIC ~1000-page import, but the dev Pod has ~1
   page, so the number is meaningless here; and even warm+idle the MEDIAN is ~519ms (over the

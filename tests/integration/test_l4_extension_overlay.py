@@ -44,16 +44,24 @@ type: https://chuck.example/biz/Equipment
                           headers={"Content-Type": "text/markdown"})
         assert resp.status_code in (200, 201, 204, 205), f"PUT failed: {resp.text}"
 
-        # Projection is post-commit/async (D58/D71), so poll the .meta until <#this>
-        # is typed biz:Equipment (read-immediately would see only CSS posix metadata).
+        # Projection is post-commit/async (D58/D71). The projection listener only
+        # projects writes to DURABLE containers, and it reloads that set from the
+        # Type Index lazily — so the FIRST write to the just-registered /biz/
+        # container won't project until the listener re-reads the Type Index (after
+        # its ~15s startup grace on a freshly restarted Pod). Re-PUT periodically to
+        # drive that reload; budget covers the grace window so the test is robust on
+        # both a warm and a cold (post-restart) Pod.
         meta_text = ""
-        for _ in range(20):  # ~5s
+        for attempt in range(80):  # ~40s
             meta = client.get("/biz/equipment/hp-laserjet.md.meta",
                               headers={"Accept": "text/turtle"})
             if meta.status_code == 200 and "https://chuck.example/biz/Equipment" in meta.text:
                 meta_text = meta.text
                 break
-            time.sleep(0.25)
+            time.sleep(0.5)
+            if attempt % 6 == 5:  # re-fire the listener so it reloads durable containers
+                client.put("/biz/equipment/hp-laserjet.md", content=body,
+                           headers={"Content-Type": "text/markdown"})
         assert "https://chuck.example/biz/Equipment" in meta_text, \
             f"biz:Equipment never projected into .meta:\n{meta_text}"
         assert "schema:mainEntity" in meta_text or "mainEntity" in meta_text
