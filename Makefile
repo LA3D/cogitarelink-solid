@@ -3,7 +3,20 @@ POD_URL ?= https://pod.vardeman.me/vault/
 CA_FILE := $(shell mkcert -CAROOT 2>/dev/null)/rootCA.pem
 GIT_SHA := $(shell git rev-parse --short HEAD)
 
-.PHONY: up down reset rebuild rebuild-clean status logs import test install clean sync-validator-tbox check-validator-tbox audit verify sync-curator-skill
+# All CSS extensions that declare a "test" script in their package.json.
+# shared/markdown-parsing is nested one level deeper — listed explicitly.
+JS_EXTENSIONS := \
+    css/extensions/markdown-projection \
+    css/extensions/markdown-render \
+    css/extensions/shape-validator \
+    css/extensions/wiki-search \
+    css/extensions/mem-trigger \
+    css/extensions/memento \
+    css/extensions/metadata-card \
+    css/extensions/profile-link \
+    css/extensions/shared/markdown-parsing
+
+.PHONY: up down reset rebuild rebuild-clean status logs import test test-py test-js install clean sync-validator-tbox check-validator-tbox audit verify sync-curator-skill
 
 up:  ## Start everything (idempotent)
 	docker compose up -d
@@ -60,8 +73,33 @@ logs:  ## Tail all logs
 import:  ## Re-run pod-setup init service
 	docker compose run --rm pod-setup
 
-test: check-validator-tbox  ## Run Python tests (also checks validator TBox bundle for drift)
+test: check-validator-tbox test-js  ## Run all tests: TBox drift check + TS guard suites + pytest
 	$(PYTHON) -m pytest tests/ -v
+
+test-py: check-validator-tbox  ## Run Python-only tests (pytest; skips TS guard suites)
+	$(PYTHON) -m pytest tests/ -v
+
+test-js:  ## Run vitest guard suites in every CSS extension (fail on first failure)
+	# Prereq: node_modules must be installed in each extension directory.
+	# If an extension fails with "Cannot find module", run: npm install --prefix <ext-dir>
+	# We do NOT auto-install (keeps the target fast + deterministic — no network on CI).
+	@failed=0; \
+	for ext in $(JS_EXTENSIONS); do \
+	  if [ ! -d "$$ext/node_modules" ]; then \
+	    echo "SKIP $$ext — node_modules missing (run: npm install --prefix $$ext)"; \
+	    failed=1; \
+	    break; \
+	  fi; \
+	  printf "%-42s " "$$ext:"; \
+	  if npm test --prefix "$$ext" --silent 2>/dev/null; then \
+	    echo "PASS"; \
+	  else \
+	    echo "FAIL"; \
+	    failed=1; \
+	    break; \
+	  fi; \
+	done; \
+	exit $$failed
 
 install:  ## Install Python project in dev mode
 	uv pip install -e ".[test]"

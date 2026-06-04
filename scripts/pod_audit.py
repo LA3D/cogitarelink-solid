@@ -247,7 +247,10 @@ async def audit(pod_url, shapes_dir, check_routing_flag=False):
         # 5. Interop registration graph
         await audit_interop_registration(client, pod_base, findings)
 
-        # 6. Routing sanity-check (--check-routing)
+        # 6. Live Type Index registration validation
+        await audit_type_index(client, sd_g, storage, canon_base, pod_base, findings)
+
+        # 7. Routing sanity-check (--check-routing)
         if check_routing_flag:
             routing_url = pod_base + "meta/routing.jsonld"
             rr = await client.get(routing_url, headers={"Accept": "application/ld+json"})
@@ -274,6 +277,114 @@ async def load_role_members(client, pod_base):
         return {str(s) for s in g.subjects(URIRef(SKOS + "inScheme"), None)}
     except (httpx.HTTPError, ValueError):
         return None
+
+
+async def audit_type_index(client, sd_g, storage, canon_base, pod_base, findings):
+    """Validate every solid:TypeRegistration in the live Type Index.
+
+    Checks per-registration:
+    1. solid:forClass present and an IRI (WARN if literal / missing).
+    2. solid:instanceContainer present, an IRI, and under the discovered storage root (ERROR if outside).
+    3. The container HEAD-resolves (2xx/3xx; WARN on 404 — registered-but-absent).
+    4. No two registrations map the same instanceContainer to different forClass values (WARN — dup-container).
+    """
+    ti_iri = next((str(o) for o in sd_g.objects(storage, URIRef(SOLID + "publicTypeIndex"))), None)
+    if ti_iri is None:
+        findings.append(finding("WARN", str(storage), "typeindex:missing-pointer",
+            "No solid:publicTypeIndex pointer in the storage description.",
+            "Add solid:publicTypeIndex <.../publicTypeIndex> to the storage description."))
+        return
+    ti_url = rewrite(ti_iri, canon_base, pod_base)
+    r = await client.get(ti_url)
+    if r.status_code != 200:
+        findings.append(finding("ERROR", ti_url, "typeindex:unreachable",
+            f"Type Index not reachable (HTTP {r.status_code}).",
+            "Ensure the Type Index resource is seeded and publicly readable."))
+        return
+    ti_g = Graph().parse(data=r.text, format="turtle", publicID=ti_url)
+
+    # container_iri → [forClass IRI, ...] — for dup-container detection
+    container_classes: dict[str, list[str]] = {}
+
+    heads = []  # (reg_iri, container_iri) pairs needing HEAD checks
+    for reg in ti_g.subjects(RDF.type, URIRef(SOLID + "TypeRegistration")):
+        reg_iri = str(reg)
+
+        # 1. solid:forClass
+        cls_node = ti_g.value(reg, URIRef(SOLID + "forClass"))
+        if cls_node is None:
+            findings.append(finding("WARN", reg_iri, "typeindex:missing-forClass",
+                "TypeRegistration has no solid:forClass.",
+                "Add solid:forClass <ClassName> to the registration."))
+            cls_iri = None
+        elif not isinstance(cls_node, URIRef):
+            findings.append(finding("WARN", reg_iri, "typeindex:forClass-literal",
+                f"solid:forClass value is a literal ({cls_node!r}), expected an IRI.",
+                "Replace the literal with an IRI reference."))
+            cls_iri = None
+        else:
+            cls_iri = str(cls_node)
+
+        # 2. solid:instanceContainer
+        # solid:instance (single-resource) registrations are valid per the Solid Type Index
+        # spec — skip the container checks for those; they are not containers.
+        has_instance = ti_g.value(reg, URIRef(SOLID + "instance")) is not None
+        ctr_node = ti_g.value(reg, URIRef(SOLID + "instanceContainer"))
+        if ctr_node is None:
+            if not has_instance:
+                findings.append(finding("WARN", reg_iri, "typeindex:missing-instanceContainer",
+                    "TypeRegistration has no solid:instanceContainer (and no solid:instance).",
+                    "Add solid:instanceContainer <container/> or solid:instance <resource> "
+                    "to the registration."))
+            continue
+        if not isinstance(ctr_node, URIRef):
+            findings.append(finding("WARN", reg_iri, "typeindex:instanceContainer-literal",
+                f"solid:instanceContainer value is a literal ({ctr_node!r}), expected an IRI.",
+                "Replace the literal with an IRI reference."))
+            continue
+        ctr_iri = str(ctr_node)
+
+        # Check the container is under the storage root.
+        # We compare against canon_base (the pim:Storage IRI) and also against pod_base
+        # (the reachable equivalent) so the check passes regardless of which host was used.
+        canon_root = canon_base if canon_base.endswith("/") else canon_base + "/"
+        pod_root   = pod_base   if pod_base.endswith("/")   else pod_base + "/"
+        reachable_ctr = rewrite(ctr_iri, canon_base, pod_base)
+        if not ctr_iri.startswith(canon_root) and not ctr_iri.startswith(pod_root) \
+                and not reachable_ctr.startswith(pod_root):
+            findings.append(finding("ERROR", reg_iri, "typeindex:container-outside-root",
+                f"instanceContainer {ctr_iri} is not under the storage root {canon_root}.",
+                "Registration must point only at containers within this Pod's storage root."))
+            continue
+
+        # 4. Accumulate per-container class list (for dup-container check after the loop)
+        if ctr_iri not in container_classes:
+            container_classes[ctr_iri] = []
+        if cls_iri:
+            container_classes[ctr_iri].append(cls_iri)
+
+        heads.append((reg_iri, reachable_ctr))
+
+    # 3. HEAD-check all containers in parallel.
+    if heads:
+        codes = await asyncio.gather(*(head_ok(client, url) for _, url in heads))
+        for (reg_iri, ctr_url), code in zip(heads, codes):
+            if isinstance(code, int) and code in (200, 301, 302, 303, 307, 308):
+                continue
+            sev = "WARN" if code == 404 else "WARN"
+            findings.append(finding(sev, reg_iri, "typeindex:container-unreachable",
+                f"Registered instanceContainer does not resolve (got {code}): {ctr_url}",
+                "Create the container or remove the stale registration."))
+
+    # 4. Dup-container: same container → multiple different forClass values.
+    for ctr_iri, classes in container_classes.items():
+        unique = list(dict.fromkeys(classes))  # preserve order, deduplicate
+        if len(unique) > 1:
+            findings.append(finding("WARN", ctr_iri, "typeindex:dup-container-conflict",
+                f"instanceContainer {ctr_iri} is registered for multiple classes: "
+                + ", ".join(unique) + ". The loader resolves deterministically but the "
+                "intent may be wrong.",
+                "Use distinct containers per class, or confirm the multi-class sharing is intentional."))
 
 
 async def audit_interop_registration(client, pod_base, findings):
