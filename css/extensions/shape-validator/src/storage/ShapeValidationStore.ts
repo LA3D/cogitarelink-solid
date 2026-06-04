@@ -167,14 +167,24 @@ export class ShapeValidationStore extends PassthroughStore {
       await this.representationToStore(identifier, await this.source.getRepresentation(identifier, {})),
     );
 
-    if (newShapes.length > 1) {
-      throw new BadRequestHttpError('A container can only be constrained by at most one shape resource.');
-    }
+    // D108 §1.5 (C-T2b): a container = the shape SET, class = dispatch by sh:targetClass
+    // within it. A container may declare MORE THAN ONE ldp:constrainedBy (concepts/ holds
+    // both skos:Concept and wiki:Source — two shapes the floor merges). The upstream
+    // shape-validator-component's "at most one shape" rule is therefore lifted: the floor +
+    // ShaclValidator now read getAll and merge, so any number of shapes is well-defined.
 
+    // Still guard the original invariant generalized to the set: you cannot CHANGE the
+    // constraint set of an already-populated container (existing children were admitted
+    // under the old set; a new set could retroactively invalidate them without re-checking).
+    // Set equality (order-independent) — adding/removing a shape on a non-empty container is
+    // the rejected case; re-asserting the SAME set (idempotent re-seed) is allowed.
     const children = dataStore.getObjects(namedNode(subjectIdentifier.path), LDP.terms.contains, null);
-    if ((newShapes.length === 1 && !(currentShapes[0] === newShapes[0])) && children.length > 0) {
+    const sameSet =
+      newShapes.length === currentShapes.length &&
+      new Set(newShapes).size === new Set([ ...newShapes, ...currentShapes ]).size;
+    if (newShapes.length > 0 && !sameSet && children.length > 0) {
       throw new BadRequestHttpError(
-        'A container can only be constrained when there are no resources present in that container.',
+        'A container can only be (re)constrained when there are no resources present in that container.',
       );
     }
   }

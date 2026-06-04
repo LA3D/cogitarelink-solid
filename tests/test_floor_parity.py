@@ -1,21 +1,27 @@
 """Floor parity (D108 Front-2 §5.8).
 
-The admission floor gates a write against the container's ldp:constrainedBy shape.
+The admission floor gates a write against the container's ldp:constrainedBy shape
+SET (D108 §1.5: container = the shape set, class = dispatch by sh:targetClass).
 The interop layer declares the SAME conformance contract structurally, via the
 Shape-Trees doc (container Manager -> ContainerTree -> st:contains ResourceTree
 -> st:shape wiki:*Shape). This test asserts the two are in parity: for every
-governed wiki container, the shape DOC its ldp:constrainedBy points to declares a
-NodeShape that overlaps the shapes its ShapeTree expects.
+governed wiki container, the set of NodeShapes its ldp:constrainedBy docs DECLARE
+must EQUAL the set of NodeShapes its ShapeTree expects (st:shape of all the
+container tree's resource trees).
 
-If they drift (constrainedBy points at one shape, the tree expects another) the
+If they drift (constrainedBy names fewer/other shapes than the tree expects) the
 floor enforces a different contract than the substrate advertises — the bug this
-test exists to catch.
+test exists to catch. concepts/ is the worked case: its tree's ConceptContainerTree
+st:contains {ConceptResourceTree, SourceResourceTree} -> {ConceptShape, SourceShape},
+so its constrainedBy MUST name both concept.shacl.ttl AND source.shacl.ttl for
+SourceShape to fire at the live floor (C-T2b). Others are singletons.
 
 R-T7 (audit R3, FOLLOWUPS item 6): UPGRADED from filename-string matching to RDF
-dereference. Each container's ldp:constrainedBy IRI is resolved to its repo file
-(URL basename -> SHAPES_DIR), THAT file is parsed, and its sh:NodeShape subjects
-are taken directly — then overlapped with the tree's st:shape set. Offline (repo
-files only); no live Pod.
+dereference. Each container's ldp:constrainedBy IRIs are resolved to their repo files
+(URL basename -> SHAPES_DIR), each file is parsed, and its sh:NodeShape subjects are
+taken directly — then required to EQUAL the tree's st:shape set. C-T2b: upgraded from
+overlap to set equality so the shapetree is the source of truth the floor provably
+tracks. Offline (repo files only); no live Pod.
 """
 from pathlib import Path
 import pytest
@@ -89,26 +95,29 @@ def test_constrainedby_matches_shapetree_shape(ctr):
 
     cb = list(g.objects(None, LDP.constrainedBy))
     assert cb, f"{ctr}: no ldp:constrainedBy — the floor would be inert for this container"
-    assert len(cb) == 1, f"{ctr}: expected exactly one ldp:constrainedBy, got {cb}"
 
-    # Dereference the constrainedBy doc (repo file) and read the NodeShapes it
-    # actually DECLARES — not a filename string match.
-    cb_file = _constrainedby_file(str(cb[0]))
-    assert cb_file.exists(), f"{ctr}: constrainedBy {cb[0]} -> {cb_file} not found in repo"
-    defined = _nodeshapes_declared(cb_file)
-    assert defined, f"{ctr}: constrainedBy doc {cb_file.name} declares no wiki:*Shape"
+    # Dereference EVERY constrainedBy doc (repo file) and union the NodeShapes they
+    # actually DECLARE — not a filename string match. The floor merges these same docs
+    # into one shape store, so the declared union is exactly what gates a write.
+    declared: set[str] = set()
+    for cb_iri in cb:
+        cb_file = _constrainedby_file(str(cb_iri))
+        assert cb_file.exists(), f"{ctr}: constrainedBy {cb_iri} -> {cb_file} not found in repo"
+        declared |= _nodeshapes_declared(cb_file)
+    assert declared, f"{ctr}: constrainedBy docs declare no wiki:*Shape"
 
     # The shapes the container's ShapeTree reaches.
     expected = TREE_SHAPES.get(container_url)
     assert expected, f"{ctr}: no ShapeTree manager assigns a tree to {container_url}"
 
-    # Parity: a NodeShape the constrainedBy doc declares must be one the tree
-    # expects for this container. (concepts/ reaches BOTH Concept + Source;
-    # constrainedBy names the primary, Concept.)
-    overlap = defined & expected
-    assert overlap, (
-        f"{ctr}: ldp:constrainedBy -> {cb_file.name} (declares {defined}) is NOT among "
-        f"the ShapeTree-expected shapes {expected} — floor/interop contract drift"
+    # Parity = SET EQUALITY (C-T2b): the NodeShapes the constrainedBy docs declare must
+    # be EXACTLY the ones the tree expects for this container. concepts/ -> both Concept +
+    # Source; others -> singletons. Inequality either way is a floor/interop contract drift
+    # (under-declared: SourceShape would never fire; over-declared: a spurious gate).
+    assert declared == expected, (
+        f"{ctr}: ldp:constrainedBy docs declare {declared} but the ShapeTree expects "
+        f"{expected} — floor/interop contract drift (the floor would gate a different "
+        f"shape set than the substrate advertises)"
     )
 
 

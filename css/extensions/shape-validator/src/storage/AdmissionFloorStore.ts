@@ -110,29 +110,29 @@ export class AdmissionFloorStore extends PassthroughStore {
     if (this.auxiliaryStrategy.isAuxiliaryIdentifier(id)) {
       const subject = this.auxiliaryStrategy.getSubjectIdentifier(id);
       const subjectIsContainer = isContainerIdentifier(subject);
-      const shapeForMeta = subjectIsContainer ? undefined : await this.constrainedByFor(subject);
+      const shapesForMeta = subjectIsContainer ? [] : await this.constrainedByFor(subject);
       // A governed resource's .meta is RDF by definition: validate internal/quads (the
       // patched-graph path), any textual RDF serialisation (the raw-PUT path), or a missing
       // content-type. We do not silently skip — if a bizarre non-RDF type ever arrives for a
       // .meta, validating-by-parse fails loudly below, which is the correct outcome.
-      if (shapeForMeta && this.isMetaRdfWrite(representation)) {
+      if (shapesForMeta.length > 0 && this.isMetaRdfWrite(representation)) {
         // Clone before consuming the stream — the original must still flow to super.
         const cloned = await cloneRepresentation(representation);
         const dataStore = await this.metaQuads(cloned, id);
-        const result = await validateQuadsAgainstShape(dataStore, await this.shapeStore(shapeForMeta));
+        const result = await validateQuadsAgainstShape(dataStore, await this.shapeStore(shapesForMeta));
         if (!result.conforms) {
-          throw new ShaclValidationError(shapeForMeta, result.reportTurtle!);
+          throw new ShaclValidationError(shapesForMeta[0], result.reportTurtle!);
         }
       }
       return super.setRepresentation(id, representation, conditions);
     }
 
-    const shapeUrl = await this.constrainedByFor(id);
+    const shapeUrls = await this.constrainedByFor(id);
     // Not a constrained container, or a content-type the projector doesn't handle
     // (RDF bodies) → pass straight through. RDF bodies are validated by the existing
     // ShapeValidationStore path.
     if (
-      !shapeUrl ||
+      shapeUrls.length === 0 ||
       !this.projector.canProject(representation)
     ) {
       return super.setRepresentation(id, representation, conditions);
@@ -152,7 +152,7 @@ export class AdmissionFloorStore extends PassthroughStore {
     // Reject BEFORE committing — a non-conforming PUT never reaches the backend.
     // conformsOrReject throws ShaclValidationError on a shape failure. (A working
     // container's permissive shape conforms trivially, so drafts pass here.)
-    await this.conformsOrReject(projected.quads, shapeUrl);
+    await this.conformsOrReject(projected.quads, shapeUrls);
 
     // Commit the body first (so the resource exists on disk before MetaWriter
     // resolves its path), then materialize the admitted graph + body-hash stamp.
@@ -176,16 +176,18 @@ export class AdmissionFloorStore extends PassthroughStore {
     representation: Representation,
     conditions?: Conditions,
   ): Promise<ChangeMap> {
-    let shapeUrl: string | undefined;
+    let shapeUrls: string[] = [];
     try {
       const rep = await this.source.getRepresentation(container, {});
-      shapeUrl = rep.metadata.get(LDP.terms.constrainedBy)?.value;
+      // getAll, not get: a multi-shape container (concepts/) holds >1 constrainedBy,
+      // and get THROWS on multiple values.
+      shapeUrls = rep.metadata.getAll(LDP.terms.constrainedBy).map((t) => t.value);
     } catch (error: unknown) {
       if (!NotFoundHttpError.isInstance(error)) {
         throw error;
       }
     }
-    if (!shapeUrl || !this.projector.canProject(representation)) {
+    if (shapeUrls.length === 0 || !this.projector.canProject(representation)) {
       return super.addResource(container, representation, conditions);
     }
 
@@ -210,7 +212,7 @@ export class AdmissionFloorStore extends PassthroughStore {
     }
 
     try {
-      await this.conformsOrReject(projected.quads, shapeUrl);
+      await this.conformsOrReject(projected.quads, shapeUrls);
     } catch (error: unknown) {
       // Roll back the just-created resource so a rejected POST leaves no residue.
       await this.source.deleteResource(created);
@@ -226,13 +228,17 @@ export class AdmissionFloorStore extends PassthroughStore {
   // trivially for drafts, so the shape verdict IS the policy (audit FOLLOWUPS #5).
   private async conformsOrReject(
     quads: Quad[],
-    shapeUrl: string,
+    shapeUrls: string[],
   ): Promise<void> {
-    const result = await validateQuadsAgainstShape(new Store(quads), await this.shapeStore(shapeUrl));
+    const result = await validateQuadsAgainstShape(new Store(quads), await this.shapeStore(shapeUrls));
     if (result.conforms) {
       return;
     }
-    throw new ShaclValidationError(shapeUrl, result.reportTurtle!);
+    // The ShaclValidationError needs ONE shapeURL for its message; use the container's
+    // primary (first-declared) shape. The 422 BODY (result.reportTurtle) carries the
+    // real failing shape's details (sh:sourceShape per result), so naming the primary
+    // here is the least-misleading single-URL choice — the report disambiguates.
+    throw new ShaclValidationError(shapeUrls[0], result.reportTurtle!);
   }
 
   // Materialize the admitted graph + a body-hash stamp into the resource's .meta,
@@ -247,26 +253,43 @@ export class AdmissionFloorStore extends PassthroughStore {
     await this.projector.materialize(id, stamped, [ ...projected.governed, this.stampPredicate ]);
   }
 
-  /** ldp:constrainedBy of the parent container, or undefined if unconstrained/root/missing. */
-  private async constrainedByFor(id: ResourceIdentifier): Promise<string | undefined> {
+  /**
+   * ALL ldp:constrainedBy shape URLs of the parent container (D108 §1.5: container = the
+   * shape SET, class = dispatch by sh:targetClass within it). Empty when unconstrained /
+   * root / missing. A container may declare more than one constrainedBy (one container can
+   * hold resources of several classes, each with its own shape), so this is plural; getAll
+   * (NOT get, which THROWS on multiple values) reads them. Order is the metadata's: index 0
+   * is the container's primary shape (used as the least-misleading ShaclValidationError URL).
+   */
+  private async constrainedByFor(id: ResourceIdentifier): Promise<string[]> {
     if (this.identifierStrategy.isRootContainer(id)) {
-      return undefined;
+      return [];
     }
     const parent = this.identifierStrategy.getParentContainer(id);
     try {
       const rep = await this.source.getRepresentation(parent, {});
-      return rep.metadata.get(LDP.terms.constrainedBy)?.value;
+      return rep.metadata.getAll(LDP.terms.constrainedBy).map((t) => t.value);
     } catch (error: unknown) {
       if (NotFoundHttpError.isInstance(error)) {
-        return undefined;
+        return [];
       }
       throw error;
     }
   }
 
-  private async shapeStore(shapeUrl: string): Promise<Store> {
-    const shape = await fetchDataset(shapeUrl);
-    return await readableToQuads(shape.data);
+  // Fetch EACH constrainedBy shape doc and MERGE the quads into one Store. SHACL targeting
+  // then dispatches by class naturally: a node is validated only by the NodeShapes whose
+  // sh:targetClass it carries. A shape whose target class a node does NOT have is inert for
+  // that node (no spurious 422); a shape that references another via sh:node has that other
+  // resolved in the merged store. Both validation paths (markdown-body + direct .meta) call
+  // this with the same URL set, so they cannot diverge on semantics.
+  private async shapeStore(shapeUrls: string[]): Promise<Store> {
+    const merged = new Store();
+    for (const url of shapeUrls) {
+      const shape = await fetchDataset(url);
+      merged.addQuads((await readableToQuads(shape.data)).getQuads(null, null, null, null));
+    }
+    return merged;
   }
 
   // True when a .meta write should be validated as RDF. A governed resource's .meta is

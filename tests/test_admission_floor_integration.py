@@ -114,11 +114,57 @@ def test_rdf_body_contacts_path_unchanged():
     assert r.status_code in (200, 404)   # smoke: floor didn't break the RDF-body substrate
 
 
+# --- C-T2b: SourceShape fires live via merged-shape class dispatch ---------
+# concepts/ now declares TWO ldp:constrainedBy docs (concept + source). The floor
+# MERGES them, so a wiki:Source node is gated by SourceShape (dct:identifier minCount
+# 1) + the inherited ConceptShape (skos:prefLabel) — both via sh:targetClass dispatch
+# within the merged store. Pre-C-T2b the floor fetched only the primary (concept) shape,
+# so SourceShape never fired and a no-identifier Source got 201.
+
+DCT = "http://purl.org/dc/terms/"
+
+
+def test_source_without_identifier_rejected_422():
+    # type: wiki:Source (CURIE) -> <#this> a wiki:Source (frontmatter type wins over the
+    # concepts/ container's skos:Concept). Has a prefLabel (so ConceptShape passes) but NO
+    # citekey/identifier -> SourceShape's dct:identifier minCount 1 fires in the MERGED
+    # {concept,source} shape store -> 422. (Pre-C-T2b the floor fetched only the concept
+    # shape, so SourceShape never fired and this got 201.)
+    body = ("---\ntype: wiki:Source\n---\n# E2E Source NoId\n\n"
+            "[E2E Source NoId]{.prefLabel} is a paper without an identifier.\n")
+    r = _put("/vault/wiki/concepts/e2e-floor-source-noid.md", body)
+    assert r.status_code == 422, (
+        f"C-T2b: a wiki:Source missing dct:identifier must be floored by SourceShape "
+        f"(expected 422), got {r.status_code}: {r.text[:200]}"
+    )
+    assert "ValidationReport" in r.text and "identifier" in r.text
+    # all-or-nothing: nothing committed
+    assert _get("/vault/wiki/concepts/e2e-floor-source-noid.md").status_code == 404
+
+
+def test_source_with_citekey_commits_with_identifier_materialized():
+    # citekey -> dct:identifier; prefLabel from the body literal axis -> conforms to BOTH
+    # SourceShape (identifier) and ConceptShape (prefLabel) in the merged store.
+    body = ("---\ntype: wiki:Source\ncitekey: vardeman-2026-ct2b\n---\n# E2E Source Ok\n\n"
+            "[E2E Source Ok]{.prefLabel} is a properly-identified paper.\n")
+    r = _put("/vault/wiki/concepts/e2e-floor-source-ok.md", body)
+    assert r.status_code in (201, 205), (
+        f"a wiki:Source with citekey + prefLabel must be admitted, got {r.status_code}: {r.text[:200]}"
+    )
+    m = _get("/vault/wiki/concepts/e2e-floor-source-ok.md.meta", headers={"Accept": "text/turtle"})
+    assert m.status_code == 200
+    g = Graph()
+    g.parse(data=m.text, format="turtle",
+            publicID=f"{POD}/vault/wiki/concepts/e2e-floor-source-ok.md")
+    assert (None, URIRef(DCT + "identifier"), None) in g, "dct:identifier not materialized on the Source"
+
+
 @pytest.fixture(autouse=True)
 def _cleanup():
     yield
     for c, names in (("concepts", ["e2e-floor-nolabel", "e2e-floor-nolabel2", "e2e-floor-valid",
-                                    "e2e-floor-patch", "e2e-floor-enrich"]),
+                                    "e2e-floor-patch", "e2e-floor-enrich",
+                                    "e2e-floor-source-noid", "e2e-floor-source-ok"]),
                      ("working", ["e2e-floor-draft"])):
         for n in names:
             _delete(f"/vault/wiki/{c}/{n}.md")

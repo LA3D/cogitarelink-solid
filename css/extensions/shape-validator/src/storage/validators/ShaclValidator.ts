@@ -14,7 +14,7 @@ import {
   readableToQuads,
 } from '@solid/community-server';
 import { getLoggerFor } from 'global-logger-factory';
-import type { Store } from 'n3';
+import { Store } from 'n3';
 import { ShaclValidationError } from '../../error/ShaclValidationError';
 import { NoOpUnprocessableWriteHook } from '../../NoOpUnprocessableWriteHook';
 import { RDF_CONTENT_TYPES } from '../../util/ContentTypes';
@@ -74,8 +74,12 @@ export class ShaclValidator extends ShapeValidator {
       throw new NotImplementedHttpError(`No shape validation on non-RDF content-type ${ct}.`);
     }
 
-    const shapeURL = parentRepresentation.metadata.get(LDP.terms.constrainedBy)?.value;
-    if (!shapeURL) {
+    // getAll, not get (which THROWS on multiple values): a container may declare more
+    // than one ldp:constrainedBy (D108 §1.5 — container = the shape SET). The contacts
+    // containers each declare exactly one today, so behavior is unchanged; the mechanism
+    // is plural so this validator and AdmissionFloorStore don't diverge on semantics.
+    const shapeURLs = parentRepresentation.metadata.getAll(LDP.terms.constrainedBy).map((t) => t.value);
+    if (shapeURLs.length === 0) {
       throw new NotImplementedHttpError('No ldp:constrainedBy predicate.');
     }
 
@@ -86,7 +90,10 @@ export class ShaclValidator extends ShapeValidator {
 
   public async handle(input: ShapeValidatorInput): Promise<void> {
     const { parentRepresentation, representation } = input;
-    const shapeURL = parentRepresentation.metadata.get(LDP.terms.constrainedBy)!.value;
+    const shapeURLs = parentRepresentation.metadata.getAll(LDP.terms.constrainedBy).map((t) => t.value);
+    // Primary shape URL for the ShaclValidationError message; the report body carries the
+    // real failing shape's details either way (see AdmissionFloorStore.conformsOrReject).
+    const shapeURL = shapeURLs[0];
 
     let representationData: BasicRepresentation;
     const preferences = { type: { [INTERNAL_QUADS]: 1 } };
@@ -108,9 +115,16 @@ export class ShaclValidator extends ShapeValidator {
     }
     const dataStore = await readableToQuads(representationData.data);
 
-    this.logger.debug(`Shape URL from parent metadata: ${shapeURL}`);
-    const shape = await fetchDataset(shapeURL);
-    const shapeStore = await readableToQuads(shape.data);
+    this.logger.debug(`Shape URLs from parent metadata: ${shapeURLs.join(', ')}`);
+    // Merge every constrainedBy shape doc into one store. SHACL dispatches by class
+    // naturally (a node matches only the NodeShapes whose sh:targetClass it has), so a
+    // single-shape container behaves exactly as before; a multi-shape container gates the
+    // node against the union (D108 §1.5).
+    const shapeStore = new Store();
+    for (const url of shapeURLs) {
+      const shape = await fetchDataset(url);
+      shapeStore.addQuads((await readableToQuads(shape.data)).getQuads(null, null, null, null));
+    }
     this.targetClassCheck(shapeStore, dataStore, shapeURL);
 
     const result = await validateQuadsAgainstShape(dataStore, shapeStore);

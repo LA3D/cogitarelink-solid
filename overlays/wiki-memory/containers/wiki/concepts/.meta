@@ -9,7 +9,7 @@
 <> a ldp:Container, ldp:BasicContainer ;
    dct:title "Wiki Concepts" ;
    solid:forClass skos:Concept ;
-   sub:shape </vault/meta/shapes/concept.shacl.ttl> ;
-   ldp:constrainedBy </vault/meta/shapes/concept.shacl.ttl> ;
+   sub:shape </vault/meta/shapes/concept.shacl.ttl> , </vault/meta/shapes/source.shacl.ttl> ;
+   ldp:constrainedBy </vault/meta/shapes/concept.shacl.ttl> , </vault/meta/shapes/source.shacl.ttl> ;
    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
    sh:agentInstruction "The SKOS concept scheme — abstract ideas/theories. Typed skos:Concept on <#this>. Author skos:prefLabel via the body literal axis [text]{.prefLabel} (required); skos:broader/related via [[Target]]{.broader}. Sources (wiki:Source) also live here." .
