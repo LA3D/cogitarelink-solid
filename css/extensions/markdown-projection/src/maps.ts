@@ -15,7 +15,7 @@
 // sidecar can never silently go stale. Regeneration is wired into `npm run
 // build` (the emit-maps step) and exposed as `npm run emit-maps`.
 
-import { CURIE_PREFIX_MAP, TYPE_MAP_TOKENS } from "./frontmatterProjection.js";
+import { CURIE_PREFIX_MAP, TYPE_MAP_TOKENS, MATURITY_MAP_TOKENS } from "./frontmatterProjection.js";
 import { BOOTSTRAP_PREDICATE_TO_CLASS } from "./wikilinkProjection.js";
 import {
     PAGE_GOVERNED_PREDICATES,
@@ -59,6 +59,8 @@ export interface MapsSidecar {
     curiePrefixes: Record<string, string>;
     /** Frontmatter type token → wiki: class IRI (frontmatterProjection TYPE_MAP). */
     typeMap: Record<string, string>;
+    /** Frontmatter maturity token → wiki: lifecycle IRI (frontmatterProjection MATURITY_MAP). */
+    maturityMap: Record<string, string>;
     /** Bootstrap predicate IRI → entailed Thing class IRI (wikilinkProjection). */
     bootstrapPredicateToClass: Record<string, string>;
     /**
@@ -91,6 +93,7 @@ export function buildMaps(): MapsSidecar {
             "test/mapsSidecar.test.ts (committed JSON must equal the live source).",
         curiePrefixes: { ...CURIE_PREFIX_MAP },
         typeMap: { ...TYPE_MAP_TOKENS },
+        maturityMap: { ...MATURITY_MAP_TOKENS },
         bootstrapPredicateToClass: { ...BOOTSTRAP_PREDICATE_TO_CLASS },
         wikiClassToThingClass: { ...WIKI_CLASS_TO_THING_CLASS },
         pageGoverned: PAGE_GOVERNED_PREDICATES.map((n) => n.value),

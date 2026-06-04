@@ -159,12 +159,58 @@ def test_source_with_citekey_commits_with_identifier_materialized():
     assert (None, URIRef(DCT + "identifier"), None) in g, "dct:identifier not materialized on the Source"
 
 
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+WIKI_SOURCE = f"{_pod_base()}/vault/ontology/wiki#Source"
+
+
+def test_shortform_source_with_citekey_commits_as_wiki_source():
+    # C-T2c: SHORT-FORM `type: source` (not the wiki:Source CURIE) must resolve
+    # <#this> a wiki:Source so SourceShape fires. citekey -> dct:identifier; prefLabel
+    # from the body. Conforms to BOTH SourceShape (identifier) and ConceptShape (prefLabel)
+    # in the merged {concept,source} store -> 201, with <#this> typed wiki:Source.
+    body = ("---\ntype: source\ncitekey: vardeman-2026-ct2c\n---\n# E2E Shortform Source\n\n"
+            "[E2E Shortform Source]{.prefLabel} is a properly-identified paper.\n")
+    r = _put("/vault/wiki/concepts/e2e-floor-shortform-source.md", body)
+    assert r.status_code in (201, 205), (
+        f"C-T2c: short-form `type: source` with citekey + prefLabel must be admitted, "
+        f"got {r.status_code}: {r.text[:200]}"
+    )
+    m = _get("/vault/wiki/concepts/e2e-floor-shortform-source.md.meta",
+             headers={"Accept": "text/turtle"})
+    assert m.status_code == 200
+    g = Graph()
+    g.parse(data=m.text, format="turtle",
+            publicID=f"{POD}/vault/wiki/concepts/e2e-floor-shortform-source.md")
+    this = URIRef(f"{POD}/vault/wiki/concepts/e2e-floor-shortform-source.md#this")
+    assert (this, URIRef(RDF_TYPE), URIRef(WIKI_SOURCE)) in g, (
+        "C-T2c: short-form `type: source` did not type <#this> a wiki:Source "
+        f"(SourceShape would not fire):\n{m.text}"
+    )
+    assert (None, URIRef(DCT + "identifier"), None) in g, "dct:identifier not materialized on the Source"
+
+
+def test_shortform_source_without_identifier_rejected_422():
+    # C-T2c: same short-form path, but no citekey/identifier -> SourceShape's
+    # dct:identifier minCount 1 fires -> 422. Proves the short-form token reaches
+    # the Source class dispatch (pre-C-T2c it fell back to skos:Concept and got 201).
+    body = ("---\ntype: source\n---\n# E2E Shortform Source NoId\n\n"
+            "[E2E Shortform Source NoId]{.prefLabel} is a paper without an identifier.\n")
+    r = _put("/vault/wiki/concepts/e2e-floor-shortform-source-noid.md", body)
+    assert r.status_code == 422, (
+        f"C-T2c: short-form `type: source` missing dct:identifier must be floored by SourceShape "
+        f"(expected 422), got {r.status_code}: {r.text[:200]}"
+    )
+    assert "ValidationReport" in r.text and "identifier" in r.text
+    assert _get("/vault/wiki/concepts/e2e-floor-shortform-source-noid.md").status_code == 404
+
+
 @pytest.fixture(autouse=True)
 def _cleanup():
     yield
     for c, names in (("concepts", ["e2e-floor-nolabel", "e2e-floor-nolabel2", "e2e-floor-valid",
                                     "e2e-floor-patch", "e2e-floor-enrich",
-                                    "e2e-floor-source-noid", "e2e-floor-source-ok"]),
+                                    "e2e-floor-source-noid", "e2e-floor-source-ok",
+                                    "e2e-floor-shortform-source", "e2e-floor-shortform-source-noid"]),
                      ("working", ["e2e-floor-draft"])):
         for n in names:
             _delete(f"/vault/wiki/{c}/{n}.md")

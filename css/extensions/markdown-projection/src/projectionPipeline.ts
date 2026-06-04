@@ -15,11 +15,11 @@
 
 import { DataFactory, NamedNode, Quad } from "n3";
 import * as YAML from "yaml";
-import { projectFrontmatter, Frontmatter, resolveCURIE } from "./frontmatterProjection.js";
+import { projectFrontmatter, Frontmatter, resolveFrontmatterType } from "./frontmatterProjection.js";
 import { projectWikilinks, BOOTSTRAP_PREDICATE_TO_CLASS } from "./wikilinkProjection.js";
 import { resolveThingClass, TypeIndex, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
 import { projectSpanLiteralsFramed, DEFAULT_LITERAL_BINDING } from "./spanLiteralProjection.js";
-import { PAGE_GOVERNED_PREDICATES } from "./governedPredicates.js";
+import { PAGE_GOVERNED_PREDICATES, WIKI_CLASS_TO_THING_CLASS } from "./governedPredicates.js";
 
 const { namedNode, literal, quad } = DataFactory;
 
@@ -222,16 +222,27 @@ export const projectionPipeline = {
             namedNode(affordanceUri),
         )];
 
-        // Substrate invariants (D98 Page+Thing bridge) — emitted when Type Index
-        // can resolve a Thing class. frontmatterType (fm.type) wins over container.
+        // Substrate invariants (D98 Page+Thing bridge) — emitted when a Thing
+        // class can be resolved. frontmatter type:: WINS over the container
+        // fallback (C-T2c): a `type: source` page in /wiki/concepts/ must type
+        // <#this> a wiki:Source so SourceShape fires, not fall back to the
+        // container's skos:Concept. Resolution order (single-sourced via
+        // resolveFrontmatterType so it can never diverge from the page-type
+        // projection): CURIE/absolute → TYPE_MAP short-form token → (miss)
+        // container fallback in resolveThingClass.
+        //
+        // resolveFrontmatterType yields the wiki: DISPATCH class for a short-form
+        // (e.g. "source" → wiki:Source); map it through WIKI_CLASS_TO_THING_CLASS
+        // to the canonical Thing class the catalog governs (sh:targetClass) —
+        // wiki:Concept → skos:Concept, wiki:Source → wiki:Source (identity, since
+        // SourceShape targets wiki:Source directly). A CURIE/absolute type already
+        // names a Thing class (skos:Concept, schema:Person) and is not in the map,
+        // so it passes through unchanged.
         const invariants: Quad[] = [];
-        // Resolve fm.type to a full IRI: CURIE form (skos:Concept), absolute IRI,
-        // or short vault form (concept → wiki:Concept via TYPE_MAP already handled
-        // by projectFrontmatter; here we need the IRI for resolveThingClass).
-        // resolveCURIE returns undefined for short vault strings like "concept" — in
-        // that case we fall through to container-based resolution in typeIndex.
-        const fmTypeIRI =
-            typeof fm.type === "string" ? resolveCURIE(fm.type) : undefined;
+        const fmDispatch = resolveFrontmatterType(fm.type);
+        const fmTypeIRI = fmDispatch
+            ? (WIKI_CLASS_TO_THING_CLASS[fmDispatch] ?? fmDispatch)
+            : undefined;
         const thingClass = resolveThingClass(
             new URL(resourceUri).pathname,
             typeIndex,

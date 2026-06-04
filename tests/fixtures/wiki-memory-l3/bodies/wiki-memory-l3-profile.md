@@ -7,6 +7,8 @@ maturity: draft
 
 # Wiki-Memory L3 Profile
 
+[Wiki-Memory L3 Profile]{.prefLabel}
+
 The canonical L3 reference profile for the cogitarelink-solid Pod. Sits on top of the L2 memory substrate and pins concrete URI layout, slug algorithm, and SHACL shape catalog.
 
 Parent: [[Agentic Memory Systems MOC]]{.broader}

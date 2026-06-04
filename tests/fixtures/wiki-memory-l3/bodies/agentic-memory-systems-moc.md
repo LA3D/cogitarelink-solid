@@ -7,6 +7,8 @@ maturity: validated
 
 # Agentic Memory Systems MOC
 
+[Agentic Memory Systems MOC]{.prefLabel}
+
 Research hub for memory architectures enabling autonomous agents to work reliably over long horizons.
 
 ## Core concepts

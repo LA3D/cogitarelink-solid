@@ -1,18 +1,23 @@
-@prefix dct:   <http://purl.org/dc/terms/> .
-@prefix prov:  <http://www.w3.org/ns/prov#> .
-@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+@prefix schema: <https://schema.org/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix cito: <http://purl.org/spar/cito/>.
+@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<>
-    a wiki:Source ;
-    dct:title "Ghumare - LLM Wiki v2 Extending Karpathy" ;
-    dct:created "2026-03-15T00:00:00Z"^^xsd:dateTime ;
-    dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
-    wiki:maturity "draft" .
-
-<ghumare---llm-wiki-v2-extending-karpathy.md.meta>
-    prov:wasGeneratedBy </meta/affordances/markdown-projection> .
-
-<#this>
-    dct:identifier "https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2" ;
-    dct:contributor </wiki/people/karpathy-andrej.md#this> .
+<> dct:created "2026-03-15T00:00:00Z"^^xsd:dateTime;
+    dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime;
+    wiki:maturity wiki:draft.
+<#this> dct:identifier "https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2".
+<> dct:title "Ghumare - LLM Wiki v2 Extending Karpathy".
+<#this> dct:contributor <../people/karpathy-andrej.md#this>;
+    skos:prefLabel "Ghumare - LLM Wiki v2 Extending Karpathy".
+<ghumare---llm-wiki-v2-extending-karpathy.md.meta> prov:wasGeneratedBy <../../meta/affordances/markdown-projection>.
+<> a wiki:Page;
+    schema:mainEntity <#this>.
+<#this> a wiki:Source;
+    schema:mainEntityOfPage <>;
+    schema:name "Ghumare - LLM Wiki v2 Extending Karpathy".

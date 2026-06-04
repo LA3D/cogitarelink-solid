@@ -94,6 +94,52 @@ describe("projectionPipeline", () => {
         expect(isographic(new Store(t1), new Store(t2))).toBe(true);
     });
 
+    it("C-T2c: short-form `type: source` in /wiki/concepts/ types <#this> a wiki:Source (not the container's skos:Concept)", async () => {
+        const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+        const WIKI_SOURCE = "https://pod.vardeman.me/vault/ontology/wiki#Source";
+        const SKOS_CONCEPT = "http://www.w3.org/2004/02/skos/core#Concept";
+
+        // The page lives in concepts/ (D98: sources merge into concepts) but its
+        // frontmatter says it IS a source. Frontmatter type wins over container,
+        // and the short-form token "source" resolves through TYPE_MAP → wiki:Source.
+        const body = `---\ntype: source\nidentifier: arXiv:2401.0001\n---\n# A Paper\n[A Paper]{.prefLabel}`;
+        const resourceUri = "http://localhost:3000/wiki/concepts/a-paper.md";
+        const triples = await projectionPipeline.run(resourceUri, body);
+        const thingTypes = triples
+            .filter((q) => q.subject.value === resourceUri + "#this" && q.predicate.value === RDF_TYPE)
+            .map((q) => q.object.value);
+        expect(thingTypes).toContain(WIKI_SOURCE);
+        expect(thingTypes).not.toContain(SKOS_CONCEPT);
+    });
+
+    it("C-T2c: short-form `type: concept` resolves <#this> a skos:Concept (Thing class, not the wiki:Concept dispatch class)", async () => {
+        const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+        const SKOS_CONCEPT = "http://www.w3.org/2004/02/skos/core#Concept";
+        const WIKI_CONCEPT = "https://pod.vardeman.me/vault/ontology/wiki#Concept";
+
+        const body = `---\ntype: concept\n---\n# A Concept\n[A Concept]{.prefLabel}`;
+        const resourceUri = "http://localhost:3000/wiki/concepts/a-concept.md";
+        const triples = await projectionPipeline.run(resourceUri, body);
+        const thingTypes = triples
+            .filter((q) => q.subject.value === resourceUri + "#this" && q.predicate.value === RDF_TYPE)
+            .map((q) => q.object.value);
+        expect(thingTypes).toContain(SKOS_CONCEPT);
+        expect(thingTypes).not.toContain(WIKI_CONCEPT);
+    });
+
+    it("C-T2c: maturity short-form projects the wiki: IRI (PageShape sh:in), not a string literal", async () => {
+        const WIKI_MATURITY = "https://pod.vardeman.me/vault/ontology/wiki#maturity";
+        const WIKI_DRAFT = "https://pod.vardeman.me/vault/ontology/wiki#draft";
+
+        const body = `---\ntype: concept\nmaturity: draft\n---\n# X\n[X]{.prefLabel}`;
+        const resourceUri = "http://localhost:3000/wiki/concepts/x.md";
+        const triples = await projectionPipeline.run(resourceUri, body);
+        const mat = triples.find((q) => q.predicate.value === WIKI_MATURITY);
+        expect(mat).toBeDefined();
+        expect(mat!.object.termType).toBe("NamedNode");
+        expect(mat!.object.value).toBe(WIKI_DRAFT);
+    });
+
     it("Bug F: page resource rdf:type deduplication — prevents <> from being typed as domain class when invariants emit it on <#this>", async () => {
         const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
         const SKOS_CONCEPT = "http://www.w3.org/2004/02/skos/core#Concept";

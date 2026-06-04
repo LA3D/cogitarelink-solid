@@ -36,6 +36,11 @@
     "working-note": "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote",
     "fleeting-note": "https://pod.vardeman.me/vault/ontology/wiki#WorkingNote"
   },
+  "maturityMap": {
+    "draft": "https://pod.vardeman.me/vault/ontology/wiki#draft",
+    "validated": "https://pod.vardeman.me/vault/ontology/wiki#validated",
+    "core": "https://pod.vardeman.me/vault/ontology/wiki#core"
+  },
   "bootstrapPredicateToClass": {
     "https://schema.org/affiliation": "https://schema.org/Organization",
     "https://schema.org/location": "https://schema.org/Place",

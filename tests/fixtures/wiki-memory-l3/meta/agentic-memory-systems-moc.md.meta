@@ -1,21 +1,22 @@
-@prefix dct:   <http://purl.org/dc/terms/> .
-@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
-@prefix prov:  <http://www.w3.org/ns/prov#> .
-@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+@prefix schema: <https://schema.org/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix cito: <http://purl.org/spar/cito/>.
+@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<>
-    a wiki:Concept ;
-    dct:title "Agentic Memory Systems MOC" ;
-    dct:created "2026-04-01T00:00:00Z"^^xsd:dateTime ;
-    dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime ;
-    wiki:maturity "validated" .
-
-<agentic-memory-systems-moc.md.meta>
-    prov:wasGeneratedBy </meta/affordances/markdown-projection> .
-
-<#this>
-    skos:related </wiki/concepts/wiki-memory-l3-profile.md#this> ;
-    skos:related </wiki/concepts/memory-substrate-vs-memory-profile.md#this> ;
-    skos:related </wiki/concepts/procedural-memory.md#this> ;
-    skos:related </wiki/concepts/compile-once-principle.md#this> .
+<> dct:created "2026-04-01T00:00:00Z"^^xsd:dateTime;
+    dct:modified "2026-05-15T00:00:00Z"^^xsd:dateTime;
+    wiki:maturity wiki:validated;
+    dct:title "Agentic Memory Systems MOC".
+<#this> skos:related <wiki-memory-l3-profile.md#this>, <memory-substrate-vs-memory-profile.md#this>, <procedural-memory.md#this>, <compile-once-principle.md#this>;
+    skos:prefLabel "Agentic Memory Systems MOC".
+<agentic-memory-systems-moc.md.meta> prov:wasGeneratedBy <../../meta/affordances/markdown-projection>.
+<> a wiki:Page;
+    schema:mainEntity <#this>.
+<#this> a skos:Concept;
+    schema:mainEntityOfPage <>;
+    schema:name "Agentic Memory Systems MOC".

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { projectFrontmatter, resolveCURIE } from "../src/frontmatterProjection.js";
+import { projectFrontmatter, resolveCURIE, resolveFrontmatterType } from "../src/frontmatterProjection.js";
 
 describe("projectFrontmatter", () => {
     it("projects type to rdf:type with class IRI", () => {
@@ -39,6 +39,19 @@ describe("projectFrontmatter", () => {
         const t2 = projectFrontmatter({ type: "source", created: "...", modified: "...", citekey: "smith-2026-foo" });
         expect(t1.find(t => t.predicate.value === "http://purl.org/dc/terms/identifier")?.object.value).toBe("https://x.com");
         expect(t2.find(t => t.predicate.value === "http://purl.org/dc/terms/identifier")?.object.value).toBe("smith-2026-foo");
+    });
+
+    it("projects maturity as the wiki: IRI, not a string literal (PageShape sh:in)", () => {
+        const triples = projectFrontmatter({ type: "concept", maturity: "draft" });
+        const m = triples.find(t => t.predicate.value === "https://pod.vardeman.me/vault/ontology/wiki#maturity");
+        expect(m?.object.termType).toBe("NamedNode");
+        expect(m?.object.value).toBe("https://pod.vardeman.me/vault/ontology/wiki#draft");
+    });
+
+    it("drops an unrecognized maturity value (no triple, never an invalid literal)", () => {
+        const triples = projectFrontmatter({ type: "concept", maturity: "bogus" });
+        const m = triples.find(t => t.predicate.value === "https://pod.vardeman.me/vault/ontology/wiki#maturity");
+        expect(m).toBeUndefined();
     });
 
     it("ignores unknown frontmatter keys", () => {
@@ -89,6 +102,27 @@ describe("resolveCURIE", () => {
         expect(resolveCURIE("concept")).toBeUndefined();
         expect(resolveCURIE("person")).toBeUndefined();
         expect(resolveCURIE("source")).toBeUndefined();
+    });
+});
+
+// C-T2c: the single resolver shared by the page-type projection and the
+// pipeline's Thing-class resolution.
+describe("resolveFrontmatterType", () => {
+    it("resolves short-form vault tokens to the wiki: dispatch class", () => {
+        expect(resolveFrontmatterType("source")).toBe("https://pod.vardeman.me/vault/ontology/wiki#Source");
+        expect(resolveFrontmatterType("concept")).toBe("https://pod.vardeman.me/vault/ontology/wiki#Concept");
+        expect(resolveFrontmatterType("person")).toBe("https://pod.vardeman.me/vault/ontology/wiki#Person");
+    });
+
+    it("resolves CURIE / absolute types directly (not via TYPE_MAP)", () => {
+        expect(resolveFrontmatterType("skos:Concept")).toBe("http://www.w3.org/2004/02/skos/core#Concept");
+        expect(resolveFrontmatterType("https://chuck.example/biz/Equipment")).toBe("https://chuck.example/biz/Equipment");
+    });
+
+    it("returns undefined for an unrecognized token or non-string", () => {
+        expect(resolveFrontmatterType("not-a-type")).toBeUndefined();
+        expect(resolveFrontmatterType(undefined)).toBeUndefined();
+        expect(resolveFrontmatterType(42)).toBeUndefined();
     });
 });
 

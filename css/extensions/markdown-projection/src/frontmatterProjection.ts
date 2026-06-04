@@ -96,6 +96,43 @@ const TYPE_MAP: Record<string, string> = {
 // Exported for the maps sidecar + cross-language agreement test.
 export const TYPE_MAP_TOKENS: Readonly<Record<string, string>> = TYPE_MAP;
 
+/**
+ * Resolve a frontmatter `type:` value to its class IRI.
+ * Resolution order (single-sourced so the page-type projection and the
+ * pipeline's Thing-class resolution can never diverge — C-T2c):
+ *   1. CURIE form "prefix:local" / absolute IRI → resolveCURIE
+ *   2. Short-form vault token (concept / source / person …) → TYPE_MAP
+ *   3. Otherwise → undefined (unrecognized type is silently dropped — D50
+ *      hallucination guard; the container fallback then governs the Thing class)
+ *
+ * Returns the class IRI a CURIE/absolute resolves to, OR the wiki: DISPATCH
+ * class a short-form maps to (e.g. "source" → wiki:Source). Callers that need
+ * the canonical Thing class (the sh:targetClass the catalog governs, e.g.
+ * skos:Concept) map the result through WIKI_CLASS_TO_THING_CLASS.
+ */
+export function resolveFrontmatterType(type: unknown): string | undefined {
+    if (typeof type !== "string") return undefined;
+    return resolveCURIE(type) ?? TYPE_MAP[type];
+}
+
+// Maturity short-form token → wiki: lifecycle IRI. The vocabulary
+// (overlays/wiki-memory/vocabulary/wiki.ttl) models maturity as IRI-valued
+// skos:Concepts and PageShape constrains wiki:maturity sh:in
+// ( wiki:draft wiki:validated wiki:core ) — so the projection MUST emit the
+// IRI, not a plain string literal. A literal "draft" fails PageShape's
+// InConstraintComponent (C-T2c ground truth). Unrecognized values are dropped
+// (same D50 silent-drop convention as an unrecognized type:), so a typo never
+// produces a triple PageShape would reject at write time.
+const WIKI_NS = "https://pod.vardeman.me/vault/ontology/wiki#";
+const MATURITY_MAP: Record<string, string> = {
+    "draft":     WIKI_NS + "draft",
+    "validated": WIKI_NS + "validated",
+    "core":      WIKI_NS + "core",
+};
+
+// Exported for the maps sidecar + agreement test.
+export const MATURITY_MAP_TOKENS: Readonly<Record<string, string>> = MATURITY_MAP;
+
 const XSD_DT  = "http://www.w3.org/2001/XMLSchema#dateTime";
 const DCT     = "http://purl.org/dc/terms/";
 const FOAF    = "http://xmlns.com/foaf/0.1/";
@@ -123,16 +160,21 @@ export function projectFrontmatter(fm: Frontmatter): Quad[] {
     const out: Quad[] = [];
 
     if (fm.type) {
-        // Resolution order: CURIE → absolute IRI → TYPE_MAP short-form
-        const curie = resolveCURIE(fm.type);
-        const cls   = curie ?? TYPE_MAP[fm.type];
+        // CURIE / absolute IRI / short-form vault token (concept, source, …)
+        const cls = resolveFrontmatterType(fm.type);
         if (cls) out.push(quad(subj, namedNode(RDF_TYPE), namedNode(cls)));
     }
 
     if (fm.title)    out.push(quad(subj, namedNode(DCT + "title"),    literal(fm.title)));
     if (fm.created)  out.push(quad(subj, namedNode(DCT + "created"),  literal(fm.created,  namedNode(XSD_DT))));
     if (fm.modified) out.push(quad(subj, namedNode(DCT + "modified"), literal(fm.modified, namedNode(XSD_DT))));
-    if (fm.maturity) out.push(quad(subj, namedNode(WIKI + "maturity"), literal(fm.maturity)));
+    // maturity is IRI-valued (wiki:draft/validated/core) — PageShape sh:in
+    // rejects a string literal. Map the short-form token to its IRI; drop
+    // unrecognized values (D50).
+    if (fm.maturity) {
+        const m = MATURITY_MAP[fm.maturity];
+        if (m) out.push(quad(subj, namedNode(WIKI + "maturity"), namedNode(m)));
+    }
 
     // identifier wins over citekey; both map to dct:identifier
     const id = fm.identifier ?? fm.citekey;

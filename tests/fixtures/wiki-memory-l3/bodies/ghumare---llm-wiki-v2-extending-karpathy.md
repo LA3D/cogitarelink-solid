@@ -8,6 +8,8 @@ identifier: https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2
 
 # Ghumare - LLM Wiki v2 Extending Karpathy
 
+[Ghumare - LLM Wiki v2 Extending Karpathy]{.prefLabel}
+
 Companion to Karpathy's LLM Wiki gist. Extends the pattern with lifecycle metadata, typed graph, hybrid search, hooks, and multi-agent considerations.
 
 Author: [[karpathy-andrej]]{.author}.
