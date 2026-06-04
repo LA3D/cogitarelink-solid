@@ -118,3 +118,48 @@ The Pod-native move under consideration: mint each scheme record as a dereferenc
 that serves all three layers at one IRI — and use THAT IRI as the literal's datatype, so
 `"10.1234/x"^^<…/identifier-schemes/doi>` makes the type itself the progressive-disclosure entry
 point. Open ODP lookup: check ontologydesignpatterns.org for an Identifier CP when reachable.
+
+## 7. Lineage audit: PROF / DCAT / schema.org-bioschemas / identifiers.org (added same day)
+
+**Confirmed:** DXWG produced BOTH DCAT (v2 REC 2020, v3 REC 2024) and PROF (Note 2019-12-18) +
+conneg-by-profile. PROF editors: Rob Atkinson (OGC) + Nicholas Car (SURROUND, ex-CSIRO; now an
+RDFLib maintainer, KurrawongAI) — the geospatial/OGC roots are real (PROF's status text cites the
+OGC Modular Specification + DCAT-AP needs + DC Application Profile guidelines; PROF "borrows its
+main structures from DCAT": Profile/ResourceDescriptor parallel Dataset/Distribution). GeoSPARQL 1.1
+is itself declared as a `prof:Profile` with ResourceDescriptors (the citable exemplar:
+opengeospatial.github.io/ogc-geosparql/geosparql11/, profile.ttl). Lars Svensson worked the conneg
+side, not a PROF editor.
+
+**The one sharpening (a design lesson):** DXWG DELIBERATELY kept PROF and DCAT decoupled — issue
+w3c/dxwg#808 ("Formally align PROF to DCAT", opened by Car) was REJECTED because `prof:isProfileOf`
+is a dependency relation DCAT doesn't model. The family composes via **`dct:conformsTo`**, never by
+cross-subclassing. DCAT 3 does not reference PROF. → Our composition rule: bridge with conformsTo /
+exactMatch; do not subclass across family members.
+
+**Crosswalk artifacts (citable):**
+- DCAT 3 Appendix B schema.org alignment (informative; tracked as dxwg#251 — framed AS a profile).
+- **JRC DCAT-AP→schema.org mapping** (ec-jrc.github.io/dcat-ap-to-schema-org/): identifiers map
+  `skos:notation → schema:value`, **the notation's DATATYPE → schema:propertyID** — i.e. the
+  ADMS-datatype form has a DOCUMENTED crosswalk to the PropertyValue form. Our derived-projection
+  rule can cite this rather than invent it.
+- **Google Dataset Search** identifier guidance: accepts URL/Text/PropertyValue and explicitly says
+  to attach "DOIs **or Compact Identifiers**" — mainstream consumption of exactly our derived form.
+- idot v0.3: `idot:Registry a dcat:Catalog` (!), `Namespace ⊑ dcat:Dataset`,
+  `Resource ⊑ dcat:DataService`, served via R2RML/Ontop; Bioregistry also exposes DCAT
+  (bioregistry.io/dcat) — a second live registry-as-DCAT instance.
+- **HCLS Dataset Descriptions (W3C IG Note, 2015-05-14)** — the smoking-gun convergence: composed
+  idot + DCAT + VoID + DC + PROV-O in one "community profile" FOUR YEARS before PROF existed
+  (editors Gray/Baran/Marshall/Dumontier). The communities arrived at "application profile over a
+  DCAT/identifier core" empirically.
+
+**Honest seams (do not overclaim):** no shared authorship between the ELIXIR/identifiers.org camp
+and the PROF editors (institutional/conceptual convergence, not a coordinated program); idot's
+DCAT-base rationale is under-documented; bioschemas profiles (cardinality/marginality application
+profiles of schema.org, authored in their DDE editor) are NOT officially expressed in SHACL or PROF
+— an open gap our SHACL-expressed/PROF-declared approach brushes against; OGC API Records↔PROF
+unconfirmed.
+
+**Net:** treating PROF + DCAT + idot + schema.org/bioschemas as one family is historically grounded
+— shared substrate (DCAT + dct:conformsTo + the application-profile pattern), assembled by
+overlapping communities rather than one committee. Our design instantiates the convergence and adds
+the layer none of them finished: the agent-affordance dispatch (d).
