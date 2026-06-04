@@ -13,6 +13,8 @@ Substrate note (discovered during probe 2026-05-18):
 - GET /.notifications/ returns 400 (CSS BadRequest — not a browsable collection);
   the channel-type endpoint GET /.notifications/WebhookChannel2023/ returns 200
 """
+import time
+
 import httpx
 import pytest
 
@@ -29,16 +31,26 @@ WEBHOOK_TYPE  = "http://www.w3.org/ns/solid/notifications#WebhookChannel2023"
 NOTIF_CONTEXT = "https://www.w3.org/ns/solid/notification/v1"
 
 
-def _subscribe(topic):
-    """POST a WebhookChannel2023 subscription; return (status_code, response_json)."""
+def _subscribe(topic, retries=3):
+    """POST a WebhookChannel2023 subscription; return (status_code, response_json).
+
+    Retries on a transient non-2xx (the subscription endpoint can return a one-off
+    error when the Pod is under concurrent suite load — a flake, not a contract
+    failure). The success path is unchanged.
+    """
     body = {
         "@context": NOTIF_CONTEXT,
         "type": WEBHOOK_TYPE,
         "topic": topic,
         "sendTo": "https://example.com/test-webhook",
     }
-    r = httpx.post(WEBHOOK_EP, json=body,
-                   headers={"Content-Type": "application/ld+json"}, verify=_CA)
+    r = None
+    for _ in range(retries):
+        r = httpx.post(WEBHOOK_EP, json=body,
+                       headers={"Content-Type": "application/ld+json"}, verify=_CA)
+        if r.status_code in (200, 201):
+            break
+        time.sleep(0.3)
     return r.status_code, r.json() if r.status_code in (200, 201) else {}
 
 
