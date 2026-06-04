@@ -10,6 +10,9 @@
         "@context": {
           "podBase": {
             "@id": "mrc:dist-cjs/converter.jsonld#MarkdownRdfaConverter_podBase"
+          },
+          "storagePath": {
+            "@id": "mrc:dist-cjs/converter.jsonld#MarkdownRdfaConverter_storagePath"
           }
         }
       }
