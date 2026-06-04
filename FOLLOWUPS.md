@@ -2,12 +2,28 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## 🔬 Agentic-fragility audit (2026-06-03) — R1/R2 correctness items OPEN
+## 🔬 Agentic-fragility audit (2026-06-03) — ✅ REMEDIATED 2026-06-04 (branch `fragility-remediation`)
 
-Holistic 4-slice sweep of all agent-written code (Chuck's lenses: hardcodes / RDF-model bypass /
-fragile regex / + agreement-tests & mock-masked seams). **Canonical report:
-`docs/plans/2026-06-03-agentic-fragility-audit.md`** (5 systemic patterns, R1–R6 remediation).
-Highest-urgency (silently wrong on the live Pod today, or security-test gaps):
+**R1–R6 implemented across 11 commits** (R-T1..R-T8 + final-review fixes + boot fix); final
+cross-batch review APPROVED-with-followups; deployed via `make reset`; live e2e 7/7; audit 0 ERROR;
+**dual-view identity verified live** (render href ≡ projected `.meta` edge for the same wikilink).
+Also: remark-AST projection parsing (maskCodeSpans retired), live-Type-Index-wins merge, frame
+partition derived from governance, agreement tests + `maps.json` sidecar over every mirror (two
+reconciled divergences: CURIE prefixes, the Python importer's pre-D70 `vault:` classes), Graph-based
+Python patches (injection class closed), one conftest layer, WAC real-shape tests. **Still-deferred
+residue:**
+- **`dct:identifier` Page/Thing split (design decision):** the pipeline derives `dct:identifier` on
+  `<>` while an authored `{.identifier}` span lands on `<#this>`; both ungoverned, non-leaking.
+  Decide: unify the subject + whether to govern it.
+- `pathConstraint.ts` agent-message prose still says `</vault/ontology/wiki>` (cosmetic literal).
+- **Add a config-term↔context-mapping agreement test** — the `Invalid predicate IRI` boot class
+  recurred this sprint (markdown-render `storagePath`) even after Task 10 documented it; third
+  occurrence earns the structural guard (parse each config block's terms against the owning
+  extension's components context).
+- mem-trigger's `ContradictionDetector`/`UnprocessableWriteDetector` get `eventsContainer` threading
+  when wired (fields exist; call-sites don't yet).
+
+### (historical) the original R1/R2 items — ALL FIXED 2026-06-04; details for the record:
 
 1. ✅ **Render↔projection URL identity split — FIXED (R-T2).** Single URL minter `targetUrlFor`
    (`shared/markdown-parsing/src/wikiUrl.ts`); `HardcodedResolver` is now a thin adapter; the
