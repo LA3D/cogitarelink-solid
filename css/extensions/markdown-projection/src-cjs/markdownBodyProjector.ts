@@ -23,6 +23,23 @@ import type { ResourceIdentifier } from "@solid/community-server/dist/http/repre
 import type { Quad } from "n3";
 import * as path from "path";
 import { fsPathFromUrl } from "./fsPaths";
+import { NoOpPostProjectionHook } from "./NoOpPostProjectionHook";
+
+// Hook contract — structurally compatible with mem-trigger's IPostProjectionHook.
+// Inline type avoids cross-package import (same approach as listener.ts).
+interface IPostProjectionHook {
+    onEdgesWritten(input: {
+        subject: string;
+        edges: Array<{ predicate: string; object: string }>;
+        timestamp: Date;
+    }): Promise<void>;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function debug(...args: unknown[]): void {
+    // eslint-disable-next-line no-console
+    console.error("[markdown-body-projector]", ...args);
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const runtimeImport = new Function("specifier", "return import(specifier)") as (s: string) => Promise<any>;
@@ -62,6 +79,10 @@ export class MarkdownBodyProjector {
     private readonly dataDir: string;
     // Pod storage root path under baseUrl, injected via Components.js (default "/vault").
     private readonly storagePath: string;
+    // Post-projection hook — optional, wildcard range to accept any structurally-compatible
+    // class from any extension (NoOpPostProjectionHook by default, MemTriggerPostProjectionHook
+    // when mem-trigger overrides). Mirrors listener.ts's hook param EXACTLY.
+    private readonly postProjectionHook: IPostProjectionHook;
     private routingMap: Record<string, string> | null = null;
     // Typed as any — TypeIndexLoader is loaded from ESM at runtime.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,6 +92,7 @@ export class MarkdownBodyProjector {
         baseUrl: string,
         dataDir: string,
         storagePath = "/vault",
+        postProjectionHook?: IPostProjectionHook,
     ) {
         this.baseUrl = baseUrl.replace(/\/$/, "");
         this.dataDir = dataDir;
@@ -78,6 +100,7 @@ export class MarkdownBodyProjector {
         // (lines 176-177) so storageBase = baseUrl + storagePath joins cleanly.
         const sp = storagePath.startsWith("/") ? storagePath : `/${storagePath}`;
         this.storagePath = sp.replace(/\/$/, "");
+        this.postProjectionHook = postProjectionHook ?? new NoOpPostProjectionHook();
     }
 
     // Storage root URL = baseUrl + storagePath. TypeIndexLoader and loadRoutingMap
@@ -144,6 +167,11 @@ export class MarkdownBodyProjector {
     // predicates (D81 Model A — agent-owned triples outside the governed set are
     // preserved). The floor delegates here because MetaWriter is ESM-only (loaded
     // via the runtime pipeline import) and the floor must stay profile-agnostic.
+    //
+    // After writing .meta, surfaces <#this>-subject edges to postProjectionHook
+    // (consumed by mem-trigger's ContradictionDetector). Hook errors are swallowed —
+    // substrate event archival must not block .meta writes. Mirrors listener.ts's
+    // hook-call block exactly (same edge-extraction + try/catch-swallow pattern).
     public async materialize(
         identifier: ResourceIdentifier,
         quads: Quad[],
@@ -152,5 +180,21 @@ export class MarkdownBodyProjector {
         const { MetaWriter } = await getPipeline();
         const fsPath = fsPathFromUrl(identifier.path, this.baseUrl, this.dataDir);
         await new MetaWriter().replaceGoverned(fsPath, quads, governed, identifier.path);
+
+        // Surface <#this>-subject edges to the post-projection hook.
+        // thisIri matches the convention in listener.ts (resource path + "#this").
+        const thisIri = `${identifier.path}#this`;
+        const thingEdges = quads
+            .filter((q) => q.subject.value === thisIri)
+            .map((q) => ({ predicate: q.predicate.value, object: q.object.value }));
+        try {
+            await this.postProjectionHook.onEdgesWritten({
+                subject: thisIri,
+                edges: thingEdges,
+                timestamp: new Date(),
+            });
+        } catch (hookErr) {
+            debug(`postProjectionHook error (substrate event archival failed; .meta still written): ${(hookErr as Error).message}`);
+        }
     }
 }

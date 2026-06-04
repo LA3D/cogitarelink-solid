@@ -221,22 +221,6 @@ def test_unprocessable_write_emits_event():
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "D108-wiring gap: ContradictionDetector is driven by "
-        "MarkdownProjectionListener.postProjectionHook (onEdgesWritten), but the "
-        "D108 admission floor moved projection IN-BAND into AdmissionFloorStore "
-        "(synchronous, pre-commit). The in-band path does NOT call the "
-        "post-projection hook, and the source has no onEdgesWritten call site, so "
-        "no mem:ContradictionDetected event fires. The body still correctly "
-        "projects cito:agreesWith + cito:disagreesWith (verified), so the detector "
-        "input is intact — only the hook invocation is disconnected. Restoring the "
-        "floor->post-projection-hook wiring is D108/D109 substrate work, out of "
-        "scope for the test-hygiene sprint. This xfail flips to a failure (alert) "
-        "when the wiring is restored."
-    ),
-)
 def test_contradiction_detected_emits_event():
     """A markdown body with both [[X]]{.supports} and [[X]]{.criticizes} wikilinks
     projects to .meta as cito:agreesWith + cito:disagreesWith (the configured
@@ -280,18 +264,22 @@ def test_contradiction_detected_emits_event():
     )
 
     # Verify the event carries both contradicting predicates (parse-based).
+    # ContradictionDetector records them as mem:contradictingPredicate values
+    # (IRIs of the predicates that contradict) rather than as direct edge predicates.
     from rdflib import URIRef as _URIRef
     CITO = "http://purl.org/spar/cito/"
+    MEM_NS = f"{_POD}ontology/mem#"
     ev_url3 = matches[0]
     ev_resp3 = CLIENT.get(ev_url3, headers={"Accept": "text/turtle"})
     eg3 = Graph().parse(data=ev_resp3.text, format="turtle", publicID=ev_url3)
-    agrees_triples    = list(eg3.triples((None, _URIRef(f"{CITO}agreesWith"), None)))
-    disagrees_triples = list(eg3.triples((None, _URIRef(f"{CITO}disagreesWith"), None)))
-    assert agrees_triples, (
-        f"Event missing cito:agreesWith predicate: {ev_resp3.text[:500]}"
+    # mem:contradictingPredicate holds the IRI of each contradicting predicate as its object
+    MEM_CONTRADICTING = _URIRef(f"{MEM_NS}contradictingPredicate")
+    contradicting_values = {str(o) for _, _, o in eg3.triples((None, MEM_CONTRADICTING, None))}
+    assert f"{CITO}agreesWith" in contradicting_values, (
+        f"Event missing cito:agreesWith in mem:contradictingPredicate: {ev_resp3.text[:500]}"
     )
-    assert disagrees_triples, (
-        f"Event missing cito:disagreesWith predicate: {ev_resp3.text[:500]}"
+    assert f"{CITO}disagreesWith" in contradicting_values, (
+        f"Event missing cito:disagreesWith in mem:contradictingPredicate: {ev_resp3.text[:500]}"
     )
 
 

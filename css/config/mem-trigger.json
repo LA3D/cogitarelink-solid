@@ -75,6 +75,15 @@
       }
     },
     {
+      "comment": "Bind MarkdownBodyProjector's postProjectionHook to MemTrigger impl when mem-trigger is installed. Overrides the NoOpPostProjectionHook default declared in markdown-projection.json. Uses the same hook instance so ContradictionDetector receives events from BOTH the in-band floor path (MarkdownBodyProjector.materialize) AND the backstop listener path (MarkdownProjectionListener.project) — restoring C-T4b: ContradictionDetector hears in-band writes again.",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:cogitarelink:MarkdownBodyProjector" },
+      "overrideParameters": {
+        "@type": "MarkdownBodyProjector",
+        "postProjectionHook": { "@id": "urn:cogitarelink:MemTriggerPostProjectionHook" }
+      }
+    },
+    {
       "comment": "Replace WorkerParallelInitializer handlers with all three listeners. This Override is imported AFTER markdown-projection.json (which sets [Memento, MarkdownProjection]) so its overrideParameters wins. K1: only one Override per instance, hence the consolidation pattern (same as memento.json ↔ markdown-projection.json relationship). All three listeners MUST be listed here because Override semantics replace rather than append.",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:WorkerParallelInitializer" },

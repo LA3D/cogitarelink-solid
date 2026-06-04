@@ -23,12 +23,13 @@
       "stampPredicate": "https://pod.vardeman.me/vault/ontology/substrate#bodyHash"
     },
     {
-      "comment": "MarkdownBodyProjector — the text/markdown BodyProjector implementation injected into the AdmissionFloorStore (D108 Front-2). Projects a markdown body to its candidate .meta graph (project), and materializes the admitted graph + body-hash stamp into the resource's .meta in-band (materialize). Same baseUrl/dataDir/storagePath wiring as the listener above; it loads the ESM projection pipeline + MetaWriter at runtime (the floor stays profile-agnostic). Injected across bundles via the floor's wildcard projector range.",
+      "comment": "MarkdownBodyProjector — the text/markdown BodyProjector implementation injected into the AdmissionFloorStore (D108 Front-2). Projects a markdown body to its candidate .meta graph (project), and materializes the admitted graph + body-hash stamp into the resource's .meta in-band (materialize). Same baseUrl/dataDir/storagePath wiring as the listener above; it loads the ESM projection pipeline + MetaWriter at runtime (the floor stays profile-agnostic). Injected across bundles via the floor's wildcard projector range. postProjectionHook fires after materialize() writes .meta — consumed by MemTrigger's ContradictionDetector (swapped for MemTriggerPostProjectionHook by mem-trigger.json Override when mem-trigger is installed).",
       "@id": "urn:cogitarelink:MarkdownBodyProjector",
       "@type": "MarkdownBodyProjector",
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
       "dataDir": { "@id": "urn:solid-server:default:variable:rootFilePath" },
-      "storagePath": "/vault"
+      "storagePath": "/vault",
+      "postProjectionHook": { "@id": "urn:cogitarelink:NoOpPostProjectionHook" }
     }
   ]
 }

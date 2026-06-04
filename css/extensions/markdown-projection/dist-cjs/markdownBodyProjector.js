@@ -55,6 +55,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MarkdownBodyProjector = void 0;
 const path = __importStar(require("path"));
 const fsPaths_1 = require("./fsPaths");
+const NoOpPostProjectionHook_1 = require("./NoOpPostProjectionHook");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function debug(...args) {
+    // eslint-disable-next-line no-console
+    console.error("[markdown-body-projector]", ...args);
+}
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const runtimeImport = new Function("specifier", "return import(specifier)");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,17 +87,22 @@ class MarkdownBodyProjector {
     dataDir;
     // Pod storage root path under baseUrl, injected via Components.js (default "/vault").
     storagePath;
+    // Post-projection hook — optional, wildcard range to accept any structurally-compatible
+    // class from any extension (NoOpPostProjectionHook by default, MemTriggerPostProjectionHook
+    // when mem-trigger overrides). Mirrors listener.ts's hook param EXACTLY.
+    postProjectionHook;
     routingMap = null;
     // Typed as any — TypeIndexLoader is loaded from ESM at runtime.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     typeIndexLoader = null;
-    constructor(baseUrl, dataDir, storagePath = "/vault") {
+    constructor(baseUrl, dataDir, storagePath = "/vault", postProjectionHook) {
         this.baseUrl = baseUrl.replace(/\/$/, "");
         this.dataDir = dataDir;
         // Normalise: leading "/", no trailing "/" — mirrors listener.ts constructor
         // (lines 176-177) so storageBase = baseUrl + storagePath joins cleanly.
         const sp = storagePath.startsWith("/") ? storagePath : `/${storagePath}`;
         this.storagePath = sp.replace(/\/$/, "");
+        this.postProjectionHook = postProjectionHook ?? new NoOpPostProjectionHook_1.NoOpPostProjectionHook();
     }
     // Storage root URL = baseUrl + storagePath. TypeIndexLoader and loadRoutingMap
     // both require this base (not the server root) to find publicTypeIndex and
@@ -133,10 +144,31 @@ class MarkdownBodyProjector {
     // predicates (D81 Model A — agent-owned triples outside the governed set are
     // preserved). The floor delegates here because MetaWriter is ESM-only (loaded
     // via the runtime pipeline import) and the floor must stay profile-agnostic.
+    //
+    // After writing .meta, surfaces <#this>-subject edges to postProjectionHook
+    // (consumed by mem-trigger's ContradictionDetector). Hook errors are swallowed —
+    // substrate event archival must not block .meta writes. Mirrors listener.ts's
+    // hook-call block exactly (same edge-extraction + try/catch-swallow pattern).
     async materialize(identifier, quads, governed) {
         const { MetaWriter } = await getPipeline();
         const fsPath = (0, fsPaths_1.fsPathFromUrl)(identifier.path, this.baseUrl, this.dataDir);
         await new MetaWriter().replaceGoverned(fsPath, quads, governed, identifier.path);
+        // Surface <#this>-subject edges to the post-projection hook.
+        // thisIri matches the convention in listener.ts (resource path + "#this").
+        const thisIri = `${identifier.path}#this`;
+        const thingEdges = quads
+            .filter((q) => q.subject.value === thisIri)
+            .map((q) => ({ predicate: q.predicate.value, object: q.object.value }));
+        try {
+            await this.postProjectionHook.onEdgesWritten({
+                subject: thisIri,
+                edges: thingEdges,
+                timestamp: new Date(),
+            });
+        }
+        catch (hookErr) {
+            debug(`postProjectionHook error (substrate event archival failed; .meta still written): ${hookErr.message}`);
+        }
     }
 }
 exports.MarkdownBodyProjector = MarkdownBodyProjector;

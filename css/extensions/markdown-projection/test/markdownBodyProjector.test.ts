@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "fs";
 import { join, dirname } from "path";
 import { tmpdir } from "os";
@@ -51,6 +51,69 @@ describe("MarkdownBodyProjector", () => {
       expect(out.getQuads(null, namedNode("http://www.w3.org/2004/02/skos/core#prefLabel"), null, null)).toHaveLength(1);
       // agent-owned predicate preserved (D81 Model A)
       expect(out.getQuads(null, namedNode("urn:agentOwned"), null, null)).toHaveLength(1);
+    });
+
+    it("postProjectionHook receives <#this>-subject edges after materialize writes .meta", async () => {
+      dir = mkdtempSync(join(tmpdir(), "mbp-hook-"));
+      const url = "https://pod.vardeman.me/vault/wiki/concepts/y.md";
+      const thisIri = `${url}#this`;
+      const fsPath = join(dir, "vault/wiki/concepts/y.md");
+      mkdirSync(dirname(fsPath), { recursive: true });
+      writeFileSync(fsPath, "# y");
+
+      // Recording fake hook — captures the onEdgesWritten call
+      let recorded: { subject: string; edges: Array<{ predicate: string; object: string }>; timestamp: Date } | null = null;
+      const fakeHook = {
+        onEdgesWritten: vi.fn(async (input: typeof recorded) => { recorded = input; }),
+      };
+
+      const p = new MarkdownBodyProjector("https://pod.vardeman.me", dir, "/vault", fakeHook as any);
+      const SKOS_PREF = "http://www.w3.org/2004/02/skos/core#prefLabel";
+      const quads = [
+        // <#this>-subject quad — must appear in hook payload
+        quad(namedNode(thisIri), namedNode(SKOS_PREF), literal("Y")),
+        // <> (page)-subject quad — must NOT appear in hook payload
+        quad(namedNode(url), namedNode("http://purl.org/dc/terms/title"), literal("Y page")),
+      ];
+
+      await p.materialize({ path: url } as any, quads, [SKOS_PREF]);
+
+      expect(fakeHook.onEdgesWritten).toHaveBeenCalledOnce();
+      expect(recorded).not.toBeNull();
+      expect(recorded!.subject).toBe(thisIri);
+      // Only the <#this>-subject quad is passed
+      expect(recorded!.edges).toHaveLength(1);
+      expect(recorded!.edges[0].predicate).toBe(SKOS_PREF);
+      expect(recorded!.edges[0].object).toBe("Y");
+      expect(recorded!.timestamp).toBeInstanceOf(Date);
+    });
+
+    it("materialize still succeeds when postProjectionHook throws", async () => {
+      dir = mkdtempSync(join(tmpdir(), "mbp-hook-err-"));
+      const url = "https://pod.vardeman.me/vault/wiki/concepts/z.md";
+      const thisIri = `${url}#this`;
+      const fsPath = join(dir, "vault/wiki/concepts/z.md");
+      mkdirSync(dirname(fsPath), { recursive: true });
+      writeFileSync(fsPath, "# z");
+
+      const throwingHook = {
+        onEdgesWritten: vi.fn(async () => { throw new Error("hook exploded"); }),
+      };
+
+      const p = new MarkdownBodyProjector("https://pod.vardeman.me", dir, "/vault", throwingHook as any);
+      const SKOS_PREF = "http://www.w3.org/2004/02/skos/core#prefLabel";
+      const quads = [
+        quad(namedNode(thisIri), namedNode(SKOS_PREF), literal("Z")),
+      ];
+
+      // Must NOT throw — hook errors are swallowed (substrate event archival must not block .meta writes)
+      await expect(
+        p.materialize({ path: url } as any, quads, [SKOS_PREF])
+      ).resolves.toBeUndefined();
+
+      // The .meta was still written despite the hook throwing
+      const out = new Store(new Parser().parse(readFileSync(`${fsPath}.meta`, "utf8")));
+      expect(out.getQuads(null, namedNode(SKOS_PREF), null, null)).toHaveLength(1);
     });
   });
 });

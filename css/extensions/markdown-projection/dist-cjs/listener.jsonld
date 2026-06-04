@@ -71,12 +71,17 @@
           "comment": "Pod storage root path under baseUrl (e.g. /vault). Optional — the constructor defaults to /vault.",
           "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_storagePath",
           "range": "xsd:string"
+        },
+        {
+          "comment": "IPostProjectionHook — optional, wildcard range to accept any structurally-compatible class from any extension (NoOpPostProjectionHook by default, MemTriggerPostProjectionHook when mem-trigger overrides). Mirrors MarkdownProjectionListener's hook param exactly.",
+          "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_postProjectionHook"
         }
       ],
       "constructorArguments": [
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_baseUrl" },
         { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_dataDir" },
-        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_storagePath" }
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_storagePath" },
+        { "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_postProjectionHook" }
       ]
     }
   ]

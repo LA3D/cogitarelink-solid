@@ -43,6 +43,9 @@
           },
           "storagePath": {
             "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_storagePath"
+          },
+          "postProjectionHook": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownBodyProjector_postProjectionHook"
           }
         }
       }
