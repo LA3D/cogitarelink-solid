@@ -2,6 +2,34 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## ⚙ Cleanup sprint (2026-06-04, branch `cleanup-sprint`) — SHIPPED; residue list
+
+Closed: **the Components.js config guard** (offline JSON-LD parse with the boot parser + @type→descriptor
+resolution — the 3×-recurrence `Invalid predicate IRI` class is dead; proven by historical-bug replay);
+**`dct:identifier` unified on `<#this>`** (derived slug killed — the URI is the identifier; frontmatter
+citekey re-pointed; governed on Source; SourceShape datatype loosened for future scheme-typed literals);
+**multi-`constrainedBy` merged-shape dispatch** (SourceShape fires live — D108 §1.5 complete; parity =
+set-equality vs the shapetree; upstream one-shape guard lifted); **short-form `type:` tokens resolve the
+Thing class** + `wiki:maturity` emits the IRI the shape declares; **`audit_type_index`** (caught real
+stale-registration residue on first run; severities D100-corrected: same-origin-outside-root=WARN,
+off-origin=ERROR); **`make test-js`** (643 TS guard tests in the default loop); **post-projection hook
+restored on the in-band path** (ContradictionDetector hears floor writes; config guard validated the
+wiring offline — first dogfood); **test suite honestly green** both Pod-up (0 failed/0 errors) and
+Pod-down (0 ConnectErrors, gated skips); L4-test teardown; memento de-flake (async-commit poll).
+
+Residue (deliberate, tracked):
+1. **Dup-container WARN** — `wiki/concepts/` hosts both `skos:Concept` and `wiki:Source` (intentional,
+   D98). Resolve only if/when Source gets a dedicated container under future D108 SKOS work.
+2. **mem-trigger detectors**: ContradictionDetector + BoundExceeded live; `ReflectionDue`/
+   `UnprocessableWrite` remain unwired v1 stubs (fields ready, call-sites absent).
+3. **Test cleanup-discipline pass** — several live tests still leave `drain-*`/`test-*` writes (the L4
+   test now cleans up; sweep the rest with autouse teardown so long sessions don't bloat the dev Pod).
+4. **Pod-template `resources/` residue** — `test_no_para_residue` runtime-skips while the reset template
+   seeds the empty PARA-era container; fix the template, the test then enforces.
+5. `make test-js` suppresses stderr on failure (print-on-fail would help debugging); minor.
+6. `test_agent_enrichment_survives_body_rewrite` stays strict-xfail (D82 `.meta.agent` sidecar — the one
+   genuinely-deferred case).
+
 ## 🔬 Agentic-fragility audit (2026-06-03) — ✅ REMEDIATED 2026-06-04 (branch `fragility-remediation`)
 
 **R1–R6 implemented across 11 commits** (R-T1..R-T8 + final-review fixes + boot fix); final
