@@ -26,7 +26,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
-testpaths = ["tests/pytest"]
+testpaths = ["tests"]
 markers = [
     "integration: tests requiring a running CSS pod",
     "sparql: SPARQL tests requiring Comunica",

@@ -35,10 +35,14 @@ def client():
 @pytest.fixture(scope="module")
 def seeded_pages(client: httpx.Client):
     """PUT a small known set of markdown pages and tear down afterward."""
+    # concepts/ pages carry a [Label]{.prefLabel} span to clear the D108 admission
+    # floor (ConceptShape requires skos:prefLabel). working/ is permissive (D73) so
+    # delta needs none. The spans are just extra body text — wiki-search greps the
+    # body, so the search-term matches below are unaffected.
     pages = {
-        "concepts/wsearch-alpha.md": "# alpha\n\nthis page discusses progressive disclosure deeply.\n",
-        "concepts/wsearch-beta.md": "# beta\n\nESPRESSO is the access-control system.\nProgressive disclosure is also mentioned.\n",
-        "concepts/wsearch-gamma.md": "# gamma\n\nnothing relevant here at all.\n",
+        "concepts/wsearch-alpha.md": "# alpha\n\n[alpha]{.prefLabel}\n\nthis page discusses progressive disclosure deeply.\n",
+        "concepts/wsearch-beta.md": "# beta\n\n[beta]{.prefLabel}\n\nESPRESSO is the access-control system.\nProgressive disclosure is also mentioned.\n",
+        "concepts/wsearch-gamma.md": "# gamma\n\n[gamma]{.prefLabel}\n\nnothing relevant here at all.\n",
         "working/wsearch-delta.md": "# delta\n\nworking note about progressive disclosure and ESPRESSO together.\n",
     }
     headers = {"Content-Type": "text/markdown"}

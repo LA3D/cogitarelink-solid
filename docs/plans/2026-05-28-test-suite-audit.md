@@ -76,3 +76,72 @@ Current/✅: `addressbook_*`, `owner_identity_*`, `overlay_*` parsers, `pod_audi
 **Deeper follow-up (coverage / false-green):** passing live tests were assumed consistent because they pass against the live Pod — but a focused pass should confirm the high-value ones (shape validations, projection invariants, two-hierarchy routing) assert *current* behavior and aren't vacuously green. Sample-audit during the refactor.
 
 **Scope note:** none of this blocks the D107 merge — these failures pre-date D107 (proven). This is a dedicated test-hygiene sprint.
+
+---
+
+## RESOLVED 2026-06-04 — C-T4 (test suite to honest green)
+
+Baseline at sprint start: **38 failed / 318 passed / 11 skipped / 1 xfailed / 15 errors**.
+Final: **Pod up → 354 passed / 13 skipped / 3 xfailed / 0 failed / 0 errors**;
+**Pod down → 182 passed (offline) / 188 skipped (gated) / 0 errors**.
+
+New root cause not in the original audit: the **D108 admission floor** now 422s any PUT
+to `/wiki/concepts/` lacking a `[Label]{.prefLabel}` body span. That cascaded into the
+15 collection errors + a swath of the failures (mem-operations, mem-events, projection,
+thing, wiki-search fixture). Fix = author floor-conformant bodies (add the prefLabel
+grammar span); these then assert their real invariants against the live Pod.
+
+Structural items (§1):
+- **A** — RESOLVED: `pyproject.toml testpaths = ["tests"]` (was `["tests/pytest"]`).
+- **B/C** — RESOLVED: `tests/conftest.py` gains a `pytest_runtest_setup` hook that
+  skips `integration`-marked tests (Pod-probe cached per session) BEFORE any fixture
+  runs — so module/session-scoped live fixtures skip cleanly instead of ConnectError-ing
+  at setup. `tests/integration/conftest.py` auto-marks only the **live** modules there
+  (regex for httpx-verb / CLIENT-verb / `_pod_base()`), leaving the 17 offline pyshacl
+  shape tests runnable Pod-down. Root live files (`test_wiki_memory_l3_discovery`,
+  `…_listener_integration`) carry module `pytestmark = pytest.mark.integration`.
+- **D/E** — already landed in R-T8 (shared `resolve_ca`/`pod_client`); comunica fixtures
+  retired with the `test_sparql.py` deletion.
+
+Tier dispositions (§2/§3):
+- `tests/pytest/test_sparql.py` — DELETED (D3/D29: Comunica moved to solid-agent-skills;
+  queried gone `/resources/concepts/` PARA path; needed the dropped :8080 sidecar).
+- `tests/pytest/test_vault_import.py` — DELETED (D70: PARA `/resources/concepts/` content
+  not seeded; importer is a non-MVP use case; offline rdf_gen smoke in `test_rdf_gen.py`
+  covers the RDF generation).
+- `test_memento.py::test_vault_data_survives` — DELETED (asserted 50+ pre-D70 vault-import
+  entries; container is now empty residue; Memento mechanism covered by the other 11 tests).
+- `test_substrate_cleanup.py` — FIXED to D98/D107 (`pages`/`sources`→`concepts` + schema.org
+  containers; `procedure.shacl`→`howto`; Type Index registers concrete Thing classes not
+  `wiki:Page`; vocab served EXTENSION-LESS at `/ontology/wiki` per D84; subclass axiom now
+  `wiki:Source ⊑ skos:Concept`). `test_meta_affordances_only_holds_overlay_descriptors`
+  REMOVED (catalog grew 4→16; `make audit` is the authoritative catalog check).
+  `test_no_para_residue` → **xfail** (real empty `resources/` residue from `make reset`;
+  pod-template cleanup follow-up, not a test bug).
+- `test_synthesis_page.py` — the "every wiki-memory shape references the synthesis URL"
+  rule is dead (only the apex `resource.shacl.ttl` carries it); RELAXED to assert the
+  apex reference (the real current routing invariant).
+- `test_phase5j_close.py` — FIXED/re-scoped to current: wikirole 5→11 (assert the original
+  affordance-family roles as a subset + verify their full SKOS structure); profiles 6→10
+  (D98: procedure→howto, source folded into concept, + schema.org Thing profiles + template);
+  `wiki.ttl` conformsTo rdfs→owl2; storage-description advertises the CORE profile subset.
+- `test_wiki_memory_l3_listener_integration.py` — FIXED paths `pages`/`sources`→`concepts`
+  and `POD` storage-root `+ "/vault"` (D107); excluded the `prov:wasGeneratedBy` stamp from
+  the subset comparison (its SUBJECT skews between the C-T2c fixture and the deployed build);
+  compose assertion `wiki#Person`→`schema:Person` (D95/D98). Fixtures left untouched (C-T2c).
+- `test_wiki_memory_l3_discovery.py::test_wiki_containers_exist` — FIXED to the D98 set.
+- mem-operations / mem-events / two-subject / thing-mainentity / wikilink-thing — FIXED with
+  floor-conformant `[Label]{.prefLabel}` bodies (real-invariant tests, just predated D108).
+- `test_wiki_search_e2e.py` — FIXED `seeded_pages` fixture with prefLabel spans (clears the
+  floor; wiki-search greps bodies, terms unaffected).
+- `test_mem_events.py::test_contradiction_detected_emits_event` — **xfail(strict)**: the
+  ContradictionDetector is driven by `MarkdownProjectionListener.postProjectionHook`
+  (`onEdgesWritten`), but D108 moved projection in-band into `AdmissionFloorStore`, which
+  doesn't call the hook (no `onEdgesWritten` call site in source). The body still projects
+  `cito:agreesWith`+`disagreesWith` correctly — only the hook invocation is disconnected.
+  Restoring the floor→hook wiring is D108/D109 substrate work, out of scope here.
+
+Known concern: `test_l4_extension_overlay.py` is an intermittent live-Pod **timing** flake
+(applies an overlay then immediately PUTs); reliably green in isolation and within the
+integration dir (3/3), flaked once in a full run right after a Pod restart (cold-cache).
+Not deterministic, not introduced by C-T4.

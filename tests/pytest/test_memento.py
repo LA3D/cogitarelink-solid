@@ -308,21 +308,11 @@ class TestTombstones:
         assert r_m.text.strip() == "prior content"
 
 
-@pytest.mark.integration
-@pytest.mark.memento
-def test_vault_data_survives():
-    """Regression: vault/resources/concepts/ container still listable and full."""
-    r = httpx.get(
-        f"{CSS}/vault/resources/concepts/",
-        headers={"Host": "pod.vardeman.me", "Accept": "text/turtle"},
-        timeout=10,
-    )
-    assert r.status_code == 200, r.text
-    g = Graph()
-    g.parse(data=r.text, format="turtle", publicID=f"{CSS}/vault/resources/concepts/")
-    LDP_CONTAINS = "http://www.w3.org/ns/ldp#contains"
-    contained = [o for _, p, o in g if str(p) == LDP_CONTAINS]
-    assert len(contained) >= 50, f"vault container shrank: {len(contained)} entries"
+# REMOVED 2026-06-04 C-T4: test_vault_data_survives. It asserted 50+ entries in
+# /vault/resources/concepts/ — pre-D70 vault-import seed content. The D70 pivot
+# dropped that seed (vault import is a non-MVP use case); the container is now an
+# empty PARA residue (0 entries). The Memento mechanism itself is exercised by the
+# other 11 tests in this file (timegate/timemap/version reads, tombstones).
 
 
 # ---------- helpers ----------

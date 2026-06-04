@@ -16,7 +16,16 @@ OVERLAY_ROOT = Path(__file__).parent.parent / "overlays" / "wiki-memory"
 OVERLAY_TTL = Path(__file__).parent.parent / "css" / "config" / "pod-templates" / "base" / "ontology" / "overlay.ttl"
 
 
-def test_wikirole_scheme_has_five_role_concepts():
+def test_wikirole_scheme_affordance_family_well_formed():
+    """The wikirole scheme's affordance-family roles are well-formed SKOS + PROF.
+
+    Re-scoped 2026-06-04 C-T4 (was test_wikirole_scheme_has_five_role_concepts): the
+    scheme grew 5→11 roles (added the standalone overview / operation-log /
+    operation-vocabulary / event-stream top concepts and the query/search affordance
+    children). We assert the ORIGINAL 5 affordance-family roles are a SUBSET of the
+    scheme and verify their full structure + the :affordance sub-hierarchy, rather
+    than pinning an exact role count that churns every time a role is added.
+    """
     g = Graph()
     g.parse(OVERLAY_ROOT / "vocabulary" / "wikirole.ttl", format="turtle")
 
@@ -25,7 +34,7 @@ def test_wikirole_scheme_has_five_role_concepts():
     assert (scheme, RDF.type, OWL.Ontology) in g
     assert (scheme, DCT.conformsTo, URIRef("http://www.w3.org/TR/dx-prof/")) in g
 
-    expected = {
+    affordance_family = {
         WIKIROLE["affordance"],
         WIKIROLE["write-affordance"],
         WIKIROLE["version-affordance"],
@@ -33,18 +42,20 @@ def test_wikirole_scheme_has_five_role_concepts():
         WIKIROLE["derived-navigation-affordance"],
     }
     found = set(g.subjects(RDF.type, PROF.ResourceRole))
-    assert expected == found, f"missing roles: {expected - found}; extra: {found - expected}"
+    assert affordance_family <= found, f"missing affordance-family roles: {affordance_family - found}"
 
-    for role in expected:
+    for role in affordance_family:
         assert (role, RDF.type, SKOS.Concept) in g
         assert (role, RDF.type, OWL.NamedIndividual) in g
         assert (role, SKOS.inScheme, scheme) in g, f"{role} missing skos:inScheme"
         assert (role, RDFS.isDefinedBy, scheme) in g, f"{role} missing rdfs:isDefinedBy"
 
-    # SKOS hierarchy: only :affordance is a top concept (SKOS §B.3.2.3)
+    # SKOS hierarchy within the family: :affordance is the top concept; its children
+    # are NOT top concepts (SKOS §B.3.2.3). Other top concepts (overview, operation-*)
+    # are out of scope for this family check.
     parent = WIKIROLE["affordance"]
     assert (parent, SKOS.topConceptOf, scheme) in g
-    for child in expected - {parent}:
+    for child in affordance_family - {parent}:
         assert (child, SKOS.topConceptOf, scheme) not in g, \
             f"{child} should not be skos:topConceptOf when it has skos:broader"
 
@@ -53,14 +64,12 @@ def test_wikirole_scheme_has_five_role_concepts():
     assert any(g.triples((scheme, RDFS.comment, None))), "scheme missing rdfs:comment"
 
     # Per-role labels and definitions
-    for role in expected:
+    for role in affordance_family:
         assert any(g.triples((role, SKOS.prefLabel, None))), f"{role} missing skos:prefLabel"
         assert any(g.triples((role, SKOS.definition, None))), f"{role} missing skos:definition"
 
-    # Hierarchy: children must have skos:broader :affordance; parent must NOT
-    parent = WIKIROLE["affordance"]
-    children = expected - {parent}
-    for child in children:
+    # Hierarchy: family children have skos:broader :affordance; the parent must NOT.
+    for child in affordance_family - {parent}:
         assert (child, SKOS.broader, parent) in g, f"{child} missing skos:broader :affordance"
     assert not list(g.triples((parent, SKOS.broader, None))), \
         "parent :affordance should not have skos:broader"
@@ -78,6 +87,15 @@ MANIFEST_TTL = Path(__file__).parent.parent / "overlays" / "wiki-memory" / "mani
 OVERLAY_DIR = Path(__file__).parent.parent / "overlays" / "wiki-memory"
 
 
+# D98 profile set: procedure→howto, source folded into concept, + the schema.org
+# Thing profiles (place/event/organization/thing) and the template profile.
+# (Updated 2026-06-04 C-T4 from the original 6-profile phase5j list.)
+WIKI_MEMORY_PROFILES = [
+    "page", "concept", "person", "howto", "working",
+    "place", "event", "organization", "thing", "template",
+]
+
+
 def test_overlay_helpers_extract_role_scheme_and_profiles():
     from scripts.overlay.common import parse_manifest
     manifest = parse_manifest(OVERLAY_DIR, pod_url="http://localhost:3000/")
@@ -86,11 +104,11 @@ def test_overlay_helpers_extract_role_scheme_and_profiles():
 
     assert sorted(manifest.profile_urls) == sorted(
         f"http://localhost:3000/vault/meta/profiles/{name}"
-        for name in ["page", "concept", "source", "person", "procedure", "working"]
+        for name in WIKI_MEMORY_PROFILES
     )
 
 
-def test_manifest_declares_role_scheme_and_six_profiles():
+def test_manifest_declares_role_scheme_and_profiles():
     g = Graph()
     g.parse(MANIFEST_TTL, format="turtle")
     overlay = URIRef("https://pod.vardeman.me/vault/ontology/overlay#wiki-memory")
@@ -101,7 +119,7 @@ def test_manifest_declares_role_scheme_and_six_profiles():
 
     profiles = set(g.objects(overlay, OVERLAY_NS.installsProfile))
     expected = {URIRef(f"file:///vault/meta/profiles/{name}") for name in
-                ["page", "concept", "source", "person", "procedure", "working"]}
+                WIKI_MEMORY_PROFILES}
     assert profiles == expected, f"diff: missing={expected - profiles}, extra={profiles - expected}"
 
 
@@ -127,11 +145,14 @@ PROF_SPEC = URIRef("http://www.w3.org/TR/dx-prof/")
 RDFS_SPEC = URIRef("http://www.w3.org/2000/01/rdf-schema")
 
 
-def test_wiki_vocab_declares_conformsTo_rdfs():
+def test_wiki_vocab_declares_conformsTo_owl2():
+    # Updated 2026-06-04 C-T4: the wiki vocab now declares dct:conformsTo the OWL 2
+    # overview (it uses owl:Class/owl:NamedIndividual constructs), not bare RDFS.
     g = Graph()
     g.parse(VOCAB_TTL, format="turtle")
     vocab = URIRef("https://pod.vardeman.me/vault/ontology/wiki")
-    assert (vocab, DCT.conformsTo, RDFS_SPEC) in g
+    owl2_spec = URIRef("https://www.w3.org/TR/owl2-overview/")
+    assert (vocab, DCT.conformsTo, owl2_spec) in g
 
 
 @pytest.mark.parametrize("name", ["page", "concept", "howto", "person", "procedure", "working"])
@@ -225,14 +246,19 @@ def test_importer_emits_content_level_conformsTo(class_hint, profile_slug):
         f"importer did not emit dct:conformsTo <{expected_profile}>"
 
 
-# --- Task 12: storage description advertises wikirole + 6 PROF profiles ---
+# --- Task 12: storage description advertises wikirole + the core PROF profiles ---
 
 @pytest.mark.integration
 def test_storage_description_advertises_wikirole_and_profiles():
-    """Storage description lists wikirole vocab and all 6 PROF profile descriptors (D86).
+    """Storage description lists the wikirole vocab and the core PROF profile descriptors (D86).
 
-    CSS only serves .well-known/solid on storage containers (pim:Storage).
-    The vault at /vault/ is the storage root, so its description is at /vault/.well-known/solid.
+    CSS only serves .well-known/solid on storage containers (pim:Storage). The vault at
+    /vault/ is the storage root, so its description is at /vault/.well-known/solid.
+
+    Re-scoped 2026-06-04 C-T4: procedure→howto, source folded into concept. The
+    storage description advertises the CORE wiki-memory profiles (page/concept/person/
+    howto/working) via prof:hasResource; assert that core set is present rather than
+    pinning the original 6-name list.
     """
     import httpx
     sd_url = f"{POD}/vault/.well-known/solid"
@@ -250,12 +276,12 @@ def test_storage_description_advertises_wikirole_and_profiles():
 
     prof_has_resource = URIRef("http://www.w3.org/ns/dx/prof/hasResource")
     profiles = set(str(o) for o in g.objects(predicate=prof_has_resource))
-    expected_profiles = {
+    core_profiles = {
         f"https://pod.vardeman.me/vault/meta/profiles/{name}"
-        for name in ["page", "concept", "source", "person", "procedure", "working"]
+        for name in ["page", "concept", "person", "howto", "working"]
     }
-    missing = expected_profiles - profiles
-    assert not missing, f"profiles missing from prof:hasResource: {missing}"
+    missing = core_profiles - profiles
+    assert not missing, f"core profiles missing from prof:hasResource: {missing}"
 
 
 # --- Task 17: end-to-end Link: rel="profile" emission from live Pod ---
@@ -288,13 +314,19 @@ def test_profile_descriptor_response_carries_prof_profile_link():
 
 
 @pytest.mark.integration
-def test_wikirole_scheme_is_dereferenceable_and_has_five_roles():
+def test_wikirole_scheme_is_dereferenceable_and_has_roles():
+    # Updated 2026-06-04 C-T4: the scheme grew 5→11 roles; assert it resolves and
+    # carries the original affordance-family roles rather than pinning an exact count.
     r = httpx.get(f"{POD}/vault/ontology/wikirole", timeout=5, verify=_CA)
     assert r.status_code == 200
     g = Graph()
     g.parse(data=r.text, format="turtle", publicID=f"{POD}/vault/ontology/wikirole")
-    found = set(g.subjects(RDF.type, PROF.ResourceRole))
-    assert len(found) == 5, f"expected 5 prof:ResourceRole instances, got {len(found)}: {found}"
+    found = {str(s) for s in g.subjects(RDF.type, PROF.ResourceRole)}
+    assert len(found) >= 5, f"expected ≥5 prof:ResourceRole instances, got {len(found)}: {found}"
+    base = "https://pod.vardeman.me/vault/ontology/wikirole#"
+    for role in ["affordance", "write-affordance", "version-affordance",
+                 "derived-class-affordance", "derived-navigation-affordance"]:
+        assert base + role in found, f"affordance-family role {role!r} missing: {found}"
 
 
 @pytest.mark.integration

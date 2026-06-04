@@ -83,6 +83,36 @@ def requires_pod():
 
 
 # ---------------------------------------------------------------------------
+# Pod-availability gate (audit §1 item C). Any test marked `integration` is
+# skipped — not errored — when the Pod is unreachable. The probe runs once per
+# session (cached) so a Pod-down run reports clean SKIPs instead of ~100
+# ConnectError failures. Tests under tests/integration/ are blanket-marked by
+# tests/integration/conftest.py; the live tests in tests/ + tests/pytest/ carry
+# `pytestmark = pytest.mark.integration` at module level.
+# ---------------------------------------------------------------------------
+
+_POD_UP_CACHE: bool | None = None
+
+
+def _pod_up_cached() -> bool:
+    global _POD_UP_CACHE
+    if _POD_UP_CACHE is None:
+        _POD_UP_CACHE = _pod_up()
+    return _POD_UP_CACHE
+
+
+def pytest_runtest_setup(item):
+    """Skip `integration`-marked tests before ANY fixture runs when the Pod is down.
+
+    A runtest_setup hook fires ahead of fixture instantiation, so module/session-
+    scoped live fixtures (seeded_pages, wiki_containers, …) get skipped cleanly
+    instead of raising ConnectError at setup. The probe is cached for the session.
+    """
+    if item.get_closest_marker("integration") and not _pod_up_cached():
+        pytest.skip("Pod not running — integration test skipped (set POD_URL or `docker compose up`)")
+
+
+# ---------------------------------------------------------------------------
 # Fold in the tests/pytest/conftest.py fixtures so they're visible repo-wide
 # ---------------------------------------------------------------------------
 

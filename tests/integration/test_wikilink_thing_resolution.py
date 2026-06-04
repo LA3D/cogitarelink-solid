@@ -14,8 +14,9 @@ CLIENT = httpx.Client(verify=_CA, timeout=10)
 
 def test_wikilink_object_is_target_thing_iri():
     """Wikilinks project with target Thing as object IRI, not page URL."""
-    target_body = "---\ntitle: Target\ntype: skos:Concept\n---\n\n# Target"
-    source_body = "---\ntitle: Source\ntype: skos:Concept\n---\n\n# Source\n\nRefers to [[Target]]{.related}."
+    # prefLabel spans satisfy the D108 admission floor on /wiki/concepts/.
+    target_body = "---\ntitle: Target\ntype: skos:Concept\n---\n\n# Target\n\n[Target]{.prefLabel}\n"
+    source_body = "---\ntitle: Source\ntype: skos:Concept\n---\n\n# Source\n\n[Source]{.prefLabel}\n\nRefers to [[Target]]{.related}."
 
     CLIENT.put(
         POD + "/wiki/concepts/target.md",

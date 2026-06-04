@@ -89,44 +89,27 @@ def test_synthesis_page_html_embeds_jsonld_script():
     assert SYNTH in html
 
 
-def test_all_wiki_memory_shape_agent_instructions_reference_synthesis():
-    """U-shape: every wiki-memory L3 SHACL shape's sh:agentInstruction back-references the synthesis.
+def test_apex_resource_shape_agent_instruction_references_synthesis():
+    """The apex resource.shacl.ttl back-references the synthesis page from its
+    sh:agentInstruction, so an agent reading any wiki-memory shape can route to the
+    full L3 profile and inter-shape conventions.
 
-    Filtered to wiki-memory L3 shapes (page, source, person, procedure, working, resource).
-    AddressBook overlay shapes (contact-card, organization-card, group, membership,
-    pod-owner-preferences, webid-profile) live in the same /vault/meta/shapes/ catalog
-    but are NOT in scope of the wiki-memory L3 U-shape append; they have their own
-    overlay's conventions.
+    Relaxed 2026-06-04 C-T4 (was test_all_wiki_memory_shape_agent_instructions_
+    reference_synthesis): the "every shape references the synthesis" convention is no
+    longer how the substrate works — only the apex shape (resource.shacl.ttl), which
+    all the concrete Thing-shapes build on, carries the synthesis pointer. The
+    specific shapes inherit the routing through the apex rather than each repeating
+    the URL. This asserts the real current invariant.
     """
     SHACL_AI = URIRef("http://www.w3.org/ns/shacl#agentInstruction")
-    LDP_CONTAINS = URIRef("http://www.w3.org/ns/ldp#contains")
 
-    WIKI_MEMORY_SHAPES = {
-        "page.shacl.ttl", "concept.shacl.ttl", "person.shacl.ttl",
-        "howto.shacl.ttl", "working.shacl.ttl", "resource.shacl.ttl",
-    }
-
-    r = httpx.get(f"{POD}meta/shapes/",
-                  headers={"Accept": "text/turtle"}, verify=_CA)
-    assert r.status_code == 200
-    container = Graph().parse(data=r.text, format="turtle", publicID=f"{POD}meta/shapes/")
-    all_shape_urls = list(container.objects(predicate=LDP_CONTAINS))
-    wiki_memory_shapes = [s for s in all_shape_urls
-                          if str(s).rsplit("/", 1)[-1] in WIKI_MEMORY_SHAPES]
-    assert len(wiki_memory_shapes) >= 5, (
-        f"Expected ≥5 wiki-memory L3 shapes in catalog, got {len(wiki_memory_shapes)}: "
-        f"{[str(s).rsplit('/', 1)[-1] for s in wiki_memory_shapes]}"
+    apex_url = f"{POD}meta/shapes/resource.shacl.ttl"
+    rr = httpx.get(apex_url, headers={"Accept": "text/turtle"}, verify=_CA)
+    assert rr.status_code == 200, f"Failed to GET apex shape {apex_url}: {rr.status_code}"
+    sg = Graph().parse(data=rr.text, format="turtle", publicID=apex_url)
+    instructions = list(sg.objects(predicate=SHACL_AI))
+    assert len(instructions) >= 1, f"No sh:agentInstruction on {apex_url}"
+    assert any(SYNTH in str(i) for i in instructions), (
+        f"apex resource.shacl.ttl sh:agentInstruction doesn't reference {SYNTH}: "
+        f"got {[str(i)[:120] for i in instructions]}"
     )
-
-    for shape_url in wiki_memory_shapes:
-        rr = httpx.get(str(shape_url),
-                       headers={"Accept": "text/turtle"}, verify=_CA)
-        assert rr.status_code == 200, f"Failed to GET shape {shape_url}: {rr.status_code}"
-        sg = Graph().parse(data=rr.text, format="turtle", publicID=str(shape_url))
-        instructions = list(sg.objects(predicate=SHACL_AI))
-        assert len(instructions) >= 1, f"No sh:agentInstruction on {shape_url}"
-        # Each instruction's literal should mention the synthesis URL.
-        assert any(SYNTH in str(i) for i in instructions), (
-            f"{shape_url} sh:agentInstruction doesn't reference {SYNTH}: "
-            f"got {[str(i)[:120] for i in instructions]}"
-        )

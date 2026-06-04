@@ -56,6 +56,13 @@ def slug():
 # ---------------------------------------------------------------------------
 
 def _put(url, body):
+    # Durable writes land in concepts/ (default skos:Concept), which the D108
+    # admission floor gates on skos:prefLabel. These tests exercise mem:*Action
+    # provenance, not the floor, so satisfy it with a prefLabel span derived from
+    # the resource slug. working/ stays permissive (D73) so its bodies pass as-is.
+    if "/wiki/concepts/" in url and ".prefLabel" not in body:
+        label = url.rsplit("/", 1)[-1].removesuffix(".md")
+        body = body + f"\n[{label}]{{.prefLabel}}\n"
     r = httpx.put(url, content=body,
                   headers={"Content-Type": "text/markdown"}, verify=_CA)
     # CSS returns 201 for create, 205 Reset Content for update (overwrite).

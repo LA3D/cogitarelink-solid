@@ -38,7 +38,8 @@ def _put_and_read_meta(path: str, body: str) -> Graph:
 
 def test_concept_page_has_two_subjects():
     """Page and Thing both present with correct types."""
-    body = "---\ntitle: Test Concept\ntype: skos:Concept\n---\n\n# Test Concept\n\nA test."
+    # [Test Concept]{.prefLabel} clears the D108 admission floor on /wiki/concepts/.
+    body = "---\ntitle: Test Concept\ntype: skos:Concept\n---\n\n# Test Concept\n\n[Test Concept]{.prefLabel}\n\nA test."
     g = _put_and_read_meta("/wiki/concepts/test-concept.md", body)
 
     page = URIRef(POD + "/wiki/concepts/test-concept.md")

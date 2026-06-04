@@ -16,6 +16,9 @@ from rdflib import Graph, Namespace
 
 from tests.conftest import _pod_base
 
+# All tests here hit the live Pod; the root conftest gate skips them when it's down.
+pytestmark = pytest.mark.integration
+
 POD = _pod_base()
 WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
 SUB = Namespace("https://pod.vardeman.me/vault/ontology/substrate#")
@@ -125,8 +128,13 @@ def test_seven_step_first_arrival_ritual() -> None:
 
 
 def test_wiki_containers_exist() -> None:
-    """All five L3 wiki containers must exist and be LDP BasicContainers."""
-    containers = ["pages", "sources", "people", "procedures", "working"]
+    """All D98 L3 wiki containers must exist and be LDP BasicContainers.
+
+    D98 merged the legacy pages/ + sources/ into concepts/ and added the
+    schema.org Thing-typed containers (places/events/organizations).
+    """
+    containers = ["concepts", "people", "places", "events",
+                  "organizations", "procedures", "working"]
     for name in containers:
         url = f"{POD}/vault/wiki/{name}/"
         r = httpx.get(url, headers={"Accept": "text/turtle"})

@@ -21,14 +21,19 @@ from rdflib import Graph, URIRef
 
 from tests.conftest import _pod_base
 
+# All tests here hit the live Pod; the root conftest gate skips them when it's down.
+pytestmark = pytest.mark.integration
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
 
-POD = _pod_base()
+# D107: the storage root is /vault — writes outside it get no projection.
+POD = _pod_base() + "/vault"
 FIX = Path(__file__).parent / "fixtures" / "wiki-memory-l3"
 
 DCT_MODIFIED = URIRef("http://purl.org/dc/terms/modified")
+PROV_WAS_GENERATED_BY = URIRef("http://www.w3.org/ns/prov#wasGeneratedBy")
 
 # Predicates injected by CSS itself — not governed, always excluded from comparison
 CSS_PREDICATES = {
@@ -36,6 +41,12 @@ CSS_PREDICATES = {
     URIRef("http://www.w3.org/ns/posix/stat#mtime"),
     URIRef("http://www.w3.org/ns/posix/stat#size"),
     URIRef("http://www.w3.org/ns/ma-ont#format"),
+    # The projection-provenance stamp. Its SUBJECT is in flux between the C-T2c
+    # source (relocated to <…md.meta>) and the deployed Pod build (still on the
+    # resource <…md>); the predicate+object are identical. Excluded like
+    # dct:modified — it's a substrate stamp, not governed content. (Subject skew
+    # tracked separately; this test asserts projected content, not stamp placement.)
+    PROV_WAS_GENERATED_BY,
 }
 
 # ---------------------------------------------------------------------------
@@ -107,10 +118,13 @@ def wiki_containers() -> None:
 # ---------------------------------------------------------------------------
 
 
+# D98 merged pages/ + sources/ into concepts/. The concept + source fixtures
+# carry [Label]{.prefLabel} body spans (verified), so they clear the D108
+# admission floor on /wiki/concepts/; people/ stays prefLabel-free (schema:name).
 @pytest.mark.parametrize("body_file,container,expected_meta", [
-    ("wiki-memory-l3-profile.md", "pages", "wiki-memory-l3-profile.md.meta"),
-    ("agentic-memory-systems-moc.md", "pages", "agentic-memory-systems-moc.md.meta"),
-    ("ghumare---llm-wiki-v2-extending-karpathy.md", "sources", "ghumare---llm-wiki-v2-extending-karpathy.md.meta"),
+    ("wiki-memory-l3-profile.md", "concepts", "wiki-memory-l3-profile.md.meta"),
+    ("agentic-memory-systems-moc.md", "concepts", "agentic-memory-systems-moc.md.meta"),
+    ("ghumare---llm-wiki-v2-extending-karpathy.md", "concepts", "ghumare---llm-wiki-v2-extending-karpathy.md.meta"),
     ("karpathy-andrej.md", "people", "karpathy-andrej.md.meta"),
 ])
 def test_round_trip(body_file: str, container: str, expected_meta: str) -> None:
@@ -282,9 +296,11 @@ def test_memento_and_projection_compose() -> None:
         + "\n".join(f"  {k}: {v}" for k, v in r2.headers.items())
     )
 
-    # Check .meta has wiki projection
+    # Check .meta has the projected Thing type. D95/D98: a person page types
+    # <#this> as schema:Person (the Thing), not wiki:Person — wiki:Page governs
+    # the document <>, schema.org types the Thing.
     r3 = httpx.get(f"{target}.meta", headers={"Accept": "text/turtle"})
     assert r3.status_code == 200
-    assert "wiki#Person" in r3.text, (
-        f".meta missing wiki:Person type — projection didn't fire:\n{r3.text}"
+    assert "schema.org/Person" in r3.text or "schema:Person" in r3.text, (
+        f".meta missing schema:Person Thing type — projection didn't fire:\n{r3.text}"
     )
