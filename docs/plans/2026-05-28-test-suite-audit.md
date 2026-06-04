@@ -141,7 +141,9 @@ Tier dispositions (§2/§3):
   `cito:agreesWith`+`disagreesWith` correctly — only the hook invocation is disconnected.
   Restoring the floor→hook wiring is D108/D109 substrate work, out of scope here.
 
-Known concern: `test_l4_extension_overlay.py` is an intermittent live-Pod **timing** flake
-(applies an overlay then immediately PUTs); reliably green in isolation and within the
-integration dir (3/3), flaked once in a full run right after a Pod restart (cold-cache).
-Not deterministic, not introduced by C-T4.
+- `test_l4_extension_overlay.py` — STABILIZED: a cold-start race (apply.py returns before
+  the overlay container/shape registration is fully live on a freshly restarted Pod, so the
+  immediately-following PUT raced the install — a rare flake, ~1 in 4 full runs, only right
+  after `docker compose start`). Fix = a bounded readiness poll on `/biz/equipment/` after
+  apply.py, before the PUT. Not an assertion change; the genuine-install-failure path still
+  surfaces (the poll is bounded and asserted).
