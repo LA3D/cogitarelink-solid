@@ -37,8 +37,36 @@ describe("projectFrontmatter", () => {
     it("projects identifier or citekey to dct:identifier", () => {
         const t1 = projectFrontmatter({ type: "source", created: "...", modified: "...", identifier: "https://x.com" });
         const t2 = projectFrontmatter({ type: "source", created: "...", modified: "...", citekey: "smith-2026-foo" });
-        expect(t1.find(t => t.predicate.value === "http://purl.org/dc/terms/identifier")?.object.value).toBe("https://x.com");
-        expect(t2.find(t => t.predicate.value === "http://purl.org/dc/terms/identifier")?.object.value).toBe("smith-2026-foo");
+        const id1 = t1.find(t => t.predicate.value === "http://purl.org/dc/terms/identifier")?.object as any;
+        const id2 = t2.find(t => t.predicate.value === "http://purl.org/dc/terms/identifier")?.object as any;
+        // absolute IRI form → plain literal, unchanged (xsd:string default)
+        expect(id1.value).toBe("https://x.com");
+        expect(id1.datatype.value).toBe("http://www.w3.org/2001/XMLSchema#string");
+        // citekey: field stays plain/untyped (typing local citekeys is curation-loop work)
+        expect(id2.value).toBe("smith-2026-foo");
+        expect(id2.datatype.value).toBe("http://www.w3.org/2001/XMLSchema#string");
+    });
+
+    // D111 §6.2 — compact-identifier convention (identifiers.org form)
+    it("types a registered compact identifier, stripping the prefix (doi:)", () => {
+        const triples = projectFrontmatter({ type: "source", identifier: "doi:10.1234/x" });
+        const id = triples.find(t => t.predicate.value === "http://purl.org/dc/terms/identifier")?.object as any;
+        expect(id.value).toBe("10.1234/x");
+        expect(id.datatype.value).toBe("https://pod.vardeman.me/id/schemes/#doi");
+    });
+
+    it("keeps the FULL lexical form for did: (scheme regex anchors on did:)", () => {
+        const triples = projectFrontmatter({ type: "person", identifier: "did:web:pod.vardeman.me" });
+        const id = triples.find(t => t.predicate.value === "http://purl.org/dc/terms/identifier")?.object as any;
+        expect(id.value).toBe("did:web:pod.vardeman.me");
+        expect(id.datatype.value).toBe("https://pod.vardeman.me/id/schemes/#did");
+    });
+
+    it("leaves an unknown prefix as a plain literal of the whole string (suggestive typing, never reject)", () => {
+        const triples = projectFrontmatter({ type: "source", identifier: "isbn:978-3" });
+        const id = triples.find(t => t.predicate.value === "http://purl.org/dc/terms/identifier")?.object as any;
+        expect(id.value).toBe("isbn:978-3");
+        expect(id.datatype.value).toBe("http://www.w3.org/2001/XMLSchema#string");
     });
 
     it("projects maturity as the wiki: IRI, not a string literal (PageShape sh:in)", () => {

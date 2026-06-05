@@ -134,6 +134,31 @@ const MATURITY_MAP: Record<string, string> = {
 // Exported for the maps sidecar + agreement test.
 export const MATURITY_MAP_TOKENS: Readonly<Record<string, string>> = MATURITY_MAP;
 
+// D111 §6.2 — compact-identifier convention (identifiers.org form) on the
+// identifier: field. Split on the FIRST colon; a registered scheme key types
+// the literal with the catalog-fragment datatype. did keeps the full string
+// (its scheme regex anchors on "did:" — the lexical form IS the whole DID).
+// Unknown prefix / no colon / absolute IRI → plain literal (suggestive typing;
+// Tier-2 curation flags). citekey: field stays untyped (curation-loop work).
+// IDS_NS is single-sourced from the CURIE map so the datatype IRI can never
+// diverge from the served context's "ids" prefix.
+const IDS_NS = CURIE_PREFIXES["ids"];
+const SCHEME_KEYS = new Set(["doi", "orcid", "ror", "arxiv", "citekey", "did"]);
+const KEEP_PREFIX = new Set(["did"]);
+
+function identifierLiteral(raw: string) {
+    if (raw.startsWith("http://") || raw.startsWith("https://")) return literal(raw);
+    const colon = raw.indexOf(":");
+    if (colon > 0) {
+        const pfx = raw.slice(0, colon);
+        if (SCHEME_KEYS.has(pfx)) {
+            const lex = KEEP_PREFIX.has(pfx) ? raw : raw.slice(colon + 1);
+            return literal(lex, namedNode(IDS_NS + pfx));
+        }
+    }
+    return literal(raw);
+}
+
 const XSD_DT  = "http://www.w3.org/2001/XMLSchema#dateTime";
 const DCT     = "http://purl.org/dc/terms/";
 const FOAF    = "http://xmlns.com/foaf/0.1/";
@@ -177,9 +202,9 @@ export function projectFrontmatter(fm: Frontmatter): Quad[] {
         if (m) out.push(quad(subj, namedNode(WIKI + "maturity"), namedNode(m)));
     }
 
-    // identifier wins over citekey; both map to dct:identifier
-    const id = fm.identifier ?? fm.citekey;
-    if (id) out.push(quad(subj, namedNode(DCT + "identifier"), literal(id)));
+    // identifier wins over citekey; identifier gets compact-id typing, citekey stays plain
+    if (fm.identifier) out.push(quad(subj, namedNode(DCT + "identifier"), identifierLiteral(fm.identifier)));
+    else if (fm.citekey) out.push(quad(subj, namedNode(DCT + "identifier"), literal(fm.citekey)));
 
     if (fm.aliases && Array.isArray(fm.aliases)) {
         for (const a of fm.aliases) {
