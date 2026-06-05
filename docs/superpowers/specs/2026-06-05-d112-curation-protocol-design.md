@@ -145,10 +145,22 @@ operations log). Each `mem:CurationNeed` points at its ledger via `mem:ledger`. 
 future L2 substrate-curator scope gets a substrate-level ledger when it is built —
 named here, not created.
 
+**Identifier structure** (verified against LDN, SAI, and RQ-Listener-1, 2026-06-05):
+one activity per ledger resource, **`<>`-subject**, delivered by POST; the server
+assigns the URL (`201 + Location`, the LDN sender/receiver pattern — LDN's own example
+payload uses the null relative IRI). This matches RQ-Listener-1's reviewed convention;
+the `urn:uuid:` subjects in the 2026-05-23 exemplar were an artifact of bundling four
+activities in one example document, not a convention. Consequence for §5: the
+back-pointer and Link header target a *dereferenceable* proposal URL. `.operations/`
+is structurally an LDN inbox (LDP container receiving POSTed AS2 payloads);
+advertising it via `ldp:inbox` is deferred until a notification consumer exists (D87
+provide-reactively).
+
 Proposal form (floor-validated by a small shape, §8):
 
 ```turtle
-<urn:uuid:…> a as:Announce , mem:RealignAction , prov:Activity ;
+# POSTed to /id/.operations/ → 201 + Location; <> resolves to the assigned URL
+<> a as:Announce , mem:RealignAction , prov:Activity ;
     as:actor <agent> ;
     as:target </id/.operations/> ;
     as:object </id/schemes/doi> ;            # the resource needing curation
@@ -168,6 +180,7 @@ Proposal form (floor-validated by a small shape, §8):
 # <plan-memento> = the Memento of /vault/meta/affordances/curation.ttl current at run time:
 <plan-memento> a prov:Plan ;
     prov:specializationOf </vault/meta/affordances/curation.ttl> .
+# Auxiliary subjects in the same resource — LDN permits multiple subjects per notification.
 ```
 
 ## 5. Read-path surfacing — the one server seam (two derive-class parts)
@@ -190,8 +203,10 @@ The vault works because feedback is encountered where agents work. The Pod equiv
    (RFC 8288 extension relation = the predicate IRI), additive via `addHeader`.
 
 A primary agent touching a resource with open curation work sees it in the HTTP
-response — whether or not it reads `.meta`. This is the read-path variant of
-RQ-Atomic-Feedback-1 and the Pod-native `curator_status:` frontmatter.
+response — whether or not it reads `.meta`. Because proposals are `<>`-subject
+resources (§4), the Link target is GET-able: notice → dereference → read the proposal
+is one hop. This is the read-path variant of RQ-Atomic-Feedback-1 and the Pod-native
+`curator_status:` frontmatter.
 
 **CSS-behavior verification battery (plan Batch 1, per agentic-development.md):**
 `.meta` content reaching `RepresentationMetadata` for MetadataWriters (profile-link
