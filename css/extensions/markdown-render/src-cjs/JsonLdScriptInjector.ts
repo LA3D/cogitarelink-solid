@@ -59,6 +59,7 @@ export const DEFAULT_CONTEXT: Record<string, string> = {
   prof: "http://www.w3.org/ns/dx/prof/",
   ldp:  "http://www.w3.org/ns/ldp#",
   rdfs: "http://www.w3.org/2000/01/rdf-schema#",
+  ids:  "https://pod.vardeman.me/id/schemes/#",
 };
 
 export class JsonLdScriptInjector {

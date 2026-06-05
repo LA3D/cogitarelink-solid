@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { DataFactory } from "n3";
-import { projectSpanLiterals, DATATYPE_PREFIXES } from "./spanLiteralProjection";
+import { projectSpanLiterals, projectSpanLiteralsFramed, DATATYPE_PREFIXES } from "./spanLiteralProjection";
 const { namedNode } = DataFactory;
 
 const BIND = {
@@ -57,5 +57,25 @@ describe("projectSpanLiterals", () => {
   it("DATATYPE_PREFIXES exports xsd: and ids: namespace bindings", () => {
     expect(DATATYPE_PREFIXES["xsd"]).toBe("http://www.w3.org/2001/XMLSchema#");
     expect(DATATYPE_PREFIXES["ids"]).toBe("https://pod.vardeman.me/id/schemes/#");
+  });
+});
+
+describe("projectSpanLiteralsFramed", () => {
+  const FRAMED_BIND = { identifier: "http://purl.org/dc/terms/identifier" };
+
+  // D111 §6.2 — framed path with ^^ids:doi datatype. dct:identifier is governed
+  // on the Thing <#this> (not page-governed), so resolveSubject routes the span
+  // to <pageUrl>#this, and the literal carries the ids:doi scheme datatype.
+  it("routes a ^^ids:doi span to <#this> with the scheme-namespace datatype", () => {
+    const page = "https://pod/wiki/sources/paper.md";
+    const q = projectSpanLiteralsFramed("[10.1/x]{.identifier^^ids:doi}", page, FRAMED_BIND);
+    expect(q).toHaveLength(1);
+    expect(q[0].subject.value).toBe(`${page}#this`);
+    expect(q[0].predicate.value).toBe("http://purl.org/dc/terms/identifier");
+    expect(q[0].object.termType).toBe("Literal");
+    expect(q[0].object.value).toBe("10.1/x");
+    expect((q[0].object as any).datatype.value).toBe(
+      "https://pod.vardeman.me/id/schemes/#doi"
+    );
   });
 });

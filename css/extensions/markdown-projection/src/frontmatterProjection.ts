@@ -41,6 +41,7 @@ const CURIE_PREFIXES: Record<string, string> = {
     "vann":   "http://purl.org/vocab/vann/",
     "td":     "https://www.w3.org/2019/wot/td#",
     "xsd":    "http://www.w3.org/2001/XMLSchema#",
+    "ids":    "https://pod.vardeman.me/id/schemes/#",
 };
 
 // Exported so the maps-sidecar emitter (scripts/emitMaps.ts) and the agreement

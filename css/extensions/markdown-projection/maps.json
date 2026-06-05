@@ -16,7 +16,8 @@
     "as": "https://www.w3.org/ns/activitystreams#",
     "vann": "http://purl.org/vocab/vann/",
     "td": "https://www.w3.org/2019/wot/td#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#"
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "ids": "https://pod.vardeman.me/id/schemes/#"
   },
   "typeMap": {
     "concept": "https://pod.vardeman.me/vault/ontology/wiki#Concept",

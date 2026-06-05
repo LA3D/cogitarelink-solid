@@ -16,6 +16,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { DATATYPE_PREFIXES } from "../src/spanLiteralProjection";
 
 const ROOT = join(__dirname, "..", "..", "..", "..");
 const MAPS = JSON.parse(readFileSync(join(__dirname, "..", "maps.json"), "utf8"));
@@ -42,6 +43,17 @@ describe("CURIE prefix agreement (projection ↔ served context)", () => {
     it("every shared prefix maps to the SAME namespace IRI", () => {
         for (const [k, iri] of Object.entries(tsPrefixes)) {
             if (k in ctxPrefixes) expect(ctxPrefixes[k]).toBe(iri);
+        }
+    });
+
+    it("every DATATYPE_PREFIXES entry is declared in the served context with the identical IRI (DATATYPE_PREFIXES ⊆ context)", () => {
+        // Makes the spanLiteralProjection.ts DATATYPE_PREFIXES header true: the
+        // served context carries matching declarations for the datatype-axis
+        // prefixes (D111 §6.2, e.g. ids:), so a `^^ids:doi`-typed literal in
+        // .meta expands to the same scheme IRI an agent reading the context sees.
+        for (const [k, iri] of Object.entries(DATATYPE_PREFIXES)) {
+            expect(ctxPrefixes, `DATATYPE_PREFIXES prefix '${k}' missing from served context`).toHaveProperty(k);
+            expect(ctxPrefixes[k]).toBe(iri);
         }
     });
 
