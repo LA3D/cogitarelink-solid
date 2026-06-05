@@ -13,7 +13,7 @@ import uuid
 
 import httpx
 import pytest
-from rdflib import Graph, URIRef
+from rdflib import Graph, RDF, URIRef
 
 from tests.conftest import _pod_base, _pod_up, resolve_ca as _resolve_ca
 
@@ -215,9 +215,7 @@ def test_descriptor_is_plan_and_versioned():
         pytest.fail(f"descriptor not parseable Turtle: {e}\n{r.text[:300]}")
 
     PROV_PLAN = URIRef("http://www.w3.org/ns/prov#Plan")
-    plans = list(g.subjects(None, PROV_PLAN))  # any subject typed prov:Plan
     # broaden: check objects too (type triple)
-    from rdflib import RDF
     plans = list(g.subjects(RDF.type, PROV_PLAN))
     assert plans, (
         f"descriptor has no prov:Plan subject\nParsed triples: {len(g)}\n"
