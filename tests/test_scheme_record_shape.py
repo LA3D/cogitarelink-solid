@@ -56,6 +56,10 @@ def test_missing_definition_fails():
     assert not _validate(GOOD.replace('skos:definition "Digital Object Identifier."@en ;', ""))
 
 
+def test_missing_prefLabel_fails():
+    assert not _validate(GOOD.replace('skos:prefLabel "DOI"@en ;', ""))
+
+
 def test_overlay_shape_copy_matches_canonical():
     root = Path(__file__).parent.parent
     canon = (root / "shapes/substrate/scheme-record.shacl.ttl").read_text()

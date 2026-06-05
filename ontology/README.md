@@ -85,6 +85,12 @@ when that application engages (interop `ApplicationRegistration` + `AccessNeedGr
   namespace drift documented in the file header (interop.ttl's `shapetree#` singular vs the
   ontology's `shapetrees#` plural — we use the plural).
 
+- `did.ttl` — cached 2026-06-02; DID Core RDFS vocab (`did:`, W3C Rec) + `did-v1.context.jsonld`
+  (the DID-document JSON-LD context). **Grounded ahead of the deferred URI/DID migration** so the
+  identity-layer ontology isn't missing later; for web-hosted DIDs prefer **`did:webvh`** (did:web +
+  verifiable history — trust off DNS). DID↔Solid integration deferred (Solid #217/#35 dormant). See
+  `solid-identity-stack` did.md + D109 §5. `sec:` companion (verification methods) stays enumerate-defer.
+
 - `idot.ttl` — cached 2026-06-05, identifiers.org types vocabulary **v0.3** (160 triples,
   rdflib-validated). **Grounded for D111** (identifier-scheme substrate): scheme records are
   `idot:Namespace` (⊑ `dcat:Dataset`) + providers `idot:Resource` (⊑ `dcat:DataService`,
@@ -99,12 +105,6 @@ when that application engages (interop `ApplicationRegistration` + `AccessNeedGr
   that scheme records reference via `skos:exactMatch`. Term/class namespace =
   `http://purl.org/spar/datacite#`; scheme individuals live under the slash form
   `http://purl.org/spar/datacite/`.
-
-- `did.ttl` — cached 2026-06-02; DID Core RDFS vocab (`did:`, W3C Rec) + `did-v1.context.jsonld`
-  (the DID-document JSON-LD context). **Grounded ahead of the deferred URI/DID migration** so the
-  identity-layer ontology isn't missing later; for web-hosted DIDs prefer **`did:webvh`** (did:web +
-  verifiable history — trust off DNS). DID↔Solid integration deferred (Solid #217/#35 dormant). See
-  `solid-identity-stack` did.md + D109 §5. `sec:` companion (verification methods) stays enumerate-defer.
 
 ## Drift to reconcile
 

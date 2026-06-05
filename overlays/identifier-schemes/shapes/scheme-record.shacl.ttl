@@ -7,7 +7,6 @@
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 @prefix idot:  <http://identifiers.org/idot/> .
 @prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix sub:   <https://pod.vardeman.me/vault/ontology/substrate#> .
 
 <> dct:conformsTo <https://www.w3.org/TR/shacl/> .
 
