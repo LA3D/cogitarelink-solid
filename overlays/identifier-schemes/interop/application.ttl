@@ -1,0 +1,49 @@
+@prefix interop: <http://www.w3.org/ns/solid/interop#> .
+@prefix acl:     <http://www.w3.org/ns/auth/acl#> .
+@prefix mem:     <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix app:     <https://pod.vardeman.me/vault/meta/interop/id-schemes-application#> .
+
+app:id-schemes a interop:Application ;
+    interop:applicationName "Identifier-Schemes" ;
+    interop:applicationDescription "D111 Pod-level PID system: /id/schemes/ catalog + scheme records + resolution roles." ;
+    interop:hasAccessNeedGroup app:id-needs ;
+    mem:hasCurationNeed app:need-provider-liveness , app:need-propertyvalue-materialization .
+
+app:id-needs a interop:AccessNeedGroup ;
+    interop:accessNecessity interop:AccessRequired ;
+    interop:accessScenario interop:PersonalAccess ;
+    interop:hasAccessNeed app:need-scheme-records .
+
+# No interop:registeredShapeTree — identifier-schemes has no shapetree yet.
+# Keep the need minimal (see D112 T6 design note).
+app:need-scheme-records a interop:AccessNeed ;
+    interop:accessMode acl:Read , acl:Write ;
+    interop:accessNecessity interop:AccessRequired .
+
+app:need-provider-liveness a mem:CurationNeed ;
+    mem:applyClass mem:JudgmentClass ;
+    mem:ledger <https://pod.vardeman.me/id/.operations/> ;
+    sh:agentInstruction """Provider liveness (judgment-class — PROPOSE ONLY, never patch
+the record). For each record in /id/schemes/ (skip the catalog document itself): take
+idot:sampleID, substitute into each provider's idot:urlPattern at {$id}; GET the
+resulting URL with Accept set to the provider's declared dcat:mediaType; PASS if the
+response is 2xx/3xx AND the Content-Type matches the declared media type. On failure,
+re-check once before flagging (a transient failure is not a dead provider), then file
+a Potential proposal to the ledger: as:object = the scheme record;
+mem:stalenessClass mem:ProviderDrift; mem:rationale = the full HTTP evidence (URL
+requested, Accept sent, status + Content-Type received, timestamps of both attempts).
+Would have caught both 2026-06-05 probe bugs (DataCite-only conneg; wrong OSLC
+syntax).""" .
+
+app:need-propertyvalue-materialization a mem:CurationNeed ;
+    mem:applyClass mem:DeriveClass ;
+    mem:ledger <https://pod.vardeman.me/id/.operations/> ;
+    sh:agentInstruction """PropertyValue materialization (derive-class — but v1 is
+propose-only: file the proposal, do NOT write the projection until it is resolved by
+a separate act). For each scheme record lacking a schema:PropertyValue projection in
+its .meta: propose adding `[ a schema:PropertyValue ; schema:propertyID <record-URL> ]`
+shaped per D111 FOLLOWUPS item 1. File: as:object = the record;
+mem:stalenessClass mem:Materialization (a derivable projection the graph does not yet
+carry — not drift); mem:rationale naming which projection is missing. The proposal
+body must contain the EXACT triples to add, so the resolving act is mechanical.""" .

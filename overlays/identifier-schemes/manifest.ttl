@@ -32,6 +32,9 @@
           overlay:hostedAt "/id/curation-proposal.shacl.ttl" ] ;
 
     overlay:installsBootstrapContent
+        [ overlay:contentPath "interop/application.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/id-schemes-application" ;
+          overlay:contentType "text/turtle" ] ,
         [ overlay:contentPath "schemes/doi.ttl" ;            overlay:hostedAt "/id/schemes/doi" ;            overlay:contentType "text/turtle" ] ,
         [ overlay:contentPath "schemes/orcid.ttl" ;          overlay:hostedAt "/id/schemes/orcid" ;          overlay:contentType "text/turtle" ] ,
         [ overlay:contentPath "schemes/ror.ttl" ;            overlay:hostedAt "/id/schemes/ror" ;            overlay:contentType "text/turtle" ] ,

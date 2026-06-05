@@ -1,0 +1,43 @@
+@prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
+@prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
+@prefix prof:     <http://www.w3.org/ns/dx/prof/> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix prov:     <http://www.w3.org/ns/prov#> .
+
+<>  a prof:ResourceDescriptor , prov:Plan ;
+    prof:hasRole wikirole:curation-affordance ;
+    rdfs:label "Curation role (D112)" ;
+    rdfs:comment "The curation protocol: how any authorized agent assumes the curator role. This document IS the prov:Plan a curator declares via prov:hadPlan — pin the Memento version you followed." ;
+    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
+    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
+    sh:agentInstruction """You are assuming the CURATOR ROLE (D112). Equipment first:
+this descriptor is your plan — GET <this-URL>?ext=timemap and note the newest memento
+URL; every proposal you file MUST carry prov:qualifiedAssociation/prov:hadPlan
+pointing at it (writes without a declared plan are rejected, 422).
+
+Procedure:
+1. Discover work: GET the application registry under /vault/meta/interop/ ; each
+   interop:Application may declare mem:hasCurationNeed nodes. Each need carries its
+   own sh:agentInstruction (the check) , mem:applyClass (the intended lane) and
+   mem:ledger (where to file).
+2. Drain signals: GET the app's .events/ container if present (mem:* write-time
+   events); treat each as a finding candidate.
+3. Run each declared sweep check per its instruction.
+4. Every finding -> ONE Potential proposal: a <>-subject Turtle body POSTed to the
+   need's mem:ledger (201 + Location = your proposal's URL). Required form: see the
+   ledger's ldp:constrainedBy shape — as:object, schema:actionStatus
+   schema:PotentialActionStatus, mem:stalenessClass, mem:rationale (with EVIDENCE),
+   your qualified association with hadPlan, as:published.
+5. propose-only (BOTH LANES): never apply a fix yourself, even when it looks trivially
+   safe and mem:applyClass says DeriveClass. Graduation to auto-apply is earned from
+   trace history; it has not been granted to any need yet.
+6. dereference the authority before flagging (a claim may already be reconciled at
+   its source — the false-positive discipline). A withdrawn flag is recorded, not
+   deleted: schema:FailedActionStatus + mem:stalenessClass mem:FalsePositive +
+   rationale saying why.
+Resolution of proposals is a SEPARATE act (any authorized agent or the deployer):
+execute the repair, then flip schema:actionStatus on the proposal; the substrate
+clears the mem:hasOpenAction back-pointer automatically.""" .

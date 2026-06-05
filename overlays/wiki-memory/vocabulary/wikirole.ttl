@@ -104,3 +104,17 @@
     skos:prefLabel "Event stream" ;
     skos:definition "Append-only LDP container holding substrate-emitted analysis events (mem:Event subclasses)." ;
     skos:topConceptOf <https://pod.vardeman.me/vault/ontology/wikirole> .
+
+# Added 2026-06-05 — D112 curation protocol
+# :curation-affordance is the role for the prov:Plan descriptor an agent pins
+# via prov:hadPlan when assuming the curator role. Distinct from :query-affordance
+# (invocable SPARQL lookup) and :write-affordance (write-time listener): a
+# curation descriptor is the protocol document itself, not an invocable action.
+
+:curation-affordance
+    a owl:NamedIndividual , skos:Concept , prof:ResourceRole ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:inScheme <https://pod.vardeman.me/vault/ontology/wikirole> ;
+    skos:broader :affordance ;
+    skos:prefLabel "Curation affordance" ;
+    skos:definition "An affordance that IS the prov:Plan curators pin via prov:hadPlan when assuming the curator role (D112). Carries the full curation protocol procedure in sh:agentInstruction. Distinct from invocable query/search affordances — this is the process document, not an HTTP-dispatched action." .
