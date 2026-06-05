@@ -1,0 +1,36 @@
+{
+  "name": "@cogitarelink/id-catalog",
+  "version": "0.1.0",
+  "description": "IdCatalogStore: server-derived identifier-scheme catalog (D111 §4.4). A PassthroughStore wrapper that derives thin catalog entries from record writes in-band and rejects client writes that touch the server-managed triples (the ldp:contains precedent).",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "lsd:module": "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/id-catalog",
+  "lsd:components": "dist/components/components.jsonld",
+  "lsd:importPaths": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/id-catalog/^0.1.0/components/": "dist/components/",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/id-catalog/^0.1.0/dist/": "dist/"
+  },
+  "lsd:contexts": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/id-catalog/^0.1.0/components/context.jsonld": "dist/components/context.jsonld"
+  },
+  "scripts": {
+    "build": "npm run build:ts && npm run build:components",
+    "build:ts": "tsc --skipLibCheck",
+    "build:components": "componentsjs-generator -s src -c dist/components -i .componentsjs-generator-ignore.json",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@solid/community-server": "*",
+    "n3": "*"
+  },
+  "devDependencies": {
+    "@solid/community-server": "^8.0.0-alpha.3",
+    "@rdfjs/types": "*",
+    "@types/node": "^22.0.0",
+    "componentsjs-generator": "^4.0.0",
+    "n3": "^1.17.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
+  }
+}
