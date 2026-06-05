@@ -1,0 +1,86 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix mem:    <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix as:     <https://www.w3.org/ns/activitystreams#> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix schema: <https://schema.org/> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+# CurationProposalShape — the write contract for mem:RealignAction proposals
+# posted to an .operations/ ledger (D112). A proposal is one prov:Activity per
+# resource, <>-subject, POSTed so the server assigns the URL (LDN sender pattern).
+# The shape fires as the ldp:constrainedBy floor on /id/.operations/ (Task 5).
+#
+# Design notes:
+#   - sh:targetClass mem:RealignAction triggers dispatch from AdmissionFloorStore.
+#   - schema:actionStatus is constrained to the three lifecycle values only;
+#     v1 of this shape accepts Potential (propose), Completed (applied), and
+#     Failed (rejected/withdrawn) — the propose-only restriction is an agent
+#     instruction, not a hard floor, to allow curator ack-and-close writes.
+#   - prov:qualifiedAssociation / prov:hadPlan is the equipped-agent assertion:
+#     an agent must declare the Memento-pinned descriptor version it followed.
+#     A write without a declared plan is plan-undeclared and MUST be rejected
+#     (D112: plan-undeclared -> 422). The constraint is a SHACL path sequence.
+#   - mem:rationale is xsd:string; the shape requires PRESENCE but cannot
+#     validate QUALITY — that is the curator's judgment.
+#   - Validated offline with inference="none" (same discipline as scheme-record).
+mem:CurationProposalShape
+    a sh:NodeShape ;
+    rdfs:label "Curation proposal contract" ;
+    rdfs:comment "Governs a mem:RealignAction proposal POSTed to an .operations/ ledger. Requires as:object (the resource needing curation), schema:actionStatus (lifecycle), mem:stalenessClass, mem:rationale (with observed HTTP evidence for liveness findings), prov:qualifiedAssociation/prov:hadPlan (Memento-pinned descriptor version), and as:published. A proposal without a declared plan is rejected (D112)." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/mem> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-06-05"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+    sh:targetClass mem:RealignAction ;
+    sh:agentInstruction """A curation proposal is one activity per resource, <>-subject,
+POSTed to the app's .operations/ ledger (201 + Location assigns your URL — the LDN
+sender pattern). Required: as:object (the resource needing curation), exactly one
+schema:actionStatus (file as schema:PotentialActionStatus — v1 is propose-only for
+both lanes), mem:stalenessClass, mem:rationale carrying the observed EVIDENCE (for
+liveness: HTTP status, Accept sent, content-type received, timestamp), and
+prov:qualifiedAssociation/prov:hadPlan pinning the Memento version of the curation
+descriptor you followed (GET the descriptor ?ext=timemap, take the newest memento).
+A write without a declared plan is rejected: equipment is asserted, not assumed.""" ;
+    sh:property [
+        sh:path as:object ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A proposal names exactly one as:object — the resource needing curation."
+    ] ;
+    sh:property [
+        sh:path schema:actionStatus ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( schema:PotentialActionStatus schema:CompletedActionStatus schema:FailedActionStatus ) ;
+        sh:message "schema:actionStatus required: PotentialActionStatus (proposed) | CompletedActionStatus (applied) | FailedActionStatus (rejected/withdrawn)."
+    ] ;
+    sh:property [
+        sh:path mem:rationale ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "mem:rationale required — a realignment without recorded reasoning is not auditable. Include the HTTP evidence for liveness findings."
+    ] ;
+    sh:property [
+        sh:path mem:stalenessClass ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:message "mem:stalenessClass required (e.g. mem:ProviderDrift, mem:FalsePositive)."
+    ] ;
+    sh:property [
+        sh:path ( prov:qualifiedAssociation prov:hadPlan ) ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:message "prov:qualifiedAssociation/prov:hadPlan required — declare the Memento-pinned curation-descriptor version you followed (D112: plan-undeclared -> 422)."
+    ] ;
+    sh:property [
+        sh:path as:published ;
+        sh:datatype xsd:dateTime ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "as:published (xsd:dateTime) required."
+    ] .
