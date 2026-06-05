@@ -3,13 +3,22 @@ import { parseSpanLiterals } from "../../shared/markdown-parsing/src/spanLiteral
 import { resolveSubject } from "./subjectFrame.js";
 const { namedNode, literal, quad } = DataFactory;
 
-// CURIE→IRI for datatypes (xsd: only for MVP; extend from context.jsonld if needed)
+// Datatype CURIE prefixes (D111 §6.2). Code-constant + agreement-test idiom, the
+// same governance as CURIE_PREFIXES in frontmatterProjection.ts: the served
+// context (overlays/wiki-memory/context-fragment.jsonld) carries matching
+// declarations and the agreement tests assert the mirror. Unknown prefix =>
+// plain literal, never a throw (suggestive typing — Tier-2 curation flags it;
+// the D50 silent-drop convention). Unbound PREDICATES still throw (governance).
 const XSD = "http://www.w3.org/2001/XMLSchema#";
+export const DATATYPE_PREFIXES: Readonly<Record<string, string>> = {
+  xsd: XSD,
+  ids: "https://pod.vardeman.me/id/schemes/#",
+};
 function datatypeIRI(curie?: string): NamedNode | undefined {
   if (!curie) return undefined;
   const [pfx, local] = curie.split(":");
-  if (pfx === "xsd") return namedNode(XSD + local);
-  throw new Error(`unbound datatype prefix: ${pfx}`);
+  const ns = DATATYPE_PREFIXES[pfx];
+  return ns ? namedNode(ns + local) : undefined;  // unknown → plain literal
 }
 
 // binding: token → predicate IRI (read from the served context.jsonld / governedPredicates later)
