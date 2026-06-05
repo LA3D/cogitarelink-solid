@@ -206,6 +206,27 @@ describe("OperationsIndexListener", () => {
     expect(setCalls.length).toBe(0);
   });
 
+  it("T6: deriving guard — Create Potential fires exactly ONE setRepresentation (no re-entrant second write)", async () => {
+    const store = makeStore();
+    const proposalQuads = new Parser().parse(potentialProposalTtl(OP1, TARGET));
+    const originalGet = store.getRepresentation.bind(store);
+    store.getRepresentation = async (id: { path: string }, prefs?: any) => {
+      if (id.path === OP1) {
+        return new BasicRepresentation(proposalQuads, INTERNAL_QUADS);
+      }
+      return originalGet(id, prefs);
+    };
+
+    const listener = new OperationsIndexListener(store as any);
+    await listener.handle();
+
+    await store._fire({ path: OP1 }, `${AS_NS}Create`);
+
+    const setCalls = store._calls.filter((c) => c.method === "setRepresentation");
+    expect(setCalls.length).toBe(1);
+    expect(setCalls[0].id).toBe(TARGET_META);
+  });
+
   it("T5: Back-pointer write MERGES with existing .meta quads (pre-existing triples survive)", async () => {
     const DCT_TITLE = "http://purl.org/dc/terms/title";
     const preExisting = [

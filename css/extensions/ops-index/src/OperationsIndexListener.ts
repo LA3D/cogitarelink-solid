@@ -19,12 +19,14 @@
  */
 import { getLoggerFor } from "global-logger-factory";
 import {
+  AS,
   Initializer,
   INTERNAL_QUADS,
   BasicRepresentation,
   readableToQuads,
 } from "@solid/community-server";
 import type { MonitoringStore, ResourceIdentifier } from "@solid/community-server";
+import type { Quad } from "@rdfjs/types";
 import { Store, DataFactory } from "n3";
 import { parseProposal, MEM_HAS_OPEN_ACTION, POTENTIAL } from "./parseProposal.js";
 
@@ -73,7 +75,7 @@ export class OperationsIndexListener extends Initializer {
   private async onLedgerChange(target: ResourceIdentifier, activityIri: string): Promise<void> {
     const opUrl = target.path;
 
-    if (activityIri === "https://www.w3.org/ns/activitystreams#Delete") {
+    if (activityIri === AS.Delete) {
       // For Delete: look up the target in the seen map (resource is already gone).
       const targetUrl = this.seen.get(opUrl);
       if (!targetUrl) {
@@ -86,7 +88,7 @@ export class OperationsIndexListener extends Initializer {
     }
 
     // For Create and Update: read the proposal and parse it.
-    let proposalQuads: any[];
+    let proposalQuads: Quad[];
     try {
       const rep = await (this.store as any).getRepresentation(
         { path: opUrl },
@@ -130,7 +132,7 @@ export class OperationsIndexListener extends Initializer {
     const metaId = { path: metaUrl };
 
     // Read existing .meta quads (tolerate missing — empty store on first write).
-    let existingQuads: any[] = [];
+    let existingQuads: Quad[] = [];
     try {
       const rep = await (this.store as any).getRepresentation(
         metaId,
