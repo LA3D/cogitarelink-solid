@@ -3,7 +3,7 @@
 // No CSS imports: this module is pure (n3 only) so it is unit-testable without
 // the CSS class graph.
 import { DataFactory, Parser } from "n3";
-import type { Quad, Term } from "@rdfjs/types";
+import type { Quad, NamedNode, Literal } from "@rdfjs/types";
 const { namedNode, quad } = DataFactory;
 
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
@@ -29,8 +29,8 @@ export function deriveThinEntry(quads: Quad[], recordUrl: string, catalogUrl: st
   const types = quads.filter(q =>
     q.subject.value === topic.value && q.predicate.value === RDF_TYPE);
   const t = namedNode(topic.value);
-  const out: Quad[] = types.map(q => quad(t, namedNode(RDF_TYPE), q.object as Term as any));
-  if (label) out.push(quad(t, namedNode(`${SKOS}prefLabel`), label as Term as any));
+  const out: Quad[] = types.map(q => quad(t, namedNode(RDF_TYPE), q.object as NamedNode | Literal));
+  if (label) out.push(quad(t, namedNode(`${SKOS}prefLabel`), label as NamedNode | Literal));
   out.push(quad(t, namedNode(`${SKOS}inScheme`), namedNode(catalogUrl)));
   out.push(quad(t, namedNode(`${RDFS}isDefinedBy`), namedNode(catalogUrl)));
   out.push(quad(t, namedNode(`${FOAF}isPrimaryTopicOf`), namedNode(recordUrl)));

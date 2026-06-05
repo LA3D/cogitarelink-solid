@@ -144,8 +144,6 @@ function entryQuadsFor(source: any, topic: string) {
   return source.metaStore.getQuads(namedNode(topic), null, null, null);
 }
 
-beforeEach(() => {});
-
 describe("IdCatalogStore — client-write guards (ldp:contains precedent)", () => {
   it("rejects a PUT (setRepresentation) directly to the catalog container", async () => {
     const source = makeSource();

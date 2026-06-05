@@ -53,6 +53,8 @@ export class IdCatalogStore extends PassthroughStore {
   protected readonly logger = getLoggerFor(this);
 
   // The catalog container URL (ends with '/'). Its .meta carries the derived index.
+  // CSS's auxiliary strategy appends `.meta` to the container URL incl. trailing slash
+  // → `/id/schemes/.meta` (NOT `/id/schemes.meta`).
   private readonly catalogMetaPath: string;
 
   // Re-entrancy guard: when WE rewrite the catalog .meta, the write goes back through
@@ -65,6 +67,7 @@ export class IdCatalogStore extends PassthroughStore {
     private readonly catalogUrl: string,
   ) {
     super(source);
+    if (!catalogUrl.endsWith('/')) throw new Error('catalogUrl must end with "/" (container URL)');
     this.catalogMetaPath = `${catalogUrl}.meta`;
   }
 
@@ -270,6 +273,7 @@ export class IdCatalogStore extends PassthroughStore {
       p !== this.catalogUrl &&
       p !== this.catalogMetaPath &&
       !p.endsWith('.meta') &&
+      // sub-containers of the catalog escape both guards — the floor gate on the parent container handles them
       !p.endsWith('/')
     );
   }
