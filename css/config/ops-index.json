@@ -1,0 +1,14 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/ops-index/^0.1.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "comment": "OperationsIndexListener (D112 §5) — subscribes to MonitoringStore 'changed' events, watches .operations/ ledger containers, and derives mem:hasOpenAction back-pointers: when a mem:RealignAction with PotentialActionStatus is created, writes <target> mem:hasOpenAction <proposal-url> into the target's .meta; on status flip to Completed/Failed or Delete, removes the pointer. Server-derived (floor/loop rule: inferable state). Re-entrancy guard mirrors IdCatalogStore. KNOWN LIMIT: Delete-removal relies on in-memory seen-map — a restart between Create and Delete leaves a dangling pointer (FOLLOWUPS). K1 note: this listener is wired into the WorkerParallelInitializer Override in mem-trigger.json (which holds the single K1-compliant consolidation point for all listener handlers).",
+      "@id": "urn:cogitarelink:OperationsIndexListener",
+      "@type": "OperationsIndexListener",
+      "store": { "@id": "urn:solid-server:default:ResourceStore" }
+    }
+  ]
+}

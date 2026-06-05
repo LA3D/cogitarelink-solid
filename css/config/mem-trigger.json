@@ -84,7 +84,7 @@
       }
     },
     {
-      "comment": "Replace WorkerParallelInitializer handlers with all three listeners. This Override is imported AFTER markdown-projection.json (which sets [Memento, MarkdownProjection]) so its overrideParameters wins. K1: only one Override per instance, hence the consolidation pattern (same as memento.json ↔ markdown-projection.json relationship). All three listeners MUST be listed here because Override semantics replace rather than append.",
+      "comment": "Replace WorkerParallelInitializer handlers with all four listeners. This Override is imported AFTER markdown-projection.json (which sets [Memento, MarkdownProjection]) so its overrideParameters wins. K1: only one Override per instance, hence the consolidation pattern (same as memento.json ↔ markdown-projection.json relationship). All four listeners MUST be listed here because Override semantics replace rather than append. ops-index appended at the tail: CDC order = Memento (git) → MarkdownProjection (meta projection) → MemTrigger (event emission) → OpsIndex (back-pointer derivation).",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:WorkerParallelInitializer" },
       "overrideParameters": {
@@ -92,7 +92,8 @@
         "handlers": [
           { "@id": "urn:cogitarelink:MementoCommitListener" },
           { "@id": "urn:cogitarelink:MarkdownProjectionListener" },
-          { "@id": "urn:cogitarelink:MemTriggerListener" }
+          { "@id": "urn:cogitarelink:MemTriggerListener" },
+          { "@id": "urn:cogitarelink:OperationsIndexListener" }
         ]
       }
     }

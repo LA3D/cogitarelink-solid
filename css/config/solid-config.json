@@ -7,7 +7,8 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/markdown-projection/^0.1.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/wiki-search/^0.1.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/mem-trigger/^0.1.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/id-catalog/^0.1.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/id-catalog/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/ops-index/^0.1.0/components/context.jsonld"
   ],
   "import": [
     "./dev-allow-all.json",
@@ -17,7 +18,8 @@
     "./markdown-projection.json",
     "./wiki-search.json",
     "./mem-trigger.json",
-    "./id-catalog.json"
+    "./id-catalog.json",
+    "./ops-index.json"
   ],
   "@graph": [
     {

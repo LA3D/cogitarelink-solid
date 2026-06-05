@@ -12,6 +12,7 @@ JS_EXTENSIONS := \
     css/extensions/wiki-search \
     css/extensions/mem-trigger \
     css/extensions/id-catalog \
+    css/extensions/ops-index \
     css/extensions/memento \
     css/extensions/metadata-card \
     css/extensions/profile-link \

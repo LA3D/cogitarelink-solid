@@ -201,6 +201,28 @@ RUN mkdir -p /community-server/node_modules/@cogitarelink && \
        /community-server/node_modules/@cogitarelink/id-catalog
 
 # ============================================================================
+# ops-index — OperationsIndexListener (D112 §5). MonitoringStore CDC subscriber
+# that derives mem:hasOpenAction back-pointers from curation-ledger (.operations/)
+# state: Create Potential proposal → write pointer into target .meta; Update to
+# Completed/Failed or Delete → remove pointer. Server-derived (floor/loop rule:
+# inferable state). CJS-only TypeScript; `npm run build` = tsc + componentsjs-generator.
+# Same @solid/community-server symlink trick + @cogitarelink/ scoped symlink.
+# ============================================================================
+
+COPY extensions/ops-index /community-server/extensions/ops-index
+
+RUN cd extensions/ops-index && npm install --ignore-scripts
+
+RUN cd extensions/ops-index && npm run build
+
+RUN rm -rf /community-server/extensions/ops-index/node_modules/@solid/community-server && \
+    ln -sf /community-server /community-server/extensions/ops-index/node_modules/@solid/community-server
+
+RUN mkdir -p /community-server/node_modules/@cogitarelink && \
+    ln -sf /community-server/extensions/ops-index \
+       /community-server/node_modules/@cogitarelink/ops-index
+
+# ============================================================================
 # Build stamp — baked LATE so earlier layers remain cacheable.
 # The ARG default "unknown" means non-Makefile builds still work cleanly.
 # Verify with: docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' cogitarelink-solid-css-1

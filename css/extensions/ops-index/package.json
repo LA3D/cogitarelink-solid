@@ -1,0 +1,36 @@
+{
+  "name": "@cogitarelink/ops-index",
+  "version": "0.1.0",
+  "description": "OperationsIndexListener: server-derived mem:hasOpenAction back-pointers from curation-ledger state (D112 §5). When a mem:RealignAction with PotentialActionStatus is created in a .operations/ ledger container, writes <target> mem:hasOpenAction <proposal-url> into the target's .meta. On status flip to Completed/Failed or Delete, removes the back-pointer.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "lsd:module": "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/ops-index",
+  "lsd:components": "dist/components/components.jsonld",
+  "lsd:importPaths": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/ops-index/^0.1.0/components/": "dist/components/",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/ops-index/^0.1.0/dist/": "dist/"
+  },
+  "lsd:contexts": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/ops-index/^0.1.0/components/context.jsonld": "dist/components/context.jsonld"
+  },
+  "scripts": {
+    "build": "npm run build:ts && npm run build:components",
+    "build:ts": "tsc --skipLibCheck",
+    "build:components": "componentsjs-generator -s src -c dist/components -i .componentsjs-generator-ignore.json",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@solid/community-server": "*",
+    "n3": "*"
+  },
+  "devDependencies": {
+    "@solid/community-server": "^8.0.0-alpha.3",
+    "@rdfjs/types": "*",
+    "@types/node": "^22.0.0",
+    "componentsjs-generator": "^4.0.0",
+    "n3": "^1.17.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
+  }
+}
