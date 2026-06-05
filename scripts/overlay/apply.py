@@ -132,17 +132,9 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
         for container_path in manifest.container_paths:
             container_url = absolutize(pod_url, container_path)
             ensure_container(client, container_url)
-            # Look for a matching .meta file under overlay_dir/containers/<path>/.meta.
-            # container_url is fully-absolute (e.g., http://pod/.../vault/wiki/pages/);
-            # strip the Pod URL to recover the path relative to the storage root
-            # (e.g., wiki/pages/), then append .meta. Containers OUTSIDE the storage
-            # root (e.g., /id/schemes/, the D111 identifier space) don't start with
-            # pod_url, so the strip would mangle the path — fall back to the URL path
-            # relative to the host origin (id/schemes/.meta) for those. This is how
-            # an out-of-root container gets constrainedBy applied at CREATION, before
-            # any bootstrap content lands (CSS rejects re-constraining a non-empty
-            # container with H400). Applying the .meta here (block 8) is the only
-            # in-band way to satisfy the empty-container ordering for /id/.
+            # /id/ containers live outside pod_url; fall back to URL-path-relative key
+            # so .meta is applied HERE (block 8, at creation) before bootstrap content —
+            # CSS H400s re-constraining a non-empty container.
             if container_url.startswith(pod_url):
                 rel = container_url[len(pod_url):].rstrip("/") + "/.meta"
             else:

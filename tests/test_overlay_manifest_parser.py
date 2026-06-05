@@ -67,7 +67,6 @@ def test_parser_returns_empty_lists_when_predicates_absent(tmp_path):
 
 def test_wiki_memory_manifest_parses_extension_guide():
     """The real wiki-memory manifest now declares installsExtensionGuide."""
-    from pathlib import Path
     m = parse_manifest(
         Path(__file__).parent.parent / "overlays" / "wiki-memory",
         pod_url="https://pod.vardeman.me/vault/",
@@ -84,18 +83,22 @@ def test_identifier_schemes_out_of_root_container_meta_placement():
     container declaration and the on-disk .meta placement block 8 depends on
     to apply ldp:constrainedBy AT CREATION (the empty-container ordering
     constraint — CSS H400s a re-constrain of a non-empty container)."""
-    from pathlib import Path
-    from urllib.parse import urlsplit
     root = Path(__file__).parent.parent
     pod_url = "https://pod.vardeman.me/vault/"
     m = parse_manifest(root / "overlays" / "identifier-schemes", pod_url=pod_url)
     container_url = "https://pod.vardeman.me/id/schemes/"
     assert container_url in m.container_paths
     assert not container_url.startswith(pod_url)  # out-of-root: the fallback branch
-    rel = urlsplit(container_url).path.lstrip("/").rstrip("/") + "/.meta"
-    assert rel == "id/schemes/.meta"
-    meta_local = root / "overlays" / "identifier-schemes" / "containers" / rel
+    expected_rel = "id/schemes/.meta"
+    meta_local = root / "overlays" / "identifier-schemes" / "containers" / expected_rel
     assert meta_local.exists()
     body = meta_local.read_text()
     assert "ldp:constrainedBy" in body
-    assert "/id/scheme-record.shacl.ttl" in body
+    assert "https://pod.vardeman.me/id/scheme-record.shacl.ttl" in body
+
+
+def test_in_root_container_meta_rel_unchanged():
+    pod_url = "https://pod.vardeman.me/vault/"
+    container_url = "https://pod.vardeman.me/vault/wiki/pages/"
+    assert container_url.startswith(pod_url)
+    assert container_url[len(pod_url):].rstrip("/") + "/.meta" == "wiki/pages/.meta"
