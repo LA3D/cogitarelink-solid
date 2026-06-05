@@ -8,6 +8,7 @@
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix dct:    <http://purl.org/dc/terms/> .
 @prefix schema: <https://schema.org/> .
+@prefix interop: <http://www.w3.org/ns/solid/interop#> .
 
 <https://pod.vardeman.me/vault/ontology/mem>
     a owl:Ontology ;
@@ -376,3 +377,58 @@ mem:CodeDrift           a mem:StalenessClass , skos:Concept ; rdfs:label "Code d
     rdfs:comment "Executable code (test, script, config) references substrate that a decision renamed/removed (e.g. a test loading source.shacl.ttl post-D98). Repair direction is code → decision, not prose → reality." .
 mem:FalsePositive       a mem:StalenessClass , skos:Concept ; rdfs:label "False positive" ;
     rdfs:comment "A flagged reference resolved as correct against the canonical source; the flag is withdrawn. Recorded so the context graph captures non-repairs, and so the false-positive guard is itself auditable." .
+
+# ============================================================
+# D112 — curation protocol terms (added 2026-06-05)
+# ============================================================
+# The curation loop (D112 sub-C) operates at Tier-2 (Karpathy Lint).
+# Three classes of artefact:
+#   mem:hasOpenAction   — server-derived back-pointer from a resource to its
+#                         pending curation activity in .operations/ (Link header)
+#   mem:CurationNeed    — a declared check an application asks the curator to run
+#   mem:applyClass / mem:ledger — routing metadata on a CurationNeed
+# Two apply-class lanes (DeriveClass / JudgmentClass) mirror the floor/loop rule
+# (derive-inferable / floor-locally-authorable / loop-graph-global, D109).
+# Two new staleness classes extend the existing StalenessClass scheme:
+#   mem:ProviderDrift   — D111 probe-caught: provider no longer resolves as declared
+#   mem:Materialization — not staleness but a derivable projection gap
+
+mem:hasOpenAction
+    a rdf:Property ;
+    rdfs:label "has open action" ;
+    rdfs:comment "Target resource → a pending (schema:PotentialActionStatus) curation activity in a .operations/ ledger. SERVER-DERIVED only: maintained by OperationsIndexListener from the ledger state; agents never author it (the ldp:contains precedent). Surfaced on GET as a Link header (rel = this property's IRI)." ;
+    rdfs:range prov:Activity .
+
+mem:CurationNeed
+    a rdfs:Class ;
+    rdfs:label "Curation need" ;
+    rdfs:comment "One declared Tier-2 check an application asks the curator role to run over its data registration. The check procedure rides on sh:agentInstruction (the on-Pod source of truth, D103); the intended lane on mem:applyClass; the ledger to file into on mem:ledger. Declared at deploy time — never invented at run time (D112 §7)." .
+
+mem:hasCurationNeed
+    a rdf:Property ;
+    rdfs:label "has curation need" ;
+    rdfs:domain interop:Application ;
+    rdfs:range mem:CurationNeed ;
+    rdfs:comment "An interop:Application declares the curation checks its data registration needs (policy-as-data, D112 §4)." .
+
+mem:applyClass
+    a rdf:Property ;
+    rdfs:label "apply class" ;
+    rdfs:domain mem:CurationNeed ;
+    rdfs:comment "The need's INTENDED lane (D112 §7). v1 behavior is propose-only for both lanes; graduation of a DeriveClass need to auto-apply is earned by a maturity score over its trace history (clean-trace rate, reversal rate, plan-version stability), never granted by design." .
+
+mem:ledger
+    a rdf:Property ;
+    rdfs:label "ledger" ;
+    rdfs:domain mem:CurationNeed ;
+    rdfs:comment "The .operations/ container proposals for this need are filed into (one activity per resource, <>-subject, LDN sender pattern)." .
+
+mem:DeriveClass         a skos:Concept ; rdfs:label "derive class" ;
+    skos:definition "Recomputable from the graph, idempotent, destroys no information." .
+mem:JudgmentClass       a skos:Concept ; rdfs:label "judgment class" ;
+    skos:definition "Requires judgment, destroys or reinterprets information, or asserts facts about the world." .
+
+mem:ProviderDrift       a mem:StalenessClass , skos:Concept ; rdfs:label "Provider drift" ;
+    skos:definition "A declared identifier-resolution provider no longer resolves as declared (sampleID × urlPattern × mediaType mismatch). Evidence of the failing HTTP transaction goes in mem:rationale." .
+mem:Materialization     a mem:StalenessClass , skos:Concept ; rdfs:label "Materialization" ;
+    skos:definition "Not staleness: a derivable projection the graph should carry but does not yet (e.g. the schema:PropertyValue projection on a scheme record). The proposal body contains the exact triples to add, so the resolving act is mechanical." .
