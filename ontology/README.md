@@ -57,7 +57,8 @@ A `#` header block, then the **verbatim** upstream vocab below it:
 | | `odrl:` | fine-grained policy (KG permissions aspect) | note only |
 | **Identifier schemes (D111)** | `idot:` (identifiers.org types) | scheme records: `idot:Namespace`/`Resource`/`urlPattern`/`luiPattern`/`sampleID` | **GROUNDED** `idot.ttl` (v0.3) |
 | | `datacite:` (SPAR DataCite) | identifier-scheme individuals (`datacite:doi`, …) for `skos:exactMatch` | **GROUNDED** `datacite.ttl` |
-| **Domain / L3** | skos, dct, schema, foaf, cito, prov, vcard, org, td, oslc | content vocab | declare (cache SKOS/DC/PROV to fix drift) |
+| **Domain / L3** | skos, dct, schema, foaf, cito, vcard, org, td, oslc | content vocab | declare (cache SKOS/DC to fix drift) |
+| | `prov:` (PROV-O) | provenance/curation (D112 hadPlan axioms) | **GROUNDED** `prov.ttl` |
 | **Minted (ours)** | wiki, sub, mem, **overlay, cap** | L3 + substrate | ours — re-base overlay/cap on `interop:` (D110) |
 
 The **grounded** set *is* the base vocabulary index the agentic harness loads on
@@ -99,6 +100,12 @@ when that application engages (interop `ApplicationRegistration` + `AccessNeedGr
   (`biomodels.net/vocab/idot.rdf` is 403/dormant). **v0.3 term names differ from the D111 plan's
   guesses**: the ID-regex pattern is `idot:luiPattern` (not `idRegexPattern`) and the example
   identifier is `idot:sampleID` (not `exampleIdentifier`) — the cache is the source of truth.
+- `prov.ttl` — cached 2026-06-05, W3C PROV-O (Provenance Ontology, W3C Rec 2013-04-30,
+  1146 triples, rdflib-validated). **Grounded for D112**: the curation-protocol spec
+  requires every curation proposal to carry `prov:qualifiedAssociation [ prov:hadPlan <plan> ]`;
+  the `hadPlan` and `qualifiedAssociation` domain/range axioms are normative dependencies.
+  Namespace `http://www.w3.org/ns/prov#`; prefix `prov:`.
+
 - `datacite.ttl` — cached 2026-06-05, SPAR DataCite ontology (OWL 2 DL, 936 triples,
   rdflib-validated; tracks DataCite Metadata Schema 4.7). **Grounded for D111**: provides the
   identifier-scheme individuals (e.g. `datacite:doi` at `<http://purl.org/spar/datacite/doi>`)
@@ -109,9 +116,9 @@ when that application engages (interop `ApplicationRegistration` + `AccessNeedGr
 ## Drift to reconcile
 
 CLAUDE.md describes `ontology/` as holding "cached ontology stubs (SKOS, DC,
-PROV-O)" — **not present** as of 2026-06-02 (only our two files existed before
-`interop.ttl`). Either cache those three (fixes offline SHACL dev + completes
-the base index) or correct CLAUDE.md.
+PROV-O)" — PROV-O is now **grounded** (`prov.ttl`, 2026-06-05). SKOS and DC
+remain declared-by-reference; cache them to fix offline SHACL dev + complete
+the base index.
 
 ## Connections
 
