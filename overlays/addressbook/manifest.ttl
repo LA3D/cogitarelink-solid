@@ -77,6 +77,12 @@
         [ solid:forClass vcard:AddressBook ;
           solid:instance </vault/contacts/index.ttl#this> ] ;
 
+    # D111: scheme records this overlay's contacts depend on (ORCID + DID identifiers).
+    # Presence-checked at apply; never overwritten.
+    overlay:registersScheme
+        <https://pod.vardeman.me/id/schemes/orcid> ,
+        <https://pod.vardeman.me/id/schemes/did> ;
+
     overlay:installsBootstrapContent
         [ overlay:contentPath "containers/index.ttl" ;
           overlay:hostedAt "/vault/contacts/index.ttl" ] ,

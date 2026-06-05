@@ -138,6 +138,7 @@ class Manifest:
     hint_mappings: list[HintMapping]          # overlay:installsHintMapping (D98)
     extension_guides: list[ExtensionGuide]    # overlay:installsExtensionGuide (D100)
     overlay_dir: Path                 # local directory holding manifest + artifacts
+    registers_schemes: tuple[URIRef, ...] = ()  # overlay:registersScheme — /id/schemes/<key> records this overlay needs (D111)
 
 
 def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
@@ -310,6 +311,10 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
                 subject=str(subject_scope),
             ))
 
+    # overlay:registersScheme — /id/schemes/<key> records this overlay depends on (D111).
+    # Objects are full scheme-record IRIs; sorted for deterministic deploy order.
+    registers_schemes = tuple(sorted(many(OVERLAY.registersScheme), key=str))
+
     # overlay:installsExtensionGuide — L4 extension manual installs (D100)
     extension_guides = []
     for guide_node in g.objects(overlay_iri, OVERLAY.installsExtensionGuide):
@@ -337,6 +342,7 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         hint_mappings=hint_mappings,
         extension_guides=extension_guides,
         overlay_dir=overlay_dir,
+        registers_schemes=registers_schemes,
     )
 
 

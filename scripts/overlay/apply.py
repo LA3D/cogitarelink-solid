@@ -19,6 +19,7 @@ from urllib.parse import urljoin, urlsplit
 
 import httpx
 from rdflib import Graph, URIRef
+from rdflib.compare import isomorphic
 from rdflib.namespace import DCTERMS, RDF
 
 from .common import (
@@ -58,6 +59,44 @@ def check_capabilities(client: httpx.Client, pod_url: str, manifest: Manifest) -
                   file=sys.stderr)
 
 
+def check_registered_schemes(client: httpx.Client, pod_url: str, manifest: Manifest) -> None:
+    """Presence-check each overlay:registersScheme record at /id/schemes/<key> (D111).
+
+    Scheme records are minted by the identifier-schemes overlay; other overlays
+    DECLARE the records their content depends on and never overwrite them
+    (conflicts go to the curation loop, not a clobber). Per scheme IRI:
+      - HEAD 200: present → no-op. If the overlay bundles schemes/<key>.ttl AND
+        its graph differs from the live one, warn (NOT overwriting).
+      - HEAD 404 + bundled record: PUT it (this overlay mints it).
+      - HEAD 404 + no bundled record: SystemExit — apply identifier-schemes first.
+    """
+    for scheme in manifest.registers_schemes:
+        url = absolutize(pod_url, str(scheme))
+        key = url.rstrip("/").rsplit("/", 1)[-1]
+        bundled = manifest.overlay_dir / "schemes" / f"{key}.ttl"
+        r = client.head(url, timeout=10)
+        if r.status_code == 200:
+            print(f"  registersScheme: {key} present")
+            if bundled.exists():
+                live = client.get(url, headers={"Accept": "text/turtle"}, timeout=10)
+                if live.status_code == 200:
+                    g_local = Graph().parse(data=bundled.read_text(), format="turtle", publicID=url)
+                    g_live = Graph().parse(data=live.text, format="turtle", publicID=url)
+                    if not isomorphic(g_local, g_live):
+                        print(f"  [warn] registersScheme: {key} differs from live record — "
+                              f"NOT overwriting (conflicts go to the curation loop)",
+                              file=sys.stderr)
+            continue
+        if bundled.exists():
+            put_file(client, url, bundled, "text/turtle")
+            print(f"  registersScheme: {key} installed")
+        else:
+            raise SystemExit(
+                f"registersScheme: required scheme record {url} is absent and "
+                f"not bundled by this overlay — apply the identifier-schemes overlay first"
+            )
+
+
 def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
     pod_url = pod_url.rstrip("/") + "/"
     manifest = parse_manifest(overlay_dir, pod_url=pod_url)
@@ -66,6 +105,7 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
 
     with httpx.Client() as client:
         check_capabilities(client, pod_url, manifest)
+        check_registered_schemes(client, pod_url, manifest)
 
         # 1. Upload vocabulary documents
         for vocab in manifest.vocabularies:
