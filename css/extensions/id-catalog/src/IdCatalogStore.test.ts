@@ -145,16 +145,27 @@ function entryQuadsFor(source: any, topic: string) {
 }
 
 describe("IdCatalogStore — client-write guards (ldp:contains precedent)", () => {
-  it("rejects a PUT (setRepresentation) directly to the catalog container", async () => {
+  it("rejects a PUT that writes a catalog-FRAGMENT (derived) subject onto the container", async () => {
     const source = makeSource();
     const store = new IdCatalogStore(source as any, CATALOG);
     await expect(
-      store.setRepresentation({ path: CATALOG }, ttl(CATALOG, `<${CATALOG}> a <urn:x> .`)),
+      store.setRepresentation({ path: CATALOG }, ttl(CATALOG, `<${TOPIC}> a <urn:x> .`)),
     ).rejects.toBeInstanceOf(ConflictHttpError);
     expect(source.calls.some((c) => c.method === "setRepresentation")).toBe(false);
   });
 
-  it("rejects a PUT directly to the catalog .meta", async () => {
+  it("allows a structural PUT to the catalog container (no fragment subject) — seed creates the empty container", async () => {
+    const source = makeSource();
+    const store = new IdCatalogStore(source as any, CATALOG);
+    // The seed's ensure_container body: container typing on `<>`, no derived #fragment.
+    await store.setRepresentation(
+      { path: CATALOG },
+      ttl(CATALOG, `<${CATALOG}> a <http://www.w3.org/ns/dcat#Catalog> ; <http://purl.org/dc/terms/title> "cat" .`),
+    );
+    expect(source.calls.some((c) => c.method === "setRepresentation" && c.id === CATALOG)).toBe(true);
+  });
+
+  it("rejects a PUT that writes a catalog-FRAGMENT subject onto the catalog .meta", async () => {
     const source = makeSource();
     const store = new IdCatalogStore(source as any, CATALOG);
     await expect(

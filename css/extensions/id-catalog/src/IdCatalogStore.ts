@@ -47,7 +47,7 @@ import {
 import type { Quad } from '@rdfjs/types';
 import { Store, Writer, Parser, DataFactory } from 'n3';
 import { getLoggerFor } from 'global-logger-factory';
-import { deriveThinEntry, findDerivedSubjects } from './deriveEntry.js';
+import { deriveThinEntry, findDerivedSubjects, catalogFragmentRe } from './deriveEntry.js';
 
 const FOAF_IS_PRIMARY_TOPIC_OF = 'http://xmlns.com/foaf/0.1/isPrimaryTopicOf';
 
@@ -81,7 +81,25 @@ export class IdCatalogStore extends PassthroughStore {
     conditions?: Conditions,
   ): Promise<ChangeMap> {
     if (!this.deriving && this.isCatalogOrMeta(id)) {
-      throw this.derivedConflict([ this.catalogUrl ]);
+      // Content-aware guard (mirrors modifyResource): reject a PUT that writes a
+      // server-derived catalog-FRAGMENT subject (`<…/id/schemes/#doi>` — the thin
+      // index entries), but ALLOW a structural write that carries none — e.g. the
+      // seed creating the empty catalog container or setting its `dcat:Catalog`
+      // typing on `<>`. A body our parser rejects is passed to source so CSS's own
+      // handler returns the correct 4xx instead of our layer leaking a 500.
+      const cloned = await cloneRepresentation(representation);
+      const text = await readableToString(cloned.data);
+      let touched: string[];
+      try {
+        touched = this.fragmentSubjects(text, id.path);
+      } catch (error: unknown) {
+        this.logger.debug(`id-catalog: unparseable PUT on ${id.path}, passing through to source: ${error}`);
+        return super.setRepresentation(id, representation, conditions);
+      }
+      if (touched.length > 0) {
+        throw this.derivedConflict(touched);
+      }
+      return super.setRepresentation(id, representation, conditions);
     }
     if (this.isRecord(id)) {
       // Clone before consuming the stream — the original must still flow to source.
@@ -91,6 +109,15 @@ export class IdCatalogStore extends PassthroughStore {
       return result;
     }
     return super.setRepresentation(id, representation, conditions);
+  }
+
+  // Parse a Turtle body (baseIRI = resource URL) and return the catalog-fragment
+  // subjects it touches. The PUT-path analogue of findDerivedSubjects (which reads
+  // N3-Patch quoted graphs); here the body is plain Turtle.
+  private fragmentSubjects(body: string, baseIRI: string): string[] {
+    const frag = catalogFragmentRe(this.catalogUrl);
+    const quads = new Parser({ baseIRI }).parse(body);
+    return [ ...new Set(quads.map((q) => q.subject.value).filter((v) => frag.test(v))) ];
   }
 
   // --- PATCH guard (N3 Patch over the catalog .meta) -------------------------
