@@ -35,10 +35,16 @@ export function projectSpanLiterals(body: string, subject: NamedNode, binding: R
 
 // The literal-axis binding the substrate was missing (skos literals on <#this> per ConceptShape /
 // governedPredicates). Token → predicate IRI. Edges (broader, cites, source…) are the wikilink axis.
+// `identifier` → dct:identifier is the D111 §6.2 *primary* authoring affordance: the body span
+// `[10.1234/x]{.identifier^^ids:doi}` carries the agent-authored external id (DOI/arXiv/citekey/
+// ORCID) on <#this> — resolveSubject frames it to the Thing (dct:identifier is not page-governed),
+// the ^^ids:* datatype is resolved by datatypeIRI above. Without it the body-span identifier axis
+// (§11.4) threw `unbound predicate: identifier`. Pairs with the frontmatter compact-id path.
 export const DEFAULT_LITERAL_BINDING: Record<string, string> = {
   prefLabel:  "http://www.w3.org/2004/02/skos/core#prefLabel",
   altLabel:   "http://www.w3.org/2004/02/skos/core#altLabel",
   definition: "http://www.w3.org/2004/02/skos/core#definition",
+  identifier: "http://purl.org/dc/terms/identifier",
 };
 
 // Parse spans once; resolve EACH span's subject by frame; build one literal quad per span.
