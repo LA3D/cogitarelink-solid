@@ -137,7 +137,7 @@ markdown authoring layer here — pure graph-authority substrate, RDF-body docum
 | **Catalog** | `/id/schemes/` — an `ldp:BasicContainer` whose representation is also `dcat:Catalog` + `skos:ConceptScheme` (the `idot:Registry ⊑ dcat:Catalog` pattern). Carries server-derived thin entries per scheme |
 | **Scheme record** | `/id/schemes/doi` — a per-scheme `ldp:RDFSource` (Turtle, conneg JSON-LD). `foaf:primaryTopic </id/schemes/#doi>`; carries the rich description: definition, regex, example, providers, crosswalk anchors |
 | **Provider** | `idot:Resource ⊑ dcat:DataService` node in a record: `idot:urlPattern "…{$id}"`, media type, `dct:conformsTo` profile, `dct:type` → role concept |
-| **Role concepts** | `/id/roles#landing-page`, `#metadata-record`, `#did-document`, `#the-resource` — `skos:Concept`s (with `skos:broader` to PROF canonical roles where one fits) stating what resolution *returns relative to the identified thing* (httpRange-14 made explicit per provider). Attached via `dct:type` (NOT `prof:hasRole`, whose domain is ResourceDescriptor) |
+| **Role concepts** | `/id/roles#landing-page`, `#metadata-record`, `#did-document`, `#the-resource` — `skos:Concept`s (with `skos:broader` to PROF canonical roles where one fits) stating what resolution *returns relative to the identified thing* (httpRange-14 made explicit per provider). Attached via `dct:type` (NOT `prof:hasRole`, whose domain is ResourceDescriptor). **PROF is lineage and grounding in this design — NO `prof:ResourceDescriptor`/`prof:Profile` machinery is built in the MVP.** The only operational PROF surface is `Link rel="profile"` document-kind hints (D86) |
 | **Vocabulary cache** | `ontology/idot.ttl` + `ontology/datacite.ttl`, ground-now per D109 §5 / `ontology/README.md` provenance convention |
 
 ---
@@ -147,15 +147,23 @@ markdown authoring layer here — pure graph-authority substrate, RDF-body docum
 ### 4.1 Placement: `/id/` at server level, outside any storage root
 
 `https://pod.vardeman.me/id/` is independent of `/vault` (or any future storage-root name).
-Rationale: **datatype IRIs are write-once-forever** — they are embedded in literals across
-every application's content. The one place the Pod absolutely cannot afford identifier rot
-is its identifiers for identifier schemes. The `/vault` segment is under active
-reconsideration; minting permanent IRIs beneath it would be self-inflicted rot.
+Rationale: **datatype IRIs are write-once-forever *within a deployment*** — they are embedded
+in literals across every application's content, and literals cannot be rewritten the way
+documents can. The one place the Pod absolutely cannot afford identifier rot is its
+identifiers for identifier schemes. The `/vault` segment is under active reconsideration;
+minting datatype IRIs beneath it would be self-inflicted rot. (Scope of the permanence claim:
+*per-deployment*. Scheme IRIs are deployment-local and parameterized like the storage root;
+**cross-deployment** consistency comes from the `exactMatch` anchors, never from shared IRIs —
+§2.6. Predicates such as the discovery edge or `overlay:registersScheme` do NOT need this
+treatment: they live in rewritable documents and migrate mechanically if their namespace
+moves. Only literal datatypes are unfixable after the fact.)
 
 Records under `/id/` are nonetheless **ordinary Solid resources**: LDP container + RDF
-Sources, WAC (public-read; writes gated), Memento (per-record TimeMaps — time-travel to see
-what `doi` resolution looked like when an old literal was written), `constrainedBy`
-validation. The CSS serving mechanics for a server-level space (own minimal storage vs.
+Sources, WAC (public-read; **writes gated to the deployer-owner identity for the MVP** —
+broader multi-agent registration policy is an authorization design that waits for the
+D110/SAI work; do not scope the *model* down to single-owner, only the MVP gate), Memento
+(per-record TimeMaps — time-travel to see what `doi` resolution looked like when an old
+literal was written), `constrainedBy` validation. The CSS serving mechanics for a server-level space (own minimal storage vs.
 static route + store wiring) are an **implementation-plan decision**, not a design question —
 either satisfies this spec provided all listed behaviors (WAC/Memento/floor/conneg) hold.
 
@@ -194,8 +202,13 @@ catalog document; Things = the `#doi`, `#orcid`, … fragments.
 | The scheme record doc | `…/id/schemes/doi` | Yes | rich description; `foaf:primaryTopic …#doi` |
 
 The abstract/document separation is enforced by HTTP fragment semantics — no representation
-can ever be "the thing at" a hash IRI (this is why hash, not 303, and it is the idiom the Pod
-already speaks via `<#this>`). Wiring predicates: catalog entry
+can ever be "the thing at" a hash IRI (this is why hash, not 303). The *principle* is the
+same one the Pod already practices via `<>`/`<#this>` (D95/D96), but the **granularity is
+new**: many thing-fragments on one catalog document, and a record document describing a
+subject whose home is a *different* document. **Implementation warning:** the existing
+`subjectFrame.ts` / `resolveSubject()` machinery maps wiki-page predicates to `<>` vs
+`<#this>` and does NOT apply to scheme records — record subjects are written as full
+abstract IRIs, no frame resolution involved. Wiring predicates: catalog entry
 `foaf:isPrimaryTopicOf <record>`; record `<> foaf:primaryTopic <…#key>`. **Every
 scheme-describing triple in the record has the abstract hash IRI as its subject, written in
 full** — the record is a document about a thing whose home is another document (same pattern
@@ -207,7 +220,26 @@ as `.meta` describing `<resource>#this`). Provider nodes are record-local fragme
 
 The thin per-scheme entries in the catalog representation are **derived from member records**
 — a DerivedView (D83 capability class), with `ldp:contains` as the exact precedent for
-server-managed triples. Consequences:
+server-managed triples.
+
+**The thin entry, normatively** (per scheme `<key>`, derived by copying typing + label from
+the record's topic node):
+
+```turtle
+<#key> a idot:Namespace, skos:Concept, rdfs:Datatype ;
+    skos:prefLabel  <copied from the record topic> ;
+    skos:inScheme   <> ;
+    rdfs:isDefinedBy <> ;
+    foaf:isPrimaryTopicOf </id/schemes/key> .
+```
+
+Nothing else is copied — definition, regex, providers, anchors live only in the record. The
+entries (plus the catalog's own `dcat:Catalog` + `skos:ConceptScheme` typing) appear in the
+**served representation of `GET /id/schemes/`** — that is the contract, since it is what
+dereferencing any datatype IRI returns; where CSS physically stores container body triples
+(its internal container `.meta` file) is an implementation detail. The `pod_audit.py`
+bijection check is defined against this triple set: every `<#key>` entry has a record whose
+`foaf:primaryTopic` is `…/schemes/#key`, and vice versa. Consequences:
 
 - **Registration = one write**: `PUT /id/schemes/<key>` (curl suffices). The catalog entry
   materializes server-side, **in-band on the write path** (D108 listener→backstop
@@ -323,8 +355,11 @@ worked method record), `solid-resource`. Nothing else until a consumer demands i
 <#manifest> overlay:registersScheme </id/schemes/doi>, </id/schemes/citekey>, </id/schemes/orcid> .
 ```
 
-`apply.py` grows one deploy block: ensure each referenced record exists (install the
-overlay's bundled record if absent; no-op if present — accretive, like capabilities).
+`apply.py` grows one deploy block: ensure each referenced record exists. **Semantics:**
+"present" = HTTP 200 at the record URL. Absent → install the overlay's bundled record.
+Present → no-op; if the bundled record's graph differs from the installed one, **log the
+difference and do not overwrite** — conflicts surface to the curation loop, never silently
+resolve (accretive, like capabilities).
 Day-one consumers: wiki-memory, AddressBook. A new application minting a novel scheme bundles
 a record conforming to `SchemeRecordShape` — open-world by the same contract logic as D100
 class extension. When D110 re-bases app declarations on `interop:`, only the manifest syntax
@@ -332,17 +367,24 @@ moves; records do not change.
 
 ### 6.2 Authoring affordances (how agents emit typed literals)
 
-- **Body span (primary, already shipped):** `["10.1234/x"]{.identifier^^ids:doi}` — the
-  RQ-Grammar-1 literal axis. Implementation: register `ids:` in the served `context.jsonld`
-  → `https://pod.vardeman.me/id/schemes/#`; extend
-  `markdown-projection/src/spanLiteralProjection.ts:datatypeIRI()` to resolve prefixes from
-  the context registry (the in-code comment already anticipates exactly this; config-driven
-  per the cleanup-sprint lesson, not hardcoded).
+- **Body span (primary — grammar shipped, plumbing is NOT):** `["10.1234/x"]{.identifier^^ids:doi}`
+  — the RQ-Grammar-1 literal axis. **Honest state of the code:** the *grammar* exists
+  (`shared/markdown-parsing/src/spanLiterals.ts` parses `^^prefix:local`), but the projector's
+  `datatypeIRI()` (`markdown-projection/src/spanLiteralProjection.ts:8-13`) hardcodes `xsd:`
+  and throws on any other prefix — there is **no context-registry loader today**; the in-code
+  comment is a TODO, not infrastructure. Implementation must BUILD it: a prefix→IRI binding
+  **injected via Components.js config at construction** (sync, like
+  `DEFAULT_LITERAL_BINDING`; config-driven per the cleanup-sprint config-guard lesson), with
+  the served `/meta/context.jsonld` gaining the matching `ids:` entry
+  (`→ https://pod.vardeman.me/id/schemes/#`) and an **agreement test** between config binding
+  and served context (the exact guard the fragility-audit residue calls for).
 - **Frontmatter (secondary):** compact-identifier convention, `identifier: doi:10.1234/x` —
-  identifiers.org's own form, which agents speak natively from training. The projector splits
-  on the first colon and resolves the prefix against **registered** schemes. Unknown prefix →
-  project as plain literal; Tier-2 curation flags it. **Never a floor reject** (suggestive
-  typing).
+  identifiers.org's own form, which agents speak natively from training. Normative binding:
+  predicate `dct:identifier`, subject frame `<#this>` (per the cleanup-sprint
+  dct:identifier-on-`<#this>` decision), scalar and list values both supported. The projector
+  splits each value on the first colon and resolves the prefix against **registered** schemes.
+  Unknown prefix → project the whole string as a plain literal; Tier-2 curation flags it.
+  **Never a floor reject** (suggestive typing).
 - **RDF-body substrates** (contacts, catalog records): direct Turtle — no special handling.
 - **Provenance amendment:** `docs/decisions/typed-wikilink-syntax-provenance.md` must be
   amended to record that the `^^datatype` / `@lang` span-literal extensions are wiki-memory's
@@ -394,8 +436,14 @@ The topic node: triple-typing (`idot:Namespace`, `skos:Concept`, `rdfs:Datatype`
 `skos:prefLabel`, `skos:definition`, `idot:idRegexPattern`, `idot:exampleIdentifier` all
 required (a scheme without syntax and a worked example is unusable by agents). Providers
 optional (non-resolvable schemes are legal). `skos:exactMatch` / `dct:conformsTo`
-recommended-not-required. `sh:agentInstruction` carries the registration how-to. Records are
-RDF-body, so the **existing** upstream validator path enforces this — no new floor machinery.
+recommended-not-required. `sh:agentInstruction` carries the registration how-to. The
+"topic is a hash IRI in the catalog namespace" constraint is expressed as `sh:pattern` on
+the `foaf:primaryTopic` IRI string (parameterized with the deployment base at deploy time).
+
+**Scope of the reuse claim, precisely:** *shape validation* reuses the existing upstream
+RDF-body validator path — no new validation machinery. But the derived-catalog hook, the
+derived-triple PATCH rejection, and the `/id/` serving wiring (§4.1, §4.4) ARE new server
+work — see §9 items 2–3. Do not read this paragraph as "the `/id/` space is config-only."
 
 The raw-HTTP agent's full loop (the guarantees are defined on this tier, per D55):
 
@@ -452,7 +500,10 @@ Probe 2 *demonstrates* the enforcement story rather than asserting it.
 ## 9. Implementation sketch (for the plan, not normative)
 
 1. Ground `ontology/idot.ttl` + `ontology/datacite.ttl` (provenance headers per
-   `ontology/README.md`; confirm the idot namespace IRI at cache time).
+   `ontology/README.md`). **BLOCKING sub-step: confirm the actual `idot:` namespace IRI from
+   the fetched vocabulary BEFORE authoring any artifact that uses `idot:` terms** — the
+   `http://identifiers.org/idot/` IRI used in this spec's examples is unconfirmed, and these
+   terms land in write-once territory.
 2. CSS serving decision for `/id/` (own minimal storage vs static route + store wiring) —
    must preserve WAC, Memento, conneg, `constrainedBy`.
 3. `/id/schemes/` container + `SchemeRecordShape` + `constrainedBy` wiring + the derived
@@ -470,3 +521,31 @@ Probe 2 *demonstrates* the enforcement story rather than asserting it.
 11. Amend `typed-wikilink-syntax-provenance.md` (the `^^`/`@lang` Sparna deviation).
 12. Register D111 in `decisions.md` + the vault decisions log.
 13. Cold-agent probes (§7.4) after deploy.
+
+## 10. Implementer hazard notes (from the 2026-06-05 cold-reader probe)
+
+A fresh agent was run over this spec before acceptance; these are the misreadings it judged
+most likely. Check yourself against each before writing code:
+
+1. **Datatype IRI form.** It is `…/id/schemes/#doi` (fragment on the CATALOG), never
+   `…/id/schemes/doi#this` and never the bare record URL. The Pod's pervasive `<#this>` idiom
+   points the wrong way here — §4.2 supersedes a per-record `#this` form deliberately (the
+   CURIE grammar requires prefix-concatenation).
+2. **The regex is never a floor constraint.** Do not add `sh:pattern`-against-instance-
+   literals to any shape, and do not re-pin `sh:datatype xsd:string` on `dct:identifier`
+   (SourceShape was loosened deliberately). Regex lives in the record as data; Tier-2 reads it.
+3. **`/id/` is not under `/vault/`.** Do not scaffold `/vault/id/…` and do not mint scheme
+   IRIs under `/vault/ontology/…`. The gravitational pull of the existing layout is exactly
+   the rot §4.1 exists to prevent.
+4. **The catalog is never hand-maintained.** Thin entries are server-derived (§4.4 gives the
+   normative triple set). Do not add entries on PUT by hand; do not let clients PATCH them.
+5. **Record subjects are full abstract IRIs.** Scheme-describing triples use
+   `</id/schemes/#key>` as subject — not `<>`, and not via `resolveSubject()` (which is
+   wiki-page machinery; see §4.3 warning).
+6. **No PROF machinery.** Roles attach via `dct:type` → `/id/roles#…` concepts. Do not build
+   `prof:ResourceDescriptor`/`prof:Profile` artifacts; PROF appears operationally only as
+   `Link rel="profile"` hints.
+7. **Confirm the `idot:` namespace IRI before use** (§9.1 blocking sub-step).
+8. **The context-registry plumbing does not exist yet.** `datatypeIRI()` is hardcoded `xsd:`
+   today; §6.2 specifies what to build (config-injected binding + served-context agreement
+   test). Do not assume a loader is present.
