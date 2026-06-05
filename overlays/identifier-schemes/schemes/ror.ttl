@@ -1,0 +1,37 @@
+@prefix idot:     <http://identifiers.org/idot/> .
+@prefix dcat:     <http://www.w3.org/ns/dcat#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:     <http://xmlns.com/foaf/0.1/> .
+@prefix datacite: <http://purl.org/spar/datacite/> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+<> a foaf:Document ;
+   dct:title "ROR identifier-scheme record" ;
+   dct:created "2026-06-05"^^xsd:date ;
+   foaf:primaryTopic <https://pod.vardeman.me/id/schemes/#ror> .
+
+<https://pod.vardeman.me/id/schemes/#ror>
+    a idot:Namespace, skos:Concept, rdfs:Datatype ;
+    skos:prefLabel "ROR"@en ;
+    skos:definition "Research Organization Registry identifier — persistent identifier for research organisations, maintained by ROR."@en ;
+    skos:inScheme <https://pod.vardeman.me/id/schemes/> ;
+    skos:exactMatch datacite:ror ;
+    rdfs:seeAlso <https://registry.identifiers.org/registry/ror> ;
+    idot:luiPattern "^0[a-hj-km-np-tv-z0-9]{6}[0-9]{2}$" ;
+    idot:sampleID "00mkhxb43" .
+
+<#ror-org> a idot:Resource ;
+    dct:title "ror.org — landing page"@en ;
+    idot:urlPattern "https://ror.org/{$id}" ;
+    dcat:servesDataset <https://pod.vardeman.me/id/schemes/#ror> ;
+    dcat:mediaType <https://www.iana.org/assignments/media-types/text/html> ;
+    dct:type <https://pod.vardeman.me/id/roles#landing-page> .
+
+<#ror-api> a idot:Resource ;
+    dct:title "ROR API — metadata record"@en ;
+    idot:urlPattern "https://api.ror.org/organizations/{$id}" ;
+    dcat:servesDataset <https://pod.vardeman.me/id/schemes/#ror> ;
+    dcat:mediaType <https://www.iana.org/assignments/media-types/application/json> ;
+    dct:type <https://pod.vardeman.me/id/roles#metadata-record> .

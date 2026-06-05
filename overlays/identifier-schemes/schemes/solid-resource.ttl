@@ -1,0 +1,28 @@
+@prefix idot:     <http://identifiers.org/idot/> .
+@prefix dcat:     <http://www.w3.org/ns/dcat#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:     <http://xmlns.com/foaf/0.1/> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+<> a foaf:Document ;
+   dct:title "Solid resource identifier-scheme record" ;
+   dct:created "2026-06-05"^^xsd:date ;
+   foaf:primaryTopic <https://pod.vardeman.me/id/schemes/#solid-resource> .
+
+<https://pod.vardeman.me/id/schemes/#solid-resource>
+    a idot:Namespace, skos:Concept, rdfs:Datatype ;
+    skos:prefLabel "Solid resource URL"@en ;
+    skos:definition "An HTTPS URL identifying a resource in a Solid Pod — the identifier IS the URL and resolution is a standard HTTP GET under Solid access patterns (LDP, conneg, WAC, Memento)."@en ;
+    skos:inScheme <https://pod.vardeman.me/id/schemes/> ;
+    dct:conformsTo <https://solidproject.org/TR/protocol> ;
+    skos:note "The Pod's own scheme: resolution is HTTP GET under Solid access patterns and returns the resource ITSELF (LDP, conneg, WAC, Memento). This record documents the informal regime; HTTP enforces it — reading this record is never required to use it."@en ;
+    idot:luiPattern "^https://[^\\s]+$" ;
+    idot:sampleID "https://pod.vardeman.me/vault/wiki/index.md" .
+
+<#pod> a idot:Resource ;
+    dct:title "This Pod"@en ;
+    idot:urlPattern "{$id}" ;
+    dcat:servesDataset <https://pod.vardeman.me/id/schemes/#solid-resource> ;
+    dct:type <https://pod.vardeman.me/id/roles#the-resource> .

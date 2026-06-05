@@ -1,0 +1,27 @@
+@prefix idot:     <http://identifiers.org/idot/> .
+@prefix dcat:     <http://www.w3.org/ns/dcat#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:     <http://xmlns.com/foaf/0.1/> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+<> a foaf:Document ;
+   dct:title "citekey identifier-scheme record" ;
+   dct:created "2026-06-05"^^xsd:date ;
+   foaf:primaryTopic <https://pod.vardeman.me/id/schemes/#citekey> .
+
+<https://pod.vardeman.me/id/schemes/#citekey>
+    a idot:Namespace, skos:Concept, rdfs:Datatype ;
+    skos:prefLabel "citekey"@en ;
+    skos:definition "Local bibliography key — identifies a literature note in this Pod's wiki-memory catalog. Format: lastname-year[-slug]."@en ;
+    skos:inScheme <https://pod.vardeman.me/id/schemes/> ;
+    skos:note "Local scheme — scope: this Pod. Resolves via the Pod's wiki-search affordance (?ext=search-grep), not the web."@en ;
+    idot:luiPattern "^[a-z][a-z-]*-\\d{4}(-[a-z0-9-]+)?$" ;
+    idot:sampleID "vardeman-2026-d111" .
+
+<#pod-search> a idot:Resource ;
+    dct:title "Pod wiki-search"@en ;
+    idot:urlPattern "https://pod.vardeman.me/vault/wiki/?ext=search-grep&q={$id}" ;
+    dcat:servesDataset <https://pod.vardeman.me/id/schemes/#citekey> ;
+    dct:type <https://pod.vardeman.me/id/roles#metadata-record> .

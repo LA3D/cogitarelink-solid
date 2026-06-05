@@ -1,0 +1,38 @@
+@prefix idot:     <http://identifiers.org/idot/> .
+@prefix dcat:     <http://www.w3.org/ns/dcat#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:     <http://xmlns.com/foaf/0.1/> .
+@prefix datacite: <http://purl.org/spar/datacite/> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+<> a foaf:Document ;
+   dct:title "DOI identifier-scheme record" ;
+   dct:created "2026-06-05"^^xsd:date ;
+   foaf:primaryTopic <https://pod.vardeman.me/id/schemes/#doi> .
+
+<https://pod.vardeman.me/id/schemes/#doi>
+    a idot:Namespace, skos:Concept, rdfs:Datatype ;
+    skos:prefLabel "DOI"@en ;
+    skos:definition "Digital Object Identifier — persistent identifier for scholarly objects, resolved via the Handle System."@en ;
+    skos:inScheme <https://pod.vardeman.me/id/schemes/> ;
+    skos:exactMatch datacite:doi ;
+    rdfs:seeAlso <https://registry.identifiers.org/registry/doi> ;
+    idot:luiPattern "^10\\.\\d{4,9}[-._;()/:a-zA-Z0-9]+$" ;
+    idot:sampleID "10.1038/sdata.2018.29" .
+
+<#doi-org> a idot:Resource ;
+    dct:title "doi.org — landing page"@en ;
+    idot:urlPattern "https://doi.org/{$id}" ;
+    dcat:servesDataset <https://pod.vardeman.me/id/schemes/#doi> ;
+    dcat:mediaType <https://www.iana.org/assignments/media-types/text/html> ;
+    dct:type <https://pod.vardeman.me/id/roles#landing-page> .
+
+<#doi-org-conneg> a idot:Resource ;
+    dct:title "doi.org — DataCite metadata via content negotiation"@en ;
+    idot:urlPattern "https://doi.org/{$id}" ;
+    dcat:servesDataset <https://pod.vardeman.me/id/schemes/#doi> ;
+    dcat:mediaType <https://www.iana.org/assignments/media-types/application/vnd.datacite.datacite+json> ;
+    dct:conformsTo <https://schema.datacite.org/> ;
+    dct:type <https://pod.vardeman.me/id/roles#metadata-record> .

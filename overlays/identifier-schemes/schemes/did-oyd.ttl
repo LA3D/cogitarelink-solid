@@ -1,0 +1,31 @@
+@prefix idot:     <http://identifiers.org/idot/> .
+@prefix dcat:     <http://www.w3.org/ns/dcat#> .
+@prefix dct:      <http://purl.org/dc/terms/> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:     <http://xmlns.com/foaf/0.1/> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+<> a foaf:Document ;
+   dct:title "did:oyd identifier-scheme record" ;
+   dct:created "2026-06-05"^^xsd:date ;
+   foaf:primaryTopic <https://pod.vardeman.me/id/schemes/#did-oyd> .
+
+<https://pod.vardeman.me/id/schemes/#did-oyd>
+    a idot:Namespace, skos:Concept, rdfs:Datatype ;
+    skos:prefLabel "did:oyd"@en ;
+    skos:definition "OwnYourData DID method — a content-addressed DID method where the identifier is derived from the multihash of the DID document itself."@en ;
+    skos:inScheme <https://pod.vardeman.me/id/schemes/> ;
+    skos:broader <https://pod.vardeman.me/id/schemes/#did> ;
+    dct:conformsTo <https://ownyourdata.github.io/oydid/> ;
+    skos:note "Content-addressed (multihash of the DID document); resolution requires an OYDID resolver or known storage location; not guaranteed publicly resolvable."@en ;
+    idot:luiPattern "^did:oyd:[1-9A-HJ-NP-Za-km-z]+(@[1-9A-HJ-NP-Za-km-z]+)?$" ;
+    idot:sampleID "did:oyd:zQmcVHWDMeXtj273A9gNAnEG2EdrGEjtQiFuw9PncyVgs9z" .
+
+<#uniresolver> a idot:Resource ;
+    dct:title "Universal DID Resolver"@en ;
+    idot:urlPattern "https://dev.uniresolver.io/1.0/identifiers/{$id}" ;
+    dcat:servesDataset <https://pod.vardeman.me/id/schemes/#did-oyd> ;
+    dcat:mediaType <https://www.iana.org/assignments/media-types/application/did+ld+json> ;
+    dct:conformsTo <https://www.w3.org/TR/did-core/> ;
+    dct:type <https://pod.vardeman.me/id/roles#did-document> .

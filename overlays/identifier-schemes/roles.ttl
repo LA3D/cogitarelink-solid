@@ -1,0 +1,28 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix role: <http://www.w3.org/ns/dx/prof/role/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+<> a foaf:Document ; dct:title "Identifier resolution-result roles" .
+
+<#scheme> a skos:ConceptScheme ; skos:prefLabel "Resolution-result roles"@en ;
+    skos:definition "What a provider's resolution result IS relative to the identified thing (httpRange-14 made explicit per provider). Attached to provider nodes via dct:type — NOT prof:hasRole (D111)."@en .
+
+<#landing-page> a skos:Concept ; skos:inScheme <#scheme> ;
+    skos:prefLabel "landing page"@en ;
+    skos:definition "A human-oriented description page about the identified thing — not the thing."@en ;
+    skos:broader role:guidance .
+
+<#metadata-record> a skos:Concept ; skos:inScheme <#scheme> ;
+    skos:prefLabel "metadata record"@en ;
+    skos:definition "A machine-readable description of the identified thing (e.g. DataCite JSON, ROR JSON, OSLC results)."@en ;
+    skos:broader role:schema .
+
+<#did-document> a skos:Concept ; skos:inScheme <#scheme> ;
+    skos:prefLabel "DID document"@en ;
+    skos:definition "A DID document conforming to DID Core — a description of the DID subject, never the subject."@en ;
+    skos:broader role:schema .
+
+<#the-resource> a skos:Concept ; skos:inScheme <#scheme> ;
+    skos:prefLabel "the resource itself"@en ;
+    skos:definition "Resolution returns the identified resource itself with full protocol affordances (the Solid case)."@en .
