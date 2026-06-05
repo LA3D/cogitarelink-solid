@@ -12,15 +12,31 @@ authoritative home:
 
 Repo decision IDs differ from vault IDs; both numberings are reconciled in `decisions.md`.
 
-## Project state (as of 2026-05-28)
+## Project state (as of 2026-06-05)
 
-- **Branch**: main, clean. **D107 URI re-layering + RQ-Listener-1 merged to `main` 2026-05-28**
-  (commit `02f9b58`, ff-merge of the former `rq-listener-1-provenance` branch; branch label deleted).
-  **PUSHED 2026-05-29** — `origin/main` == local `main` @ `c894255` (0 ahead/0 behind); the stale
-  `origin/rq-listener-1-provenance` remote branch is gone. Tree clean. **Live Pod deployed at `1cc4986`** (D107
-  Phase 4) — substrate artifacts are identical to `main` HEAD (commits since are tests/docs/Makefile
-  only), so the running Pod is consistent; `make status` will WARN deployed≠HEAD (cosmetic — a
-  `make reset` would re-stamp it but isn't needed for substrate correctness).
+- **Branch**: main, clean, @ `466ab3b` — **52 commits ahead of `origin/main`, NOT pushed (push =
+  Chuck's pending call)**. Three merged-and-verified bodies of work since the last push (2026-05-29):
+  **D108 Front-2 admission floor** (LIVE + enforcing; e2e 7/7; merged 2026-06-03), **fragility
+  remediation R1–R6** (merged 2026-06-04), **cleanup sprint** (merged 2026-06-05). Live Pod deployed
+  at the cleanup-sprint build — substrate ≡ HEAD. `make test` = TBox check + 643 TS guard tests +
+  full pytest, **honestly green Pod-up AND Pod-down**; `make audit` 0 ERROR (1 intentional WARN:
+  D98 dup-container concepts/={Concept,Source}).
+- **▶ NEXT SESSION: the identifier-affordance brainstorm → spec → D-number.** Framing LOCKED with
+  Chuck 2026-06-04: identifier types = agent-affordance dispatch keys. Grounding (committed):
+  `docs/research/2026-06-04-identifier-affordances-prior-art.md` (4-column prior-art comparison +
+  DXWG lineage). Chuck's three calls: (i) literal's datatype = dereferenceable Pod scheme record
+  (`"10.1234/x"^^</vault/meta/identifier-schemes/doi>`); (ii) cache `idot.ttl` v0.3 + `datacite.ttl`
+  pod-side (ground-now), scheme records REFERENCE identifiers.org entries; (iii) compose via
+  `dct:conformsTo`/`skos:exactMatch`, NEVER cross-subclass (dxwg#808). Scheme record =
+  `idot:Namespace` (⊑ dcat:Dataset) + skos:Concept + rdfs:Datatype; providers = `idot:Resource`
+  (⊑ dcat:DataService, urlPattern {$id}); PROF descriptors for what resolution returns (mint roles
+  as skos:Concepts + broader); sh:pattern = Tier-2 curation, NOT a floor 422. Validation experiment:
+  cold agent + typed identifier + scheme catalog → correct resolution trajectory. SourceShape already
+  loosened (no xsd:string pin) — the substrate is ready.
+- **Then (D109 order):** sub-C curation loop → **RQ-View-2 FULL re-eval** (floor + grammar both
+  live now) → D view layer. The in-band *teaching* agenda (skill-over-build / Knob 1) stays DEFERRED
+  per Chuck's structure-before-teaching reorder — the 422+ValidationReport is the runtime teaching
+  signal meanwhile.
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
@@ -43,6 +59,10 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | MemTrigger detector wiring | `mem-trigger-detector-wiring-complete` | D101 |
 | Rung 1.5 redesign (design only) | — | D102 |
 | Phase A pilot + skills-bootstrap + self-validating substrate | `phase-a-complete` | D103, D104 |
+| D109 sub-A: RQ-Grammar-1 grammar (literal axis) + D110 interop foundation (2026-06-02, pushed) | — | D109/D110 |
+| **D108 Front-2 in-band admission floor** (LIVE; path-agnostic over `.meta`; general `AdmissionFloorStore` + pluggable `BodyProjector`; listener→backstop; merged 2026-06-03) | — | D108/D109-B |
+| **Agentic-fragility audit + R1–R6 remediation** (dual-view URL identity fix; live-TI-wins; remark-AST projection parsing; agreement-test sweep + maps.json; Graph-based Python patches; merged 2026-06-04) | — | audit doc `docs/plans/2026-06-03-agentic-fragility-audit.md` |
+| **Cleanup sprint** (Components.js config guard — the 3× boot class dead; dct:identifier→`<#this>` + multi-constrainedBy merged dispatch (SourceShape live); audit_type_index; make test-js; suite honestly green; merged 2026-06-05) | — | — |
 | Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
 | Option-B substrate audit + curator (pod-audit walker + pod-curator skill, 2026-05-24) | — | D104 / vault-D99 |
 | RQ-Substrate-4 URI re-layering Phases 1–4 (sub: namespace, reframe, storage-root, PROF; **merged to main 2026-05-28**, commit `02f9b58`, not pushed; cold-probe eval RQ-View-2 + view layer still open) | — | **D107** |
@@ -93,7 +113,14 @@ Pod design that demonstrably works. Original B1/B2/T framing dropped.
 - Design doc: `docs/plans/2026-05-23-rung-1.5-redesign-design.md`. Pilot report:
   `docs/plans/2026-05-23-phase-a-pilot-report.md` (18 substrate failure modes in §4).
 
-### ★ ACTIVE PRIORITY (2026-06-01) — D109 substrate re-grounding (umbrella; D108 is now sub-project B)
+### D109 substrate re-grounding (umbrella) — sub-A ✅ + sub-B ✅ SHIPPED; next-in-sequence = C, after the identifier brainstorm
+
+> **STATUS UPDATE 2026-06-05:** sub-project **A (RQ-Grammar-1) SHIPPED 2026-06-02**; sub-project
+> **B (D108 Front-2 admission floor) SHIPPED + LIVE 2026-06-03** (path-agnostic floor over the
+> `.meta` graph; multi-`constrainedBy` merged class-dispatch completed 2026-06-04 — SourceShape
+> fires live). The "▶ NEXT DEV SESSION = brainstorm sub-project A" pointer below is HISTORICAL.
+> Current order: **identifier-affordance brainstorm (queued, see Project state) → C curation loop →
+> RQ-View-2 FULL re-eval → D view layer.** Historical record follows:
 
 **D109** (`docs/superpowers/specs/2026-06-01-substrate-regrounding-design.md`; decisions.md `### D109`): pulling RQ-Grammar-1 to its root showed **one omission, four masks** — the substrate was built as the *document view + RDF annotation*, not the **hybrid contextualized KG** (Verborgh) the design called for. **Target = layer-partitioned co-equal authority over a hybrid store** (markdown = L3 authoring authority incl. prose; `.meta` graph = L1/L2 queryable/interop authority incl. substrate-derived + curator-added; **NOT graph-canonical** — authoring stays markdown-native; server-managed description-resource projection bridges; L3 references the pod, not vice versa; symmetric/CRDT → Scale-3; no-clobber = RQ-Listener-1/D82). **Coherence** = Tier-0 legibility/**layered-context-loading** + Tier-1 SHACL **admission floor** (D108 Front-2) + Tier-2 **agentic curation loop** (Karpathy Lint); floor/loop rule = derive-inferable / floor-locally-authorable / loop-graph-global. **Foundational-ontology layer:** `ontology/` cache (basis `ontology/README.md`); **`interop:` adopted** as the agentic-app vocabulary (vocabulary now / Authorization-Agent runtime deferred — corrects the "SAI too heavy" dismissal); identity layer (`acl`/`acp`/VCDM/`sec`/`did`) enumerated-but-deferred; **D110** (stub) re-bases `cap:`/`overlay:`→`interop:`. **Decomposition:** A **RQ-Grammar-1** (the grammar) → B **D108 Front-2** → C curation loop → D view layer (deferred). **▶ NEXT DEV SESSION = brainstorm sub-project A (RQ-Grammar-1)** — "the complete, reversible, rule-grounded markdown write-view into the substrate graph"; open syntax in D109 §8. Branch `d109-substrate-regrounding` (not pushed). Auto-mems `foundational-ontology-cache`, `skos-backbone-enforcement-architecture`, `authoring-grammar-expressivity-gap`.
 
@@ -120,7 +147,7 @@ model; **brainstorm OPENED 2026-05-30**) → Front 2 (substrate guardrails + dua
 (2026-05-29) killed the naive "retire `constrainedBy`/class-only/derive-prefLabel" version — keep
 `constrainedBy` as the gate. Auto-mem `skos-backbone-enforcement-architecture`; FOLLOWUPS top section.
 
-### Next-session candidates (post-D107-merge, 2026-05-28)
+### Next-session candidates (post-D107-merge, 2026-05-28) — STATUS 2026-06-05: item 2 (test-hygiene) ✅ DONE (cleanup sprint C-T4: suite honestly green, drift fixed/deleted, requires_pod everywhere, audit doc annotated); item 3 (push) still pending, now 52 ahead; item 1 (RQ-View-2) re-sequenced AFTER the identifier brainstorm + sub-C; items 4-5 unchanged. Historical list:
 
 D107 URI re-layering + RQ-Listener-1 are merged to `main` (above). RQ-Listener-1 ✅ resolved by
 collapse + reviewed/APPROVED 2026-05-28 (design: operation provenance canonical in `/vault/wiki/.operations/`

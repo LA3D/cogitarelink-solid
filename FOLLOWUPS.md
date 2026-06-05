@@ -129,7 +129,7 @@ de-duped `fsPathFromUrl`); the deferable findings:
 agenda / Knob 1) follows once the structure has settled — the 422+ValidationReport is itself the
 runtime teaching signal in the meantime).
 
-## 🔍 Cold-probe findings (n=3, 2026-06-02) — in-band grammar teaching + URI opacity
+## 🔍 Cold-probe findings (n=3, 2026-06-02) — STATUS 2026-06-05: the STRUCTURAL halves shipped (container `sub:shape`+`sh:agentInstruction` backfill, descriptor literal axis + `sub:projectsFromBody`, projector code-span skip — all in the Front-2 sprint Phase 1; querying/graph-view eval folds into RQ-View-2). The in-band TEACHING quick-win + Knob 1 remain DEFERRED per the structure-before-teaching reorder. Historical record:
 
 Three independent cold-probe agents (HTTP-only, no repo/skills/hints) interpreting the live pod.
 **Strong positives:** all three read it as **agentic memory** ("an agent's durable externalized
@@ -247,7 +247,7 @@ foundation spec §7 has the full assessment). **Future op:** promote to the defa
 spike proves the footprint and the 1.2/coverage features earn their keep. Don't lose this — flagged
 explicitly.
 
-## ★ ACTIVE PRIORITY — D109: substrate re-grounding (umbrella; decided 2026-06-01)
+## D109: substrate re-grounding (umbrella; decided 2026-06-01) — sub-A ✅ (2026-06-02) + sub-B ✅ (2026-06-03/04, floor LIVE); next-in-sequence = C curation → RQ-View-2 full re-eval (after the queued identifier-affordance brainstorm — see `.claude/memory/MEMORY.md`)
 
 **Decision recorded** (`### D109` in decisions.md; full record `docs/superpowers/specs/2026-06-01-substrate-regrounding-design.md`). Pulling RQ-Grammar-1 to its root surfaced **one omission wearing four masks** (RQ-Grammar-1 inexpressible literals / D108 inert shapes / `prefLabel` materialized nowhere / RQ-Substrate-4 contamination): the substrate was built as the **document view with an RDF annotation bolted on**, not the **hybrid contextualized KG** (Verborgh) the design called for. The conceptual spine (SKOS / three frames / two hierarchies / owner partition) is **sound**; the failure is *realization in the graph*.
 
@@ -260,7 +260,7 @@ explicitly.
 
 **▶ NEXT SESSION (development): brainstorm sub-project A — RQ-Grammar-1.** The actual grammar design, framed by D109 as *"the complete, reversible, rule-grounded markdown write-view into the substrate graph."* Open syntax decisions are in D109 §8 (Sparna-informed `{=…}` subject-scoping + an inline literal axis, *trimmed*; exploit our implicit `<>`/`<#this>` default; close the datatype/lang gap; reconcile the two drifted predicate maps — render-path `predicates.ts` vs projection-path `context.jsonld`). **Framing is locked** (D109 §3–§6); run the brainstorm→spec→plan→implement cycle for A. Artifacts in place: D109 spec, `ontology/interop.ttl` + README, D110 stub. Branch `d109-substrate-regrounding` (committed, **not pushed**). Auto-mems: `foundational-ontology-cache`, `skos-backbone-enforcement-architecture`, `authoring-grammar-expressivity-gap`.
 
-## D108: SKOS backbone + dual-view enforcement — now D109 sub-project B (Front-2 = the admission floor)
+## D108: SKOS backbone + dual-view enforcement — ✅ BOTH FRONTS SHIPPED (Front-1 2026-06-01; Front-2 = the admission floor, LIVE 2026-06-03, multi-shape dispatch 2026-06-04). Historical record:
 
 **Decision recorded** (`### D108` in decisions.md; full record `docs/superpowers/specs/2026-05-30-skos-backbone-dual-view-enforcement-decision.md`). Pulling the `skos:prefLabel`-not-enforced thread (RQ-View-2 Probe-A repeats, 2026-05-29) unravelled a **proven root cause: the entire wiki-memory L3 content corpus is unvalidated at write time** (no `/vault/wiki/` container declares `ldp:constrainedBy`; the upstream validator validates the markdown *body* not the projected `.meta`; `.meta` is auxiliary-exempt; projection is post-commit). Controlled write of a `prefLabel`-less concept → `201`. D104 "self-validating substrate" held only for the RDF-body substrates (contacts/WebID).
 
