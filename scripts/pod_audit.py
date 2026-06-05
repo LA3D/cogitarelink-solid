@@ -44,6 +44,7 @@ PROF   = "http://www.w3.org/ns/dx/prof/"
 SKOS   = "http://www.w3.org/2004/02/skos/core#"
 INTEROP = "http://www.w3.org/ns/solid/interop#"
 ST     = "http://www.w3.org/ns/shapetrees#"
+FOAF   = "http://xmlns.com/foaf/0.1/"
 
 # The wikirole SKOS scheme — prof:hasRole targets under this namespace must be
 # defined here, else the role is dangling (e.g. the search-affordance role that
@@ -97,6 +98,28 @@ def check_routing(routing, type_index, published_range=PUBLISHED_RANGE):
             findings.append(finding("WARN", pred, "routing:published-range-agreement",
                 f"{pred}→{cls} differs from published rdfs:range {pub}; confirm intentional.",
                 f"Confirm {pred}→{cls} is intentional or correct the routing map."))
+    return findings
+
+
+def scheme_bijection_findings(catalog_g, record_topics):
+    """Defense-in-depth bijection check for the derived identifier-scheme catalog.
+
+    The catalog entries are SERVER-DERIVED (IdCatalogStore enforces this in-band);
+    this only catches substrate bugs and admin hand-edits. Contract: every catalog
+    entry (subject with foaf:isPrimaryTopicOf) ↔ a record whose foaf:primaryTopic
+    points back. record_topics is the set of foaf:primaryTopic objects collected
+    from each backing record (the async side does the GETs)."""
+    entries = {str(s) for s in catalog_g.subjects(URIRef(FOAF + "isPrimaryTopicOf"), None)}
+    topics = set(record_topics)
+    findings = []
+    for e in sorted(entries - topics):
+        findings.append(finding("ERROR", e, "scheme:entry-without-record",
+            f"derived catalog entry {e} has no backing record (hand-edit?).",
+            "Remove the hand-added entry, or let IdCatalogStore re-derive the catalog."))
+    for t in sorted(topics - entries):
+        findings.append(finding("ERROR", t, "scheme:record-without-entry",
+            f"record topic {t} missing from derived catalog (derivation bug).",
+            "Investigate IdCatalogStore — the record exists but the catalog dropped its entry."))
     return findings
 
 
@@ -251,6 +274,9 @@ async def audit(pod_url, shapes_dir, check_routing_flag=False):
         # 6. Live Type Index registration validation
         await audit_type_index(client, sd_g, storage, canon_base, pod_base, findings)
 
+        # 6b. Identifier-scheme catalog bijection cross-check (D111)
+        await audit_scheme_catalog(client, sd_g, storage, canon_base, pod_base, findings)
+
         # 7. Routing sanity-check (--check-routing)
         if check_routing_flag:
             routing_url = pod_base + "meta/routing.jsonld"
@@ -402,6 +428,51 @@ async def audit_type_index(client, sd_g, storage, canon_base, pod_base, findings
                 + ", ".join(unique) + ". The loader resolves deterministically but the "
                 "intent may be wrong.",
                 "Use distinct containers per class, or confirm the multi-class sharing is intentional."))
+
+
+async def audit_scheme_catalog(client, sd_g, storage, canon_base, pod_base, findings):
+    """Bijection cross-check for the derived identifier-scheme catalog (D111).
+
+    Discover the catalog via sub:identifierSchemeCatalog. No pointer → return silently
+    (the storage-description shape flags the absence, not this check). Records are the
+    ldp:contains objects that are not containers; each must carry foaf:primaryTopic back
+    to a catalog entry, and the entry set must equal the record-topic set."""
+    cat_iri = next((str(o) for o in sd_g.objects(
+        storage, URIRef(SUB + "identifierSchemeCatalog"))), None)
+    if cat_iri is None:
+        return
+    cat_url = rewrite(cat_iri, canon_base, pod_base)
+    r = await client.get(cat_url)
+    if r.status_code != 200:
+        findings.append(finding("ERROR", cat_url, "scheme:catalog-unreachable",
+            f"Identifier-scheme catalog not reachable (HTTP {r.status_code}).",
+            "Ensure the derived catalog is published and publicly readable."))
+        return
+    cat_g = Graph().parse(data=r.text, format="turtle", publicID=cat_url)
+    records = [str(o) for o in cat_g.objects(URIRef(cat_url), URIRef(LDP + "contains"))
+               if not str(o).endswith("/")]
+
+    resps = await asyncio.gather(*(
+        client.get(rewrite(rec, canon_base, pod_base)) for rec in records),
+        return_exceptions=True)
+    record_topics = []
+    for rec, resp in zip(records, resps):
+        if isinstance(resp, Exception) or resp.status_code != 200:
+            findings.append(finding("ERROR", rec, "scheme:record-unreachable",
+                "Scheme record not reachable.", ""))
+            continue
+        rec_g = Graph().parse(data=resp.text, format="turtle",
+                              publicID=rewrite(rec, canon_base, pod_base))
+        topic = rec_g.value(URIRef(rewrite(rec, canon_base, pod_base)),
+                            URIRef(FOAF + "primaryTopic"))
+        if topic is None:
+            findings.append(finding("ERROR", rec, "scheme:record-no-primary-topic",
+                f"scheme record {rec} has no foaf:primaryTopic.",
+                "Each scheme record must carry foaf:primaryTopic back to its catalog entry."))
+        else:
+            record_topics.append(str(topic))
+
+    findings += scheme_bijection_findings(cat_g, record_topics)
 
 
 async def audit_interop_registration(client, pod_base, findings):
