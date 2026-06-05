@@ -289,6 +289,8 @@ CSS handles RDF conneg automatically. Solid Protocol §3.1 trailing-slash MUST i
 issue #22 unresolved) — always normalize before compare. Closes **RQ-Substrate-3**. Full
 guidance lives in the `solid-uri-conformance` skill; this entry is the canonical commitment.
 
+**Scope note (D111, 2026-06-05):** "all vocabulary IRIs are Pod-hosted / hash-namespaced" applies to **application** vocabularies (wiki/capability/overlay). Foundational **external** vocabularies (`idot:`, `datacite:`) keep their canonical external IRIs under the D49/D109 declare-or-ground policy — D111 follows this. The D111 fragment-datatype form (`…/id/schemes/#doi`) is itself a canonical *application* of D84's hash rule (a Pod-hosted, hash-namespaced datatype IRI).
+
 ### D85 — TLS deployment
 
 Solid Protocol §3 mandates HTTPS. Dev: **mkcert** local CA + CSS native `--httpsKey`/`--httpsCert`
@@ -359,6 +361,8 @@ the descriptor at the required `cap:minVersion`.
 5. **Honest** — the dependency is on the artifact actually consumed, not the wrapper
 
 Completes **D83** (Pod-as-toolkit) for overlay-to-overlay coupling. Resolves the deferred-decision flag in `solid-uri-conformance/references/deltas.md`. Full rationale in `docs/plans/2026-05-16-capabilities-only-overlay-deps.md`. First consumer is the AddressBook overlay (declares 3 requires + 5 provides); wiki-memory was retrofitted to declare 4 provides.
+
+**Clarification (D111, 2026-06-05):** "the capability catalog is the only mechanism for overlay coupling" is about *capability* coupling. `overlay:registersScheme` (D111) is **resource registration** — an overlay declaring it contributes a Pod-infrastructure resource (an identifier scheme record) — a different axis from overlay-to-overlay capability coupling, not a second coupling mechanism.
 
 ### D88 — `tmpl:` substrate template vocabulary
 
@@ -971,6 +975,8 @@ SHACL shapes (start with 2 exemplary: StorageDescription + AffordanceDescriptor)
 
 **See also**: D55 (HATEOAS three-tier), D70 (L1/L2/L3 stratification), D73 (two-stage commit), D74 (`mem:*` triggers), D77 + D98 (shape catalog), D81 (predicate-level governance), D87 (wiki-search exemplary descriptor), D103 (skills bootstrap; substrate is the manual — this decision closes that loop), D102 (Rung 1.5 redesign — empirical grounding).
 
+**Amendment (D111, 2026-06-05) — boundary note:** "substrate self-description IS wiki-memory L3 content" scopes to substrate resources serving *discovery/routing* (the storage description, affordance/capability catalogs, JSON-LD context, Type Index, shape catalog). **Infrastructure substrates** that provide data-layer services — the D111 identifier system at `/id/`, cf. Memento's version space — live at **Pod level outside L3**, with their own governance, and are NOT wiki-memory L3 content. Per D111 §11.
+
 ## Two-hierarchy commitment + Type-Index addressing (D105–D106, 2026-05-26)
 
 Surfaced by a cold-agent probe: the wikilink resolver guessed a target's LDP container from the link's *role* (`{.source}`→`/wiki/sources/`), a layer violation that broke on D98's container rename/merge and would produce dangling links for any agent-extended type. Tracing it back exposed a missing principle.
@@ -1016,6 +1022,16 @@ D106: **Wikilink/edge addressing resolves the container from the target's class 
 ### D110 (STUB) — re-base `cap:`/`overlay:` app-declaration on `interop:` (2026-06-02)
 
 **Stub, not yet designed.** Our bespoke `cap:`/`overlay:` app-declaration terms (`cap:requires`, `overlay:providesCapability`, `/vault/meta/capabilities/`, overlay `manifest.ttl`) reinvent W3C Solid Application Interoperability (`interop:`, cached `ontology/interop.ttl` per D109 §5): overlay≈`Application`/`ApplicationRegistration`; `cap:requires`≈`AccessNeedGroup`/`AccessNeed`+`registeredShapeTree`; wiki containers≈`DataRegistration`. Re-base on `interop:` — **adopt the vocabulary only**, keep SHACL as the validation layer, do NOT build the Authorization-Agent runtime, avoid the volatile grant terms (CG #334). Open: the `registeredShapeTree`→SHACL bridge; migration of deployed triples + `pod_audit.py`/pod-curator tooling. Parent: D109 §5. Full record: `docs/superpowers/specs/2026-06-02-cap-overlay-interop-rebase-decision.md`.
+
+## Identifier-scheme substrate (D111, 2026-06-05)
+
+### D111 — Pod-level identifier-scheme (PID) substrate at `/id/`; fragment datatypes; derived catalog; suggestive typing (2026-06-05)
+
+**Decision:** A **Pod-level persistent-identifier (PID) system** at `/id/`, **outside the storage root** (`/vault/`) — an *infrastructure substrate* like Memento's version space, not L3 content (see the D104 boundary amendment). Identifier types are **agent-affordance dispatch keys**: a typed identifier carries enough for an agent to know how to resolve it. **Datatype = a fragment on the catalog document:** a typed identifier literal is annotated with a custom datatype IRI that is a fragment on the scheme catalog (`"10.1234/x"^^<https://pod.vardeman.me/id/schemes/#doi>`) — the datatype IRI dereferences (minus fragment) to the catalog doc whose `<#doi>` topic IS the scheme record (ADMS/JRC precedent: datatype↔`schema:propertyID`). **Two regimes, formality declared not ambient:** (a) *protocol-enforced informal* identifiers (plain literals, no scheme) and (b) *catalog-described formal* identifiers (scheme-typed literals whose datatype names a registered scheme) — a resource declares which regime applies; the substrate does not infer formality from the value. **Derived catalog:** the `/id/schemes/` index is server-derived by `IdCatalogStore` (an `ldp:contains`-precedent derived container — the catalog index is computed from the seed records, agents write records not the index). **Suggestive typing:** a scheme's `idot:luiPattern` regex is **data** an agent reads (for resolution + Tier-2 curation), **NOT a floor `422` trigger** — the admission floor checks scheme-record *structure* (SchemeRecordShape), never validates instance identifier literals against the regex. **Composition via `dct:conformsTo`/`skos:exactMatch`, NEVER cross-subclass** (dxwg#808 lesson): a scheme record is triple-typed `idot:Namespace` (⊑ `dcat:Dataset`) + `skos:Concept` + `rdfs:Datatype`, aligned to `datacite:*` individuals by `skos:exactMatch`; providers are `idot:Resource` (⊑ `dcat:DataService`, `idot:urlPattern {$id}`); resolution-return semantics carried by PROF ResourceDescriptors with mint roles as `skos:Concept`s. **Curl-grade enforcement:** every constraint is HTTP-observable (PUT a malformed scheme record → `422`+ValidationReport; the floor + the derived index are testable with curl, no client library required).
+
+**Implementation:** scheme records seeded by the `overlays/identifier-schemes/` overlay (the catalog + 8 scheme records — doi/orcid/ror/arxiv/citekey/did/did-oyd/solid-resource — + the resolution-result role scheme), applied FIRST by pod-setup. `css/extensions/id-catalog/` hosts `IdCatalogStore` (between Locking and Patching; the `.meta` rewrite carries the identifier-bearing `BasicRepresentation` so the floor's auxiliary exemption applies). `DEFAULT_LITERAL_BINDING` gained the `identifier` token so a typed identifier can be authored inline via a body span (`[10.1234/x]{.identifier^^ids:doi}`). The scheme-catalog `.meta` (`ldp:constrainedBy` → SchemeRecordShape) is delivered via `apply.py` block 8 at container creation (CSS only allows `constrainedBy` on an empty container). Confirmed idot v0.3 terms = `idot:luiPattern`/`idot:sampleID` (NOT the plan's `idRegexPattern`/`exampleIdentifier` — §9.1 blocking step caught it).
+
+**Status:** **SHIPPED 2026-06-05** (live on the Pod; e2e 7/7; `make audit` 0 ERROR / 1 known WARN; `make reset` reproducible — identifier-schemes seeded first). Closes the identifier-affordance brainstorm queued from the 2026-06-04 framing lock. **Reconciliations** (amendments appended to D104 / D87 / D84 below). Full record: spec `docs/superpowers/specs/2026-06-05-identifier-scheme-substrate-design.md`; plan `docs/superpowers/plans/2026-06-05-identifier-scheme-substrate.md`; prior art `docs/research/2026-06-04-identifier-affordances-prior-art.md`. **See also:** D104 (infrastructure-substrate boundary), D84 (fragment datatype = a canonical application of the hash rule; external vocab scope note), D49/D109 (declare-or-ground vocab policy — `idot:`/`datacite:` grounded), D108 (admission floor carries custom-datatype literals through the in-band path), D87 (`overlay:registersScheme` = resource registration), D86 (PROF resolution-return descriptors), D105/D106 (`skos:exactMatch` cross-scheme, never `owl:equivalentClass`).
 
 ## Open research questions
 

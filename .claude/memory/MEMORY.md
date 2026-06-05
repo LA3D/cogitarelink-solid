@@ -14,29 +14,21 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 
 ## Project state (as of 2026-06-05)
 
-- **Branch**: main, clean, @ `466ab3b` — **52 commits ahead of `origin/main`, NOT pushed (push =
-  Chuck's pending call)**. Three merged-and-verified bodies of work since the last push (2026-05-29):
-  **D108 Front-2 admission floor** (LIVE + enforcing; e2e 7/7; merged 2026-06-03), **fragility
-  remediation R1–R6** (merged 2026-06-04), **cleanup sprint** (merged 2026-06-05). Live Pod deployed
-  at the cleanup-sprint build — substrate ≡ HEAD. `make test` = TBox check + 643 TS guard tests +
-  full pytest, **honestly green Pod-up AND Pod-down**; `make audit` 0 ERROR (1 intentional WARN:
-  D98 dup-container concepts/={Concept,Source}).
-- **▶ NEXT SESSION: the identifier-affordance brainstorm → spec → D-number.** Framing LOCKED with
-  Chuck 2026-06-04: identifier types = agent-affordance dispatch keys. Grounding (committed):
-  `docs/research/2026-06-04-identifier-affordances-prior-art.md` (4-column prior-art comparison +
-  DXWG lineage). Chuck's three calls: (i) literal's datatype = dereferenceable Pod scheme record
-  (`"10.1234/x"^^</vault/meta/identifier-schemes/doi>`); (ii) cache `idot.ttl` v0.3 + `datacite.ttl`
-  pod-side (ground-now), scheme records REFERENCE identifiers.org entries; (iii) compose via
-  `dct:conformsTo`/`skos:exactMatch`, NEVER cross-subclass (dxwg#808). Scheme record =
-  `idot:Namespace` (⊑ dcat:Dataset) + skos:Concept + rdfs:Datatype; providers = `idot:Resource`
-  (⊑ dcat:DataService, urlPattern {$id}); PROF descriptors for what resolution returns (mint roles
-  as skos:Concepts + broader); sh:pattern = Tier-2 curation, NOT a floor 422. Validation experiment:
-  cold agent + typed identifier + scheme catalog → correct resolution trajectory. SourceShape already
-  loosened (no xsd:string pin) — the substrate is ready.
-- **Then (D109 order):** sub-C curation loop → **RQ-View-2 FULL re-eval** (floor + grammar both
-  live now) → D view layer. The in-band *teaching* agenda (skill-over-build / Knob 1) stays DEFERRED
-  per Chuck's structure-before-teaching reorder — the 422+ValidationReport is the runtime teaching
-  signal meanwhile.
+- **Branch**: `d111-identifier-schemes` (off main) carries **D111 identifier-scheme substrate —
+  SHIPPED** (live on the Pod + e2e 7/7 green; `make audit` 0 ERROR / 1 known WARN; `make reset`
+  reproducible; **merge to main pending = Chuck's call**). `main` itself is **52 commits ahead of
+  `origin/main`, NOT pushed**. Bodies of work since the last push (2026-05-29): **D108 Front-2
+  admission floor** (merged 2026-06-03), **fragility remediation R1–R6** (merged 2026-06-04),
+  **cleanup sprint** (merged 2026-06-05), **D111** (on `d111-identifier-schemes`, merge pending).
+  `make test` = TBox check + 643 TS guard tests + full pytest, **honestly green Pod-up AND
+  Pod-down**; `make audit` 0 ERROR (1 intentional WARN: D98 dup-container concepts/={Concept,Source}).
+- **The identifier-affordance brainstorm is DONE — shipped as D111** (`/id/` Pod-level PID system;
+  fragment datatypes; derived catalog; curl-grade enforcement; e2e 7/7; spec
+  `docs/superpowers/specs/2026-06-05-identifier-scheme-substrate-design.md`).
+- **▶ NEXT SESSION (D109 order):** sub-C curation loop → **RQ-View-2 FULL re-eval** (floor + grammar
+  both live now) → D view layer. The in-band *teaching* agenda (skill-over-build / Knob 1) stays
+  DEFERRED per Chuck's structure-before-teaching reorder — the 422+ValidationReport is the runtime
+  teaching signal meanwhile.
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
@@ -63,6 +55,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | **D108 Front-2 in-band admission floor** (LIVE; path-agnostic over `.meta`; general `AdmissionFloorStore` + pluggable `BodyProjector`; listener→backstop; merged 2026-06-03) | — | D108/D109-B |
 | **Agentic-fragility audit + R1–R6 remediation** (dual-view URL identity fix; live-TI-wins; remark-AST projection parsing; agreement-test sweep + maps.json; Graph-based Python patches; merged 2026-06-04) | — | audit doc `docs/plans/2026-06-03-agentic-fragility-audit.md` |
 | **Cleanup sprint** (Components.js config guard — the 3× boot class dead; dct:identifier→`<#this>` + multi-constrainedBy merged dispatch (SourceShape live); audit_type_index; make test-js; suite honestly green; merged 2026-06-05) | — | — |
+| **D111 identifier-scheme substrate** (Pod-level PID system at /id/; fragment datatypes; derived catalog; curl-grade enforcement; e2e 7/7; 2026-06-05) | — | D111 |
 | Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
 | Option-B substrate audit + curator (pod-audit walker + pod-curator skill, 2026-05-24) | — | D104 / vault-D99 |
 | RQ-Substrate-4 URI re-layering Phases 1–4 (sub: namespace, reframe, storage-root, PROF; **merged to main 2026-05-28**, commit `02f9b58`, not pushed; cold-probe eval RQ-View-2 + view layer still open) | — | **D107** |

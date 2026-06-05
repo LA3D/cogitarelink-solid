@@ -2,6 +2,32 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## 🆔 D111 identifier-scheme substrate (2026-06-05, branch `d111-identifier-schemes`) — SHIPPED; residue list
+
+Live on the Pod; e2e 7/7; `make audit` 0 ERROR / 1 known WARN; `make reset` reproducible
+(identifier-schemes seeded FIRST). Open follow-ups:
+
+1. **PropertyValue materialization rule → sub-C curation loop.** The derived `schema:PropertyValue`
+   projection (propertyID = scheme-record URL) is a *curation-loop* (Tier-2) materialization, not a
+   write-time floor concern — fold it into the sub-C curation work, not the admission floor.
+2. **RO-Crate / Croissant profile records (unseeded).** The model accommodates dataset-packaging
+   profiles (RO-Crate, Croissant) as scheme/profile records; not seeded — add when a real consumer
+   needs them (provide-reactively, D87 discipline).
+3. **WAC write-gate for `/id/`.** `/id/` is currently world-writable under dev-allow-all. The write
+   gate (only the deployer/curator registers schemes) activates with the security profile — not a
+   bug today, a deferred hardening tied to auth turn-on.
+4. **IdCatalogStore internal `.meta` write bypasses Locking.** The derived-index rewrite writes
+   `this.source` below the Locking layer (single-writer assumption holds today). Revisit at
+   multi-agent WAC — concurrent scheme registrations could race the derived index.
+5. **`Link: rel="profile"` document-kind hints need `dct:conformsTo` in `.meta`.** For the catalog
+   and scheme-record documents to advertise their kind via `rel="profile"`, the profile-link writer
+   needs `dct:conformsTo` in their `.meta` (same pattern as D86). Not yet wired for `/id/` docs.
+6. **uniresolver provider = the DIF dev instance (no SLA).** The DID scheme records point resolution
+   at the DIF universal-resolver dev instance; no uptime guarantee. Swap for a self-hosted or
+   SLA-backed resolver if `/id/` resolution becomes load-bearing.
+7. **DOI scheme record follows Crossref regex guidance** (`^10\.…`). SICI-style angle-bracket DOIs
+   are deliberately NOT matched by the `idot:luiPattern` — documented limitation, not a bug.
+
 ## ⚙ Cleanup sprint (2026-06-04, branch `cleanup-sprint`) — SHIPPED; residue list
 
 Closed: **the Components.js config guard** (offline JSON-LD parse with the boot parser + @type→descriptor

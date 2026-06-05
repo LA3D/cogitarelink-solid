@@ -594,3 +594,22 @@ permits same-origin containers outside the storage root (D100), so the catalog w
 once the discovery edge exists. Test-suite posture: no exact-set assertions on the storage
 description or server root — D111's additions are additive-safe; 24 artifacts FINE, 9 need
 extensions, 3 break until the context-binding batch lands (§9 item 5).
+
+## Implementation errata (2026-06-05)
+
+Facts the build surfaced that diverge from or extend the spec text:
+
+- **idot term names.** The confirmed v0.3 terms are `idot:luiPattern` (the local-ID regex)
+  and `idot:sampleID` (the example identifier) — NOT `idot:idRegexPattern` / `idot:exampleIdentifier`
+  as this spec's examples guessed. The §9.1 blocking step (validate against the cached vocab
+  before authoring) caught it; the cache is the source of truth.
+- **Catalog `.meta` delivery.** The scheme-catalog `.meta` (carrying `ldp:constrainedBy` →
+  SchemeRecordShape) is delivered via `apply.py` block 8 at container creation. CSS only allows
+  setting `constrainedBy` on an EMPTY container (re-constraining a populated container H400s),
+  so the constraint must land before any seed records are written.
+- **IdCatalogStore placement.** The store sits between Locking and Patching in the wrap chain.
+  The derived-index `.meta` rewrite needed the identifier-bearing `BasicRepresentation` so the
+  admission floor's auxiliary exemption applies (the `.meta` write passes through unvalidated).
+- **Literal binding.** `DEFAULT_LITERAL_BINDING` (markdown-projection) gained the `identifier`
+  token (`dct:identifier`) — the §6.2 primary affordance for authoring a typed identifier inline
+  via a body span (`[10.1234/x]{.identifier^^ids:doi}`).

@@ -140,6 +140,30 @@ reconcile during the D108 Front-2 work.
 
 ---
 
+## 4a. Datatype/lang span-literal extension (D111)
+
+The Sparna draft (and the Pandoc/kramdown attribute syntax it builds on) has **no datatype
+syntax** — verified 2026-06-05 against the live draft. The form
+
+```markdown
+[10.1234/sdata.2018.29]{.identifier^^ids:doi}     → typed literal, datatype = ids:doi
+[Bonjour]{.altLabel@fr}                           → language-tagged literal, lang = fr
+```
+
+is **wiki-memory's own extension** on the lineage: a span literal `[text]{.pred}` (the literal
+axis, RQ-Grammar-1) optionally carries `^^prefix:local` (a datatype CURIE) or `@lang` (a BCP-47
+language tag). Datatype CURIEs resolve via `DATATYPE_PREFIXES`
+(`css/extensions/markdown-projection/src/spanLiteralProjection.ts`) — e.g. `ids:` →
+`https://pod.vardeman.me/id/schemes/#`, so `^^ids:doi` is the D111 fragment-datatype scheme IRI.
+
+`DATATYPE_PREFIXES` must agree with the **served** JSON-LD context (the `ids` binding in
+`overlays/wiki-memory/context-fragment.jsonld`); this is the `curiePrefixAgreement` guard
+(`frontmatterProjection.ts`) — the same "two maps, one source" discipline the §4 drift caveat
+demands, applied to datatype CURIEs. The `^^`/`@` carrier is N-Triples/Turtle literal syntax,
+not a new invention — it is the standard literal annotation transplanted into the span attribute.
+
+---
+
 ## 5. References
 
 - Pandoc Manual — attribute syntax (`bracketed_spans`, `link_attributes`, Divs/Spans):

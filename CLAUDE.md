@@ -72,6 +72,7 @@ css/extensions/
   markdown-render/          — (renamed from markdown-rdfa) rehype-based markdown→HTML; wikilinks.css (D75)
   markdown-projection/      — body wikilinks → .meta projection via MonitoringStore listener (D58/D71/D81)
   memento/                  — RFC 7089 Memento support (MementoCommitListener + TimeGate + TimeMap)
+  id-catalog/               — server-derived identifier-scheme catalog (IdCatalogStore, D111)
   shared/markdown-parsing/  — wikilinks, predicates, resolver modules (reused by renderer + projection)
 shapes/
   concept-note.ttl          — legacy standalone shape (pre-overlay; superseded by overlay catalog)
@@ -79,6 +80,7 @@ ontology/        — foundational-vocabulary cache (basis: ontology/README.md, D
 overlays/
   wiki-memory/              — wiki-memory L3 overlay; SHACL catalog at shapes/ (8 NodeShapes / 11 files, D98 supersedes D77/D78)
   addressbook/              — AddressBook substrate (D87 candidate, shipped 2026-05-17)
+  identifier-schemes/       — D111 PID system seeds: /id/schemes/ catalog + 8 scheme records + resolution roles
 scripts/         — Python CLI tools (vault importer, SPARQL query)
 tests/           — pytest conformance + integration tests
 docs/plans/      — Architecture design documents
