@@ -1,0 +1,6 @@
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+
+<> ldp:constrainedBy <https://pod.vardeman.me/id/curation-proposal.shacl.ttl> ;
+    dct:title "identifier-schemes curation ledger (.operations/)" ;
+    dct:description "D112 ledger: one mem:RealignAction activity per resource, <>-subject, LDN sender pattern. Floor: CurationProposalShape (rationale + actionStatus + hadPlan required)." .

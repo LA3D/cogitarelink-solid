@@ -22,11 +22,14 @@
     overlay:version "0.1" ;
     dct:description "D111 Pod-level PID system: /id/schemes/ catalog + 8 scheme records + resolution-result roles + SchemeRecordShape admission floor. Lives OUTSIDE the storage root (rename-proof datatype IRIs)." ;
 
-    overlay:installsContainer </id/schemes/> ;
+    overlay:installsContainer </id/schemes/> ,
+                             </id/.operations/> ;
 
     overlay:installsShape
         [ overlay:document "shapes/scheme-record.shacl.ttl" ;
-          overlay:hostedAt "/id/scheme-record.shacl.ttl" ] ;
+          overlay:hostedAt "/id/scheme-record.shacl.ttl" ] ,
+        [ overlay:document "shapes/curation-proposal.shacl.ttl" ;
+          overlay:hostedAt "/id/curation-proposal.shacl.ttl" ] ;
 
     overlay:installsBootstrapContent
         [ overlay:contentPath "schemes/doi.ttl" ;            overlay:hostedAt "/id/schemes/doi" ;            overlay:contentType "text/turtle" ] ,
