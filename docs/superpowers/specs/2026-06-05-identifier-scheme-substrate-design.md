@@ -510,11 +510,21 @@ Probe 2 *demonstrates* the enforcement story rather than asserting it.
    catalog hook (in-band; DerivedView pattern) + derived-triple write rejection.
 4. Seed records (§5.2 list) + `/id/roles` concepts + `tmpl:` scheme-record template
    (+ template↔shape agreement test).
-5. `context.jsonld`: `ids:` prefix; projector `datatypeIRI()` extension (context-driven).
+5. `context.jsonld`: `ids:` prefix — concretely, the served context deploys from
+   `overlays/wiki-memory/context-fragment.jsonld` via `apply.py`'s `merge_jsonld_context()`,
+   and the agreement web spans FOUR artifacts that must move together: the context fragment,
+   `frontmatterProjection.ts` `CURIE_PREFIXES`, the renderer's `DEFAULT_CONTEXT`
+   (JsonLdScriptInjector), and `maps.json` — the existing `curiePrefixAgreement` /
+   `contextAgreement` guards will catch any one left behind. Projector `datatypeIRI()`
+   extension (context-driven). Known test impact: 3 guards WILL-BREAK until this lands
+   (spanLiteralProjection throw-on-unknown, contextAgreement, `make test-js`) — sequence the
+   context-binding task with its test updates in one batch.
 6. Frontmatter compact-id projection rule (registered-prefix split; unknown → plain literal).
 7. `overlay:registersScheme` manifest predicate + `apply.py` deploy block; wiki-memory and
    AddressBook manifests updated.
 8. Storage-description discovery edge (standard-predicate-first check; likely `sub:` term).
+   Concretely: a new entry in the static `void-description.json` StaticStorageDescriber
+   (storage description is fully static per the standing PATCH-405 rule).
 9. `pod_audit.py` defense-in-depth checks (entry↔record bijection; pointer HEAD-checks).
 10. Tests: TS guards (grammar/projection/derivation), pytest conformance (Pod-up gated),
     floor e2e incl. raw-curl registration path.
@@ -549,3 +559,38 @@ most likely. Check yourself against each before writing code:
 8. **The context-registry plumbing does not exist yet.** `datatypeIRI()` is hardcoded `xsd:`
    today; §6.2 specifies what to build (config-injected binding + served-context agreement
    test). Do not assume a loader is present.
+
+## 11. Decision reconciliation (from the 2026-06-05 collision sweep)
+
+Three parallel sweeps (decisions corpus, server implementation, test suites) ran before
+acceptance. No design-level blockers; the reconciliations to record when registering D111:
+
+1. **D104 boundary (the one real collision).** D104 states substrate self-description IS
+   wiki-memory L3 content; `/id/` is deliberately outside L3. Resolution: **accept the
+   exception and name the boundary** — substrate resources serving *discovery/routing*
+   (storage description, affordance/capability catalogs) are L3 content per D104;
+   *infrastructure substrates* providing data-layer services (the identifier system; cf.
+   Memento's version space) live at Pod level outside L3 with their own governance. Amend
+   D104's entry with this scoping when D111 is registered.
+2. **D87 wording.** D87 says the capability catalog is "the only mechanism for overlay
+   coupling." `overlay:registersScheme` is **resource registration** (presence of Pod
+   infrastructure), not overlay-to-overlay capability coupling — a different axis. Add the
+   clarifying sentence to D87's entry.
+3. **D84 scope.** D84's "all vocabulary IRIs are Pod-hosted/hash-namespaced…" applies to
+   *application* vocabularies (wiki/capability/overlay). Foundational external vocabularies
+   (`idot:`, `datacite:`) keep their canonical external IRIs under the D49/D109
+   declare-or-ground policy — which D111 follows. (The fragment datatype form itself is a
+   canonical *application* of D84's hash rule.)
+4. **D108 verification requirement.** The in-band projection path (D108 Front-2, live) must
+   be e2e-verified to carry custom-datatype literals unchanged (body span `^^ids:doi` →
+   typed literal in the projected `.meta` → floor validates → 201). Add this case to the
+   floor e2e suite (§9 item 10).
+
+Implementation-side confirmations from the sweep (no spec changes needed): `/id/` collides
+with nothing at server root (only `.well-known/solid` + `/vault/` exist); Memento's
+`fsPathFromUrl` already covers any path under baseUrl, so `/id/` gets TimeMaps for free; all
+shape-validator path constraints are `/vault/*`-scoped — no overlap; `pod_audit.py` already
+permits same-origin containers outside the storage root (D100), so the catalog walks cleanly
+once the discovery edge exists. Test-suite posture: no exact-set assertions on the storage
+description or server root — D111's additions are additive-safe; 24 artifacts FINE, 9 need
+extensions, 3 break until the context-binding batch lands (§9 item 5).
