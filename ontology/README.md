@@ -55,6 +55,8 @@ A `#` header block, then the **verbatim** upstream vocab below it:
 | | `sec:` | Data Integrity proofs / DID verif. methods | enumerate-defer |
 | | `did:` (DID Core, W3C Rec) | identity-layer agent/owner identifiers (D14 bridge) | **GROUNDED** `did.ttl` + `did-v1.context.jsonld` (prefer `did:webvh`; migration deferred) |
 | | `odrl:` | fine-grained policy (KG permissions aspect) | note only |
+| **Identifier schemes (D111)** | `idot:` (identifiers.org types) | scheme records: `idot:Namespace`/`Resource`/`urlPattern`/`luiPattern`/`sampleID` | **GROUNDED** `idot.ttl` (v0.3) |
+| | `datacite:` (SPAR DataCite) | identifier-scheme individuals (`datacite:doi`, …) for `skos:exactMatch` | **GROUNDED** `datacite.ttl` |
 | **Domain / L3** | skos, dct, schema, foaf, cito, prov, vcard, org, td, oslc | content vocab | declare (cache SKOS/DC/PROV to fix drift) |
 | **Minted (ours)** | wiki, sub, mem, **overlay, cap** | L3 + substrate | ours — re-base overlay/cap on `interop:` (D110) |
 
@@ -82,6 +84,21 @@ when that application engages (interop `ApplicationRegistration` + `AccessNeedGr
   `st:focusNode` → the resource's `<#this>`; `st:contains` → container hierarchy. Upstream
   namespace drift documented in the file header (interop.ttl's `shapetree#` singular vs the
   ontology's `shapetrees#` plural — we use the plural).
+
+- `idot.ttl` — cached 2026-06-05, identifiers.org types vocabulary **v0.3** (160 triples,
+  rdflib-validated). **Grounded for D111** (identifier-scheme substrate): scheme records are
+  `idot:Namespace` (⊑ `dcat:Dataset`) + providers `idot:Resource` (⊑ `dcat:DataService`,
+  `idot:urlPattern`). Confirmed namespace = `http://identifiers.org/idot/` (the IRI the vocab
+  declares; `owl:versionIRI <http://identifiers.org/0.3>`). Live source = identifiers-org/ontop
+  (`biomodels.net/vocab/idot.rdf` is 403/dormant). **v0.3 term names differ from the D111 plan's
+  guesses**: the ID-regex pattern is `idot:luiPattern` (not `idRegexPattern`) and the example
+  identifier is `idot:sampleID` (not `exampleIdentifier`) — the cache is the source of truth.
+- `datacite.ttl` — cached 2026-06-05, SPAR DataCite ontology (OWL 2 DL, 936 triples,
+  rdflib-validated; tracks DataCite Metadata Schema 4.7). **Grounded for D111**: provides the
+  identifier-scheme individuals (e.g. `datacite:doi` at `<http://purl.org/spar/datacite/doi>`)
+  that scheme records reference via `skos:exactMatch`. Term/class namespace =
+  `http://purl.org/spar/datacite#`; scheme individuals live under the slash form
+  `http://purl.org/spar/datacite/`.
 
 - `did.ttl` — cached 2026-06-02; DID Core RDFS vocab (`did:`, W3C Rec) + `did-v1.context.jsonld`
   (the DID-document JSON-LD context). **Grounded ahead of the deferred URI/DID migration** so the
