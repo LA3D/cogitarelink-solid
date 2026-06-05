@@ -178,6 +178,29 @@ RUN rm -rf /community-server/extensions/mem-trigger/node_modules/@solid/communit
 RUN ln -sf /community-server/extensions/mem-trigger /community-server/node_modules/mem-trigger
 
 # ============================================================================
+# id-catalog — IdCatalogStore (D111 §4.4). PassthroughStore wrapper that derives
+# thin catalog entries from identifier-scheme record writes in-band and rejects
+# client writes touching the server-managed triples (the ldp:contains precedent).
+# CJS-only TypeScript; `npm run build` = tsc + componentsjs-generator (no ESM
+# build). Same @solid/community-server symlink trick to keep class identity
+# (PassthroughStore/BasicRepresentation) consistent with the CSS host. Scoped
+# npm name (@cogitarelink/id-catalog), so symlinked under node_modules/@cogitarelink.
+# ============================================================================
+
+COPY extensions/id-catalog /community-server/extensions/id-catalog
+
+RUN cd extensions/id-catalog && npm install --ignore-scripts
+
+RUN cd extensions/id-catalog && npm run build
+
+RUN rm -rf /community-server/extensions/id-catalog/node_modules/@solid/community-server && \
+    ln -sf /community-server /community-server/extensions/id-catalog/node_modules/@solid/community-server
+
+RUN mkdir -p /community-server/node_modules/@cogitarelink && \
+    ln -sf /community-server/extensions/id-catalog \
+       /community-server/node_modules/@cogitarelink/id-catalog
+
+# ============================================================================
 # Build stamp — baked LATE so earlier layers remain cacheable.
 # The ARG default "unknown" means non-Makefile builds still work cleanly.
 # Verify with: docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' cogitarelink-solid-css-1

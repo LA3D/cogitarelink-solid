@@ -20,7 +20,9 @@
  * recover the POST-created identifier, `readableToQuads`/`readableToString` for reads, an
  * INTERNAL_QUADS .meta read cycle, and an N3 Writer for the Turtle the .meta is written as.
  *
- * Server wiring (Components.js) is the NEXT task — this file is build + unit tests only.
+ * Server wiring (Components.js) is live: css/config/id-catalog.json inserts this store
+ * between Locking and Patching so the modifyResource guard sees N3 patches as text. See
+ * rewriteMeta for the one runtime subtlety the wiring surfaced (the .meta identifier).
  */
 import type {
   ResourceStore,
@@ -228,7 +230,17 @@ export class IdCatalogStore extends PassthroughStore {
     const metaId = { path: this.catalogMetaPath };
     this.deriving = true;
     try {
-      await this.source.setRepresentation(metaId, new BasicRepresentation(ttl, 'text/turtle'));
+      // Pass metaId as the representation's identifier (BasicRepresentation's
+      // (data, ResourceIdentifier, contentType) overload sets metadata.id to the
+      // .meta URL). The shape-validation floor below reads the validation target
+      // from the REPRESENTATION's identifier, not the setRepresentation id arg —
+      // without this, the .meta has no/default identifier, isAuxiliaryIdentifier
+      // returns false, and ShaclValidator validates the catalog index body against
+      // SchemeRecordShape (→ "no nodes conform to target classes" 400). With the
+      // correct .meta identifier, ShaclValidator.canHandle short-circuits on the
+      // auxiliary check, so the derived index write passes through unvalidated —
+      // the same exemption every other .meta write relies on.
+      await this.source.setRepresentation(metaId, new BasicRepresentation(ttl, metaId, 'text/turtle'));
     } finally {
       this.deriving = false;
     }

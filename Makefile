@@ -11,6 +11,7 @@ JS_EXTENSIONS := \
     css/extensions/shape-validator \
     css/extensions/wiki-search \
     css/extensions/mem-trigger \
+    css/extensions/id-catalog \
     css/extensions/memento \
     css/extensions/metadata-card \
     css/extensions/profile-link \
