@@ -112,43 +112,43 @@ def test_battery_c_meta_conformsTo_surfaces_as_link_header():
         f"All headers: {dict(r.headers)}")
 
 
-@pytest.mark.xfail(
-    reason=(
-        "D112 T1 battery finding B-d: /vault/wiki/working/ admission floor rejects "
-        "text/turtle POST with no rdf:type — 400 BadRequestHttpError 'no nodes in the "
-        "body conform to any of the target classes of working.shacl.ttl'. The 'permissive' "
-        "working container (D73) gates text/turtle by shape class dispatch; a bare "
-        "<> dct:title body has no target-class node so it is rejected before the "
-        "null-relative <> subject resolution can be observed. LDN-style <>-subject POSTs "
-        "need a typed body (or a truly unflored container). Task 7 must account for this."
-    ),
-    strict=True,
-)
 def test_battery_d_post_null_relative_subject_to_floored_container():
     # B-d: POST text/turtle with a <> (null relative IRI) subject to a floored container
-    # resolves <> to the newly created URL. The /vault/wiki/working/ container is
-    # described as permissive (D73), so this POST should succeed with 201. We then GET
-    # the Location URL and assert the created URL is the subject of the dct:title triple.
-    # FINDING: the floor rejects this — see xfail reason above.
-    ctr = f"{POD}/vault/wiki/working/"
-    body = '@prefix dct: <http://purl.org/dc/terms/> .\n<> dct:title "battery d112" .\n'
-    r = _post(ctr, body, "text/turtle", follow_redirects=False)
+    # resolves <> to the newly created URL.
+    #
+    # Battery finding (2026-06-05): an UNTYPED body (<> dct:title "...") → 400 — the
+    # admission floor's class dispatch rejects "no nodes conform to any target classes of
+    # working.shacl.ttl" before <> resolution occurs. Task 7 (LDN sender) must use a typed body.
+    #
+    # This test verifies the actual question (does <> resolve?) using a TYPED body:
+    # <> a wiki:WorkingNote ; dct:title "..." — the working shape targets wiki:WorkingNote,
+    # sh:closed false, so this is the minimal conformant form.
+    WIKI = "https://pod.vardeman.me/vault/ontology/wiki#"
+    ctr  = f"{POD}/vault/wiki/working/"
+    body = (
+        "@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .\n"
+        "@prefix dct: <http://purl.org/dc/terms/> .\n"
+        '<> a wiki:WorkingNote ; dct:title "battery d112 typed" .\n'
+    )
+    r = httpx.post(ctr, content=body,
+                   headers={"Content-Type": "text/turtle", "Slug": "d112-battery-d"},
+                   verify=_CA, follow_redirects=False)
     assert r.status_code == 201, f"B-d POST {r.status_code}: {r.text[:300]}"
     loc = r.headers.get("location", "")
-    assert loc, f"B-d: 201 but no Location header"
+    assert loc, "B-d: 201 but no Location header"
 
-    # GET the created resource and check <> resolves to the created URL
-    created = _get(loc, headers={"Accept": "text/turtle"})
-    assert created.status_code == 200, f"B-d GET {loc} -> {created.status_code}"
-    g = Graph()
-    g.parse(data=created.text, format="turtle", publicID=loc)
-    titles = list(g.objects(URIRef(loc), URIRef(DCT + "title")))
-    assert titles, (
-        f"B-d: dct:title on <{loc}> not found after POST with <> subject.\n"
-        f"Triples:\n{created.text[:400]}")
-    assert any("battery d112" in str(t) for t in titles), (
-        f"B-d: title value mismatch: {titles}")
-
-    # Cleanup
-    _delete(loc)
-    assert _get(loc).status_code in (404, 410), f"B-d: cleanup failed — {loc} still live"
+    try:
+        # GET the created resource and confirm <> resolved to the assigned URL
+        created = _get(loc, headers={"Accept": "text/turtle"})
+        assert created.status_code == 200, f"B-d GET {loc} -> {created.status_code}"
+        g = Graph()
+        g.parse(data=created.text, format="turtle", publicID=loc)
+        # The created URL must appear as a subject (proves <> → assigned URL)
+        assert URIRef(loc) in set(g.subjects()), (
+            f"B-d: <{loc}> not a subject in returned graph — <> did not resolve.\n"
+            f"Subjects: {list(g.subjects())[:10]}\nBody:\n{created.text[:400]}")
+        titles = list(g.objects(URIRef(loc), URIRef(DCT + "title")))
+        assert any("battery d112 typed" in str(t) for t in titles), (
+            f"B-d: title value mismatch: {titles}")
+    finally:
+        _delete(loc)
