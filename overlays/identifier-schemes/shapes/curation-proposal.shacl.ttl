@@ -27,11 +27,11 @@
 #   - mem:rationale is xsd:string; the shape requires PRESENCE but cannot
 #     validate QUALITY — that is the curator's judgment.
 #   - Validated offline with inference="none" (same discipline as scheme-record).
-mem:CurationProposalShape
+<#CurationProposalShape>
     a sh:NodeShape ;
     rdfs:label "Curation proposal contract" ;
     rdfs:comment "Governs a mem:RealignAction proposal POSTed to an .operations/ ledger. Requires as:object (the resource needing curation), schema:actionStatus (lifecycle), mem:stalenessClass, mem:rationale (with observed HTTP evidence for liveness findings), prov:qualifiedAssociation/prov:hadPlan (Memento-pinned descriptor version), and as:published. A proposal without a declared plan is rejected (D112)." ;
-    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/mem> ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/id/curation-proposal.shacl.ttl> ;
     dct:conformsTo <https://www.w3.org/TR/shacl/> ;
     dct:created "2026-06-05"^^xsd:date ;
     dct:creator <https://orcid.org/0000-0003-4091-6059> ;
