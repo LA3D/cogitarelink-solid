@@ -19,7 +19,7 @@
     skos:inScheme <https://pod.vardeman.me/id/schemes/> ;
     skos:exactMatch datacite:ror ;
     rdfs:seeAlso <https://registry.identifiers.org/registry/ror> ;
-    idot:luiPattern "^0[a-hj-km-np-tv-z0-9]{6}[0-9]{2}$" ;
+    idot:luiPattern "^0[a-hj-km-np-tv-z0-9]{8}$" ;
     idot:sampleID "00mkhxb43" .
 
 <#ror-org> a idot:Resource ;
@@ -31,7 +31,7 @@
 
 <#ror-api> a idot:Resource ;
     dct:title "ROR API — metadata record"@en ;
-    idot:urlPattern "https://api.ror.org/organizations/{$id}" ;
+    idot:urlPattern "https://api.ror.org/v2/organizations/{$id}" ;
     dcat:servesDataset <https://pod.vardeman.me/id/schemes/#ror> ;
     dcat:mediaType <https://www.iana.org/assignments/media-types/application/json> ;
     dct:type <https://pod.vardeman.me/id/roles#metadata-record> .

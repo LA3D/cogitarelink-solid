@@ -22,7 +22,7 @@
     idot:sampleID "did:web:pod.vardeman.me" .
 
 <#uniresolver> a idot:Resource ;
-    dct:title "Universal DID Resolver"@en ;
+    dct:title "DIF Universal Resolver (dev instance — no SLA)"@en ;
     idot:urlPattern "https://dev.uniresolver.io/1.0/identifiers/{$id}" ;
     dcat:servesDataset <https://pod.vardeman.me/id/schemes/#did> ;
     dcat:mediaType <https://www.iana.org/assignments/media-types/application/did+ld+json> ;

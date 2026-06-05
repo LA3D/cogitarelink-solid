@@ -19,7 +19,7 @@
     skos:inScheme <https://pod.vardeman.me/id/schemes/> ;
     skos:exactMatch datacite:arxiv ;
     rdfs:seeAlso <https://registry.identifiers.org/registry/arxiv> ;
-    idot:luiPattern "^(\\d{4}\\.\\d{4,5}|[a-z-]+(\\.[A-Z]{2})?/\\d{7})(v\\d+)?$" ;
+    idot:luiPattern "^(\\d{4}\\.\\d{4,5}|[a-z-]+(\\.[a-zA-Z0-9-]+)?/\\d{7})(v\\d+)?$" ;
     idot:sampleID "2310.04363" .
 
 <#arxiv-abs> a idot:Resource ;
