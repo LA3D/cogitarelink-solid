@@ -394,31 +394,31 @@ mem:FalsePositive       a mem:StalenessClass , skos:Concept ; rdfs:label "False 
 #   mem:Materialization — not staleness but a derivable projection gap
 
 mem:hasOpenAction
-    a rdf:Property ;
+    a owl:ObjectProperty ;
     rdfs:label "has open action" ;
     rdfs:comment "Target resource → a pending (schema:PotentialActionStatus) curation activity in a .operations/ ledger. SERVER-DERIVED only: maintained by OperationsIndexListener from the ledger state; agents never author it (the ldp:contains precedent). Surfaced on GET as a Link header (rel = this property's IRI)." ;
     rdfs:range prov:Activity .
 
 mem:CurationNeed
-    a rdfs:Class ;
+    a owl:Class ;
     rdfs:label "Curation need" ;
     rdfs:comment "One declared Tier-2 check an application asks the curator role to run over its data registration. The check procedure rides on sh:agentInstruction (the on-Pod source of truth, D103); the intended lane on mem:applyClass; the ledger to file into on mem:ledger. Declared at deploy time — never invented at run time (D112 §7)." .
 
 mem:hasCurationNeed
-    a rdf:Property ;
+    a owl:ObjectProperty ;
     rdfs:label "has curation need" ;
     rdfs:domain interop:Application ;
     rdfs:range mem:CurationNeed ;
     rdfs:comment "An interop:Application declares the curation checks its data registration needs (policy-as-data, D112 §4)." .
 
 mem:applyClass
-    a rdf:Property ;
+    a owl:ObjectProperty ;
     rdfs:label "apply class" ;
     rdfs:domain mem:CurationNeed ;
     rdfs:comment "The need's INTENDED lane (D112 §7). v1 behavior is propose-only for both lanes; graduation of a DeriveClass need to auto-apply is earned by a maturity score over its trace history (clean-trace rate, reversal rate, plan-version stability), never granted by design." .
 
 mem:ledger
-    a rdf:Property ;
+    a owl:ObjectProperty ;
     rdfs:label "ledger" ;
     rdfs:domain mem:CurationNeed ;
     rdfs:comment "The .operations/ container proposals for this need are filed into (one activity per resource, <>-subject, LDN sender pattern)." .
