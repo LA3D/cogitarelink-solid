@@ -76,7 +76,7 @@ css/extensions/
   shared/markdown-parsing/  — wikilinks, predicates, resolver modules (reused by renderer + projection)
 shapes/
   concept-note.ttl          — legacy standalone shape (pre-overlay; superseded by overlay catalog)
-ontology/        — foundational-vocabulary cache (basis: ontology/README.md, D109 §5): SolidPodProfile + interop: (Solid App Interop) + vault ontology; ground/declare/enumerate-defer policy. (SKOS/DC/PROV-O = ground-now backlog, not yet cached)
+ontology/        — foundational-vocabulary cache (basis: ontology/README.md, D109 §5): SolidPodProfile + interop: (Solid App Interop) + vault ontology; ground/declare/enumerate-defer policy. (SKOS/DC = ground-now backlog; PROV-O grounded 2026-06-05)
 overlays/
   wiki-memory/              — wiki-memory L3 overlay; SHACL catalog at shapes/ (8 NodeShapes / 11 files, D98 supersedes D77/D78)
   addressbook/              — AddressBook substrate (D87 candidate, shipped 2026-05-17)

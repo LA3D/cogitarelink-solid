@@ -25,18 +25,13 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   seeded FIRST); `make test` honestly green Pod-up AND Pod-down (known flake:
   `test_timemap_returns_parseable_turtle`, ordering-dependent, passes in isolation); `make audit`
   0 ERROR / 1 intentional WARN (D98 dup-container).
-- **▶ NEXT SESSION: the sub-C curation-loop brainstorm → spec → D-number** (D109 order; then
-  **RQ-View-2 FULL re-eval**, then D view layer). Grounding to load: D109 floor/loop rule
-  (derive-inferable / floor-locally-authorable / **loop-graph-global**); existing pieces — the
-  `pod-curator` skill (proposes `mem:RealignAction`, never patches), `mem:StalenessDetected`/
-  `RealignAction`/`rationale` vocab + `.operations/` trace exemplar, D101 MemTrigger wiring
-  (2 detectors still stubs, FOLLOWUPS); **two D111-donated detector candidates**: provider
-  liveness (sampleID×urlPattern×declared-mediaType) + suggestive-typing sweep (literals vs
-  `luiPattern`) — both motivated by real probe-caught bugs. Open design questions: trigger model
-  (scheduled/event/agent-invoked), the auto-apply boundary (derive-class vs judgment-class
-  RealignActions), and whether RQ-View-2 runs before or after sub-C. Sub-C's eval = Rung 1.5 B2
-  (Lint). The teaching agenda (skill-over-build / Knob 1) stays DEFERRED per Chuck's
-  structure-before-teaching reorder.
+- **D112 curation protocol BUILT 2026-06-05** on branch `d112-curation-protocol` (10/10 plan tasks;
+  e2e green; `make audit` 0 ERROR / 1 known WARN; suite green Pod-up + Pod-down). **NOT yet merged
+  to main. ▶ NEXT = the two D112 cold probes** (curator probe + primary-agent probe, ensemble
+  grading — spec §8 defines grading criteria; grading criteria in
+  `docs/superpowers/specs/2026-06-05-d112-curation-protocol-design.md` §8) **BEFORE merge counts
+  as validated**, then **RQ-View-2 FULL re-eval**, then D view layer. Teaching agenda (skill-over-build
+  / Knob 1) stays DEFERRED per Chuck's structure-before-teaching reorder.
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
@@ -64,6 +59,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | **Agentic-fragility audit + R1–R6 remediation** (dual-view URL identity fix; live-TI-wins; remark-AST projection parsing; agreement-test sweep + maps.json; Graph-based Python patches; merged 2026-06-04) | — | audit doc `docs/plans/2026-06-03-agentic-fragility-audit.md` |
 | **Cleanup sprint** (Components.js config guard — the 3× boot class dead; dct:identifier→`<#this>` + multi-constrainedBy merged dispatch (SourceShape live); audit_type_index; make test-js; suite honestly green; merged 2026-06-05) | — | — |
 | **D111 identifier-scheme substrate** (Pod-level PID system at /id/; fragment datatypes; derived catalog; curl-grade enforcement; e2e 8/8; cold probes 3/3; bootstrap memory seeded; merged 2026-06-05) | — | D111 |
+| **D112 curation protocol** (Tier-2 loop as Pod state; 5 seams: signals/ledger/policy-as-data/read-path/curator-as-role; `OperationsIndexListener` + `CurationLinkMetadataWriter`; PROV-O grounded; id-schemes vertical slice; built 2026-06-05; **cold probes pending — not yet validated**) | — | D112 |
 | Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
 | Option-B substrate audit + curator (pod-audit walker + pod-curator skill, 2026-05-24) | — | D104 / vault-D99 |
 | RQ-Substrate-4 URI re-layering Phases 1–4 (sub: namespace, reframe, storage-root, PROF; **merged to main 2026-05-28**, commit `02f9b58`, not pushed; cold-probe eval RQ-View-2 + view layer still open) | — | **D107** |

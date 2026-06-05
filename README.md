@@ -292,7 +292,7 @@ css/config/        CSS Components.js configuration (file backend, WAC, seed)
 css/extensions/    TypeScript CSS component package (.well-known/ handlers)
 comunica/          Comunica SPARQL sidecar config (link-traversal + traqula fix)
 shapes/            SHACL shapes for pod content (concept-note, project-note, daily-note)
-ontology/          PROF SolidPodProfile + cached ontology stubs (SKOS, DC, PROV-O)
+ontology/          PROF SolidPodProfile + cached ontology stubs (SKOS, DC); PROV-O grounded 2026-06-05
 scripts/           Python CLI tools (vault importer, SPARQL query, pod setup)
 tests/             pytest conformance + integration tests
 docs/plans/        Architecture design documents

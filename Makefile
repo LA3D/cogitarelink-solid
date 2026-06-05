@@ -18,7 +18,7 @@ JS_EXTENSIONS := \
     css/extensions/profile-link \
     css/extensions/shared/markdown-parsing
 
-.PHONY: up down reset rebuild rebuild-clean status logs import test test-py test-js install clean sync-validator-tbox check-validator-tbox audit verify sync-curator-skill
+.PHONY: up down reset rebuild rebuild-clean status logs import test test-py test-js install clean sync-validator-tbox check-validator-tbox audit verify
 
 up:  ## Start everything (idempotent)
 	docker compose up -d
@@ -117,13 +117,6 @@ check-validator-tbox:  ## Fail if the bundled validator TBox copies have drifted
 
 audit:  ## Validate the Pod's substrate self-description (D104); ERROR findings fail
 	SSL_CERT_FILE="$(CA_FILE)" $(PYTHON) scripts/pod_audit.py $(POD_URL) --shapes-dir shapes/substrate/ --check-routing
-
-CURATOR_SKILL := ../solid-agent-skills/skills/pod-curator/scripts
-sync-curator-skill:  ## Sync canonical pod_audit.py + substrate shapes into the bundled pod-curator skill
-	@test -d "$(CURATOR_SKILL)" || (echo "skill bundle dir not found: $(CURATOR_SKILL)"; exit 1)
-	cp scripts/pod_audit.py "$(CURATOR_SKILL)/pod_audit.py"
-	cp shapes/substrate/*.ttl "$(CURATOR_SKILL)/shapes/substrate/"
-	@echo "synced pod_audit.py + shapes/substrate/ → $(CURATOR_SKILL)"
 
 clean:  ## Stop and destroy all data
 	docker compose down -v

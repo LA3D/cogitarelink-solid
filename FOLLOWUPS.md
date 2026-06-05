@@ -2,6 +2,43 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## 🔁 D112 curation protocol (2026-06-05, branch d112-curation-protocol) — BUILT; cold probes pending
+
+Built on branch `d112-curation-protocol` (10/10 plan tasks); e2e green; audit 0 ERROR / 1 known WARN;
+suite green Pod-up + Pod-down. **Cold probes are the validation gate** — do NOT merge to main until
+the two cold probes (curator probe + primary-agent probe, ensemble grading — spec §8) pass.
+
+1. **Cold probes NOT yet run.** Curator probe (cold agent with Pod affordances only, curates the
+   identifier-schemes overlay) + primary-agent probe (cold agent reads a resource, follows
+   `Link: rel="mem:hasOpenAction"`, acts on a proposed curation). Both scored with the spec §8 ensemble
+   grading criteria. These are the D112 validation gate.
+2. **Delete-event back-pointer removal relies on in-memory seen-map.** The `OperationsIndexListener`
+   tracks which resources it has annotated in-memory. A restart between a Create event (adds the
+   `mem:hasOpenAction` back-pointer) and a Delete event (removes it) leaves a dangling pointer on the
+   resource `.meta`. By-design v1; revisit with persistence or a sweep-repair pass.
+3. **wiki-memory rollout gated on D82.** The `mem:hasOpenAction` back-pointer pattern requires the
+   agent `.meta` enrichment to survive body rewrites (D82 `.meta.agent` sidecar). The `/id/` slice
+   sidesteps this (Turtle bodies, no projection rewrite). Full wiki-memory rollout waits on D82.
+4. **Maturity scorer NOT built.** Ledger signals are defined (clean-trace rate, reversal rate,
+   plan-version stability) and traces are scoreable when data accumulates — but the scorer that
+   graduates a derive-class RealignAction to auto-apply is deferred.
+5. **Agreement test for duplicated IRI constants.** `MEM_HAS_OPEN_ACTION` and `POTENTIAL`
+   (`schema:PotentialActionStatus`) are defined in both `ops-index/src/parseProposal.ts` and
+   `profile-link/src/CurationLinkMetadataWriter.ts`. A cross-extension agreement test (modeled on
+   `test_substrate_mirror_consistency.py`) should verify both against `mem.ttl`.
+6. **id-schemes `interop:Application` not in SAI registry chain.** The identifier-schemes interop
+   app is discoverable via LDP container listing of `/vault/meta/interop/` but has no shapetree
+   declaration and is not in the SAI `RegistrySet` chain. Provide-reactively (D87 discipline) —
+   generalize when app #3 declares needs.
+7. **`ldp:inbox` advertisement deferred.** Advertising `/id/.operations/` as `ldp:inbox` waits
+   until an LDN notification consumer exists.
+8. **`rdfs:isDefinedBy` migration sweep.** Pre-existing wiki shapes carry `rdfs:isDefinedBy`
+   pointing at vocab docs that don't declare them. D112's `<#CurationProposalShape>` form (shape IRI
+   = hash on the shapes file that declares it) is the D84-conformant pattern; consider a migration
+   sweep for the pre-existing shapes.
+9. **ops-index logger 'attached' message not visible in CSS logs.** Log-level config issue; cosmetic
+   — no runtime impact.
+
 ## 🆔 D111 identifier-scheme substrate (2026-06-05, MERGED to main) — SHIPPED + VALIDATED; residue list
 
 Live on the Pod; e2e 8/8 (incl. the bootstrapped `how-identifiers-work` memory); **cold probes
@@ -10,14 +47,14 @@ found+fixed same day); `make audit` 0 ERROR / 1 known WARN; `make reset` reprodu
 (identifier-schemes seeded FIRST). Open follow-ups:
 
 0. **Probe-donated sub-C detector candidates (first citizens for the curation-loop brainstorm):**
-   (a) provider liveness — substitute each record's `idot:sampleID` into each `idot:urlPattern`,
-   verify the declared `dcat:mediaType` comes back (would have caught BOTH probe bugs);
+   (a) ✅ provider liveness — **→ resolved by D112** (implemented as `mem:JudgmentClass` detector in
+   the identifier-schemes curation affordance); substitute each record's `idot:sampleID` into each
+   `idot:urlPattern`, verify the declared `dcat:mediaType` comes back (would have caught BOTH probe bugs);
    (b) suggestive-typing sweep — typed identifier literals vs their scheme's `luiPattern`.
    Lesson: SHACL validates structure; only resolution attempts validate providers.
 
-1. **PropertyValue materialization rule → sub-C curation loop.** The derived `schema:PropertyValue`
-   projection (propertyID = scheme-record URL) is a *curation-loop* (Tier-2) materialization, not a
-   write-time floor concern — fold it into the sub-C curation work, not the admission floor.
+1. ✅ **PropertyValue materialization rule → sub-C curation loop. → resolved by D112** (implemented as
+   `mem:DeriveClass` detector; `schema:PropertyValue` projection, `propertyID` = scheme-record URL).
 2. **RO-Crate / Croissant profile records (unseeded).** The model accommodates dataset-packaging
    profiles (RO-Crate, Croissant) as scheme/profile records; not seeded — add when a real consumer
    needs them (provide-reactively, D87 discipline).
