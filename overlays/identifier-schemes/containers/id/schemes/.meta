@@ -1,0 +1,15 @@
+@prefix dcat:  <http://www.w3.org/ns/dcat#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix ldp:   <http://www.w3.org/ns/ldp#> .
+
+# Container .meta for /id/schemes/ (D111). Applied at container CREATION via
+# apply.py block 8 — BEFORE bootstrap content lands — because CSS rejects
+# (re)constraining a NON-EMPTY container with H400 ("A container can only be
+# (re)constrained when there are no resources present"). This is the empty-
+# container ordering constraint verified empirically in Task 1. The Block-11
+# installsContainerMetaPatch path runs AFTER bootstrap, so it cannot carry the
+# constrainedBy for a container that holds the 8 seed records.
+<> a dcat:Catalog, skos:ConceptScheme ;
+    dct:title "Identifier-scheme catalog" ;
+    ldp:constrainedBy <https://pod.vardeman.me/id/scheme-record.shacl.ttl> .

@@ -54,3 +54,10 @@ def test_topic_outside_catalog_namespace_fails():
 
 def test_missing_definition_fails():
     assert not _validate(GOOD.replace('skos:definition "Digital Object Identifier."@en ;', ""))
+
+
+def test_overlay_shape_copy_matches_canonical():
+    root = Path(__file__).parent.parent
+    canon = (root / "shapes/substrate/scheme-record.shacl.ttl").read_text()
+    copy = (root / "overlays/identifier-schemes/shapes/scheme-record.shacl.ttl").read_text()
+    assert canon == copy

@@ -75,3 +75,27 @@ def test_wiki_memory_manifest_parses_extension_guide():
     assert len(m.extension_guides) == 1
     assert m.extension_guides[0].document == "extending-l3.md"
     assert m.extension_guides[0].hosted_at == "/vault/meta/extending-l3.md"
+
+
+def test_identifier_schemes_out_of_root_container_meta_placement():
+    """D111: /id/schemes/ lives OUTSIDE the /vault storage root, so apply.py
+    block 8 resolves its container .meta via the URL path (id/schemes/.meta),
+    not by stripping pod_url. This guards both the manifest's out-of-root
+    container declaration and the on-disk .meta placement block 8 depends on
+    to apply ldp:constrainedBy AT CREATION (the empty-container ordering
+    constraint — CSS H400s a re-constrain of a non-empty container)."""
+    from pathlib import Path
+    from urllib.parse import urlsplit
+    root = Path(__file__).parent.parent
+    pod_url = "https://pod.vardeman.me/vault/"
+    m = parse_manifest(root / "overlays" / "identifier-schemes", pod_url=pod_url)
+    container_url = "https://pod.vardeman.me/id/schemes/"
+    assert container_url in m.container_paths
+    assert not container_url.startswith(pod_url)  # out-of-root: the fallback branch
+    rel = urlsplit(container_url).path.lstrip("/").rstrip("/") + "/.meta"
+    assert rel == "id/schemes/.meta"
+    meta_local = root / "overlays" / "identifier-schemes" / "containers" / rel
+    assert meta_local.exists()
+    body = meta_local.read_text()
+    assert "ldp:constrainedBy" in body
+    assert "/id/scheme-record.shacl.ttl" in body

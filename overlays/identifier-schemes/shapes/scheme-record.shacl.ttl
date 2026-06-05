@@ -1,0 +1,100 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix idot:  <http://identifiers.org/idot/> .
+@prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sub:   <https://pod.vardeman.me/vault/ontology/substrate#> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+# SchemeRecordShape — the registration contract for identifier-scheme records
+# in the /id/schemes/ catalog (D111). A scheme record is a foaf:Document PUT
+# to /id/schemes/<key>; it carries a foaf:primaryTopic pointing at the abstract
+# scheme node (a fragment on the catalog: /id/schemes/#<key>). This shape
+# validates the document frame and delegates to SchemeTopicShape for the topic.
+#
+# Design notes:
+#   - The document (<>) is the resource being validated (foaf:Document).
+#   - The topic node is the abstract scheme entity; its IRI must be a fragment
+#     on the /id/schemes/ catalog, never a sub-resource path.
+#   - Providers (idot:Resource) are optional — non-resolvable schemes are legal.
+#   - idot:luiPattern is DATA (the regex string stored for agents to read);
+#     this shape requires its PRESENCE, never validates instance literals.
+#   - skos:exactMatch and dct:conformsTo on the topic are recommended-not-required.
+#   - Validated offline with inference="none" (same discipline as storage-description).
+wiki:SchemeRecordShape
+    a sh:NodeShape ;
+    rdfs:label "Identifier scheme record contract" ;
+    rdfs:comment "Governs a scheme record document PUT to /id/schemes/<key>. Requires a dct:title (Page frame) and exactly one foaf:primaryTopic pointing at a catalog-fragment IRI. The topic node is validated by SchemeTopicShape. Targets foaf:Document." ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
+    dct:conformsTo <https://www.w3.org/TR/shacl/> ;
+    dct:created "2026-06-05"^^xsd:date ;
+    dct:creator <https://orcid.org/0000-0003-4091-6059> ;
+    sh:targetClass foaf:Document ;
+    sh:agentInstruction """To register an identifier scheme, PUT one Turtle document to /id/schemes/<key> (e.g. /id/schemes/doi). The document frame:
+  <https://pod.vardeman.me/id/schemes/<key>> a foaf:Document ;
+      dct:title "<label> scheme record" ;
+      foaf:primaryTopic <https://pod.vardeman.me/id/schemes/#<key>> .
+The topic node (the abstract scheme) MUST use a fragment IRI on the catalog (/id/schemes/#<key> — NOT /id/schemes/<key>#this). It must be triple-typed idot:Namespace + skos:Concept + rdfs:Datatype, carry skos:prefLabel, skos:definition, idot:luiPattern (the regex as a plain string — data, not a constraint), and at least one idot:sampleID. Providers are optional: an idot:Resource with idot:urlPattern (use {$id} as the placeholder), dcat:servesDataset pointing at the scheme, and dct:type from /id/roles. GET /id/schemes/doi for a worked exemplar. The catalog index at /id/schemes/ is server-derived — write nothing else there.""" ;
+    sh:property [
+        sh:path dct:title ;
+        sh:minCount 1 ;
+        sh:message "Scheme record document needs dct:title (Page frame)."
+    ] ;
+    sh:property [
+        sh:path foaf:primaryTopic ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:pattern "^https://pod\\.vardeman\\.me/id/schemes/#[A-Za-z][A-Za-z0-9_-]*$" ;
+        sh:message "foaf:primaryTopic must point at a catalog-fragment IRI of the form https://pod.vardeman.me/id/schemes/#<key> (never a sub-resource path like /id/schemes/<key>#this)." ;
+        sh:node wiki:SchemeTopicShape
+    ] .
+
+# SchemeTopicShape — validates the abstract scheme entity (the foaf:primaryTopic
+# value node). No sh:targetClass here: fires only when invoked via sh:node from
+# SchemeRecordShape. Requires the three-type stack and the idot core properties.
+wiki:SchemeTopicShape
+    a sh:NodeShape ;
+    rdfs:label "Identifier scheme topic contract" ;
+    rdfs:comment "Validates the abstract scheme entity. Requires triple-typing (idot:Namespace + skos:Concept + rdfs:Datatype), prefLabel, definition, luiPattern, and at least one sampleID. Invoked via sh:node from SchemeRecordShape, not targeted globally." ;
+    sh:property [
+        sh:path rdf:type ;
+        sh:hasValue idot:Namespace ;
+        sh:message "Scheme topic must be typed idot:Namespace (the scheme record is a namespace in the identifiers.org sense)."
+    ] ;
+    sh:property [
+        sh:path rdf:type ;
+        sh:hasValue skos:Concept ;
+        sh:message "Scheme topic must be typed skos:Concept (enables SKOS-based catalog navigation and skos:exactMatch alignment)."
+    ] ;
+    sh:property [
+        sh:path rdf:type ;
+        sh:hasValue rdfs:Datatype ;
+        sh:message "Scheme topic must be typed rdfs:Datatype (the datatype IRI is the literal annotation key for typed identifiers)."
+    ] ;
+    sh:property [
+        sh:path skos:prefLabel ;
+        sh:minCount 1 ;
+        sh:message "Scheme topic needs skos:prefLabel (the canonical human-readable name)."
+    ] ;
+    sh:property [
+        sh:path skos:definition ;
+        sh:minCount 1 ;
+        sh:message "Scheme topic needs skos:definition (a scoped definition for agents disambiguating scheme selection)."
+    ] ;
+    sh:property [
+        sh:path idot:luiPattern ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "Scheme topic needs exactly one idot:luiPattern (the regex for local ID validation — suggestive typing, data for agents, not a floor 422 trigger)."
+    ] ;
+    sh:property [
+        sh:path idot:sampleID ;
+        sh:minCount 1 ;
+        sh:message "Scheme topic needs at least one idot:sampleID (a worked example for agent resolution testing)."
+    ] .

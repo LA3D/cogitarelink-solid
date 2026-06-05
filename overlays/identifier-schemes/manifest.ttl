@@ -1,0 +1,40 @@
+@prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+
+# D111 identifier-scheme substrate overlay. Stands up the /id/ Pod-level PID
+# space: the /id/schemes/ catalog (dcat:Catalog + skos:ConceptScheme), the 8
+# seed scheme records, the resolution-result role scheme, and the
+# SchemeRecordShape admission floor (ldp:constrainedBy).
+#
+# ORDERING (verified empirically — Task 1 CSS battery): CSS returns H400 when
+# re-constraining a NON-EMPTY container. So the ldp:constrainedBy MUST be
+# applied while /id/schemes/ is still empty. apply.py's installsContainerMetaPatch
+# (block 11) runs AFTER bootstrap content (block 9b) — too late for a container
+# that holds the seed records. Instead the constrainedBy + catalog typing live
+# in the container .meta at containers/id/schemes/.meta, which apply.py block 8
+# applies AT CONTAINER CREATION, before any record lands. (apply.py block 8 was
+# extended to resolve container .meta paths for containers OUTSIDE the /vault
+# storage root — /id/ is one such.) The 8 records + roles deploy via
+# installsBootstrapContent.
+<https://pod.vardeman.me/vault/ontology/overlay#identifier-schemes>
+    a overlay:Overlay ;
+    overlay:name "identifier-schemes" ;
+    overlay:version "0.1" ;
+    dct:description "D111 Pod-level PID system: /id/schemes/ catalog + 8 scheme records + resolution-result roles + SchemeRecordShape admission floor. Lives OUTSIDE the storage root (rename-proof datatype IRIs)." ;
+
+    overlay:installsContainer </id/schemes/> ;
+
+    overlay:installsShape
+        [ overlay:document "shapes/scheme-record.shacl.ttl" ;
+          overlay:hostedAt "/id/scheme-record.shacl.ttl" ] ;
+
+    overlay:installsBootstrapContent
+        [ overlay:contentPath "schemes/doi.ttl" ;            overlay:hostedAt "/id/schemes/doi" ;            overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "schemes/orcid.ttl" ;          overlay:hostedAt "/id/schemes/orcid" ;          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "schemes/ror.ttl" ;            overlay:hostedAt "/id/schemes/ror" ;            overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "schemes/arxiv.ttl" ;          overlay:hostedAt "/id/schemes/arxiv" ;          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "schemes/citekey.ttl" ;        overlay:hostedAt "/id/schemes/citekey" ;        overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "schemes/did.ttl" ;            overlay:hostedAt "/id/schemes/did" ;            overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "schemes/did-oyd.ttl" ;        overlay:hostedAt "/id/schemes/did-oyd" ;        overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "schemes/solid-resource.ttl" ; overlay:hostedAt "/id/schemes/solid-resource" ; overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "roles.ttl" ;                  overlay:hostedAt "/id/roles" ;                  overlay:contentType "text/turtle" ] .

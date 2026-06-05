@@ -15,7 +15,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 import httpx
 from rdflib import Graph, URIRef
@@ -134,9 +134,19 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             ensure_container(client, container_url)
             # Look for a matching .meta file under overlay_dir/containers/<path>/.meta.
             # container_url is fully-absolute (e.g., http://pod/.../vault/wiki/pages/);
-            # strip the Pod URL to recover the path relative to the Pod root
-            # (e.g., wiki/pages/), then append .meta.
-            rel = container_url[len(pod_url):].rstrip("/") + "/.meta"
+            # strip the Pod URL to recover the path relative to the storage root
+            # (e.g., wiki/pages/), then append .meta. Containers OUTSIDE the storage
+            # root (e.g., /id/schemes/, the D111 identifier space) don't start with
+            # pod_url, so the strip would mangle the path — fall back to the URL path
+            # relative to the host origin (id/schemes/.meta) for those. This is how
+            # an out-of-root container gets constrainedBy applied at CREATION, before
+            # any bootstrap content lands (CSS rejects re-constraining a non-empty
+            # container with H400). Applying the .meta here (block 8) is the only
+            # in-band way to satisfy the empty-container ordering for /id/.
+            if container_url.startswith(pod_url):
+                rel = container_url[len(pod_url):].rstrip("/") + "/.meta"
+            else:
+                rel = urlsplit(container_url).path.lstrip("/").rstrip("/") + "/.meta"
             meta_local = overlay_dir / "containers" / rel
             if meta_local.exists():
                 meta_url = container_url.rstrip("/") + "/.meta"
