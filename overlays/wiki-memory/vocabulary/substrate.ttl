@@ -427,6 +427,20 @@ sub:affordanceCatalog
     """ ;
     rdfs:seeAlso </vault/meta/affordances/> .
 
+sub:identifierSchemeCatalog
+    a rdf:Property ;
+    rdfs:label "identifier-scheme catalog" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:comment "Points from a storage description to the Pod-level identifier-scheme catalog (D111). The catalog is a dcat:Catalog of dereferenceable scheme records whose fragment IRIs are the datatypes of identifier literals." ;
+    skos:scopeNote "Used at the storage-description level. The catalog lives at /id/schemes/, OUTSIDE the /vault/ storage root, so scheme datatype IRIs survive a storage-root rename. An agent resolving a typed identifier literal (e.g. \"10.1234/x\"^^</id/schemes/doi>) dereferences the datatype IRI to learn the scheme's resolution providers and minting roles." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource ;
+    skos:example """
+        # In /vault/.well-known/solid:
+        <> sub:identifierSchemeCatalog </id/schemes/> .
+    """ ;
+    rdfs:seeAlso </id/schemes/> .
+
 sub:capabilityCatalog
     a rdf:Property ;
     rdfs:label "capability catalog" ;

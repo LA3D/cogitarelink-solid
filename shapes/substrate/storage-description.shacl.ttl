@@ -20,7 +20,7 @@
 wiki:StorageDescriptionShape
     a sh:NodeShape ;
     rdfs:label "Storage description contract" ;
-    rdfs:comment "Governs the Pod's .well-known/solid storage description. Requires the five catalog pointers an arriving agent follows (affordance, type index, JSON-LD context, shape catalog, profile document) plus a conformance declaration. Targets pim:Storage." ;
+    rdfs:comment "Governs the Pod's .well-known/solid storage description. Requires the six catalog pointers an arriving agent follows (affordance, identifier-scheme, type index, JSON-LD context, shape catalog, profile document) plus a conformance declaration. Targets pim:Storage." ;
     rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/wiki> ;
     dct:conformsTo <https://www.w3.org/TR/shacl/> ;
     dct:created "2026-05-23"^^xsd:date ;
@@ -32,6 +32,12 @@ wiki:StorageDescriptionShape
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
         sh:message "Storage description must point at the affordance catalog via sub:affordanceCatalog (D52)."
+    ] ;
+    sh:property [
+        sh:path sub:identifierSchemeCatalog ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Storage description must point at the identifier-scheme catalog via sub:identifierSchemeCatalog (D111)."
     ] ;
     sh:property [
         sh:path solid:publicTypeIndex ;

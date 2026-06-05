@@ -180,6 +180,16 @@
             ]
           },
           {
+            "comment": "D111: identifier-scheme catalog pointer — the Pod-level PID system at /id/ (OUTSIDE the storage root; rename-proof datatype IRIs)",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#identifierSchemeCatalog",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/id/schemes/"
+              }
+            ]
+          },
+          {
             "comment": "L3: affordance catalog container (D52)",
             "@type": "StaticStorageDescriber",
             "terms": [
