@@ -13,4 +13,5 @@
     skos:prefLabel "How Wiki-Memory Works" ;
     rdfs:label "How Wiki-Memory Works" ;
     skos:definition "The conceptual model of this Pod's memory: three node-frames and the SKOS backbone." ;
+    skos:related <how-identifiers-work.md#this> ;
     schema:mainEntityOfPage <how-wiki-memory-works.md> .

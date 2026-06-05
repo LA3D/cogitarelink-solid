@@ -123,6 +123,13 @@
     ] ;
 
     overlay:installsPage [
+        overlay:targetResource <https://pod.vardeman.me/vault/wiki/concepts/how-identifiers-work.md> ;
+        overlay:body <concepts/how-identifiers-work.md> ;
+        overlay:meta <concepts/how-identifiers-work.md.meta.ttl> ;
+        dct:title "How Identifiers Work (the Pod's PID system; dog-foods the compact-id convention)"
+    ] ;
+
+    overlay:installsPage [
         overlay:targetResource <https://pod.vardeman.me/vault/wiki/concepts/photosynthesis.md> ;
         overlay:body <concepts/photosynthesis.md> ;
         overlay:meta <concepts/photosynthesis.md.meta.ttl> ;

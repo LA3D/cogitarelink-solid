@@ -175,3 +175,31 @@ def test_body_span_typed_literal_survives_inband_projection():
     # 404. NOT a live 2xx — that would be residue. (Distinct from the floor's
     # rejected-write 404: those never committed, so no tombstone.)
     assert _get(url).status_code in (404, 410), "span probe left live residue"
+
+
+def test_bootstrap_memory_page_served():
+    # The seeded how-identifiers-work memory IS the Pod's memory about its own PID
+    # system. It must serve (200), dog-food the compact-id convention (frontmatter
+    # `identifier: citekey:..` projects a dct:identifier literal carrying the
+    # …/id/schemes/#citekey datatype on <#this>) AND author a prefLabel inline, and
+    # the entry-point storage-description agentInstruction must point at /id/schemes/.
+    page = f"{POD}/vault/wiki/concepts/how-identifiers-work.md"
+    r = _get(page)
+    assert r.status_code == 200, f"bootstrap page GET {r.status_code}: {r.text[:200]}"
+
+    m = _get(f"{page}.meta", headers={"Accept": "text/turtle"})
+    assert m.status_code == 200, f"bootstrap .meta GET {m.status_code}: {m.text[:200]}"
+    g = Graph()
+    g.parse(data=m.text, format="turtle", publicID=page)
+    citekey_dt = URIRef(f"{POD}/id/schemes/#citekey")
+    id_lits = list(g.objects(None, URIRef(DCT + "identifier")))
+    typed = {str(o): getattr(o, "datatype", None) for o in id_lits}
+    assert "how-identifiers-2026" in typed, f"compact-id not a dct:identifier object: {typed}"
+    assert typed["how-identifiers-2026"] == citekey_dt, (
+        f"dct:identifier datatype is {typed['how-identifiers-2026']}, expected {citekey_dt}")
+    pref = list(g.objects(None, URIRef(SKOS + "prefLabel")))
+    assert pref, "bootstrap concept carries no skos:prefLabel"
+
+    sd = _get(f"{POD}/vault/.well-known/solid", headers={"Accept": "text/turtle"})
+    assert sd.status_code == 200, f"storage description GET {sd.status_code}: {sd.text[:200]}"
+    assert "/id/schemes/" in sd.text, "agentInstruction does not mention the scheme catalog"

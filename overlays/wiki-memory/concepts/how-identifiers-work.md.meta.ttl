@@ -1,0 +1,18 @@
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix schema: <https://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+<how-identifiers-work.md>
+    a wiki:Page ; dct:title "How Identifiers Work" ; rdfs:label "How Identifiers Work" ;
+    schema:mainEntity <how-identifiers-work.md#this> .
+<how-identifiers-work.md#this>
+    a skos:Concept ;
+    schema:name "How Identifiers Work" ;
+    skos:prefLabel "How identifiers work" ;
+    rdfs:label "How identifiers work" ;
+    skos:definition "How this Pod handles identifiers: two regimes (the informal resource-URL regime and the formal catalog-described regime), the datatype-as-dispatch-key mechanism, the resolution walk, authoring, and registering a scheme." ;
+    skos:related <how-wiki-memory-works.md#this> ;
+    rdfs:seeAlso <https://pod.vardeman.me/id/schemes/> ;
+    schema:mainEntityOfPage <how-identifiers-work.md> .

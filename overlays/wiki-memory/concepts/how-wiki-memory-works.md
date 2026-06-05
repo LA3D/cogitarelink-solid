@@ -41,7 +41,8 @@ graph view.
 Per D81, the substrate governs a declared set of predicates; you own the rest.
 - **Derived for you** (do not hand-write): `rdfs:label`, `schema:name`, page/thing plumbing.
 - **You must supply** (judgment — not inferable): `skos:prefLabel` on a concept; `dct:identifier`
-  on a Source (a DOI/arXiv id); the right `skos:broader`.
+  on a Source (a DOI/arXiv id — see [[how-identifiers-work]] for how to type and resolve it); the
+  right `skos:broader`.
 - A write that omits required judgment metadata is rejected (see correction protocol).
 
 ## The correction protocol

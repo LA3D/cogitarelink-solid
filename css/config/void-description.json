@@ -389,7 +389,7 @@
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/shacl#agentInstruction",
-                "StaticStorageDescriber:_terms_value": "\"This Pod's memory is a SKOS concept backbone. Every wiki page has TWO RDF subjects with three frame roles: the page document <> (dct:title), the entity <#this> (schema:name), and -- when the entity is a concept -- the SKOS unit <#this> (skos:prefLabel). skos:broader/narrower/related is the navigation axis. Writes are validated by SHACL shapes; a 422 returns a sh:ValidationReport you correct against. Read sub:agentGuide before writing.\""
+                "StaticStorageDescriber:_terms_value": "\"This Pod's memory is a SKOS concept backbone. Every wiki page has TWO RDF subjects with three frame roles: the page document <> (dct:title), the entity <#this> (schema:name), and -- when the entity is a concept -- the SKOS unit <#this> (skos:prefLabel). skos:broader/narrower/related is the navigation axis. Writes are validated by SHACL shapes; a 422 returns a sh:ValidationReport you correct against. Typed identifiers carry their dispatch in the literal datatype -- dereference it to reach the scheme catalog at /id/schemes/. Read sub:agentGuide before writing.\""
               }
             ]
           }
