@@ -50,7 +50,13 @@
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
     },
     {
-      "comment": "Insert MementoLinkMetadataWriter after the default LinkRelMetadataWriter so existing Link rels (ldp:constrainedBy etc) get serialized first; we append on top. Then insert ProfileLinkMetadataWriter after that (two steps in one Override).",
+      "comment": "Per D112 §5: emits Link: rel=\"<mem:hasOpenAction IRI>\" headers, one per mem:hasOpenAction back-pointer on the resource's RepresentationMetadata. RFC 8288 extension relation = the predicate IRI. Makes open curation proposals visible in-band on GET — the read-path surfacing seam.",
+      "@id": "urn:cogitarelink:CurationLinkMetadataWriter",
+      "@type": "CurationLinkMetadataWriter",
+      "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
+    },
+    {
+      "comment": "Insert MementoLinkMetadataWriter after the default LinkRelMetadataWriter so existing Link rels (ldp:constrainedBy etc) get serialized first; we append on top. Then insert ProfileLinkMetadataWriter after that, CurationLinkMetadataWriter after that, then WikiSearchLinkMetadataWriter last (four steps in one Override).",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:MetadataWriter" },
       "overrideSteps": [{
@@ -69,6 +75,12 @@
         "@type": "OverrideListInsertAfter",
         "overrideParameter": { "@id": "ah:dist/ParallelHandler.jsonld#ParallelHandler_handlers" },
         "overrideTarget": { "@id": "urn:cogitarelink:ProfileLinkMetadataWriter" },
+        "overrideValue": { "@id": "urn:cogitarelink:CurationLinkMetadataWriter" }
+      },
+      {
+        "@type": "OverrideListInsertAfter",
+        "overrideParameter": { "@id": "ah:dist/ParallelHandler.jsonld#ParallelHandler_handlers" },
+        "overrideTarget": { "@id": "urn:cogitarelink:CurationLinkMetadataWriter" },
         "overrideValue": { "@id": "urn:cogitarelink:WikiSearchLinkMetadataWriter" }
       }]
     }
