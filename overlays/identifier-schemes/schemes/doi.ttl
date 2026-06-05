@@ -30,9 +30,18 @@
     dct:type <https://pod.vardeman.me/id/roles#landing-page> .
 
 <#doi-org-conneg> a idot:Resource ;
-    dct:title "doi.org — DataCite metadata via content negotiation"@en ;
+    dct:title "doi.org — DataCite metadata via content negotiation (DataCite-registered DOIs only)"@en ;
     idot:urlPattern "https://doi.org/{$id}" ;
     dcat:servesDataset <https://pod.vardeman.me/id/schemes/#doi> ;
     dcat:mediaType <https://www.iana.org/assignments/media-types/application/vnd.datacite.datacite+json> ;
     dct:conformsTo <https://schema.datacite.org/> ;
+    skos:note "Only DOIs registered with DataCite serve this profile; Crossref-registered DOIs return 'No acceptable resource available'. For registration-agency-independent metadata use the csl provider."@en ;
+    dct:type <https://pod.vardeman.me/id/roles#metadata-record> .
+
+<#doi-org-csl> a idot:Resource ;
+    dct:title "doi.org — CSL JSON metadata via content negotiation (all registration agencies)"@en ;
+    idot:urlPattern "https://doi.org/{$id}" ;
+    dcat:servesDataset <https://pod.vardeman.me/id/schemes/#doi> ;
+    dcat:mediaType <https://www.iana.org/assignments/media-types/application/vnd.citationstyles.csl+json> ;
+    dct:conformsTo <https://citationstyles.org/> ;
     dct:type <https://pod.vardeman.me/id/roles#metadata-record> .

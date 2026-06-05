@@ -22,6 +22,6 @@
 
 <#pod-search> a idot:Resource ;
     dct:title "Pod wiki-search"@en ;
-    idot:urlPattern "https://pod.vardeman.me/vault/wiki/?ext=search-grep&q={$id}" ;
+    idot:urlPattern "https://pod.vardeman.me/vault/wiki/?ext=search-grep&oslc.searchTerms=%22{$id}%22" ;
     dcat:servesDataset <https://pod.vardeman.me/id/schemes/#citekey> ;
     dct:type <https://pod.vardeman.me/id/roles#metadata-record> .
