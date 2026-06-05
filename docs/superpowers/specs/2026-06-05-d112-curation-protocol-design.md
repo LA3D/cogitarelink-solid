@@ -93,6 +93,20 @@ including `mem:FalsePositive` (non-repairs recorded), and the worked ledger exem
   with `schema:PotentialActionStatus` (proposed), `schema:CompletedActionStatus`
   (applied), `schema:FailedActionStatus` (rejected/withdrawn). Natural fit —
   RealignAction is already a `schema:ReplaceAction` subclass. No minted status terms.
+- **Provenance-of-procedure** by PROV-O reuse (axioms verified against the live
+  ontology, 2026-06-05): every ledger activity carries
+  `prov:qualifiedAssociation [ a prov:Association ; prov:agent <actor> ; prov:hadPlan <plan> ]`.
+  Domain/range conformance: `qualifiedAssociation` domain `prov:Activity` ✓ (proposals
+  are Activities), `hadPlan` domain `prov:Association` / range `prov:Plan` ✓ — PROV-O
+  places "no prescriptive requirement on the nature of plans, their representation",
+  so the curation affordance descriptor qualifies and self-asserts `a prov:Plan`. The
+  plan reference is **Memento-pinned** (the descriptor version the agent followed);
+  the trace also asserts `<memento> a prov:Plan ; prov:specializationOf <descriptor>`
+  so the ledger validates under the audit's `inference="none"`. Actors are typed
+  `prov:SoftwareAgent`. Rationale: identity says *who*; the plan says *equipped with
+  what* — a curation judgment is only auditable against the procedure version it
+  claims to have followed. PROV-O graduates from the ground-now backlog into
+  `ontology/` (this decision relies on its axioms normatively).
 - **`mem:hasOpenAction`** — target resource → pending operation. Server-derived only
   (§5); agents never author it. Domain: any resource; range: a ledger activity.
 - **`mem:CurationNeed`** (class), **`mem:hasCurationNeed`** (domain
@@ -143,7 +157,17 @@ Proposal form (floor-validated by a small shape, §8):
     mem:rationale "GET https://doi.org/… Accept: application/vnd.… → 406 (2026-06-05T…). Provider no longer serves the declared media type." ;
     prov:used <https://doi.org/10.5555/12345678> ;          # the dereferenced provider URL (the evidence)
     prov:wasDerivedFrom </id/schemes/doi> ;                  # the record carrying the stale claim
+    prov:wasAssociatedWith <agent> ;
+    prov:qualifiedAssociation [
+        a prov:Association ;
+        prov:agent <agent> ;
+        prov:hadPlan <plan-memento> ] ;                      # the procedure version followed (floor-required)
     as:published "…"^^xsd:dateTime .
+
+<agent> a prov:SoftwareAgent .
+# <plan-memento> = the Memento of /vault/meta/affordances/curation.ttl current at run time:
+<plan-memento> a prov:Plan ;
+    prov:specializationOf </vault/meta/affordances/curation.ttl> .
 ```
 
 ## 5. Read-path surfacing — the one server seam (two derive-class parts)
@@ -179,7 +203,12 @@ the proposal shape).
 ## 6. The curator role and discovery
 
 **No skill ships** (structure-before-teaching, same posture as D111 — the cold probes
-test in-band discovery, not skill quality). The role is assumable entirely in-band:
+test in-band discovery, not skill quality). But the role is not equipment-free:
+**assuming the role means loading the plan and declaring it**. Every ledger write
+carries `prov:hadPlan` pointing at the Memento-pinned descriptor version the agent
+followed; the floor 422s undeclared writes. The equipment lives on the Pod (the
+descriptor, Memento-versioned), not in a skill bundle that can evaporate the way
+pod-curator did. The role is assumable entirely in-band:
 
 ```
 storage description → application registry → mem:hasCurationNeed
@@ -219,7 +248,8 @@ no third lane until a real instance demands one.
 1. **Curator probe**: a cold agent, given only the Pod URL and the ask "curate this
    Pod", must discover the curation needs in-band, run provider liveness, and file a
    conformant Potential proposal. Graded: ledger form validates against the proposal
-   shape; rationale carries HTTP evidence; no judgment-class auto-apply; the
+   shape; rationale carries HTTP evidence; `prov:hadPlan` declares the Memento-pinned
+   descriptor version actually followed; no judgment-class auto-apply; the
    back-pointer appears on the target.
 2. **Primary-agent probe**: a cold agent doing ordinary scheme-record work (read a
    record, register a scheme) against a Pod with an open action planted. Graded: does
@@ -229,7 +259,9 @@ no third lane until a real instance demands one.
 
 **Deterministic layer**: e2e for listener derive/remove on status transitions; header
 emission; floor acceptance/rejection on `.operations/` writes (well-formed proposal →
-201, malformed → 422); vocab validity (rdflib parse + audit); proposal SHACL shape;
+201, malformed → 422, **plan-undeclared → 422** — the shape requires the
+`prov:qualifiedAssociation/prov:hadPlan` path); vocab validity (rdflib parse + audit);
+proposal SHACL shape;
 no new mirrors expected — status IRIs shared between listener and tests via one
 constants module.
 
@@ -256,6 +288,11 @@ skill; curator WebID/WAC identity (activates with the security profile, like the
 - **Concurrent curators**: two agents assuming the role simultaneously could file
   duplicate proposals. Tolerated in v1 (duplicates are visible, resolvable, and
   recorded); a claim convention is deferred until it actually happens.
+- **Equipment vs identity**: procedural grounding is declared and floor-required
+  (`prov:hadPlan`, Memento-pinned) — but *identity* stays self-asserted until
+  WebID/the security profile. The trace proves which plan was claimed, not who
+  claimed it; the future interop grant flow scopes `.operations/` write access to
+  registered curation-capable applications (equipped-agent authorization).
 - **Liveness false positives**: transient provider failures. Mitigated by the
   evidence-in-rationale requirement and the FalsePositive discipline; not retried
   automatically (no scheduler).
