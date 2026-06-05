@@ -99,7 +99,17 @@ export class IdCatalogStore extends PassthroughStore {
       // Clone before reading: the patch stream is single-use and must still reach source.
       const cloned = await cloneRepresentation(patch);
       const body = await readableToString(cloned.data);
-      const touched = findDerivedSubjects(body, this.catalogUrl);
+      // Our guard only acts on patches it can READ. A body our N3 parser rejects can't be
+      // a well-formed insert of derived triples either — so pass it through. CSS's own
+      // patch handler (same N3.js family) then rejects it with the correct 4xx, instead of
+      // our layer leaking a raw parse error as a 500.
+      let touched: string[];
+      try {
+        touched = findDerivedSubjects(body, this.catalogUrl);
+      } catch (error: unknown) {
+        this.logger.debug(`id-catalog: unparseable patch on ${id.path}, passing through to source: ${error}`);
+        return super.modifyResource(id, patch, conditions);
+      }
       if (touched.length > 0) {
         throw this.derivedConflict(touched);
       }
@@ -177,9 +187,12 @@ export class IdCatalogStore extends PassthroughStore {
 
   /**
    * Rewrite the catalog .meta with one record's entry. `entry === null` means delete
-   * (the record was removed). Replacement is by SUBJECT (the topic) when adding, and by
-   * `foaf:isPrimaryTopicOf → recordUrl` when deleting — so a re-PUT leaves no stale
-   * duplicates and a delete removes exactly the deleted record's entry.
+   * (the record was removed). The contract is replace-PER-RECORD: drop the record's
+   * OLD entry, then add the new one. The old entry is identified by its
+   * `foaf:isPrimaryTopicOf → recordUrl` back-link in the CURRENT store (so a topic
+   * CHANGE — `#doi → #doi-new` — doesn't orphan the stale `#doi` entry), plus the new
+   * entry's own subject (covers a first-PUT after manual cleanup). Delete uses only the
+   * back-link match (the new topic isn't known from the recordUrl alone).
    *
    * Lock trade-off: the internal write goes through this.source BELOW the platform's
    * Locking layer (this store wraps the resource store, the lock wraps the request).
@@ -189,17 +202,18 @@ export class IdCatalogStore extends PassthroughStore {
   private async rewriteMeta(recordUrl: string, entry: Quad[] | null): Promise<void> {
     const existing = await this.readMetaQuads();
 
-    // Drop the OLD entry for this record. When adding, match by the entry's subject
-    // (its topic). When deleting, the topic isn't known from the recordUrl alone, so
-    // match by the isPrimaryTopicOf back-link instead.
+    // Subjects of the record's OLD entry: every subject back-linked to this record
+    // (the same match the delete path uses — replace-per-record, not replace-by-topic),
+    // plus, when adding, the new entry's own subject.
     const recordNode = DataFactory.namedNode(recordUrl);
-    const topicValues = entry
-      ? new Set(entry.map((q) => q.subject.value))
-      : new Set(
-          existing
-            .getQuads(null, DataFactory.namedNode(FOAF_IS_PRIMARY_TOPIC_OF), recordNode, null)
-            .map((q) => q.subject.value),
-        );
+    const topicValues = new Set(
+      existing
+        .getQuads(null, DataFactory.namedNode(FOAF_IS_PRIMARY_TOPIC_OF), recordNode, null)
+        .map((q) => q.subject.value),
+    );
+    if (entry) {
+      for (const q of entry) topicValues.add(q.subject.value);
+    }
 
     const kept = existing
       .getQuads(null, null, null, null)

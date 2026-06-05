@@ -29,6 +29,7 @@ const CATALOG = "https://pod.vardeman.me/id/schemes/";
 const CATALOG_META = `${CATALOG}.meta`;
 const RECORD = "https://pod.vardeman.me/id/schemes/doi";
 const TOPIC = "https://pod.vardeman.me/id/schemes/#doi";
+const TOPIC_NEW = "https://pod.vardeman.me/id/schemes/#doi-new";
 const OTHER = "https://pod.vardeman.me/wiki/concepts/photosynthesis.md";
 
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
@@ -47,6 +48,19 @@ const DOI_RECORD = `
 @prefix idot: <${IDOT}> .
 <> foaf:primaryTopic <${TOPIC}> .
 <${TOPIC}>
+  a idot:Namespace, skos:Concept, rdfs:Datatype ;
+  skos:prefLabel "DOI" ;
+  skos:definition "Digital Object Identifier" .
+`;
+
+// The same record re-PUT with a CHANGED foaf:primaryTopic (#doi → #doi-new).
+const DOI_RECORD_NEW_TOPIC = `
+@prefix rdfs: <${RDFS}> .
+@prefix skos: <${SKOS}> .
+@prefix foaf: <${FOAF}> .
+@prefix idot: <${IDOT}> .
+<> foaf:primaryTopic <${TOPIC_NEW}> .
+<${TOPIC_NEW}>
   a idot:Namespace, skos:Concept, rdfs:Datatype ;
   skos:prefLabel "DOI" ;
   skos:definition "Digital Object Identifier" .
@@ -180,6 +194,22 @@ describe("IdCatalogStore — client-write guards (ldp:contains precedent)", () =
     await store.modifyResource({ path: CATALOG_META }, n3Patch(CATALOG_META, patch) as any);
     expect(source.calls.some((c) => c.method === "modifyResource")).toBe(true);
   });
+
+  it("a malformed (unparseable) patch passes through to source — no raw n3 error from our layer", async () => {
+    const source = makeSource();
+    (source as any).modifyResource = async (id: any) => {
+      source.calls.push({ method: "modifyResource", id: id.path });
+      return new Map();
+    };
+    const store = new IdCatalogStore(source as any, CATALOG);
+    const garbage = n3Patch(CATALOG_META, "not n3 {{{");
+    // Our guard must not surface a raw N3 ParseError; the request reaches source,
+    // where CSS's own (same-family) patch handler rejects it with a proper 4xx.
+    await expect(
+      store.modifyResource({ path: CATALOG_META }, garbage as any),
+    ).resolves.toBeDefined();
+    expect(source.calls.some((c) => c.method === "modifyResource")).toBe(true);
+  });
 });
 
 describe("IdCatalogStore — server derivation on record writes", () => {
@@ -237,6 +267,37 @@ describe("IdCatalogStore — server derivation on record writes", () => {
     const labels = entryQuadsFor(source, TOPIC).filter((q: any) => q.predicate.value === `${SKOS}prefLabel`);
     expect(labels.length).toBe(1);
     expect(labels[0].object.value).toBe("DOI");
+  });
+
+  it("re-PUT with a CHANGED primaryTopic orphans no stale entry (replace per-record)", async () => {
+    // Pre-seed the catalog .meta with the FULL derived entry for the OLD topic (#doi),
+    // including its isPrimaryTopicOf back-link to the record.
+    const seeded = [
+      quad(namedNode(TOPIC), namedNode(RDF_TYPE), namedNode(`${IDOT}Namespace`)),
+      quad(namedNode(TOPIC), namedNode(`${SKOS}prefLabel`), literal("DOI")),
+      quad(namedNode(TOPIC), namedNode(`${SKOS}inScheme`), namedNode(CATALOG)),
+      quad(namedNode(TOPIC), namedNode(`${RDFS}isDefinedBy`), namedNode(CATALOG)),
+      quad(namedNode(TOPIC), namedNode(`${FOAF}isPrimaryTopicOf`), namedNode(RECORD)),
+    ];
+    const source = makeSource(seeded);
+    const store = new IdCatalogStore(source as any, CATALOG);
+
+    // Re-PUT the SAME record with a changed topic (#doi → #doi-new).
+    await store.setRepresentation({ path: RECORD }, ttl(RECORD, DOI_RECORD_NEW_TOPIC));
+
+    // The new entry is present in full.
+    expect(entryQuadsFor(source, TOPIC_NEW).length).toBe(7);
+    // The stale #doi entry is gone — ZERO quads with that subject.
+    expect(entryQuadsFor(source, TOPIC).length).toBe(0);
+    // Exactly ONE back-link to the record (no orphaned duplicate).
+    const backlinks = source.metaStore.getQuads(
+      null,
+      namedNode(`${FOAF}isPrimaryTopicOf`),
+      namedNode(RECORD),
+      null,
+    );
+    expect(backlinks.length).toBe(1);
+    expect(backlinks[0].subject.value).toBe(TOPIC_NEW);
   });
 
   it("DELETE of a record removes its entry from the catalog .meta (matched by isPrimaryTopicOf)", async () => {
