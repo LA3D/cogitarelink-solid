@@ -2,10 +2,18 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## 🆔 D111 identifier-scheme substrate (2026-06-05, branch `d111-identifier-schemes`) — SHIPPED; residue list
+## 🆔 D111 identifier-scheme substrate (2026-06-05, MERGED to main) — SHIPPED + VALIDATED; residue list
 
-Live on the Pod; e2e 7/7; `make audit` 0 ERROR / 1 known WARN; `make reset` reproducible
+Live on the Pod; e2e 8/8 (incl. the bootstrapped `how-identifiers-work` memory); **cold probes
+PASSED 3/3** (report `docs/plans/2026-06-05-d111-cold-probe-report.md` — 2 seed-data provider bugs
+found+fixed same day); `make audit` 0 ERROR / 1 known WARN; `make reset` reproducible
 (identifier-schemes seeded FIRST). Open follow-ups:
+
+0. **Probe-donated sub-C detector candidates (first citizens for the curation-loop brainstorm):**
+   (a) provider liveness — substitute each record's `idot:sampleID` into each `idot:urlPattern`,
+   verify the declared `dcat:mediaType` comes back (would have caught BOTH probe bugs);
+   (b) suggestive-typing sweep — typed identifier literals vs their scheme's `luiPattern`.
+   Lesson: SHACL validates structure; only resolution attempts validate providers.
 
 1. **PropertyValue materialization rule → sub-C curation loop.** The derived `schema:PropertyValue`
    projection (propertyID = scheme-record URL) is a *curation-loop* (Tier-2) materialization, not a
