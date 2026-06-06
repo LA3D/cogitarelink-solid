@@ -2,11 +2,16 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## 🔁 D112 curation protocol (2026-06-05, branch d112-curation-protocol) — BUILT; cold probes pending
+## 🔁 D112 curation protocol (2026-06-05, MERGED to main + pushed 2026-06-06) — BUILT; cold probes pending
 
 Built on branch `d112-curation-protocol` (10/10 plan tasks); e2e green; audit 0 ERROR / 1 known WARN;
-suite green Pod-up + Pod-down. **Cold probes are the validation gate** — do NOT merge to main until
-the two cold probes (curator probe + primary-agent probe, ensemble grading — spec §8) pass.
+suite green Pod-up + Pod-down. **Merged to main + pushed 2026-06-06 (Chuck's call). Cold probes remain
+the VALIDATION gate** — D112 is BUILT, not VALIDATED, until the two cold probes pass (curator probe +
+primary-agent probe, ensemble grading — spec §8). Probe-harness notes: run the cold agent OUTSIDE the
+repo (an agent launched in-repo inherits CLAUDE.md/MEMORY/spec = warm); give it only the Pod URL + the
+bare ask; this file + the spec are for the GRADER. Probe-1's derive-class finding is naturally present
+(no scheme record carries a PropertyValue projection yet); probe-2 needs the harness to plant one open
+action first (POST a conformant proposal, see tests/test_curation_protocol_e2e.py for the body).
 
 1. **Cold probes NOT yet run.** Curator probe (cold agent with Pod affordances only, curates the
    identifier-schemes overlay) + primary-agent probe (cold agent reads a resource, follows

@@ -14,8 +14,8 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 
 ## Project state (as of 2026-06-05)
 
-- **Branch**: main, clean, @ `a204c83` — **27 commits ahead of `origin/main`, NOT pushed (push =
-  Chuck's pending call)**. **D111 identifier-scheme substrate MERGED 2026-06-05 + VALIDATED**:
+- **Branch**: main, clean, **in sync with `origin/main` (pushed 2026-06-06; stale remote branch
+  pruned — the push-decision item is CLOSED)**. **D111 identifier-scheme substrate MERGED 2026-06-05 + VALIDATED**:
   live `/id/schemes/` catalog (8 records, server-derived index via `IdCatalogStore`), fragment
   datatypes (`"…"^^<…/id/schemes/#doi>`), curl-grade enforcement, e2e **8/8** (incl. the
   bootstrapped `how-identifiers-work` memory, agentGuide-linked, dog-foods compact-id), **cold
@@ -25,13 +25,14 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   seeded FIRST); `make test` honestly green Pod-up AND Pod-down (known flake:
   `test_timemap_returns_parseable_turtle`, ordering-dependent, passes in isolation); `make audit`
   0 ERROR / 1 intentional WARN (D98 dup-container).
-- **D112 curation protocol BUILT 2026-06-05** on branch `d112-curation-protocol` (10/10 plan tasks;
-  e2e green; `make audit` 0 ERROR / 1 known WARN; suite green Pod-up + Pod-down). **NOT yet merged
-  to main. ▶ NEXT = the two D112 cold probes** (curator probe + primary-agent probe, ensemble
-  grading — spec §8 defines grading criteria; grading criteria in
-  `docs/superpowers/specs/2026-06-05-d112-curation-protocol-design.md` §8) **BEFORE merge counts
-  as validated**, then **RQ-View-2 FULL re-eval**, then D view layer. Teaching agenda (skill-over-build
-  / Knob 1) stays DEFERRED per Chuck's structure-before-teaching reorder.
+- **D112 curation protocol BUILT 2026-06-05, MERGED to main + PUSHED 2026-06-06** (ff-merge, branch
+  deleted; 10/10 plan tasks; e2e green; `make audit` 0 ERROR / 1 known WARN; suite green Pod-up +
+  Pod-down; `origin/main` in sync — the push backlog is CLEARED, stale remote branch pruned).
+  **BUILT ≠ VALIDATED: ▶ NEXT = the two D112 cold probes** (curator probe + primary-agent probe,
+  ensemble grading — criteria in `docs/superpowers/specs/2026-06-05-d112-curation-protocol-design.md`
+  §8; probe-harness setup notes in FOLLOWUPS D112 item 1 — cold agent runs OUTSIDE the repo), then
+  **RQ-View-2 FULL re-eval**, then D view layer. Teaching agenda (skill-over-build / Knob 1) stays
+  DEFERRED per Chuck's structure-before-teaching reorder.
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
