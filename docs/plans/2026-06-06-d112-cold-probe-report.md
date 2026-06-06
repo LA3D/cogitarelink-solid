@@ -117,6 +117,28 @@ The agents' self-logged trajectories were verified against the raw stream-json
   api.ror.org, dev.uniresolver.io etc. before flagging (the lone 405 in run 1 was
   Crossref's transform endpoint rejecting HEAD — external, recovered).
 
+## Artifact audit (the agent-authored Turtle itself)
+
+All ledger entries were captured in full before each cleanup (37 bodies:
+`~/dev/probes/d112/captured-proposals/`; the Pod itself is back to pristine state).
+Offline pyshacl re-validation against `curation-proposal.shacl.ttl`: **37/37
+conform** — independent confirmation, no floor/validator drift. Reading them:
+
+- **Rationale quality exceeds the criterion.** E.g. run 1's uniresolver proposal:
+  two timestamped attempts, exact error strings (`getaddrinfo ENOTFOUND`),
+  expected-vs-received content types, and a *proposed remediation* (publish
+  `did.json` publicly or swap the sampleID). Reviewable as filed.
+- **SHAPE GAP — the ledger is anonymous.** Only 2/37 entries carry `prov:agent`,
+  and both are the harness plants (copied from the e2e exemplar). All 35
+  agent-authored proposals omit `prov:agent` and the `as:Announce`/`prov:Activity`
+  types — the shape requires only the `hadPlan` path, and cold agents satisfy
+  shapes minimally. Consequence: the planned maturity scorer (FOLLOWUPS D112
+  item 4 — clean-trace/reversal rates, auto-apply graduation) is per-agent and
+  cannot be built over an anonymous ledger. Fix direction per the D108 floor rule:
+  agent identity is judgment-free and server-knowable once auth is on → **derive**
+  (stamp the authenticated WebID at write time), don't 422; under dev-allow-all
+  there is nothing to derive from, so the gap is currently structural.
+
 ## What this means (RQ-Atomic-Feedback-1, read-path variant: first live datapoint = NEGATIVE)
 
 The D112 read-path seam works mechanically end-to-end (emit → dereference →

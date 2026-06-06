@@ -34,9 +34,14 @@ suite green Pod-up + Pod-down. **Cold probes run 2026-06-06** (report
 3. **wiki-memory rollout gated on D82.** The `mem:hasOpenAction` back-pointer pattern requires the
    agent `.meta` enrichment to survive body rewrites (D82 `.meta.agent` sidecar). The `/id/` slice
    sidesteps this (Turtle bodies, no projection rewrite). Full wiki-memory rollout waits on D82.
-4. **Maturity scorer NOT built.** Ledger signals are defined (clean-trace rate, reversal rate,
-   plan-version stability) and traces are scoreable when data accumulates — but the scorer that
-   graduates a derive-class RealignAction to auto-apply is deferred.
+4. **Maturity scorer NOT built — and BLOCKED by ledger anonymity (probe artifact audit 2026-06-06).**
+   Ledger signals are defined (clean-trace rate, reversal rate, plan-version stability) but the
+   scorer is per-agent and the ledger is anonymous: 35/35 agent-authored probe proposals omitted
+   `prov:agent` (shape only requires the `hadPlan` path; cold agents satisfy shapes minimally;
+   captured bodies at `~/dev/probes/d112/captured-proposals/`, 37/37 pyshacl-conform). Fix per the
+   D108 floor rule: identity is judgment-free + server-knowable under auth → DERIVE (stamp the
+   authenticated WebID at write time), not 422. Activates with the security profile (same trigger
+   as the `/id/` write gate, D111 item 3).
 5. **Agreement test for duplicated IRI constants.** `MEM_HAS_OPEN_ACTION` and `POTENTIAL`
    (`schema:PotentialActionStatus`) are defined in both `ops-index/src/parseProposal.ts` and
    `profile-link/src/CurationLinkMetadataWriter.ts`. A cross-extension agreement test (modeled on
