@@ -28,7 +28,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 - **D112 curation protocol: cold probes RUN 2026-06-06** (report
   `docs/plans/2026-06-06-d112-cold-probe-report.md`; harness `~/dev/probes/d112/`). **Probe 1
   (curator) PASSED 3/3 — the curator loop is VALIDATED**: in-band discovery, real liveness,
-  Memento-pinned conformant proposals (floor 201s, both POST and PUT-slug paths), propose-only
+  Memento-pinned conformant proposals (floor 201s, plain-POST and POST+Slug naming paths), propose-only
   discipline 3/3 on both lanes, back-pointers derived; bonus: all runs caught a REAL bug
   (did#uniresolver can't resolve pod.vardeman.me — local-/etc/hosts-only DNS). **Probe 2
   (primary-agent read-path) NEGATIVE 0/2**: the `mem:hasOpenAction` Link header was emitted

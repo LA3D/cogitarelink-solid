@@ -9,8 +9,12 @@ suite green Pod-up + Pod-down. **Cold probes run 2026-06-06** (report
 `docs/plans/2026-06-06-d112-cold-probe-report.md`; harness + per-run artifacts `~/dev/probes/d112/`).
 
 1. ✅ **Curator probe PASSED 3/3 (ensemble) — the curator loop is VALIDATED.** All runs: in-band
-   discovery → liveness → Memento-pinned conformant proposals (floor 201s; both POST-UUID and
-   PUT-slug write paths) → propose-only on BOTH lanes (3/3 lane-discipline) → back-pointers derived.
+   discovery → liveness → Memento-pinned conformant proposals (floor 201s; plain-POST-UUID and
+   POST+Slug naming paths; raw-verified ZERO PUT/PATCH/DELETE across all runs) → propose-only on
+   BOTH lanes (3/3 lane-discipline) → back-pointers derived. Raw-trajectory audit (report §):
+   `.well-known/solid` bypassed 4/5 runs (discovery rode container browsing + interop + bootstrap
+   memory — D44 router not load-bearing for mid-tier agents); one passing curator made ZERO
+   header-inspecting requests in 95 calls (body channel carries the in-band teaching).
    All runs also caught a REAL bug: `did#uniresolver` can't resolve `pod.vardeman.me` (the name is
    local-/etc/hosts-only — did:web self-reference needs public DNS; deepens D111 item 6). Judgment
    variance observed (doi-conneg 406: 1 run declined per the record's `skos:note`, 2 flagged) —

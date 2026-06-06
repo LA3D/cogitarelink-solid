@@ -53,9 +53,11 @@ Key behavioral findings:
    framed as drift). Both dispositions are defensible; crucially the disagreement
    lands as reviewable Potential proposals, never as record edits. This is the
    propose-only design absorbing inter-agent judgment variance exactly as intended.
-3. **Both write paths exercised incidentally.** Runs 1–2 used POST-to-container
-   (UUID names); run 3 used PUT-with-slug (`matprop-ror`, `liveness-doi-conneg`).
-   Floor and `OperationsIndexListener` handled both identically.
+3. **Both naming paths exercised incidentally.** Runs 1–2 used plain POST-to-container
+   (server-assigned UUID names); run 3 used POST with a `Slug:` header
+   (`matprop-ror`, `liveness-doi-conneg`) — the proper LDP naming idiom. Floor and
+   `OperationsIndexListener` handled both identically. (Raw-trajectory-verified:
+   no PUTs anywhere — an earlier draft of this report mis-attributed run 3 to PUT.)
 4. **Scope discipline held.** All runs observed out-of-scope issues (missing
    `prefs.ttl`, unenriched WebID, empty containers) and explicitly declined to act:
    "Per D112 protocol, I do not file proposals or make edits for findings outside
@@ -84,6 +86,36 @@ Notable positive: probe-2 run 1 got lost under `/vault/`, recovered via the
 bootstrapped `how-identifiers-work` memory (`/id/schemes/` pointer), and completed —
 the D111 in-band teaching chain carried an agent that never saw the storage
 description's id-catalog pointer.
+
+## Raw-trajectory audit (ground truth vs self-reports)
+
+The agents' self-logged trajectories were verified against the raw stream-json
+(all 5 runs; tool-call mining at `~/dev/probes/d112/`):
+
+| Run | tool calls | `.well-known/solid` fetched | header-inspecting curls | PUT/PATCH/DELETE |
+|---|---|---|---|---|
+| probe1-run1 | 100 | **no** | 13 | 0 |
+| probe1-run2 | 95 | **no** | **0** | 0 |
+| probe1-run3 | 80 | yes (1) | 23 | 0 |
+| probe2-run1 | 19 | no | 3 | 0 |
+| probe2-run2 | 15 | no | 3 | 0 |
+
+- **Self-reports were faithful** — no omitted fumbles or write attempts; the only
+  writes in the entire eval were ledger POSTs. Propose-only holds at the raw level.
+- **The D44 storage description was bypassed in 4/5 runs.** Curator runs 1–2 fully
+  succeeded without ever fetching `.well-known/solid` — discovery rode LDP container
+  browsing, the interop registry, and the bootstrap memory. The substrate's
+  *redundancy* carries cold arrival; the advertised router is not the load-bearing
+  path for mid-tier agents (RQ-Discovery-1 nuance; bears on D44/D48).
+- **The header channel is nearly unopened even by successful curators.**
+  probe1-run2 made zero header-inspecting requests in 95 calls and passed every
+  criterion — `ldp:constrainedBy`, types, and instructions all read from
+  representation bodies. Generalizes the probe-2 negative: on this Pod the
+  body/representation channel does nearly all the in-band teaching work; Tier-1
+  Link headers are decorative for body-focused agents.
+- External-authority diligence was real: runs dereferenced doi.org, api.crossref.org,
+  api.ror.org, dev.uniresolver.io etc. before flagging (the lone 405 in run 1 was
+  Crossref's transform endpoint rejecting HEAD — external, recovered).
 
 ## What this means (RQ-Atomic-Feedback-1, read-path variant: first live datapoint = NEGATIVE)
 
