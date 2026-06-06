@@ -1,6 +1,6 @@
 ---
 name: decision-lookup
-description: Look up architectural decisions (D1-D86, K1-K3, RQ-*) for cogitarelink-solid — full prose, supersessions, cross-references, and the skill-to-decision mapping. Invoke when you need the rationale or status of a specific decision ID, when a code change touches a decision area and you need to verify alignment, or when reconciling supersessions (e.g., "is D32 still in force?").
+description: Look up architectural decisions (D1-D112, K1-K4, RQ-*) for cogitarelink-solid — full prose, supersessions, cross-references, and the skill-to-decision mapping. Invoke when you need the rationale or status of a specific decision ID, when a code change touches a decision area and you need to verify alignment, or when reconciling supersessions (e.g., "is D32 still in force?").
 ---
 
 # Decision Lookup
@@ -16,7 +16,7 @@ Full architectural decisions log + cross-reference index lives in `decisions.md`
 
 ## Lookup workflow
 
-1. **Read `decisions.md`** in this directory — it's the full index (D1–D86, K1–K3, RQs).
+1. **Read `decisions.md`** in this directory — it's the full index (D1–D112, K1–K4, RQs).
 2. **Filter by ID or topic**:
    - Direct ID: grep the doc for `^D{N}:` or `^K{N}:` or `^RQ-`.
    - Topic: use the "Skill cross-reference" table at the top to find the topic-coherent D-cluster, then its dedicated skill.

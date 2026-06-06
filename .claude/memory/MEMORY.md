@@ -6,7 +6,7 @@ authoritative home:
 
 - **Sprint recaps + narrative** → git tags + git history (tags listed under "Shipped")
 - **Decision text + substrate-behavior findings** → invoke the `decision-lookup` skill
-  (`.claude/skills/decision-lookup/decisions.md`, D1–D104 / K1–K4 / RQ-*)
+  (`.claude/skills/decision-lookup/decisions.md`, D1–D112 / K1–K4 / RQ-*)
 - **Caveats + cleanup queue** → `FOLLOWUPS.md`
 - **Canonical decisions log** → vault `01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
