@@ -25,14 +25,20 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   seeded FIRST); `make test` honestly green Pod-up AND Pod-down (known flake:
   `test_timemap_returns_parseable_turtle`, ordering-dependent, passes in isolation); `make audit`
   0 ERROR / 1 intentional WARN (D98 dup-container).
-- **D112 curation protocol BUILT 2026-06-05, MERGED to main + PUSHED 2026-06-06** (ff-merge, branch
-  deleted; 10/10 plan tasks; e2e green; `make audit` 0 ERROR / 1 known WARN; suite green Pod-up +
-  Pod-down; `origin/main` in sync — the push backlog is CLEARED, stale remote branch pruned).
-  **BUILT ≠ VALIDATED: ▶ NEXT = the two D112 cold probes** (curator probe + primary-agent probe,
-  ensemble grading — criteria in `docs/superpowers/specs/2026-06-05-d112-curation-protocol-design.md`
-  §8; probe-harness setup notes in FOLLOWUPS D112 item 1 — cold agent runs OUTSIDE the repo), then
-  **RQ-View-2 FULL re-eval**, then D view layer. Teaching agenda (skill-over-build / Knob 1) stays
-  DEFERRED per Chuck's structure-before-teaching reorder.
+- **D112 curation protocol: cold probes RUN 2026-06-06** (report
+  `docs/plans/2026-06-06-d112-cold-probe-report.md`; harness `~/dev/probes/d112/`). **Probe 1
+  (curator) PASSED 3/3 — the curator loop is VALIDATED**: in-band discovery, real liveness,
+  Memento-pinned conformant proposals (floor 201s, both POST and PUT-slug paths), propose-only
+  discipline 3/3 on both lanes, back-pointers derived; bonus: all runs caught a REAL bug
+  (did#uniresolver can't resolve pod.vardeman.me — local-/etc/hosts-only DNS). **Probe 2
+  (primary-agent read-path) NEGATIVE 0/2**: the `mem:hasOpenAction` Link header was emitted
+  correctly but never entered the agents' context — both fetched the record with `curl -s`
+  (body-only). DELIVERY-channel failure, not salience: RQ-Atomic-Feedback-1 read-path = first
+  live datapoint, negative. **▶ NEXT = design-response brainstorm** (3 candidates in report §
+  "What this means": teach-the-convention / surface-in-representation (D58-style, RQ-Listener-1
+  no-clobber caveat) / accept-header-as-curator-facing) → then **RQ-View-2 FULL re-eval**, then
+  D view layer. Teaching agenda (skill-over-build / Knob 1) stays DEFERRED per Chuck's
+  structure-before-teaching reorder.
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
@@ -60,7 +66,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | **Agentic-fragility audit + R1–R6 remediation** (dual-view URL identity fix; live-TI-wins; remark-AST projection parsing; agreement-test sweep + maps.json; Graph-based Python patches; merged 2026-06-04) | — | audit doc `docs/plans/2026-06-03-agentic-fragility-audit.md` |
 | **Cleanup sprint** (Components.js config guard — the 3× boot class dead; dct:identifier→`<#this>` + multi-constrainedBy merged dispatch (SourceShape live); audit_type_index; make test-js; suite honestly green; merged 2026-06-05) | — | — |
 | **D111 identifier-scheme substrate** (Pod-level PID system at /id/; fragment datatypes; derived catalog; curl-grade enforcement; e2e 8/8; cold probes 3/3; bootstrap memory seeded; merged 2026-06-05) | — | D111 |
-| **D112 curation protocol** (Tier-2 loop as Pod state; 5 seams: signals/ledger/policy-as-data/read-path/curator-as-role; `OperationsIndexListener` + `CurationLinkMetadataWriter`; PROV-O grounded; id-schemes vertical slice; built 2026-06-05; **cold probes pending — not yet validated**) | — | D112 |
+| **D112 curation protocol** (Tier-2 loop as Pod state; 5 seams: signals/ledger/policy-as-data/read-path/curator-as-role; `OperationsIndexListener` + `CurationLinkMetadataWriter`; PROV-O grounded; id-schemes vertical slice; built 2026-06-05; **cold probes 2026-06-06: curator loop VALIDATED 3/3; read-path surfacing NEGATIVE 0/2 (header channel never opened — design response pending)**) | — | D112 |
 | Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
 | Option-B substrate audit + curator (pod-audit walker + pod-curator skill, 2026-05-24) | — | D104 / vault-D99 |
 | RQ-Substrate-4 URI re-layering Phases 1–4 (sub: namespace, reframe, storage-root, PROF; **merged to main 2026-05-28**, commit `02f9b58`, not pushed; cold-probe eval RQ-View-2 + view layer still open) | — | **D107** |

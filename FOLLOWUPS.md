@@ -2,21 +2,27 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## 🔁 D112 curation protocol (2026-06-05, MERGED to main + pushed 2026-06-06) — BUILT; cold probes pending
+## 🔁 D112 curation protocol (2026-06-05, MERGED + pushed) — cold probes RUN 2026-06-06: curator loop VALIDATED; read-path NEGATIVE
 
 Built on branch `d112-curation-protocol` (10/10 plan tasks); e2e green; audit 0 ERROR / 1 known WARN;
-suite green Pod-up + Pod-down. **Merged to main + pushed 2026-06-06 (Chuck's call). Cold probes remain
-the VALIDATION gate** — D112 is BUILT, not VALIDATED, until the two cold probes pass (curator probe +
-primary-agent probe, ensemble grading — spec §8). Probe-harness notes: run the cold agent OUTSIDE the
-repo (an agent launched in-repo inherits CLAUDE.md/MEMORY/spec = warm); give it only the Pod URL + the
-bare ask; this file + the spec are for the GRADER. Probe-1's derive-class finding is naturally present
-(no scheme record carries a PropertyValue projection yet); probe-2 needs the harness to plant one open
-action first (POST a conformant proposal, see tests/test_curation_protocol_e2e.py for the body).
+suite green Pod-up + Pod-down. **Cold probes run 2026-06-06** (report
+`docs/plans/2026-06-06-d112-cold-probe-report.md`; harness + per-run artifacts `~/dev/probes/d112/`).
 
-1. **Cold probes NOT yet run.** Curator probe (cold agent with Pod affordances only, curates the
-   identifier-schemes overlay) + primary-agent probe (cold agent reads a resource, follows
-   `Link: rel="mem:hasOpenAction"`, acts on a proposed curation). Both scored with the spec §8 ensemble
-   grading criteria. These are the D112 validation gate.
+1. ✅ **Curator probe PASSED 3/3 (ensemble) — the curator loop is VALIDATED.** All runs: in-band
+   discovery → liveness → Memento-pinned conformant proposals (floor 201s; both POST-UUID and
+   PUT-slug write paths) → propose-only on BOTH lanes (3/3 lane-discipline) → back-pointers derived.
+   All runs also caught a REAL bug: `did#uniresolver` can't resolve `pod.vardeman.me` (the name is
+   local-/etc/hosts-only — did:web self-reference needs public DNS; deepens D111 item 6). Judgment
+   variance observed (doi-conneg 406: 1 run declined per the record's `skos:note`, 2 flagged) —
+   absorbed by propose-only as designed.
+1b. **▶ Primary-agent probe NEGATIVE 0/2 — read-path surfacing needs a design response.** The
+   `mem:hasOpenAction` Link header was emitted correctly but NEVER entered the agents' context: both
+   fetched the record with `curl -s` (body-only) — a DELIVERY-channel failure, not salience
+   (RQ-Atomic-Feedback-1 read-path, first live datapoint). Three response candidates in the report:
+   (a) teach "read Link headers on every fetch" via entry-point instruction; (b) surface the open
+   action in the representation body/`.meta` (D58-style; collides with the RQ-Listener-1 no-clobber
+   concerns); (c) declare the back-pointer curator-facing only and close the read-path variant as
+   "deferred signals win". Brainstorm before building.
 2. **Delete-event back-pointer removal relies on in-memory seen-map.** The `OperationsIndexListener`
    tracks which resources it has annotated in-memory. A restart between a Create event (adds the
    `mem:hasOpenAction` back-pointer) and a Delete event (removes it) leaves a dangling pointer on the
