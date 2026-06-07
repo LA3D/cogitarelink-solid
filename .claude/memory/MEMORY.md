@@ -14,8 +14,13 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 
 ## Project state (as of 2026-06-05)
 
-- **Branch**: main, clean, **in sync with `origin/main` (pushed 2026-06-06; stale remote branch
-  pruned — the push-decision item is CLOSED)**. **D111 identifier-scheme substrate MERGED 2026-06-05 + VALIDATED**:
+- **Branch**: main, clean, **4 ahead of `origin/main` (the 2026-06-06/07 probe reports + audits;
+  push = Chuck's call)**. **Sibling `solid-agent-skills`: 7 ahead, push HELD** — the 2026-05-24
+  pod-curator commits were rebased by mistake then RESTORED via merge (original hashes incl.
+  `273b29a` preserved; merge commit `f5f8ed9`); push decision pends Chuck because (a) the
+  pod-curator skill's bundled `pod_audit.py` is frozen at 2026-05-24 (pre-D107/D111/D112 —
+  `make sync-curator-skill` refreshes) and (b) the repo's own research agenda
+  (`docs/research/2026-06-03-pod-skill-acquisition.md`) questions hand-written skills. **D111 identifier-scheme substrate MERGED 2026-06-05 + VALIDATED**:
   live `/id/schemes/` catalog (8 records, server-derived index via `IdCatalogStore`), fragment
   datatypes (`"…"^^<…/id/schemes/#doi>`), curl-grade enforcement, e2e **8/8** (incl. the
   bootstrapped `how-identifiers-work` memory, agentGuide-linked, dog-foods compact-id), **cold
