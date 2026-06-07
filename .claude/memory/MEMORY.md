@@ -34,10 +34,29 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   (primary-agent read-path) NEGATIVE 0/2**: the `mem:hasOpenAction` Link header was emitted
   correctly but never entered the agents' context — both fetched the record with `curl -s`
   (body-only). DELIVERY-channel failure, not salience: RQ-Atomic-Feedback-1 read-path = first
-  live datapoint, negative. **▶ NEXT = design-response brainstorm** (3 candidates in report §
-  "What this means": teach-the-convention / surface-in-representation (D58-style, RQ-Listener-1
-  no-clobber caveat) / accept-header-as-curator-facing) → then **RQ-View-2 FULL re-eval**, then
-  D view layer. Teaching agenda (skill-over-build / Knob 1) stays DEFERRED per Chuck's
+  live datapoint, negative.
+- **RQ-View-2 FULL re-eval RUN 2026-06-07 — ANSWERED** (report
+  `docs/plans/2026-06-07-rq-view-2-report.md`; harness `~/dev/probes/rqview2/`; 4 cold runs,
+  3 arms incl. a Tier-3 curl+`solid-pod`-CLI arm added on Chuck's instrument critique — curl arms
+  only ever see the graph view's per-document projection, not the queryable union). **Misread
+  KILLED 2/2** (vs 2026-05-26/27 baseline 2/2 misread) — **RQ-Substrate-4 behavioral validation
+  DONE** (only the D107 §6 view layer remains). **Write-side round-trip GREEN 2/2**: cold agents
+  authored full-grammar markdown (prefLabel literal axis + broader + unprompted related),
+  first-try 201s, zero 422s/PATCHes — RQ-Grammar-1 gap behaviorally closed — and self-verified
+  via `.meta`. **Central finding: agents consume the token/representation layer** — Tier-1 read
+  arm answered the graph question from bodies alone (0 `.meta` fetches; dual-layer linking makes
+  the body carry the graph); Tier-3 arm consumed graph triples ONLY via the CLI's **FUSED**
+  `read` (body+sidecar in one response) and never ran `sparql` (scale-conditional, unmeasured —
+  RQ-Pod-6/Phase-C). New substrate findings: inverse `skos:narrower` is seed-only NOT derived
+  (D109 derive-rule violation; seeded narrower now stale); seeded exemplars teach phantom
+  affordances; PROF not delivered on wiki notes (`describedby` is the actual dual-view
+  affordance, unused by curl agents).
+  **▶ NEXT = the read-path/view design brainstorm**, now with converged input from BOTH evals:
+  agent-facing signals belong in the body or the FUSED body+governed-graph representation (an
+  open-action triple in the fused view would have been seen; the Link header was not). Candidates:
+  teach-the-convention / surface-in-representation (D58-style; RQ-Listener-1 no-clobber caveat) /
+  curator-facing-only — PLUS the fused view as the design target for the D107 §6 view layer.
+  Then D view layer. Teaching agenda (skill-over-build / Knob 1) stays DEFERRED per Chuck's
   structure-before-teaching reorder.
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.

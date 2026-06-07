@@ -1373,3 +1373,27 @@ Effort: ~30 min in checkPathConstraint + new unit tests.
 - **RQ-Harness-1** — fabric namespace minting at `https://cogitarelink.org/ns/fabric#` — blocks all `fabric:*` predicates past prototype.
 - **RQ-Eval-1/2/3** — task suite design, sub-agent config, GEPA convergence (Rung 1.5 work).
 - **RQ-Memento-1/2**, **RQ-Federation-1** — see `decisions-index.md`.
+
+## 🔭 RQ-View-2 eval residue (2026-06-07) — eval ANSWERED; substrate findings to action
+
+Report `docs/plans/2026-06-07-rq-view-2-report.md`; harness + raw trajectories `~/dev/probes/rqview2/`.
+Misread killed 2/2; write round-trip green 2/2; agents consume the token/representation layer
+(fused body+meta view wins; SPARQL unused at 7-doc scale).
+
+1. **Inverse `skos:narrower` is seed-only, not derived.** Confirmed 2× deterministically: a new
+   concept's `{.broader}` projection does NOT add `narrower` to the target's `.meta`. Per the D109
+   derive/floor/loop rule this is a DERIVE (mechanically inferable). The seeded
+   `biology.md.meta` narrower edge (and the hand-written `[[Photosynthesis]]{.narrower}` in
+   biology.md's body) are now stale/misleading. Fix either in the projection listener (derive
+   inverse on write + on delete) or declare it a curation-loop detector (graph-global pair
+   consistency) — decide in the read-path/view brainstorm.
+2. **Seeded exemplars teach phantom affordances.** A D112 probe agent inferred "inverse maintained
+   by substrate" from seeded data. Seed/exemplar content is a teaching channel — needs the same
+   curation discipline as descriptors (candidate curation-loop detector: seed-implied behaviors
+   vs declared affordances).
+3. **PROF not delivered on wiki notes** — no `rel="profile"` Link header on `.md` responses
+   (D86/D107 promoted PROF as the out-of-band hint; it isn't being emitted on content). Either
+   wire the profile-link writer for wiki pages or drop Probe-C/PROF-on-content from the design.
+   Note `rel="describedby"` IS present and went unused by every curl agent (0/4 runs).
+4. **Probe-harness nit:** `setup/cleanup.sh` scripts (both rigs) die under `set -e` when a slug
+   doesn't exist (`[ ... ] && del` returns 1) — pad with `|| true` before reuse.
