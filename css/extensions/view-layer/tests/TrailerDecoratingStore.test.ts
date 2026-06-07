@@ -5,6 +5,8 @@ import {
   guardedStreamFrom,
   readableToString,
   INTERNAL_QUADS,
+  CONTENT_LENGTH_TERM,
+  POSIX,
 } from "@solid/community-server";
 import { DataFactory } from "n3";
 import { TrailerDecoratingStore } from "../src/TrailerDecoratingStore";
@@ -123,6 +125,20 @@ describe("TrailerDecoratingStore — decorating path", () => {
     const rep = await store.getRepresentation({ path: RES }, {});
     expect(rep.metadata.contentType).toBe("text/markdown");
     expect(rep.metadata.getAll(namedNode(MEM_HAS_OPEN_ACTION)).map((t) => t.value)).toContain(OP);
+  });
+
+  it("drops the stale length metadata so the longer decorated body is not truncated", async () => {
+    const bodyMeta = meta("text/markdown", [OP]);
+    // The DataAccessor stamps posix:size (which RangeMetadataWriter turns into
+    // Content-Length); both must be gone or the HTTP layer truncates the response.
+    bodyMeta.add(POSIX.terms.size, literal(String(BODY.length)));
+    bodyMeta.add(CONTENT_LENGTH_TERM, literal(String(BODY.length)));
+    const { store } = build(bodyMeta, { rationale: "r" });
+    const rep = await store.getRepresentation({ path: RES }, {});
+    expect(rep.metadata.getAll(POSIX.terms.size).length).toBe(0);
+    expect(rep.metadata.getAll(CONTENT_LENGTH_TERM).length).toBe(0);
+    const out = await readableToString(rep.data);
+    expect(out.length).toBeGreaterThan(BODY.length);
   });
 
   it("fetches the op resource exactly once (rationale + type share one fetch)", async () => {

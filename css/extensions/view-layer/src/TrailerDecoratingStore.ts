@@ -20,6 +20,8 @@ import {
   readableToString,
   readableToQuads,
   INTERNAL_QUADS,
+  CONTENT_LENGTH_TERM,
+  POSIX,
 } from "@solid/community-server";
 import type {
   ResourceStore,
@@ -75,6 +77,13 @@ export class TrailerDecoratingStore extends PassthroughStore {
       }),
     );
     const decorated = body + renderTrailer(open);
+    // Drop the stale length metadata: the DataAccessor below stamps posix:size (= the
+    // un-decorated file byte count), and RangeMetadataWriter emits that as Content-Length.
+    // Appending the trailer makes the served body longer, so the stale size would
+    // truncate the response to the original byte count. Removing posix:size lets the
+    // HTTP layer chunk the longer body; CONTENT_LENGTH_TERM is dropped for good measure.
+    rep.metadata.removeAll(POSIX.terms.size);
+    rep.metadata.removeAll(CONTENT_LENGTH_TERM);
     return new BasicRepresentation(decorated, rep.metadata);
   }
 
