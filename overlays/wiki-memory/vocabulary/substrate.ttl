@@ -581,3 +581,73 @@ sub:labelProperty
     rdfs:domain sh:NodeShape ;
     rdfs:range rdf:Property ;
     skos:scopeNote "The label property an agent must supply (or the substrate must materialize) for a node of this frame. Concepts use skos:prefLabel because the conceptual backbone is SKOS." .
+
+# ============================================================
+# View layer (D107 §6 / 2026-06-07 view-layer spec)
+# ============================================================
+
+sub:View
+    a rdfs:Class ;
+    rdfs:subClassOf <http://www.w3.org/ns/dx/prof/Profile> ;
+    rdfs:label "View" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:comment "A negotiable representation of pod resources: a PROF profile whose role:mapping artifact is the declared projection query. Selected via ?_profile={token} (conneg-by-profile QSA)." ;
+    skos:scopeNote "Views are PROF profiles — each view descriptor declares prof:hasResource artifacts (the projection query, the shape governing the view's output). sub:realization declares whether the view is assembled per-request (sub:Virtual) or stored and rederivable (sub:Materialized). sub:writable carries the lens law: a view is writable iff its get admits a well-behaved put (lossy/derived views are read-only, writes return 405). sub:servesAt is used only for cross-cutting views that mint a new URL space; per-resource views selected by ?_profile= omit it." ;
+    rdfs:seeAlso <https://www.w3.org/TR/dx-prof/> .
+
+sub:RealizationMode
+    a rdfs:Class ;
+    rdfs:label "realization mode" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:comment "Abstract class for the two ways a view can be produced. Concrete instances are sub:Virtual and sub:Materialized." .
+
+sub:Virtual
+    a sub:RealizationMode ;
+    rdfs:label "virtual realization" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:comment "The view is assembled per-request from the underlying resources. No stored copy; always reflects current state." .
+
+sub:Materialized
+    a sub:RealizationMode ;
+    rdfs:label "materialized realization" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:comment "The view is stored as a derived resource and is rederivable on demand. Enables efficient retrieval at the cost of potential staleness." .
+
+sub:realization
+    a rdf:Property ;
+    rdfs:label "realization" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:domain sub:View ;
+    rdfs:range sub:RealizationMode ;
+    rdfs:comment "How the view is produced: sub:Virtual (assembled per request) or sub:Materialized (stored, rederivable)." ;
+    skos:scopeNote "Single-valued per view descriptor. An agent reading this predicate learns whether it can rely on a stored representation (sub:Materialized, GET the servesAt URL) or must request assembly each time (sub:Virtual, pass ?_profile= on each request)." ;
+    skos:example """
+        <> a sub:View ;
+           sub:realization sub:Virtual .
+    """ .
+
+sub:writable
+    a rdf:Property ;
+    rdfs:label "writable" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:domain sub:View ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "The lens law as data: a view is writable iff its get admits a well-behaved put. Lossy/derived views are read-only (writes get 405)." ;
+    skos:scopeNote "Typed xsd:boolean. true = the view supports write-back (PUT/PATCH to the view URL propagates to the underlying resource). false (or absent) = the view is read-only; the server returns 405 on write attempts. Agents SHOULD check this before attempting a PUT through a view." ;
+    skos:example """
+        <> a sub:View ;
+           sub:writable false .
+    """ .
+
+sub:servesAt
+    a rdf:Property ;
+    rdfs:label "serves at" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:domain sub:View ;
+    rdfs:range rdfs:Resource ;
+    rdfs:comment "For cross-cutting views: the URL space (container) this view mints. Per-resource views (selected by ?_profile= on existing URLs) omit this." ;
+    skos:scopeNote "Used when a view projects a union or cross-cut of existing resources under a new URL (e.g., a fused body+graph endpoint at /wiki/fused/). Per-resource views that are accessed by appending ?_profile={token} to an existing resource URL do not need this predicate." ;
+    skos:example """
+        <> a sub:View ;
+           sub:servesAt </vault/wiki/fused/> .
+    """ .
