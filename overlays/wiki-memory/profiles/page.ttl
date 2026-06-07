@@ -10,13 +10,15 @@
 <https://pod.vardeman.me/vault/meta/profiles/page>
   a prof:Profile ;
   rdfs:label "Wiki-Memory L3 — Page profile" ;
-  sh:agentInstruction "You are reading the wiki-memory Page document view of this entity. The same entity also has a graph view — its .meta triples (Accept: text/turtle on <this>.meta), queryable via SPARQL for the typed predicates. The governing SHACL shape is in the shape catalog (sub:shapeCatalog). The canonical entity node is <#this>. This is the base profile; concrete types (Concept, Person, Place, Event, Organization, Procedure, WorkingNote, Template) profile this one. (Future: conneg-by-profile ?_profile= will let you select document vs graph view explicitly.)" ;
-  sh:agentInstruction """View authority for resources of this kind:
-- The DOCUMENT view (the resource body) is authoritative for prose and navigational/locally-authorable links. Author here with PUT/PATCH.
-- The GRAPH view (the .meta description resource) is authoritative for typed edges, governed context (open actions, provenance, staleness), and substrate-derived triples. The body's typed wikilinks are a CONVENIENCE PROJECTION of the graph, not authoritative — do not rely on them for graph-correct answers.
-- READ ?_profile=fused when your question is about the graph: it returns the resource content plus its authoritative governed graph in one representation (content-type-agnostic; works on markdown and RDF resources alike).
+  sh:agentInstruction """You are reading the wiki-memory Page DOCUMENT VIEW of this entity. The same entity has a GRAPH VIEW in its .meta description resource. The canonical entity node is <#this>. This is the base profile; concrete types (Concept, Person, Place, Event, Organization, Procedure, WorkingNote, Template) profile this one. The governing SHACL shape is in the shape catalog (sub:shapeCatalog).
+
+View authority:
+- DOCUMENT VIEW (body) is authoritative for prose and navigational/locally-authorable links. Author here with PUT/PATCH.
+- GRAPH VIEW (.meta) is authoritative for typed edges, governed context (open actions, provenance, staleness), and substrate-derived triples. Body wikilinks are a CONVENIENCE PROJECTION of the graph, not authoritative — do not treat them as the ground truth for typed predicates.
+- READ ?_profile=fused when your question concerns this resource's graph: it returns the body plus its authoritative governed graph in one representation. Use this for per-resource graph questions; do NOT SPARQL a single resource's .meta directly.
+- SPARQL is for CROSS-RESOURCE aggregate queries (e.g., "all Concepts with skos:broader X") — not per-resource graph access.
 - WRITE: author content in the document view; propose graph-global judgment (realignment, staleness, cross-scheme links) to the operations ledger (the container linked by the curation affordance), not by editing the body.
-- Floor signposts (no tool required): Link rel="describedby" -> the .meta graph; Link rel="...mem#hasOpenAction" -> an open curation action; Link rel="profile" -> this statement.""" ;
+- Floor signposts (no tool required): Link rel="describedby" → the .meta graph; Link rel="...mem#hasOpenAction" → an open curation action; Link rel="profile" → this statement.""" ;
   rdfs:comment "Root profile for all wiki-memory pages on this Pod. The wiki:Concept, wiki:Person, schema:HowTo, wiki:WorkingNote, and place/event/organization profiles all profile this one." ;
   dct:publisher <https://orcid.org/0000-0003-4091-6059> ;
   dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
