@@ -55,28 +55,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   (D109 derive-rule violation; seeded narrower now stale); seeded exemplars teach phantom
   affordances; PROF not delivered on wiki notes (`describedby` is the actual dual-view
   affordance, unused by curl agents).
-- **View-layer read-path cold probe RUN 2026-06-07 — INCONCLUSIVE on the trailer; reframed the
-  architecture** (report `docs/plans/2026-06-07-view-layer-cold-probe-report.md` — CORRECTED after
-  raw-trajectory audit; harness `~/dev/probes/viewlayer/`). The first pass over-claimed "Arm A 2/2,
-  trailer delivers"; the raw audit killed that: **both Arm-A agents used `curl -v`, so both also saw
-  the `mem:hasOpenAction` Link header** — the runs don't isolate the body trailer as the channel
-  (the clean test, plain `curl -s` on markdown, was never run). Arm-B floor agent followed its nose
-  competently (root→docs→`/id/schemes/`→orcid→tested provider) but used `-s` on resource GETs, so
-  governed context (in `.meta`/headers) was invisible — **the floor behaving as designed.** Decisive
-  follow-up: **`solid-pod read /id/schemes/orcid` (CLI fused read) DOES surface `mem:hasOpenAction`
-  on the Turtle record** — content-type-agnostic, the channel RQ-View-2 proved tool agents use.
-  **▶ ARCHITECTURE DECISION (Chuck 2026-06-07): curl = degraded follow-your-nose floor; governed
-  metadata lives in `.meta`; the fused-read tier (CLI / planned Pod MCP) is the governed-context
-  delivery contract.** Floor signposts = standard `Link rel="…hasOpenAction"` + `describedby`
-  (content-type-agnostic, already emitted); the floor is NOT a governed-context channel by design.
-  **The A′ markdown trailer is now questionable** — it smears a `.meta` rendering into the content
-  body (contradicts "metadata in `.meta`"), is unproven, duplicates the fused read, doesn't
-  generalize past markdown. **RQ-Substrate-4 NOT closed** (over-claimed before): server `?_profile=`
-  views are `/vault`-scoped (no `/id/` coverage); only the CLI's own sidecar merge delivers on RDF.
-  **▶ NEXT (to scope): (1)** demote/remove `TrailerDecoratingStore` (rely on Link rel + describedby
-  + fused read), **(2)** make the server fused/graph view substrate-wide + content-type-agnostic to
-  match the CLI (spec §3.1's three execution contexts, only half-built), **(3)** add a CLI/MCP
-  Tier-3 eval arm (curl-only measured the wrong tier). Teaching agenda stays DEFERRED.
+- **D114 BUILT + verified 2026-06-07** (spec `2026-06-07-read-path-view-authority-design.md`; decisions.md D114): trailer + 422 guard + doc/graph views removed; `?_profile=fused` substrate-wide + content-type-agnostic (the governed-context contract, every tier); view-authority contract deployed (page-profile `sh:agentInstruction` + `sub:viewAuthority` in `.well-known/solid`); 13/13 integration green on `make reset`, audit 0 ERROR. D113 view-layer spec (`2026-06-07-view-layer-design.md`) carries a supersession banner. **▶ NEXT = the D114 eval** (proof in the pudding): Tier-3 fused-read arm + over-trust probe (stale in-band link vs authoritative graph — does a contract-taught agent `?_profile=fused` before answering?) + floor-honesty probe (D114 spec §5).
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
@@ -105,7 +84,8 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | **Cleanup sprint** (Components.js config guard — the 3× boot class dead; dct:identifier→`<#this>` + multi-constrainedBy merged dispatch (SourceShape live); audit_type_index; make test-js; suite honestly green; merged 2026-06-05) | — | — |
 | **D111 identifier-scheme substrate** (Pod-level PID system at /id/; fragment datatypes; derived catalog; curl-grade enforcement; e2e 8/8; cold probes 3/3; bootstrap memory seeded; merged 2026-06-05) | — | D111 |
 | **D112 curation protocol** (Tier-2 loop as Pod state; 5 seams: signals/ledger/policy-as-data/read-path/curator-as-role; `OperationsIndexListener` + `CurationLinkMetadataWriter`; PROV-O grounded; id-schemes vertical slice; built 2026-06-05; **cold probes 2026-06-06: curator loop VALIDATED 3/3; read-path surfacing NEGATIVE 0/2 (header channel never opened — design response pending)**) | — | D112 |
-| **D113 view layer** (D107 §6 realized; conditional trailer on default GET; fused/graph/doc/alt views via `?_profile=`; `Link: rel="profile"` now emitting; 6 class profiles + 4 view descriptors overlay-installed; Person cross-cutting demonstrator `/vault/views/people/`; declared-query engine-executed; 41/41 unit + 12/12 e2e; **built 2026-06-07, branch `view-layer`, not yet merged/pushed**) | — | D113 |
+| **D113 view layer** (D107 §6 realized; PROF class profiles + `?_profile=fused/alt`; Person cross-cutting demonstrator; `ViewAssembler` declared-query engine; 41/41 unit + 12/12 e2e; merged 2026-06-07) | — | D113 |
+| **D114 read-path + view-authority** (trailer/422-guard/doc/graph removed; `?_profile=fused` substrate-wide + content-type-agnostic; view-authority contract in page-profile `sh:agentInstruction` + `.well-known/solid`; 13/13 integration green; built + verified 2026-06-07) | — | D114 |
 | Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
 | Option-B substrate audit + curator (pod-audit walker + pod-curator skill, 2026-05-24) | — | D104 / vault-D99 |
 | RQ-Substrate-4 URI re-layering Phases 1–4 (sub: namespace, reframe, storage-root, PROF; **merged to main 2026-05-28**, commit `02f9b58`, not pushed; cold-probe eval RQ-View-2 + view layer still open) | — | **D107** |

@@ -1,5 +1,7 @@
 # View Layer — Design (D107 §6 realized)
 
+> **⚠ Read-path delivery SUPERSEDED by D114** (`2026-06-07-read-path-view-authority-design.md`, BUILT 2026-06-07). The A′ conditional `<!-- pod:notice -->` trailer (§3–§4), the `?_profile=doc` and `?_profile=graph` views, and the 422 marker guard were removed — the cold probe (`docs/plans/2026-06-07-view-layer-cold-probe-report.md`) did not validate the trailer, and the architecture decision is: curl = degraded follow-your-nose floor; governed metadata lives in `.meta`; the fused-read tier is the delivery contract. What STANDS from this spec: the PROF class profiles, `?_profile=fused` (now substrate-wide + content-type-agnostic) + `?_profile=alt`, the Person cross-cutting demonstrator, the `ViewAssembler` declared-query engine, the `sub:` vocabulary, and the write grammar/admission-floor/ledger. See D114 for the corrected read-path design + the new view-authority contract.
+
 **Date:** 2026-06-07
 **Status:** Approved in brainstorm (Chuck + Claude); supersedes the deferred sketch in
 D107 §6 / neurosymbolic spec §4.3 by concretizing it. Companion evidence:
