@@ -55,7 +55,25 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   (D109 derive-rule violation; seeded narrower now stale); seeded exemplars teach phantom
   affordances; PROF not delivered on wiki notes (`describedby` is the actual dual-view
   affordance, unused by curl agents).
-- **D114 BUILT + verified 2026-06-07** (spec `2026-06-07-read-path-view-authority-design.md`; decisions.md D114): trailer + 422 guard + doc/graph views removed; `?_profile=fused` substrate-wide + content-type-agnostic (the governed-context contract, every tier); view-authority contract deployed (page-profile `sh:agentInstruction` + `sub:viewAuthority` in `.well-known/solid`); 13/13 integration green on `make reset`, audit 0 ERROR. D113 view-layer spec (`2026-06-07-view-layer-design.md`) carries a supersession banner. **▶ NEXT = the D114 eval** (proof in the pudding): Tier-3 fused-read arm + over-trust probe (stale in-band link vs authoritative graph — does a contract-taught agent `?_profile=fused` before answering?) + floor-honesty probe (D114 spec §5).
+- **D114 BUILT + verified 2026-06-07** (spec `2026-06-07-read-path-view-authority-design.md`; decisions.md D114): trailer + 422 guard + doc/graph views removed; `?_profile=fused` substrate-wide + content-type-agnostic (the governed-context contract, every tier); view-authority contract deployed (page-profile `sh:agentInstruction` + `sub:viewAuthority` in `.well-known/solid`); 13/13 integration green on `make reset`, audit 0 ERROR. D113 view-layer spec carries a supersession banner.
+- **D114 EVAL RUN 2026-06-07 — delivery improved, over-trust NOT fixed, NO regression** (report
+  `docs/plans/2026-06-07-d114-eval-report.md`; harness `~/dev/probes/d114/`). Over-trust trap (body says
+  broader=Progressive Disclosure; open `mem:RealignAction` says it's stale, real broader=Hierarchical
+  Retrieval; correction only in the ledger). **Arm 1 Tier-3** (curl+solid-pod): `solid-pod read` (fused)
+  **DID deliver `mem:hasOpenAction` into context** — agent ignored it, answered the stale value high-conf,
+  never dereferenced the op, never read the contract. **Arm 2 floor**: same, worse ("modified today → fresh"
+  false inference). **Delivery ✅ / interpretation ✗** — over-trust moved from delivery (D112 dead Link
+  header) to SALIENCE: `hasOpenAction → <op-url>` is an opaque pointer agents don't follow; the view-authority
+  contract is deployed but UNCONSULTED (agents handed a URL go straight to it, never the storage desc/profile).
+  Same failure class as D112 Probe-2, now confirmed to persist with in-band delivery at the tool tier. n=1/arm.
+  **Regression arms PASS**: Arm 3 write round-trip = 201, zero 422, grammar→`.meta`, fused renders (authoring
+  intact); d112 Probe-1 curator re-run = conformant proposal 201, floor taught (2×422→corrected), propose-only
+  held, acme untouched (curator loop intact). `make audit` 0 ERROR throughout. **RQ-Substrate-4 read-path STAYS
+  OPEN** (delivery necessary-not-sufficient). **▶ NEXT = open-action interpretation / self-interpreting fused
+  view**: inline `mem:rationale`+`stalenessClass`+affected-predicate next to the governed triple it qualifies
+  (content-type-agnostic redo of what the trailer's rationale-inlining got right), and/or get the contract onto
+  the agent's path, and/or teach open-action semantics. **Push: cleared on Chuck's gate (improvement + no
+  regression) — his call.**
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
