@@ -133,8 +133,17 @@ export class ViewHttpHandler extends HttpHandler {
     }
 
     // RDF record: union the resource's own triples with its .meta graph and
-    // serialize as one turtle graph (no fence).
-    const own = await readableToQuads(rep.data);
+    // serialize as one turtle graph (no fence). Re-read the base as quads —
+    // readableToQuads needs an internal/quads stream, not the stored turtle
+    // bytes (an empty-prefs read returns the serialized representation, which
+    // Store.import() can't parse → zero own-triples). Discard the first read's
+    // (content-type probe) stream so it doesn't leak undrained.
+    rep.data.destroy();
+    const ownRep = await this.store.getRepresentation(
+      { path: target },
+      { type: { [INTERNAL_QUADS]: 1 } },
+    );
+    const own = await readableToQuads(ownRep.data);
     const metaStore = await this.readMetaQuads(target);
     const merged = [
       ...own.getQuads(null, null, null, null),

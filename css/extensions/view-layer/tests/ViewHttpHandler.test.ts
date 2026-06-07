@@ -104,11 +104,18 @@ function makeStore(opts: { bodyMissing?: boolean } = {}) {
         return { data: guardedStreamFrom(DESCRIPTORS[path]), metadata: meta("text/turtle") };
       }
 
-      // the RDF record — served as text/turtle quads (its own triples).
+      // the RDF record. Faithful to CSS: an empty-prefs read returns the stored
+      // SERIALIZED turtle (bytes that readableToQuads can't parse); only an
+      // internal/quads read yields the resource's own quad stream.
       if (path === RDF_RES) {
-        const s = new Store(RDF_OWN_QUADS);
-        return { data: guardedStreamFrom(s.getQuads(null, null, null, null)),
-                 metadata: meta("text/turtle") };
+        if (wantsQuads) {
+          const s = new Store(RDF_OWN_QUADS);
+          return { data: guardedStreamFrom(s.getQuads(null, null, null, null)),
+                   metadata: meta("internal/quads") };
+        }
+        const a = new ViewAssembler();
+        const ttl = await a.serializeTurtle(RDF_OWN_QUADS);
+        return { data: guardedStreamFrom(ttl), metadata: meta("text/turtle") };
       }
 
       // stored markdown body.
