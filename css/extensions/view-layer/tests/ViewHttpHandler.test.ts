@@ -19,6 +19,21 @@ const META_QUADS = [
        namedNode("http://www.w3.org/2004/02/skos/core#prefLabel"), literal("Agent Memory")),
 ];
 
+// ── RDF resource case (substrate-wide fused, e.g. /id/schemes/orcid) ──
+// An RDF record (text/turtle) with its OWN triples, whose .meta carries an open action.
+const RDF_RES = `${BASE}/id/schemes/orcid`;
+const HAS_OPEN_ACTION = "https://pod.vardeman.me/vault/ontology/mem#hasOpenAction";
+const RDF_OWN_QUADS = [
+  quad(namedNode(RDF_RES), namedNode("http://www.w3.org/2004/02/skos/core#prefLabel"),
+       literal("ORCID")),
+  quad(namedNode(RDF_RES), namedNode("http://www.w3.org/2004/02/skos/core#notation"),
+       literal("orcid")),
+];
+const RDF_META_QUADS = [
+  quad(namedNode(RDF_RES), namedNode(HAS_OPEN_ACTION),
+       namedNode("https://pod.vardeman.me/id/.operations/abc")),
+];
+
 const FUSED_PROJECTION = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }";
 
 // View descriptor stubs — minimal turtle, each carries its token as a literal.
@@ -36,6 +51,11 @@ const DESCRIPTORS: Record<string, string> = {
 //  - the .meta resource (INTERNAL_QUADS or text/turtle) → META_QUADS
 //  - {viewsBase}fused-projection (text/markdown / string) → FUSED_PROJECTION
 //  - the two {viewsBase}<view> descriptors (turtle/quads) → DESCRIPTORS
+// Minimal metadata stub exposing the contentType getter the handler reads.
+function meta(contentType: string) {
+  return { contentType };
+}
+
 function makeStore(opts: { bodyMissing?: boolean } = {}) {
   return {
     async getRepresentation(id: { path: string }, prefs: any) {
@@ -43,21 +63,34 @@ function makeStore(opts: { bodyMissing?: boolean } = {}) {
       const wantsQuads = !!(prefs?.type && prefs.type["internal/quads"]);
       const wantsTurtle = !!(prefs?.type && prefs.type["text/turtle"]);
 
-      // .meta resource.
+      // .meta resource — RDF record's .meta carries the open action.
+      if (path === `${RDF_RES}.meta`) {
+        const s = new Store(RDF_META_QUADS);
+        if (wantsQuads) {
+          return { data: guardedStreamFrom(s.getQuads(null, null, null, null)),
+                   metadata: meta("internal/quads") };
+        }
+        const a = new ViewAssembler();
+        const ttl = await a.serializeTurtle(RDF_META_QUADS);
+        return { data: guardedStreamFrom(ttl), metadata: meta("text/turtle") };
+      }
+
+      // .meta resource (markdown note).
       if (path.endsWith(".meta")) {
         if (wantsQuads) {
           const s = new Store(META_QUADS);
-          return { data: guardedStreamFrom(s.getQuads(null, null, null, null)) };
+          return { data: guardedStreamFrom(s.getQuads(null, null, null, null)),
+                   metadata: meta("internal/quads") };
         }
         // turtle string
         const a = new ViewAssembler();
         const ttl = await a.serializeTurtle(META_QUADS);
-        return { data: guardedStreamFrom(ttl) };
+        return { data: guardedStreamFrom(ttl), metadata: meta("text/turtle") };
       }
 
       // fused-projection query text.
       if (path === `${VIEWS}fused-projection`) {
-        return { data: guardedStreamFrom(FUSED_PROJECTION) };
+        return { data: guardedStreamFrom(FUSED_PROJECTION), metadata: meta("text/plain") };
       }
 
       // view descriptors.
@@ -66,18 +99,25 @@ function makeStore(opts: { bodyMissing?: boolean } = {}) {
           // serve as quads parsed from the turtle stub
           const { Parser } = await import("n3");
           const quads = new Parser().parse(DESCRIPTORS[path]);
-          return { data: guardedStreamFrom(quads) };
+          return { data: guardedStreamFrom(quads), metadata: meta("internal/quads") };
         }
-        return { data: guardedStreamFrom(DESCRIPTORS[path]) };
+        return { data: guardedStreamFrom(DESCRIPTORS[path]), metadata: meta("text/turtle") };
       }
 
-      // stored body.
+      // the RDF record — served as text/turtle quads (its own triples).
+      if (path === RDF_RES) {
+        const s = new Store(RDF_OWN_QUADS);
+        return { data: guardedStreamFrom(s.getQuads(null, null, null, null)),
+                 metadata: meta("text/turtle") };
+      }
+
+      // stored markdown body.
       if (path === RES) {
         if (opts.bodyMissing) {
           const { NotFoundHttpError } = await import("@solid/community-server");
           throw new NotFoundHttpError();
         }
-        return { data: guardedStreamFrom(STORED_BODY) };
+        return { data: guardedStreamFrom(STORED_BODY), metadata: meta("text/markdown") };
       }
 
       throw new Error(`unexpected getRepresentation: ${path}`);
@@ -171,6 +211,27 @@ describe("ViewHttpHandler.handle — fused", () => {
     const h = build({ bodyMissing: true });
     const res = makeResponse();
     await expect(h.handle(input("GET", "fused", res) as any)).rejects.toThrow();
+  });
+
+  // D114 T5: fused must be substrate-wide + content-type-agnostic. An RDF record
+  // (text/turtle, e.g. /id/schemes/orcid) fuses as ONE merged turtle graph
+  // (own triples ∪ .meta), text/turtle, NO markdown fence.
+  it("RDF resource: merges own triples with .meta as one turtle graph (no fence)", async () => {
+    const h = build();
+    const res = makeResponse();
+    await h.handle({
+      request: { method: "GET", url: `/id/schemes/orcid?_profile=fused` } as any,
+      response: res.response,
+    } as any);
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["content-type"]).toBe("text/turtle");
+    // resource-own triple present
+    expect(res.body).toContain("ORCID");
+    // .meta open-action triple present
+    expect(res.body).toContain("hasOpenAction");
+    // ONE merged graph — no markdown fence
+    expect(res.body).not.toContain("```turtle");
+    expect(String(res.headers["link"])).toContain("/views/fused");
   });
 });
 

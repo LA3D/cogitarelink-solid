@@ -109,13 +109,39 @@ export class ViewHttpHandler extends HttpHandler {
   }
 
   // ─── fused ────────────────────────────────────────────────────────────────
+  // Substrate-wide + content-type-agnostic (D114). The fused representation =
+  // resource content ⊕ its authoritative governed graph (.meta), rendered per
+  // content-type:
+  //   markdown → body + fenced turtle of the projected governed graph
+  //   RDF      → the record's own triples UNIONED with its .meta as ONE graph
+  // Mirrors the CLI's client-side describedby-merge so every tier (curl floor
+  // included) gets the same fused read over one HTTP affordance.
   private async serveFused(response: any, target: string, head: boolean): Promise<void> {
-    // Body read first so its 404 propagates (CSS renders 404).
-    const body = await this.readBody(target);
+    // Read the base resource WITHOUT a restrictive type preference so RDF
+    // records don't fail conversion (the markdown-only read threw
+    // NotImplementedHttpError on text/turtle). A 404 here propagates by design.
+    const rep = await this.store.getRepresentation({ path: target }, {});
+    const ct = rep.metadata?.contentType ?? "";
+
+    if (ct === "text/markdown") {
+      const body = await readableToString(rep.data);
+      const metaStore = await this.readMetaQuads(target);
+      const query = await this.readProjectionQuery();
+      const fused = await this.assembler.fuse(body, query, [metaStore]);
+      this.write(response, 200, "text/markdown", "fused", head ? undefined : fused);
+      return;
+    }
+
+    // RDF record: union the resource's own triples with its .meta graph and
+    // serialize as one turtle graph (no fence).
+    const own = await readableToQuads(rep.data);
     const metaStore = await this.readMetaQuads(target);
-    const query = await this.readProjectionQuery();
-    const fused = await this.assembler.fuse(body, query, [metaStore]);
-    this.write(response, 200, "text/markdown", "fused", head ? undefined : fused);
+    const merged = [
+      ...own.getQuads(null, null, null, null),
+      ...metaStore.getQuads(null, null, null, null),
+    ];
+    const ttl = await this.assembler.serializeTurtle(merged);
+    this.write(response, 200, "text/turtle", "fused", head ? undefined : ttl);
   }
 
   // ─── alt ──────────────────────────────────────────────────────────────────
@@ -141,16 +167,6 @@ export class ViewHttpHandler extends HttpHandler {
   }
 
   // ─── store reads ────────────────────────────────────────────────────────────
-  // Stored body as a string (text/markdown preference). A NotFoundHttpError
-  // here propagates by design.
-  private async readBody(target: string): Promise<string> {
-    const rep = await this.store.getRepresentation(
-      { path: target },
-      { type: { "text/markdown": 1 } },
-    );
-    return readableToString(rep.data);
-  }
-
   // .meta quads for a resource (INTERNAL_QUADS preference).
   private async readMetaQuads(target: string): Promise<Store> {
     return this.readMetaQuadsAt(metaPath(target));
