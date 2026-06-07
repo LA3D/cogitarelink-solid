@@ -1,128 +1,141 @@
 # View-Layer Cold-Agent Read-Path Probe — Report (2026-06-07)
 
+> **Corrected after raw-trajectory audit (2026-06-07, same day).** The first pass
+> of this report claimed "Arm A PASSED 2/2 — the trailer delivers." Reading the
+> actual `trajectory.jsonl` files (not the agents' self-reports) showed both Arm-A
+> agents used `curl -v`, so both *also* saw the `mem:hasOpenAction` Link header —
+> the runs do **not** isolate the body trailer as the delivery mechanism. The
+> honest findings, and the architecture decision they led to, are below.
+
 The D113 view layer (`docs/superpowers/specs/2026-06-07-view-layer-design.md`)
-shipped the A′ conditional `<!-- pod:notice -->` trailer to fix the negative
-result D112 Probe-2 found: the `mem:hasOpenAction` Link header was emitted but
-never reached cold curl agents (they `curl -s` body-only). This probe re-runs that
-read-path question now that the open-action signal rides the markdown **body**.
+shipped the A′ conditional `<!-- pod:notice -->` trailer to fix D112 Probe-2: the
+`mem:hasOpenAction` Link header was emitted but cold curl agents read body-only and
+missed it. This probe re-ran that read-path question.
 
-- **Harness:** `~/dev/probes/viewlayer/` (reuses the D112 rig). Sonnet, curl-only
-  (`--allowedTools "Bash(curl:*)"`), empty cwd outside all repos, full stream-json
-  captured. Global `~/.claude/CLAUDE.md` loads (vault/style only — no Pod content).
-- **Baseline to beat:** D112 Probe-2 = **0/2** (`docs/plans/2026-06-06-d112-cold-probe-report.md`).
-- **Two arms** (the instrument decision — see "Why two arms"):
-  - **Arm A — markdown** (the fix): open action on a wiki concept → trailer in the
-    default GET body. 2 runs.
-  - **Arm B — turtle** (coverage probe): faithful D112 Probe-2 replication on the
-    RDF `/id/schemes/orcid` record, where the trailer cannot apply. 1 run.
+- **Harness:** `~/dev/probes/viewlayer/` (reuses the D112 rig). Sonnet, curl-only,
+  empty cwd outside all repos, full stream-json captured.
+- **Baseline:** D112 Probe-2 = 0/2 (`docs/plans/2026-06-06-d112-cold-probe-report.md`).
+- **Two arms:** A = markdown (trailer applies), 2 runs; B = Turtle `/id/schemes/orcid`
+  (faithful D112 replication, trailer cannot apply), 1 run.
 
-## Verdict: Arm A PASSED 2/2 (trailer delivers the signal — RQ-Substrate-4 view-layer piece behaviorally validated); Arm B NEGATIVE 0/1 (confirms the fix is markdown-scoped — RDF resources are the next gap)
+## Verdict (corrected)
 
-### Why two arms
+**The probe did not cleanly validate the trailer, and the raw audit + a follow-up
+tool-tier check reframed the whole question.** The defensible conclusions:
 
-The D112 Probe-2 target (`/id/schemes/orcid`) is `text/turtle`. The
-`TrailerDecoratingStore` guard is `contentType === "text/markdown"` — you cannot
-inject an HTML-comment trailer into Turtle. A literal re-run on the same target
-would show the trailer absent for a reason that has nothing to do with whether the
-body channel works. So the fix is tested where it applies (Arm A, markdown) and the
-original RDF target is run as a separate **coverage probe** (Arm B) — a negative
-there is a finding (the markdown-only scope), not a regression. This is the
-framing-first / instrument-confounds-are-findings discipline from the harness memory.
+1. **Governed-context delivery is a tool-tier property, and it works.** The CLI
+   fused read (`solid-pod read`) surfaces `mem:hasOpenAction` on the Turtle
+   `/id/schemes/orcid` record — content-type-agnostic — because it fetches the
+   `.meta` sidecar and merges it. This is the channel RQ-View-2 proved tool-equipped
+   agents actually use (fused `read`, never `sparql`, never headers).
+2. **The curl floor is degraded-by-design and behaved exactly so.** The Arm-B floor
+   agent followed its nose competently to the record and did the task; it never saw
+   the open action because its pattern is `-s` (body) on resources, and governed
+   context lives in `.meta`/headers, not the body.
+3. **The markdown trailer is not demonstrated to deliver anything the header
+   didn't,** and under the architecture decision below it is redundant.
 
-### Arm A — markdown trailer (the fix), 2 runs
+### Architecture decision (Chuck, 2026-06-07)
 
-Planted: wiki concept `vl-probe-topic.md` ("Tiered Retrieval", conformant — passes
-the floor) + one open `mem:RealignAction` (rationale = a renamed `skos:broader`
-target). Task = "summarize this note." The task **never mentions curation**. Plant
-asserted the trailer present in the body before each run.
+**curl is a degraded floor — a follow-your-nose channel, not a governed-context
+channel. Metadata lives in the `.meta` layer. The fused-read tier (CLI / planned
+Pod MCP) is the delivery contract for governed context.** Consequences:
 
-| Criterion | run1 | run2 |
+- Governed context (open actions, staleness, provenance) is NOT guaranteed at the
+  curl floor. The floor's in-band signposts are the standard, content-type-agnostic
+  ones already emitted: `Link rel="…hasOpenAction"` + `describedby`. An agent that
+  inspects them follows its nose to the `.meta`; one that doesn't is degraded by
+  design.
+- The substrate's governed-context contract is the **fused read** — resource +
+  `.meta`, merged, content-type-agnostic — delivered through the tool the agent
+  actually uses.
+- The A′ markdown trailer smears a rendering of `.meta` into the content body, which
+  contradicts "metadata lives in `.meta`," is unproven as a delivery channel, and
+  duplicates the fused read. It is a candidate for removal/demotion (see "What we do
+  about it").
+
+## Raw-trajectory audit (ground truth, not self-reports)
+
+### Arm A — markdown, 2 runs
+
+| | run1 | run2 |
 |---|---|---|
-| 1 Ordinary task completes (faithful summary) | ✅ | ✅ |
-| 2 **Notice enters context (PRIMARY, vs D112 0/2)** | ✅ | ✅ |
-| 3 Dereferences the op activity (second fetch) | ✗ (unneeded) | ✗ (unneeded) |
-| 4 Disposition (surfaces as caveat / acts) | ✅ "not authoritative — verify before relying" | ✅ "should not be treated as authoritative" |
-| 5 No false write-back of the trailer | ✅ | ✅ |
+| curl invocation | `curl -s -v …` | `curl -v …` |
+| calls total | 1 | 1 |
+| saw Link header (`-v`) | **yes** | **yes** |
+| saw body trailer | yes | yes |
+| dereferenced op IRI / `.meta` | no | no |
+| noticed + caveated the open action | yes | yes |
 
-Both runs summarized the note **and**, unprompted, surfaced the open action as a
-caveat that the note's `skos:broader` link is stale and the record is not
-authoritative until realigned. Criterion #3 is ✗ in a *good* way: the trailer
-front-loads type + op IRI + **rationale** inline, so the agent had enough to act
-without a second fetch.
+Both noticed the open action and surfaced it unprompted as a "not authoritative —
+verify first" caveat — a real positive for *salience once the signal is in front of
+the agent*. But the `-v` means the header was in front of them too, so this is **not**
+a test of the trailer-as-sole-channel. The trailer's only isolated contribution was
+the inline rationale text (the header carries just the opaque op IRI). Each agent
+acted off the single `-v` response without a second fetch. **The clean test — plain
+`curl -s` on markdown, header invisible, trailer the only channel — was never run.**
 
-### Arm B — turtle coverage probe (faithful D112 replication), 1 run
+### Arm B — Turtle `/id/schemes/orcid`, 1 run
 
-Planted: one open action on `/id/schemes/orcid` (RDF/Turtle); back-pointer Link
-header confirmed live. Task = D112 Probe-2 verbatim (find ORCID providers + test
-liveness).
+Discovery path (genuine follow-your-nose): root → `resources/` → `meta/` →
+`capabilities/` → `routing.jsonld` → `wiki/concepts/` → read
+`how-identifiers-work.md` (which named the `/id/schemes/` catalog) → one path fumble
+(`/vault/id/schemes/` → `NotFoundHttpError`) → self-corrected to root `/id/schemes/`
+→ orcid record → tested the provider (live 200). Task completed correctly.
 
-| Criterion | run1 |
-|---|---|
-| 1 Ordinary task completes | ✅ providers found + liveness-tested |
-| 2 Notices the open action | ✗ (expected — same as D112) |
+Call pattern: **`-I` on containers, `-s` (body only) on resource records.** Never
+inspected the orcid record's headers; never followed `describedby`. The open action
+was therefore invisible — the floor behaving exactly as the architecture decision
+says it should: content follow-your-nose works; governed context requires the tool
+tier or an explicit header/`describedby` follow.
 
-The agent did a thorough discovery sweep and fetched the orcid record with
-`curl -s … -H "Accept: text/turtle"` — **body only, no `-I`/`-v` on that GET** — so
-the Link header (the only signal on an RDF resource) was invisible. Exact
-reproduction of the D112 0/2 mechanism.
+### Tool-tier check (the decisive follow-up)
 
-## Raw-trajectory audit (ground truth vs self-reports)
+```
+solid-pod read /id/schemes/orcid  →  "mem#hasOpenAction": { "@id": ".../id/.operations/…" }
+```
 
-Mined the actual `curl` tool calls from each `trajectory.jsonl` (never trusting the
-narrative `report.md`):
+The fused read surfaces the open action on the RDF record. Server-side `?_profile=
+graph` and `?_profile=fused` did **not** (the view layer is `/vault`-scoped — the
+`/id/` substrate has no `?_profile=` coverage). So today only the CLI's own sidecar
+merge delivers it on RDF; the server views need to be brought up to the same
+content-type-agnostic, substrate-wide behavior.
 
-- **Arm A run1:** one call — `curl -s -v …vl-probe-topic.md`. **run2:** one call —
-  `curl -v …vl-probe-topic.md`. Both used `-v`, so both *also* received the Link
-  header. **But the actionable content the agents quoted — the rationale string
-  ("the `skos:broader` target … was renamed …") — exists only in the body
-  trailer**; the Link header carries an opaque op IRI (exactly what D112's agents
-  ignored). So the trailer is what carried the disposition-driving content. The `-v`
-  is a confound for "body-only" purity but not for the result: the trailer is in the
-  body regardless of curl flags, whereas the Link header appears only if the agent
-  chooses `-I`/`-v` on that resource.
-- **Arm B run1:** 16 calls; the decisive one is `curl -s …/id/schemes/orcid -H
-  "Accept: text/turtle"` — no `-I`/`-v`. The agent *did* use `-I` on containers
-  (`/vault/`, `/id/schemes/`) but not on the record, so it never saw the record's
-  Link header. Confirms: on RDF resources the signal depends on a header fetch the
-  agent doesn't reliably make.
+## What this means for the research questions
 
-## Artifact audit
+- **RQ-Atomic-Feedback-1 (read-path):** the delivery contract is the fused-read
+  tier, and it works (CLI proven). The curl floor is not a governed-context channel
+  by design. The trailer is not a validated delivery mechanism.
+- **RQ-Substrate-4:** the URI/namespace slice is validated (RQ-View-2). The
+  view-layer "read-path" piece is **not** closed the way the first draft claimed —
+  what's validated is that the *tool-tier fused read* delivers governed context;
+  the server-side view layer still has gaps (see below). Do **not** mark
+  RQ-Substrate-4 closed yet.
 
-- Escape hatch holds: `…vl-probe-topic.md?_profile=doc` returned the stored body
-  byte-identical (no trailer) in both Arm-A snapshots — the pristine round-trip the
-  write path depends on.
-- No agent attempted to write the trailer back (the 422 marker guard never fired —
-  a clean run).
-- Pod `make audit` after the eval: **0 ERROR / 1 WARN (intentional D98 dup-container)
-  / 1 INFO**. (An unrelated audit-script `ValueError: Invalid isoformat string:
-  '[YYYY-MM-DD]'` prints but does not affect the 0-ERROR verdict — a placeholder
-  date somewhere; tracked as a minor audit-script followup.)
+## What we do about it (open — to scope next)
 
-## What this means
+1. **De-scope/relocate the trailer.** Either remove `TrailerDecoratingStore`
+   entirely (rely on `Link rel` + `describedby` as the floor signposts + fused read
+   as the contract), or demote it to a *pure pointer* ("this resource has governed
+   context — follow `describedby`") rather than a rendering of the rationale. Keep
+   the 422 marker guard only if the trailer survives in some form.
+2. **Make the server fused/graph view substrate-wide + content-type-agnostic** so
+   `?_profile=fused` on any resource (incl. `/id/`) matches what the CLI read does.
+   This is the real "view layer" — one declared projection, delivered through the
+   server view, the CLI, and the MCP (spec §3.1's three execution contexts, which we
+   only half-built).
+3. **Fix the eval to test the deployed tier.** Add a CLI/MCP (Tier-3) arm, like
+   RQ-View-2, instead of curl-only. That is the tier the governed-context contract
+   lives at.
 
-- **RQ-Atomic-Feedback-1, read-path variant — second live datapoint = POSITIVE for
-  markdown.** D112 Probe-2 was the first (negative, Link-header channel). The A′
-  trailer converts the *delivery* failure into a *salience* test, and cold agents
-  pass it 2/2: the signal arrives in the body they already read, and they treat it
-  as signal (caveat the user, don't silently rely). The body is the reliable
-  agent-facing channel; the Link header is not.
-- **RQ-Substrate-4 — view-layer piece behaviorally validated.** With the URI/namespace
-  slice already validated (D107 / RQ-View-2 misread KILLED 2/2) and now the view
-  layer's read-path delivery validated for the wiki-memory substrate, RQ-Substrate-4
-  is **closeable**. (Closing it formally is a decisions.md edit — Chuck's call.)
-- **The next gap = RDF resources.** Arm B shows scheme records, contacts, and other
-  Turtle resources still rely on the Link header that curl agents miss. The trailer
-  is structurally markdown-only. Candidate fixes (out of scope here, for the next
-  brainstorm): fold the governed/open-action `.meta` into the served representation
-  of RDF resources, or make the **graph/fused view the default** for RDF resources
-  (an open-action triple in a served-by-default graph view would be in-band the way
-  the trailer is for markdown). This is the RDF analogue of the A′ decision.
+## Status
 
-## Status changes
-
-- View-layer cold probe: **Arm A PASSED 2/2 / Arm B NEGATIVE 0/1 (coverage gap, expected).**
-- D113 §8 eval hook: **DISCHARGED.**
-- RQ-Substrate-4: behaviorally validated end-to-end (URI slice + view layer);
-  **closeable** pending a decisions.md edit.
-- New FOLLOWUP: RDF-resource open-action surface (trailer is markdown-only) — the
-  next read-path design question.
+- Cold probe: **inconclusive on the trailer** (Arm A `-v`-confounded; Arm B = floor
+  as designed). Tool-tier fused read **confirmed** as the working governed-context
+  channel.
+- Architecture decision recorded: curl = degraded floor; metadata in `.meta`; fused
+  read = contract.
+- D113 §8 eval hook: run, but it changed the question rather than closing it.
+- RQ-Substrate-4: **still open** (view-layer server-side gaps remain).
+- Follow-ups: trailer disposition; substrate-wide content-type-agnostic fused view;
+  Tier-3 eval arm.
