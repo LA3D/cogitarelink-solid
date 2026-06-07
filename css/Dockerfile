@@ -223,10 +223,11 @@ RUN mkdir -p /community-server/node_modules/@cogitarelink && \
        /community-server/node_modules/@cogitarelink/ops-index
 
 # ============================================================================
-# view-layer — ViewAssembler + ViewHttpHandler + ViewSpaceHttpHandler +
-# TrailerDecoratingStore (view-layer spec, D107 §6). ?_profile= conneg (doc|
-# fused|graph|alt) over /vault/wiki/*, the /vault/views/ cross-cutting URL space,
-# and the conditional GET trailer that surfaces mem:hasOpenAction in-band.
+# view-layer — ViewAssembler + ViewHttpHandler + ViewSpaceHttpHandler
+# (view-layer spec D107 §6; read-path delivery corrected by D114). ?_profile=
+# conneg (fused|alt) over any tree — fused is the substrate-wide, content-type-
+# agnostic governed-context contract — plus the /vault/views/ cross-cutting URL
+# space. (D114 removed the TrailerDecoratingStore + doc/graph tokens.)
 # CJS-only TypeScript; `npm run build` = tsc + componentsjs-generator (mirrors
 # memento/mem-trigger). Same @solid/community-server symlink trick to keep class
 # identity (PassthroughStore/BasicRepresentation/RepresentationMetadata)
