@@ -12,10 +12,9 @@ authoritative home:
 
 Repo decision IDs differ from vault IDs; both numberings are reconciled in `decisions.md`.
 
-## Project state (as of 2026-06-05)
+## Project state (as of 2026-06-07)
 
-- **Branch**: main, clean, **4 ahead of `origin/main` (the 2026-06-06/07 probe reports + audits;
-  push = Chuck's call)**. **Sibling `solid-agent-skills`: 7 ahead, push HELD** — the 2026-05-24
+- **Branch**: `view-layer` (15 commits ahead of main; 41/41 unit + 12/12 e2e green; `make audit` 0 ERROR; merge/push = Chuck's call). **`main` is still 4 ahead of `origin/main`** (the 2026-06-06/07 probe reports; push = Chuck's call). **Sibling `solid-agent-skills`: 7 ahead, push HELD** — the 2026-05-24
   pod-curator commits were rebased by mistake then RESTORED via merge (original hashes incl.
   `273b29a` preserved; merge commit `f5f8ed9`); push decision pends Chuck because (a) the
   pod-curator skill's bundled `pod_audit.py` is frozen at 2026-05-24 (pre-D107/D111/D112 —
@@ -56,13 +55,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   (D109 derive-rule violation; seeded narrower now stale); seeded exemplars teach phantom
   affordances; PROF not delivered on wiki notes (`describedby` is the actual dual-view
   affordance, unused by curl agents).
-  **▶ NEXT = the read-path/view design brainstorm**, now with converged input from BOTH evals:
-  agent-facing signals belong in the body or the FUSED body+governed-graph representation (an
-  open-action triple in the fused view would have been seen; the Link header was not). Candidates:
-  teach-the-convention / surface-in-representation (D58-style; RQ-Listener-1 no-clobber caveat) /
-  curator-facing-only — PLUS the fused view as the design target for the D107 §6 view layer.
-  Then D view layer. Teaching agenda (skill-over-build / Knob 1) stays DEFERRED per Chuck's
-  structure-before-teaching reorder.
+  **▶ NEXT = D112 Probe-2 read-path cold-probe re-run** against the conditional trailer channel (D113). The read-path brainstorm + view layer are BUILT (branch `view-layer`, spec/plan dated 2026-06-07, D113). The trailer addresses Probe-2's delivery-channel failure (Link header → body injection). A passing re-run closes RQ-Substrate-4 (both pieces: URI/namespace slice via D107 + view layer via D113). Teaching agenda (skill-over-build / Knob 1) stays DEFERRED per Chuck's structure-before-teaching reorder.
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
@@ -91,6 +84,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 | **Cleanup sprint** (Components.js config guard — the 3× boot class dead; dct:identifier→`<#this>` + multi-constrainedBy merged dispatch (SourceShape live); audit_type_index; make test-js; suite honestly green; merged 2026-06-05) | — | — |
 | **D111 identifier-scheme substrate** (Pod-level PID system at /id/; fragment datatypes; derived catalog; curl-grade enforcement; e2e 8/8; cold probes 3/3; bootstrap memory seeded; merged 2026-06-05) | — | D111 |
 | **D112 curation protocol** (Tier-2 loop as Pod state; 5 seams: signals/ledger/policy-as-data/read-path/curator-as-role; `OperationsIndexListener` + `CurationLinkMetadataWriter`; PROV-O grounded; id-schemes vertical slice; built 2026-06-05; **cold probes 2026-06-06: curator loop VALIDATED 3/3; read-path surfacing NEGATIVE 0/2 (header channel never opened — design response pending)**) | — | D112 |
+| **D113 view layer** (D107 §6 realized; conditional trailer on default GET; fused/graph/doc/alt views via `?_profile=`; `Link: rel="profile"` now emitting; 6 class profiles + 4 view descriptors overlay-installed; Person cross-cutting demonstrator `/vault/views/people/`; declared-query engine-executed; 41/41 unit + 12/12 e2e; **built 2026-06-07, branch `view-layer`, not yet merged/pushed**) | — | D113 |
 | Extensible conceptual structure + D98 migration complete (2026-05-23) | — | D104+ (auto-mem `conceptual_structure_as_extensible_data`) |
 | Option-B substrate audit + curator (pod-audit walker + pod-curator skill, 2026-05-24) | — | D104 / vault-D99 |
 | RQ-Substrate-4 URI re-layering Phases 1–4 (sub: namespace, reframe, storage-root, PROF; **merged to main 2026-05-28**, commit `02f9b58`, not pushed; cold-probe eval RQ-View-2 + view layer still open) | — | **D107** |
