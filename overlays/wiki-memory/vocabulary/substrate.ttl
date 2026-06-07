@@ -620,7 +620,7 @@ sub:realization
     rdfs:domain sub:View ;
     rdfs:range sub:RealizationMode ;
     rdfs:comment "How the view is produced: sub:Virtual (assembled per request) or sub:Materialized (stored, rederivable)." ;
-    skos:scopeNote "Single-valued per view descriptor. An agent reading this predicate learns whether it can rely on a stored representation (sub:Materialized, GET the servesAt URL) or must request assembly each time (sub:Virtual, pass ?_profile= on each request)." ;
+    skos:scopeNote "Single-valued per view descriptor. An agent reading this predicate learns whether it can rely on a stored representation — sub:Materialized (a pre-computed representation served as-is — still selected via ?_profile={token} for per-resource views; assembly happens at write/derive time rather than per request) — or must request assembly each time: sub:Virtual (pass ?_profile= on each request)." ;
     skos:example """
         <> a sub:View ;
            sub:realization sub:Virtual .
@@ -646,8 +646,8 @@ sub:servesAt
     rdfs:domain sub:View ;
     rdfs:range rdfs:Resource ;
     rdfs:comment "For cross-cutting views: the URL space (container) this view mints. Per-resource views (selected by ?_profile= on existing URLs) omit this." ;
-    skos:scopeNote "Used when a view projects a union or cross-cut of existing resources under a new URL (e.g., a fused body+graph endpoint at /wiki/fused/). Per-resource views that are accessed by appending ?_profile={token} to an existing resource URL do not need this predicate." ;
+    skos:scopeNote "Used when a view projects a union or cross-cut of existing resources under a new URL (e.g., a people cross-cut at /vault/views/people/). Per-resource views that are accessed by appending ?_profile={token} to an existing resource URL do not need this predicate." ;
     skos:example """
         <> a sub:View ;
-           sub:servesAt </vault/wiki/fused/> .
+           sub:servesAt </vault/views/people/> .
     """ .
