@@ -67,9 +67,19 @@ const PERSON_META = [
   quad(namedNode(PERSON), namedNode(SCHEMA_NAME), literal("Jane Doe")),
   quad(namedNode(PERSON), namedNode(SCHEMA_SAMEAS), namedNode(CONTACT)),
 ];
-// the contact resource (RDF, served as its own quads — no .meta).
+// the contact resource (RDF) carries its substantive quads in the body.
 const CONTACT_QUADS = [
   quad(namedNode(CONTACT), namedNode(VCARD_FN), literal("Jane Doe (contact)")),
+];
+// Live CSS auto-stamps every resource's `.meta` with system metadata, so a
+// contact's `.ttl.meta` is NEVER empty — it holds dc:modified about the resource
+// (NOT the substantive vcard quads). The handler must still pull the body quads:
+// this guards the readMemberQuads merge (a `meta.size > 0` short-circuit would
+// return only these system triples and break the sameAs join).
+const CONTACT_META_SYSTEM = [
+  quad(namedNode(`${BASE}/vault/contacts/Person/jane.ttl`),
+       namedNode("http://purl.org/dc/terms/modified"),
+       literal("2026-06-07T00:00:00.000Z")),
 ];
 
 // The declared people-projection (overlays/wiki-memory/views/people-projection).
@@ -112,8 +122,9 @@ function makeStore() {
       // wiki person body resource as quads → empty (markdown body, no RDF).
       if (path === PERSON_RES) return serveQuads([]);
 
-      // contact resource: no .meta → empty; the resource itself carries quads.
-      if (path === `${BASE}/vault/contacts/Person/jane.ttl.meta`) return serveQuads([]);
+      // contact resource: `.meta` holds only CSS system metadata (NEVER empty in
+      // live CSS); the substantive vcard quads live in the resource body.
+      if (path === `${BASE}/vault/contacts/Person/jane.ttl.meta`) return serveQuads(CONTACT_META_SYSTEM);
       if (path === `${BASE}/vault/contacts/Person/jane.ttl`) return serveQuads(CONTACT_QUADS);
       // contact reached directly via sameAs (#this stripped to base resource).
       if (path === CONTACT) return serveQuads(CONTACT_QUADS);

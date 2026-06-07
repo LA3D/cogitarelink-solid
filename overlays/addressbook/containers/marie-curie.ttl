@@ -1,0 +1,13 @@
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+
+# Bridge contact: the addressbook home for the wiki person marie-curie.
+# The wiki note (/vault/wiki/people/marie-curie.md) declares schema:sameAs to
+# <#this>; the people view's CONSTRUCT joins the two homes over that bridge,
+# producing a two-home card (Verborgh contacts-conundrum existence proof).
+# Conforms to ContactCardShape: vcard:fn, vcard:inAddressBook, + owl:sameAs anchor.
+<#this>
+    a vcard:Individual ;
+    vcard:fn "Marie Curie" ;
+    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
+    owl:sameAs <http://www.wikidata.org/entity/Q7186> .

@@ -250,12 +250,17 @@ export class ViewSpaceHttpHandler extends HttpHandler {
     return sources;
   }
 
-  // A member contributes its `.meta` quads if present; otherwise its own quads
-  // (markdown notes carry RDF in `.meta`; contacts/.ttl carry their own quads).
+  // A member contributes BOTH its `.meta` quads and its own quads, merged.
+  // Markdown notes carry their substantive RDF in `.meta` (the body is text/markdown
+  // → no INTERNAL_QUADS); contacts/.ttl carry their substantive RDF in the resource
+  // body while CSS auto-stamps `.meta` with system metadata (dc:modified, posix:*).
+  // A `meta.size > 0` heuristic mis-fires for contacts because their `.meta` is never
+  // empty — it just holds the wrong (system) triples. Merging both stores serves every
+  // case: the body quads + the .meta quads together.
   private async readMemberQuads(member: string): Promise<Store> {
-    const meta = await this.readQuadsAt(`${member}.meta`);
-    if (meta.size > 0) return meta;
-    return this.readQuadsAt(member);
+    const merged = await this.readQuadsAt(`${member}.meta`);
+    merged.addQuads((await this.readQuadsAt(member)).getQuads(null, null, null, null));
+    return merged;
   }
 
   // INTERNAL_QUADS read; tolerates a missing resource → empty store.

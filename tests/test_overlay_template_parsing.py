@@ -69,4 +69,11 @@ def test_addressbook_manifest_parses_with_all_artifacts():
     assert len(m.provides) == 5
     # required_capabilities should have 3 entries (wiki-vocabulary, foaf-primarytopic-bridge, wiki-type-index-registration)
     assert len(m.required_capabilities) == 3
-    assert len(m.container_meta_patches) == 4
+    # Organization / Group / Membership are constrained post-creation (block 11).
+    # Person/ is constrained AT creation via containers/contacts/Person/.meta
+    # (block 8) so the marie-curie bridge contact can be bootstrapped into it —
+    # a block-11 re-constraint of the now-non-empty container would H400.
+    assert len(m.container_meta_patches) == 3
+    person_meta = Path(__file__).parent.parent / "overlays" / "addressbook" / \
+        "containers" / "contacts" / "Person" / ".meta"
+    assert person_meta.exists() and "constrainedBy" in person_meta.read_text()
