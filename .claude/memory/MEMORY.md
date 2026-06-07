@@ -14,7 +14,7 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 
 ## Project state (as of 2026-06-07)
 
-- **Branch**: `view-layer` (15 commits ahead of main; 41/41 unit + 12/12 e2e green; `make audit` 0 ERROR; merge/push = Chuck's call). **`main` is still 4 ahead of `origin/main`** (the 2026-06-06/07 probe reports; push = Chuck's call). **Sibling `solid-agent-skills`: 7 ahead, push HELD** — the 2026-05-24
+- **Branch**: main, clean. **View layer (D113) MERGED to main 2026-06-07** (merge commit `9dd3d92`, no-ff; 41/41 unit + 12/12 e2e green; `make audit` 0 ERROR; view-layer branch deleted). **`main` is now 19 ahead of `origin/main`** (view-layer merge + the 2026-06-06/07 probe reports; push = Chuck's call). **Sibling `solid-agent-skills`: 7 ahead, push HELD** — the 2026-05-24
   pod-curator commits were rebased by mistake then RESTORED via merge (original hashes incl.
   `273b29a` preserved; merge commit `f5f8ed9`); push decision pends Chuck because (a) the
   pod-curator skill's bundled `pod_audit.py` is frozen at 2026-05-24 (pre-D107/D111/D112 —
