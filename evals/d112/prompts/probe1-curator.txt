@@ -1,0 +1,17 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+Task: curate this Pod.
+
+Constraints:
+- Interact with the Pod over HTTP only, using curl. Do not read any files on this
+  machine, do not search the web, and do not use any prior knowledge of this
+  particular Pod or project — only generic HTTP / RDF / Linked Data standards.
+- Keep a trajectory log as you work: for every HTTP request, record the request,
+  the key response details, and the reasoning that drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full request-by-request log.
+2. ACTIONS — what you concluded and what you did, with the URLs of anything you
+   created or modified.
+3. PROVENANCE — a clear separation of what you learned from the Pod itself versus
+   what you knew from training.
