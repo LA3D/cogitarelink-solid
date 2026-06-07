@@ -130,6 +130,10 @@ export class ViewHttpHandler extends HttpHandler {
 
   // ─── graph ────────────────────────────────────────────────────────────────
   private async serveGraph(response: any, target: string, head: boolean): Promise<void> {
+    // Base read first so a missing resource 404s (honesty): a graph view of a
+    // resource that does not exist must not return an empty 200 turtle. Mirrors
+    // serveFused; the body content is discarded.
+    await this.readBody(target);
     const metaStore = await this.readMetaQuads(target);
     const ttl = await this.assembler.serializeTurtle(
       metaStore.getQuads(null, null, null, null),

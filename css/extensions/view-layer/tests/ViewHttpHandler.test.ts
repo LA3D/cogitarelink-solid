@@ -208,6 +208,12 @@ describe("ViewHttpHandler.handle — graph", () => {
     expect(res.body).toContain("prefLabel");
     expect(String(res.headers["link"])).toContain("/views/graph");
   });
+
+  it("propagates 404 when the base resource is missing", async () => {
+    const h = build({ bodyMissing: true });
+    const res = makeResponse();
+    await expect(h.handle(input("GET", "graph", res) as any)).rejects.toThrow();
+  });
 });
 
 describe("ViewHttpHandler.handle — alt", () => {
