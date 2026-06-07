@@ -6,11 +6,10 @@
  * Task 11) so its reads never see the Task-9 trailer.
  *
  * Per-resource view tokens (the contract table):
- *   doc   → 200 stored body verbatim (text/markdown)
  *   fused → 200 body ⊕ fenced projection turtle (text/markdown)
- *   graph → 200 the .meta content (text/turtle)
- *   alt   → 200 the 4-view catalog (text/turtle, 60s cached)
+ *   alt   → 200 the 2-view catalog (text/turtle, 60s cached)
  *   <other/empty> → 400 listing valid tokens
+ * Removed: doc (redundant with default GET), graph (redundant with describedby .meta).
  * Non-GET/HEAD → 405 (lens law: views are read-only; sub:writable false).
  */
 import {
@@ -30,13 +29,14 @@ import { getProfileToken, stripProfileQuery } from "./uri";
 
 // Per-resource view tokens this handler serves (people is /vault/views/-only,
 // served by ViewSpaceHttpHandler — NOT a per-resource view → 400 here).
-const VALID_TOKENS = ["doc", "fused", "graph", "alt"] as const;
+// doc removed: redundant with default GET. graph removed: redundant with describedby .meta.
+const VALID_TOKENS = ["fused", "alt"] as const;
 type ViewToken = (typeof VALID_TOKENS)[number];
 
 const CACHE_TTL_MS = 60_000;
 
-// The four view descriptor resources merged for the `alt` catalog.
-const DESCRIPTOR_NAMES = ["document", "fused", "graph", "people"] as const;
+// The two view descriptor resources merged for the `alt` catalog.
+const DESCRIPTOR_NAMES = ["fused", "people"] as const;
 
 // Derive the .meta path for a resource URL (CSS auxiliary strategy: append
 // ".meta"). Mirrors OperationsIndexListener.metaPath.
@@ -101,21 +101,11 @@ export class ViewHttpHandler extends HttpHandler {
 
     const head = method === "HEAD";
     switch (token as ViewToken) {
-      case "doc":
-        return this.serveDoc(response, stripped, head);
       case "fused":
         return this.serveFused(response, stripped, head);
-      case "graph":
-        return this.serveGraph(response, stripped, head);
       case "alt":
         return this.serveAlt(response, head);
     }
-  }
-
-  // ─── doc ──────────────────────────────────────────────────────────────────
-  private async serveDoc(response: any, target: string, head: boolean): Promise<void> {
-    const body = await this.readBody(target);
-    this.write(response, 200, "text/markdown", "document", head ? undefined : body);
   }
 
   // ─── fused ────────────────────────────────────────────────────────────────
@@ -126,19 +116,6 @@ export class ViewHttpHandler extends HttpHandler {
     const query = await this.readProjectionQuery();
     const fused = await this.assembler.fuse(body, query, [metaStore]);
     this.write(response, 200, "text/markdown", "fused", head ? undefined : fused);
-  }
-
-  // ─── graph ────────────────────────────────────────────────────────────────
-  private async serveGraph(response: any, target: string, head: boolean): Promise<void> {
-    // Base read first so a missing resource 404s (honesty): a graph view of a
-    // resource that does not exist must not return an empty 200 turtle. Mirrors
-    // serveFused; the body content is discarded.
-    await this.readBody(target);
-    const metaStore = await this.readMetaQuads(target);
-    const ttl = await this.assembler.serializeTurtle(
-      metaStore.getQuads(null, null, null, null),
-    );
-    this.write(response, 200, "text/turtle", "graph", head ? undefined : ttl);
   }
 
   // ─── alt ──────────────────────────────────────────────────────────────────
@@ -180,7 +157,7 @@ export class ViewHttpHandler extends HttpHandler {
   }
 
   // Quads from an arbitrary resource path (INTERNAL_QUADS preference).
-  // Tolerates a missing resource → empty store (used by graph + alt).
+  // Tolerates a missing resource → empty store (used by alt).
   private async readMetaQuadsAt(path: string): Promise<Store> {
     try {
       const rep = await this.store.getRepresentation(

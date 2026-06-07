@@ -27,9 +27,7 @@ function descriptor(token: string): string {
 }
 
 const DESCRIPTORS: Record<string, string> = {
-  [`${VIEWS}document`]: descriptor("doc"),
   [`${VIEWS}fused`]: descriptor("fused"),
-  [`${VIEWS}graph`]: descriptor("graph"),
   [`${VIEWS}people`]: descriptor("people"),
 };
 
@@ -37,7 +35,7 @@ const DESCRIPTORS: Record<string, string> = {
 //  - the stored body (text/markdown preference) → STORED_BODY
 //  - the .meta resource (INTERNAL_QUADS or text/turtle) → META_QUADS
 //  - {viewsBase}fused-projection (text/markdown / string) → FUSED_PROJECTION
-//  - the four {viewsBase}<view> descriptors (turtle/quads) → DESCRIPTORS
+//  - the two {viewsBase}<view> descriptors (turtle/quads) → DESCRIPTORS
 function makeStore(opts: { bodyMissing?: boolean } = {}) {
   return {
     async getRepresentation(id: { path: string }, prefs: any) {
@@ -141,7 +139,7 @@ describe("ViewHttpHandler.canHandle", () => {
   it("accepts a URL carrying ?_profile=", async () => {
     const h = build();
     const res = makeResponse();
-    await expect(h.canHandle(input("GET", "doc", res) as any)).resolves.toBeUndefined();
+    await expect(h.canHandle(input("GET", "fused", res) as any)).resolves.toBeUndefined();
   });
 
   it("accepts an empty ?_profile= (token \"\")", async () => {
@@ -153,28 +151,6 @@ describe("ViewHttpHandler.canHandle", () => {
         response: res.response,
       } as any),
     ).resolves.toBeUndefined();
-  });
-});
-
-describe("ViewHttpHandler.handle — doc", () => {
-  it("serves the stored body verbatim as text/markdown with a profile Link", async () => {
-    const h = build();
-    const res = makeResponse();
-    await h.handle(input("GET", "doc", res) as any);
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toBe(STORED_BODY);
-    expect(res.headers["content-type"]).toBe("text/markdown");
-    expect(String(res.headers["link"])).toContain('rel="profile"');
-    expect(String(res.headers["link"])).toContain("/views/document");
-  });
-
-  it("HEAD doc: headers but no body", async () => {
-    const h = build();
-    const res = makeResponse();
-    await h.handle(input("HEAD", "doc", res) as any);
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toBe("");
-    expect(res.headers["content-type"]).toBe("text/markdown");
   });
 });
 
@@ -198,34 +174,17 @@ describe("ViewHttpHandler.handle — fused", () => {
   });
 });
 
-describe("ViewHttpHandler.handle — graph", () => {
-  it("serves the .meta as turtle containing a known triple", async () => {
-    const h = build();
-    const res = makeResponse();
-    await h.handle(input("GET", "graph", res) as any);
-    expect(res.statusCode).toBe(200);
-    expect(res.headers["content-type"]).toBe("text/turtle");
-    expect(res.body).toContain("prefLabel");
-    expect(String(res.headers["link"])).toContain("/views/graph");
-  });
-
-  it("propagates 404 when the base resource is missing", async () => {
-    const h = build({ bodyMissing: true });
-    const res = makeResponse();
-    await expect(h.handle(input("GET", "graph", res) as any)).rejects.toThrow();
-  });
-});
-
 describe("ViewHttpHandler.handle — alt", () => {
-  it("serves the 4-view catalog as turtle naming the tokens", async () => {
+  it("serves the 2-view catalog as turtle naming fused and people tokens (not doc/graph)", async () => {
     const h = build();
     const res = makeResponse();
     await h.handle(input("GET", "alt", res) as any);
     expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toBe("text/turtle");
-    expect(res.body).toContain("doc");
     expect(res.body).toContain("fused");
-    expect(res.body).toContain("graph");
+    expect(res.body).toContain("people");
+    expect(res.body).not.toContain('"doc"');
+    expect(res.body).not.toContain('"graph"');
   });
 });
 
@@ -235,9 +194,7 @@ describe("ViewHttpHandler.handle — errors", () => {
     const res = makeResponse();
     await h.handle(input("GET", "bogus", res) as any);
     expect(res.statusCode).toBe(400);
-    expect(res.body).toContain("doc");
     expect(res.body).toContain("fused");
-    expect(res.body).toContain("graph");
     expect(res.body).toContain("alt");
   });
 
@@ -251,10 +208,28 @@ describe("ViewHttpHandler.handle — errors", () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it("?_profile=doc → 400 (removed token, hits default arm)", async () => {
+    const h = build();
+    const res = makeResponse();
+    await h.handle(input("GET", "doc", res) as any);
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toContain("fused");
+    expect(res.body).toContain("alt");
+  });
+
+  it("?_profile=graph → 400 (removed token, hits default arm)", async () => {
+    const h = build();
+    const res = makeResponse();
+    await h.handle(input("GET", "graph", res) as any);
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toContain("fused");
+    expect(res.body).toContain("alt");
+  });
+
   it("PUT → 405 read-only, Allow header, body names the document view + stripped url", async () => {
     const h = build();
     const res = makeResponse();
-    await h.handle(input("PUT", "doc", res) as any);
+    await h.handle(input("PUT", "fused", res) as any);
     expect(res.statusCode).toBe(405);
     expect(res.headers["allow"]).toBe("GET, HEAD, OPTIONS");
     expect(res.body).toContain("document view");
