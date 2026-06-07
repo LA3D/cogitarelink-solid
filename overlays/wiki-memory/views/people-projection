@@ -1,0 +1,16 @@
+# Person-unification view (cross-cutting demonstrator).
+# Joins wiki person descriptions with addressbook contacts over sameAs.
+PREFIX schema: <https://schema.org/>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT {
+  ?person ?p ?o .
+  ?person rdfs:seeAlso ?contact .
+  ?contact ?cp ?co .
+}
+WHERE {
+  ?person a schema:Person ; ?p ?o .
+  OPTIONAL {
+    ?person schema:sameAs ?contact .
+    ?contact ?cp ?co .
+  }
+}

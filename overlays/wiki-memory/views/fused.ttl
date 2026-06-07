@@ -1,0 +1,21 @@
+@prefix sub:  <https://pod.vardeman.me/vault/ontology/substrate#> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix role: <http://www.w3.org/ns/dx/prof/role/> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://pod.vardeman.me/vault/meta/views/fused> a sub:View, prof:Profile ;
+  dct:title "Fused view" ;
+  prof:hasToken "fused" ;
+  prof:hasResource [ a prof:ResourceDescriptor ;
+    prof:hasRole role:mapping ;
+    skos:note "CONSTRUCT-as-view: the declared projection producing the graph component. The served fused representation is the stored body plus this projection's result serialized as a fenced Turtle section." ;
+    dct:format "application/sparql-query" ;
+    prof:hasArtifact <https://pod.vardeman.me/vault/meta/views/fused-projection> ] ;
+  sub:realization sub:Virtual ;
+  sub:writable false ;
+  sh:agentInstruction "Body + governed graph + open actions in one text/markdown response. Read-only; author via the document view (plain GET/PUT on the resource URL). The graph section is appended as a fenced turtle code block after the body." ;
+  prof:isProfileOf <https://pod.vardeman.me/vault/meta/profiles/page> ;
+  prof:isTransitiveProfileOf <https://pod.vardeman.me/vault/meta/profiles/page>, <https://solidproject.org/TR/protocol> .
