@@ -18,6 +18,7 @@
     skos:prefLabel "Wiki-Memory L3 Profile".
 <wiki-memory-l3-profile.md.meta> prov:wasGeneratedBy <../../meta/affordances/markdown-projection>.
 <> a wiki:Page;
+    dct:conformsTo <https://pod.vardeman.me/vault/meta/profiles/concept>;
     schema:mainEntity <#this>.
 <#this> a skos:Concept;
     schema:mainEntityOfPage <>;

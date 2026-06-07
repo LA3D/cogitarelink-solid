@@ -152,6 +152,22 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             n3_patch_inserts(client, meta_url, _conforms_graph(url, PROF_SPEC))
             print(f"  prof.meta → dct:conformsTo PROF")
 
+        # 5b. Upload view descriptors + their CONSTRUCT-of-record artifacts (view-layer).
+        #     Ensure the views container exists first (matches the shape/profile pattern).
+        #     View descriptors get dct:conformsTo PROF so ProfileLinkMetadataWriter fires.
+        if manifest.views or manifest.view_artifacts:
+            ensure_container(client, absolutize(pod_url, "/vault/meta/views/"))
+        for hd in manifest.views:
+            url = absolutize(pod_url, hd.hosted_at)
+            put_file(client, url, hd.document, hd.content_type)
+            print(f"  view  → {url}")
+            n3_patch_inserts(client, f"{url}.meta", _conforms_graph(url, PROF_SPEC))
+            print(f"  view.meta → dct:conformsTo PROF")
+        for hd in manifest.view_artifacts:
+            url = absolutize(pod_url, hd.hosted_at)
+            put_file(client, url, hd.document, hd.content_type)
+            print(f"  view artifact → {url}")
+
         # 6. Upload provided capabilities to the catalog
         for cap in manifest.provides:
             r = client.put(cap.url, content=cap.document.encode("utf-8"),

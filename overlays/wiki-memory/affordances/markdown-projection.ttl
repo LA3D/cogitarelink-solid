@@ -37,6 +37,7 @@
     # Drift here means the descriptor advertises a different contract than the
     # listener enforces — the bug the test exists to catch.
     sub:governs rdf:type ,
+        dct:conformsTo ,
         dct:contributor ,
         dct:created ,
         dct:identifier ,

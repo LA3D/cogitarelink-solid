@@ -59,6 +59,7 @@
     "http://purl.org/dc/terms/title",
     "http://purl.org/dc/terms/created",
     "http://purl.org/dc/terms/modified",
+    "http://purl.org/dc/terms/conformsTo",
     "https://schema.org/mainEntity",
     "https://pod.vardeman.me/vault/ontology/wiki#maturity",
     "http://www.w3.org/ns/prov#wasGeneratedBy",
@@ -206,6 +207,7 @@
     ]
   },
   "governedUnion": [
+    "http://purl.org/dc/terms/conformsTo",
     "http://purl.org/dc/terms/contributor",
     "http://purl.org/dc/terms/created",
     "http://purl.org/dc/terms/identifier",

@@ -51,7 +51,9 @@
         </vault/wiki/procedures/> ,
         </vault/wiki/working/> ,
         </vault/wiki/.operations/> ,
-        </vault/wiki/.events/> ;
+        </vault/wiki/.events/> ,
+        </vault/meta/views/> ,
+        </vault/views/> ;
 
     overlay:installsShape
         [ overlay:document "shapes/resource.shacl.ttl" ;
@@ -108,6 +110,16 @@
         </vault/meta/profiles/howto> ,
         </vault/meta/profiles/working> ,
         </vault/meta/profiles/template> ;
+
+    overlay:installsView
+        [ overlay:document "views/document.ttl" ; overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/document> ] ,
+        [ overlay:document "views/fused.ttl" ;    overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/fused> ] ,
+        [ overlay:document "views/graph.ttl" ;    overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/graph> ] ,
+        [ overlay:document "views/people.ttl" ;   overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/people> ] ;
+
+    overlay:installsViewArtifact
+        [ overlay:document "views/fused-projection" ;  overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/fused-projection> ] ,
+        [ overlay:document "views/people-projection" ; overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/people-projection> ] ;
 
     overlay:installsPage [
         overlay:targetResource <https://pod.vardeman.me/vault/wiki/index.md> ;

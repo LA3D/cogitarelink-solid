@@ -46,6 +46,8 @@ overlay:installsContainer    a rdf:Property ; rdfs:label "Pod path of a containe
 overlay:installsShape        a rdf:Property ; rdfs:label "Pod URL of a SHACL shape file this overlay uploads" ; rdfs:isDefinedBy <> .
 overlay:installsAffordance   a rdf:Property ; rdfs:label "Pod URL of an affordance descriptor this overlay uploads" ; rdfs:isDefinedBy <> .
 overlay:installsProfile        a rdf:Property ; rdfs:label "Pod URL of a PROF profile descriptor this overlay uploads" ; rdfs:isDefinedBy <> .
+overlay:installsView           a rdf:Property ; rdfs:label "PROF view descriptor this overlay uploads" ; rdfs:comment "Object is a blank node with overlay:document + overlay:hostedAt (structured like installsShape)." ; rdfs:isDefinedBy <> .
+overlay:installsViewArtifact   a rdf:Property ; rdfs:label "SPARQL CONSTRUCT-of-record artifact backing a view this overlay uploads" ; rdfs:comment "Object is a blank node with overlay:document + overlay:hostedAt; deployed as application/sparql-query." ; rdfs:isDefinedBy <> .
 overlay:installsRoleScheme     a rdf:Property ; rdfs:label "Pod URL of a SKOS role-concept scheme this overlay publishes" ; rdfs:isDefinedBy <> .
 overlay:installsTypeRegistration a rdf:Property ;
     rdfs:label "Type Index registration this overlay adds" ;

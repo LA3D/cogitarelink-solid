@@ -16,6 +16,7 @@
     skos:prefLabel "Agentic Memory Systems MOC".
 <agentic-memory-systems-moc.md.meta> prov:wasGeneratedBy <../../meta/affordances/markdown-projection>.
 <> a wiki:Page;
+    dct:conformsTo <https://pod.vardeman.me/vault/meta/profiles/concept>;
     schema:mainEntity <#this>.
 <#this> a skos:Concept;
     schema:mainEntityOfPage <>;
