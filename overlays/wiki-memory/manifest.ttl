@@ -116,9 +116,7 @@
         </vault/meta/profiles/template> ;
 
     overlay:installsView
-        [ overlay:document "views/document.ttl" ; overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/document> ] ,
         [ overlay:document "views/fused.ttl" ;    overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/fused> ] ,
-        [ overlay:document "views/graph.ttl" ;    overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/graph> ] ,
         [ overlay:document "views/people.ttl" ;   overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/people> ] ;
 
     overlay:installsViewArtifact
