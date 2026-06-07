@@ -1,0 +1,15 @@
+@prefix sub:  <https://pod.vardeman.me/vault/ontology/substrate#> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix role: <http://www.w3.org/ns/dx/prof/role/> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://pod.vardeman.me/vault/meta/views/document> a sub:View, prof:Profile ;
+  dct:title "Document view" ;
+  prof:hasToken "doc" ;
+  sub:writable true ;
+  sh:agentInstruction "The stored markdown body, byte-identical, with no server-managed trailer. This is the writable view: author here with GET/PUT/POST. ?_profile=doc is the pristine escape hatch when the default GET carries a pod:notice trailer." ;
+  prof:isProfileOf <https://pod.vardeman.me/vault/meta/profiles/page> ;
+  prof:isTransitiveProfileOf <https://pod.vardeman.me/vault/meta/profiles/page>, <https://solidproject.org/TR/protocol> .

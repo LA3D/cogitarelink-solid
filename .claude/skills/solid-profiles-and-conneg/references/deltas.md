@@ -4,9 +4,9 @@ This Pod's specific profile catalog. Read when working *in this repo* and you ne
 
 ---
 
-## The 5 wiki-memory L3 profiles
+## The 6 wiki-memory L3 class profiles + 4 view profiles
 
-Hosted on this Pod at `https://pod.vardeman.me/vault/meta/profiles/`:
+**Class profiles** — hosted at `https://pod.vardeman.me/vault/meta/profiles/`; auto-installed by `overlay:installsProfile` (D113, branch `view-layer`):
 
 | Class IRI | Profile IRI | Token |
 |---|---|---|
@@ -16,6 +16,15 @@ Hosted on this Pod at `https://pod.vardeman.me/vault/meta/profiles/`:
 | `wiki:Person` | `https://pod.vardeman.me/vault/meta/profiles/person` | `wiki-person` |
 | `wiki:Procedure` | `https://pod.vardeman.me/vault/meta/profiles/procedure` | `wiki-procedure` |
 | `wiki:WorkingNote` | `https://pod.vardeman.me/vault/meta/profiles/working` | `wiki-working` |
+
+**View profiles** — hosted at `https://pod.vardeman.me/vault/meta/views/`; auto-installed by `overlay:installsView` (D113, branch `view-layer`). Selected via `?_profile={token}`:
+
+| View | Profile IRI | Token | Writable |
+|---|---|---|---|
+| Document (default) | `https://pod.vardeman.me/vault/meta/views/document` | `doc` | yes |
+| Fused (body+graph) | `https://pod.vardeman.me/vault/meta/views/fused` | `fused` | no |
+| Graph-only Turtle | `https://pod.vardeman.me/vault/meta/views/graph` | `graph` | no |
+| Person cross-cutting | `https://pod.vardeman.me/vault/meta/views/people` | `people` | no |
 
 Profile chain:
 
@@ -45,12 +54,7 @@ overlays/wiki-memory/profiles/
 └── working.ttl
 ```
 
-Currently **committed but not auto-installed**. The overlay machinery doesn't yet have an `installsProfile` predicate parallel to `installsShape` / `installsAffordance`. Two open items in `FOLLOWUPS.md`:
-
-1. Add `overlay:installsProfile` to the overlay schema + parse it in `scripts/overlay/common.py` + upload it in `scripts/overlay/apply.py` (~15 LOC).
-2. Build a `Link: rel="profile"` MetadataWriter CSS extension at `css/extensions/profile-link/` that emits the profile Link header per resource GET (~30 LOC, mirrors `MementoLinkMetadataWriter`).
-
-Until those land, the profile descriptors exist as designed Turtle in the overlay directory but aren't served by the Pod and the Link header isn't emitted.
+**Now auto-installed** (D113, branch `view-layer`). The overlay machinery gained `overlay:installsProfile` + `overlay:installsView` + `overlay:installsViewArtifact` predicates parsed in `scripts/overlay/common.py` and applied in `scripts/overlay/apply.py`. The `Link: rel="profile"` MetadataWriter (`css/extensions/profile-link/ProfileLinkMetadataWriter`) was already built in Phase 5j; the missing piece was `dct:conformsTo` landing in resource `.meta` — now derived on write by the projection pipeline. `?_profile=alt` introspection is live (D113 FOLLOWUPS item closed).
 
 ## Custom roles minted
 
@@ -64,13 +68,13 @@ When the 8 standard PROF roles don't fit, this project mints custom roles in the
 - Every profile carries `prof:hasToken` for QSA conneg. Tokens are mnemonic and prefixed with `wiki-`.
 - `dct:publisher` points to the ORCID of the author for attribution.
 
-## What's deferred
+## What's deferred (post-D113)
 
-- The `Link: rel="profile"` MetadataWriter (D86 implementation).
-- `_profile=alt` introspection view.
-- Overlay machinery to auto-install profile descriptors.
+- **PROF not yet emitted on wiki content pages.** `rel="profile"` is emitted when `dct:conformsTo` is in `.meta`; wiki `.md` resources don't yet get `dct:conformsTo` derived by the projection pipeline (only the class-profile-bearing containers/resources do). Wire when Probe-C/PROF-on-content is a design target.
+- **`WIKI_CLASS_TO_PROFILE` covers only 5 classes.** `Place`/`Event`/`Organization` fall through to the `page` profile; extend if full per-class PROF hints are wanted. Tracked in D113 FOLLOWUPS.
+- View layer cold probe re-run (D112 Probe-2 re-run against the trailer channel) — the eval that closes RQ-Substrate-4. Tracked in D113 FOLLOWUPS.
 
-All tracked in `FOLLOWUPS.md` under "Phase 5j close-out."
+All open items tracked in `FOLLOWUPS.md` under "D113 view layer."
 
 ## Related project skills
 

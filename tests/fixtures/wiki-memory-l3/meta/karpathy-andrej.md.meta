@@ -15,6 +15,7 @@
     dct:title "Karpathy, Andrej".
 <karpathy-andrej.md.meta> prov:wasGeneratedBy <../../meta/affordances/markdown-projection>.
 <> a wiki:Page;
+    dct:conformsTo <https://pod.vardeman.me/vault/meta/profiles/person>;
     schema:mainEntity <#this>.
 <#this> a schema:Person;
     schema:mainEntityOfPage <>;

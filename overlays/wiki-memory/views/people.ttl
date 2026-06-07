@@ -1,0 +1,22 @@
+@prefix sub:  <https://pod.vardeman.me/vault/ontology/substrate#> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix role: <http://www.w3.org/ns/dx/prof/role/> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://pod.vardeman.me/vault/meta/views/people> a sub:View, prof:Profile ;
+  dct:title "People view (cross-cutting demonstrator)" ;
+  prof:hasToken "people" ;
+  prof:hasResource [ a prof:ResourceDescriptor ;
+    prof:hasRole role:mapping ;
+    skos:note "CONSTRUCT joining wiki person .meta graphs with addressbook contacts over the schema:sameAs bridge. Sources enumerated via Type Index (schema:Person + vcard:Individual containers) — no source hardcode (D107)." ;
+    dct:format "application/sparql-query" ;
+    prof:hasArtifact <https://pod.vardeman.me/vault/meta/views/people-projection> ] ;
+  sub:servesAt <https://pod.vardeman.me/vault/views/people/> ;
+  sub:realization sub:Virtual ;
+  sub:writable false ;
+  sh:agentInstruction "One person, one URL, assembled from every container that knows them (wiki note + addressbook contact). Read-only: writes get 405 naming the writable homes. Each member lists its sources via rdfs:seeAlso." ;
+  prof:isProfileOf <https://pod.vardeman.me/vault/meta/profiles/person> ;
+  prof:isTransitiveProfileOf <https://pod.vardeman.me/vault/meta/profiles/person>, <https://pod.vardeman.me/vault/meta/profiles/page>, <https://solidproject.org/TR/protocol> .

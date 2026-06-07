@@ -19,11 +19,13 @@ import { projectFrontmatter, Frontmatter, resolveFrontmatterType } from "./front
 import { projectWikilinks, BOOTSTRAP_PREDICATE_TO_CLASS } from "./wikilinkProjection.js";
 import { resolveThingClass, TypeIndex, DEFAULT_WIKI_TYPE_INDEX } from "./typeIndexLookup.js";
 import { projectSpanLiteralsFramed, DEFAULT_LITERAL_BINDING } from "./spanLiteralProjection.js";
-import { PAGE_GOVERNED_PREDICATES, WIKI_CLASS_TO_THING_CLASS } from "./governedPredicates.js";
+import { PAGE_GOVERNED_PREDICATES, WIKI_CLASS_TO_THING_CLASS,
+         WIKI_CLASS_TO_PROFILE, DEFAULT_PROFILE } from "./governedPredicates.js";
 
 const { namedNode, literal, quad } = DataFactory;
 
 const DCT_TITLE                = "http://purl.org/dc/terms/title";
+const DCT_CONFORMS_TO          = "http://purl.org/dc/terms/conformsTo";
 const PROV_GEN_BY              = "http://www.w3.org/ns/prov#wasGeneratedBy";
 const AFFORDANCE_PATH          = "/meta/affordances/markdown-projection";
 const RDF_TYPE                 = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
@@ -252,6 +254,11 @@ export const projectionPipeline = {
             const pageIRI  = namedNode(resourceUri);
             const thingIRI = namedNode(`${resourceUri}#this`);
             invariants.push(...emitSubstrateInvariants({ pageIRI, thingIRI, thingClass }));
+            // <> dct:conformsTo <profile> — resource-kind hint (D86). Keyed off the
+            // frontmatter wiki dispatch class (fmDispatch); container-only pages
+            // (no type:) get DEFAULT_PROFILE (page). Lights up ProfileLinkMetadataWriter.
+            const profile = (fmDispatch && WIKI_CLASS_TO_PROFILE[fmDispatch]) ?? DEFAULT_PROFILE;
+            invariants.push(quad(pageIRI, namedNode(DCT_CONFORMS_TO), namedNode(profile)));
             // schema:name on <#this> — required by ThingShape (minCount 1). Derived
             // from the page title (frontmatter title > H1 > slug) so every Thing has
             // a name; the substrate governs it. (Probe 2026-05-26: crystallized

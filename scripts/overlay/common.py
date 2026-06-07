@@ -114,6 +114,14 @@ class ExtensionGuide:
 
 
 @dataclass(frozen=True)
+class HostedDocument:
+    """A local file deployed verbatim to a Pod URL (view-layer: profiles, view descriptors, SPARQL artifacts)."""
+    document: Path
+    hosted_at: str
+    content_type: str = "text/turtle"
+
+
+@dataclass(frozen=True)
 class Manifest:
     """Parsed view of an overlay's manifest.ttl."""
     name: str
@@ -138,7 +146,17 @@ class Manifest:
     hint_mappings: list[HintMapping]          # overlay:installsHintMapping (D98)
     extension_guides: list[ExtensionGuide]    # overlay:installsExtensionGuide (D100)
     overlay_dir: Path                 # local directory holding manifest + artifacts
+    views: list[HostedDocument] = field(default_factory=list)          # overlay:installsView — PROF view descriptors (view-layer)
+    view_artifacts: list[HostedDocument] = field(default_factory=list) # overlay:installsViewArtifact — SPARQL CONSTRUCT-of-record
     registers_schemes: tuple[URIRef, ...] = ()  # overlay:registersScheme — /id/schemes/<key> records this overlay needs (D111)
+
+    @property
+    def view_urls(self) -> list[str]:
+        return [v.hosted_at for v in self.views]
+
+    @property
+    def view_artifact_urls(self) -> list[str]:
+        return [v.hosted_at for v in self.view_artifacts]
 
 
 def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
@@ -311,6 +329,22 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
                 subject=str(subject_scope),
             ))
 
+    # overlay:installsView / installsViewArtifact — view-layer descriptors + their
+    # CONSTRUCT-of-record artifacts. Structured blank nodes like installsShape:
+    # [ overlay:document "views/fused.ttl" ; overlay:hostedAt <…/views/fused> ].
+    # View descriptors are text/turtle; the SPARQL artifacts application/sparql-query.
+    def hosted_docs(predicate, content_type):
+        out = []
+        for node in many(predicate):
+            doc = next(g.objects(node, OVERLAY.document), None)
+            host = next(g.objects(node, OVERLAY.hostedAt), None)
+            if doc and host:
+                out.append(HostedDocument(overlay_dir / str(doc), str(host), content_type))
+        return out
+
+    views = hosted_docs(OVERLAY.installsView, "text/turtle")
+    view_artifacts = hosted_docs(OVERLAY.installsViewArtifact, "application/sparql-query")
+
     # overlay:registersScheme — /id/schemes/<key> records this overlay depends on (D111).
     # Objects are full scheme-record IRIs; sorted for deterministic deploy order.
     registers_schemes = tuple(sorted(many(OVERLAY.registersScheme), key=str))
@@ -342,6 +376,8 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         hint_mappings=hint_mappings,
         extension_guides=extension_guides,
         overlay_dir=overlay_dir,
+        views=views,
+        view_artifacts=view_artifacts,
         registers_schemes=registers_schemes,
     )
 

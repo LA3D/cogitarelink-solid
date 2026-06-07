@@ -223,6 +223,29 @@ RUN mkdir -p /community-server/node_modules/@cogitarelink && \
        /community-server/node_modules/@cogitarelink/ops-index
 
 # ============================================================================
+# view-layer — ViewAssembler + ViewHttpHandler + ViewSpaceHttpHandler +
+# TrailerDecoratingStore (view-layer spec, D107 §6). ?_profile= conneg (doc|
+# fused|graph|alt) over /vault/wiki/*, the /vault/views/ cross-cutting URL space,
+# and the conditional GET trailer that surfaces mem:hasOpenAction in-band.
+# CJS-only TypeScript; `npm run build` = tsc + componentsjs-generator (mirrors
+# memento/mem-trigger). Same @solid/community-server symlink trick to keep class
+# identity (PassthroughStore/BasicRepresentation/RepresentationMetadata)
+# consistent with the CSS host. Unscoped npm name (view-layer), so symlinked at
+# node_modules/view-layer (not under @cogitarelink/).
+# ============================================================================
+
+COPY extensions/view-layer /community-server/extensions/view-layer
+
+RUN cd extensions/view-layer && npm install --ignore-scripts
+
+RUN cd extensions/view-layer && npm run build
+
+RUN rm -rf /community-server/extensions/view-layer/node_modules/@solid/community-server && \
+    ln -sf /community-server /community-server/extensions/view-layer/node_modules/@solid/community-server
+
+RUN ln -sf /community-server/extensions/view-layer /community-server/node_modules/view-layer
+
+# ============================================================================
 # Build stamp — baked LATE so earlier layers remain cacheable.
 # The ARG default "unknown" means non-Makefile builds still work cleanly.
 # Verify with: docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' cogitarelink-solid-css-1

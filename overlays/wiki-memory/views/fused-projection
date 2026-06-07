@@ -1,0 +1,5 @@
+# Fused-view graph component (declared query of record — executed by the
+# server's ViewAssembler, the planned Pod MCP sparql tool, and any client
+# engine; diffable against the served view for self-validation).
+CONSTRUCT { ?s ?p ?o }
+WHERE     { ?s ?p ?o }

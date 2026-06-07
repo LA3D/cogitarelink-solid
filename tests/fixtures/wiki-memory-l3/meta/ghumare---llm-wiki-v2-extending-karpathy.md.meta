@@ -17,6 +17,7 @@
     skos:prefLabel "Ghumare - LLM Wiki v2 Extending Karpathy".
 <ghumare---llm-wiki-v2-extending-karpathy.md.meta> prov:wasGeneratedBy <../../meta/affordances/markdown-projection>.
 <> a wiki:Page;
+    dct:conformsTo <https://pod.vardeman.me/vault/meta/profiles/source>;
     schema:mainEntity <#this>.
 <#this> a wiki:Source;
     schema:mainEntityOfPage <>;

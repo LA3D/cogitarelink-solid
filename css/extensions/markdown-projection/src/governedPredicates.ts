@@ -28,6 +28,10 @@ const ORG    = "http://www.w3.org/ns/org#";
 const PROV   = "http://www.w3.org/ns/prov#";
 const WIKI   = "https://pod.vardeman.me/vault/ontology/wiki#";
 
+// Pod base IRI — single-sourced from WIKI (the wiki vocab lives under <podbase>/vault/…)
+// so the profile IRIs can never diverge from the rest of the pod-hosted namespace.
+const PODBASE = WIKI.slice(0, WIKI.indexOf("/vault/"));  // "https://pod.vardeman.me"
+
 // ---------------------------------------------------------------------------
 // Page-level predicates (subject = <> / the page resource)
 // ---------------------------------------------------------------------------
@@ -36,6 +40,7 @@ export const PAGE_GOVERNED_PREDICATES: NamedNode[] = [
     namedNode(DCT    + "title"),
     namedNode(DCT    + "created"),
     namedNode(DCT    + "modified"),
+    namedNode(DCT    + "conformsTo"),  // resource-kind hint (D86); derived from the wiki class → profile IRI
     namedNode(SCHEMA + "mainEntity"),
     namedNode(WIKI   + "maturity"),
     namedNode(PROV   + "wasGeneratedBy"),
@@ -173,6 +178,21 @@ export const WIKI_CLASS_TO_THING_CLASS: Record<string, string> = {
     [WIKI + "WorkingNote"]: SCHEMA + "Thing",
     [WIKI + "Resource"]:    SCHEMA + "Thing",
 };
+
+// wiki: dispatch class IRI → PROF profile IRI (resource-kind hint, D86). The
+// projector derives <> dct:conformsTo <profile> from the resource's wiki class
+// so ProfileLinkMetadataWriter emits Link: rel="profile". Slugs mirror the Python
+// importer's CONTENT_PROFILE_MAP (scripts/lib/rdf_gen.py) — the two write paths
+// must agree on the profile a class conforms to. Unmapped → DEFAULT_PROFILE.
+const PROFILE_BASE = PODBASE + "/vault/meta/profiles/";
+export const WIKI_CLASS_TO_PROFILE: Record<string, string> = {
+    [WIKI + "Concept"]:     PROFILE_BASE + "concept",
+    [WIKI + "Source"]:      PROFILE_BASE + "source",
+    [WIKI + "Person"]:      PROFILE_BASE + "person",
+    [WIKI + "Procedure"]:   PROFILE_BASE + "procedure",
+    [WIKI + "WorkingNote"]: PROFILE_BASE + "working",
+};
+export const DEFAULT_PROFILE = PROFILE_BASE + "page";
 
 // ---------------------------------------------------------------------------
 // Per-subject governed-predicate resolution (D81 Model A + D98 two-subject)

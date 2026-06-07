@@ -1,0 +1,14 @@
+@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix ldp:   <http://www.w3.org/ns/ldp#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+
+# Applied at container CREATION (apply.py block 8), BEFORE bootstrap content
+# (block 9b). Constraining at creation lets the overlay seed conformant contacts
+# (the marie-curie bridge) into this container — CSS H400s any attempt to
+# (re)constrain a NON-empty container, so the post-creation block-11 patch path
+# cannot be used once a bootstrap contact is present. Mirrors how wiki-memory
+# constrains its content containers at creation (containers/wiki/people/.meta).
+<> a ldp:Container, ldp:BasicContainer ;
+   solid:forClass vcard:Individual ;
+   ldp:constrainedBy </vault/meta/shapes/contact-card.shacl.ttl> .

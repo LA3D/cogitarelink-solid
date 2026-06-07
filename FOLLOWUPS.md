@@ -2,6 +2,16 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## 🔭 D113 view layer (2026-06-07, branch `view-layer`) — BUILT; eval PENDING
+
+Built on branch `view-layer` (15 commits; 41/41 unit tests + 12/12 live e2e; `make audit` 0 ERROR). Merge/push = Chuck's call.
+
+- [ ] **View-layer cold probe — D112 Probe-2 read-path re-run against the conditional trailer channel. PENDING — this is the eval that closes RQ-Substrate-4.** Probe 2 negative (0/2) showed the `mem:hasOpenAction` Link header never reached curl agents (body-only). The trailer now injects the signal into the body when open curation state exists. Re-run the same cold-agent probe; a passing result closes both RQ-Substrate-4 pieces (URI/namespace slice via D107 + view layer via D113).
+- [ ] **WIKI_CLASS_TO_PROFILE covers only 5 classes.** `Place`/`Event`/`Organization` fall through to the `page` profile even though dedicated class profiles exist. Extend the mapping if full per-class PROF hints are wanted on every GET.
+- [ ] **`mem:` IRI re-declaration now has a 3rd site.** `TrailerDecoratingStore` inlines the `mem:hasOpenAction` IRI constant; `ops-index/src/parseProposal.ts` and `profile-link/src/CurationLinkMetadataWriter.ts` already have it. Fold all three into the existing `mem.ttl` agreement-test lock (D112 FOLLOWUP item 5 pattern).
+- [ ] **Fused/graph Turtle serialization uses full IRIs (no prefixes).** Comunica's `@comunica/query-sparql` serializer emits unabbreviated IRIs. Add standard prefix declarations if fused-block readability matters for human review or cold-agent context.
+- [ ] **`OperationHandler` list snapshot in `view-layer.json` must be mirrored on a CSS version bump.** The handler is injected by position into the LdpHandler chain via Components.js Override. Same K1 tradeoff as AdmissionFloor — document which CSS version was current (v8.x at 2026-06-07) so a future bump knows to recheck the chain.
+
 ## 🔁 D112 curation protocol (2026-06-05, MERGED + pushed) — cold probes RUN 2026-06-06: curator loop VALIDATED; read-path NEGATIVE
 
 Built on branch `d112-curation-protocol` (10/10 plan tasks); e2e green; audit 0 ERROR / 1 known WARN;
@@ -1139,8 +1149,7 @@ Sibling repo (solid-agent-skills):
   ~~6. Tests: assert Link header presence on every resource GET~~
   ~~Design fully specified in `.claude/skills/solid-uri-conformance/SKILL.md` + `templates.md` Template E.~~
 
-- [ ] **`_profile=alt` introspection view.**
-  Reserved spec token (NOT `alternates` — see PROF research finding). Lists all profile × media-type combos for a resource. Part of the ProfileLinkMetadataWriter extension or a separate handler. Defer until Pod-bound agent eval shows a use case.
+- [x] **`_profile=alt` introspection view.** — DONE (D113, branch `view-layer`). `ViewHttpHandler` intercepts `?_profile=alt` and returns the profile listing (all negotiable profiles for the resource). `Link: rel="profile"` emitted for all 6 class profiles + 4 view profiles (doc/fused/graph/people tokens).
 
 - [ ] **CSS storage description PATCH gate.**
   Surfaced during overlay apply: CSS returns `405 MethodNotAllowedHttpError "Only GET requests can target the storage description."` Overlay's storage-patch.ttl couldn't be applied at runtime — the wiki:* L3 pointers in `.well-known/solid` come exclusively from `css/config/void-description.json` (static StaticStorageDescriber). Decision: either (a) keep all storage description triples in static config (current state, works); (b) override CSS to allow PATCH on storage description; (c) move L3 pointers entirely into overlay-patched `/vault/.meta`. Currently working as-is; revisit if RQ-Substrate-3 successor surfaces.

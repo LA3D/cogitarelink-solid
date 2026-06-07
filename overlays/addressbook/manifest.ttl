@@ -89,11 +89,14 @@
         [ overlay:contentPath "containers/people.ttl" ;
           overlay:hostedAt "/vault/contacts/people.ttl" ] ,
         [ overlay:contentPath "containers/groups.ttl" ;
-          overlay:hostedAt "/vault/contacts/groups.ttl" ] ;
+          overlay:hostedAt "/vault/contacts/groups.ttl" ] ,
+        [ overlay:contentPath "containers/marie-curie.ttl" ;
+          overlay:hostedAt "/vault/contacts/Person/marie-curie.ttl" ] ;
 
+    # Person/ is constrained at CREATION via containers/contacts/Person/.meta
+    # (block 8) so the marie-curie bridge contact can be bootstrapped into it;
+    # a block-11 re-constraint of the now-non-empty container would H400.
     overlay:installsContainerMetaPatch
-        [ overlay:targetContainer </vault/contacts/Person/> ;
-          overlay:metaPatchContent "person-container-meta.ttl" ] ,
         [ overlay:targetContainer </vault/contacts/Organization/> ;
           overlay:metaPatchContent "organization-container-meta.ttl" ] ,
         [ overlay:targetContainer </vault/contacts/Group/> ;
