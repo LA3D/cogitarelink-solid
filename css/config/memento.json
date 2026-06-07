@@ -14,7 +14,7 @@
       "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" }
     },
     {
-      "comment": "Insert MementoHttpHandler and WikiSearchHttpHandler immediately before LdpHandler so Memento-shaped and search-grep requests get claimed before standard LDP processing. Both insertions are in a single Override to satisfy the K1 one-Override-per-instance constraint.",
+      "comment": "Insert MementoHttpHandler, WikiSearchHttpHandler, and the two view-layer handlers (ViewHttpHandler + ViewSpaceHttpHandler) immediately before LdpHandler so Memento-shaped, search-grep, and ?_profile= / /vault/views/ requests get claimed before standard LDP processing. ALL four insertions are in this single Override to satisfy the K1 one-Override-per-instance constraint — the view-layer handler INSTANCES are declared in view-layer.json but their insertion steps live here (the same memento.json ↔ wiki-search.json split). Order does not matter: every handler falls through cleanly (NotImplementedHttpError) when its QSA/path is absent.",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:BaseHttpHandler" },
       "overrideSteps": [{
@@ -28,6 +28,18 @@
         "overrideParameter": { "@id": "css:dist/util/handlers/StatusWaterfallHandler.jsonld#StatusWaterfallHandler_handlers" },
         "overrideTarget": { "@id": "urn:solid-server:default:LdpHandler" },
         "overrideValue": { "@id": "urn:cogitarelink:WikiSearchHttpHandler" }
+      },
+      {
+        "@type": "OverrideListInsertBefore",
+        "overrideParameter": { "@id": "css:dist/util/handlers/StatusWaterfallHandler.jsonld#StatusWaterfallHandler_handlers" },
+        "overrideTarget": { "@id": "urn:solid-server:default:LdpHandler" },
+        "overrideValue": { "@id": "urn:cogitarelink:ViewHttpHandler" }
+      },
+      {
+        "@type": "OverrideListInsertBefore",
+        "overrideParameter": { "@id": "css:dist/util/handlers/StatusWaterfallHandler.jsonld#StatusWaterfallHandler_handlers" },
+        "overrideTarget": { "@id": "urn:solid-server:default:LdpHandler" },
+        "overrideValue": { "@id": "urn:cogitarelink:ViewSpaceHttpHandler" }
       }]
     },
     {

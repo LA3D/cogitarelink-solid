@@ -1,0 +1,86 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/asynchronous-handlers/^1.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/view-layer/^0.1.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "comment": "ViewAssembler (view-layer spec §3.1) — executes the view descriptors' declared CONSTRUCT/SELECT projection queries via embedded @comunica/query-sparql over EXPLICIT sources (no link traversal; the Pod hosts no SPARQL endpoint per D3/D29). Parameterless: engine + serializers are constructed internally. Shared by both view HTTP handlers.",
+      "@id": "urn:cogitarelink:ViewAssembler",
+      "@type": "ViewAssembler"
+    },
+    {
+      "comment": "ViewHttpHandler — per-resource ?_profile= conneg (view-layer spec §4): doc|fused|graph|alt over /vault/wiki/* resources. Inserted BEFORE LdpHandler in the BaseHttpHandler waterfall (same QSA-interception precedent as WikiSearchHttpHandler / MementoHttpHandler), so ?_profile-shaped GETs are claimed before standard LDP processing and fall through (NotImplementedHttpError) otherwise. store = urn:solid-server:default:ResourceStore = the MonitoringStore instance (the Monitoring-level store): internal reads MUST NOT pass through the TrailerDecoratingStore, which sits ABOVE Monitoring and only decorates the outbound LDP read path. baseUrl is the deployment baseUrl variable (NOT a literal); viewsBase is the pod-specific view-descriptor container (hardcoded string, same idiom as the AdmissionFloor stampPredicate / markdown-render storagePath).",
+      "@id": "urn:cogitarelink:ViewHttpHandler",
+      "@type": "ViewHttpHandler",
+      "store": { "@id": "urn:solid-server:default:ResourceStore" },
+      "assembler": { "@id": "urn:cogitarelink:ViewAssembler" },
+      "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
+      "viewsBase": "https://pod.vardeman.me/vault/meta/views/"
+    },
+    {
+      "comment": "ViewSpaceHttpHandler — the /vault/views/ cross-cutting virtual URL space (view-layer spec §6; Person demonstrator at /vault/views/people/). Read-only; assembles one entity from its multiple writable homes via a descriptor CONSTRUCT, sources enumerated through the Type Index (no source hardcode, D107). Inserted BEFORE LdpHandler alongside ViewHttpHandler. Same Monitoring-level store ref as ViewHttpHandler (bypasses the trailer). viewSpaceRoot = the served container path; typeIndexUrl = the Type Index used to enumerate person-class source containers.",
+      "@id": "urn:cogitarelink:ViewSpaceHttpHandler",
+      "@type": "ViewSpaceHttpHandler",
+      "store": { "@id": "urn:solid-server:default:ResourceStore" },
+      "assembler": { "@id": "urn:cogitarelink:ViewAssembler" },
+      "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
+      "viewsBase": "https://pod.vardeman.me/vault/meta/views/",
+      "viewSpaceRoot": "/vault/views/",
+      "typeIndexUrl": "https://pod.vardeman.me/vault/settings/publicTypeIndex"
+    },
+    {
+      "comment": "TrailerDecoratingStore (view-layer spec §4.3, decision A′) — the conditional dynamic trailer on default GET. A PassthroughStore that decorates ONLY the outbound LDP read path: it wraps urn:solid-server:default:ResourceStore (the MonitoringStore) and is referenced by the LDP OperationHandler (below) so it sits ABOVE Monitoring in the read path. Internal consumers (markdown-projection / mem-trigger / ops-index listeners, the two view handlers) all reference urn:solid-server:default:ResourceStore directly and therefore BYPASS the trailer — internal reads never see it. Note we do NOT re-@id the MonitoringStore as the trailer: ResourceStore must stay a MonitoringStore so its `changed` event subscription (CDC) keeps working — a PassthroughStore at that @id would emit no events. auxiliaryStrategy is the standard CSS strategy (used to skip decorating .meta auxiliaries).",
+      "@id": "urn:cogitarelink:ResourceStore_Trailer",
+      "@type": "TrailerDecoratingStore",
+      "source": { "@id": "urn:solid-server:default:ResourceStore" },
+      "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" }
+    },
+    {
+      "comment": "Interpose the TrailerDecoratingStore ABOVE MonitoringStore on the LDP read path. The LDP OperationHandler (config/ldp/handler/components/operation-handler.json) is a StatusWaterfallHandler whose Get/Post/Put/Delete/Head/Patch handlers all reference urn:solid-server:default:ResourceStore (= Monitoring) inline. We replace the whole handlers list (overrideParameters — the handlers are anonymous inline objects with no @id to anchor an InsertBefore against) so every operation handler reads/writes through urn:cogitarelink:ResourceStore_Trailer instead. The trailer is a plain passthrough for writes (events still fire once at Monitoring below it) and only decorates GET responses that carry mem:hasOpenAction. The StaticThrowHandler (405 MethodNotAllowed fallback) is replicated verbatim at the tail. CAVEAT (same tradeoff as the K1 overrideParameters workaround): this snapshots the upstream OperationHandler shape, so a CSS bump that adds an operation handler must be mirrored here.",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:OperationHandler" },
+      "overrideParameters": {
+        "@type": "StatusWaterfallHandler",
+        "handlers": [
+          {
+            "@type": "GetOperationHandler",
+            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" },
+            "eTagHandler": { "@id": "urn:solid-server:default:ETagHandler" }
+          },
+          {
+            "@type": "PostOperationHandler",
+            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" }
+          },
+          {
+            "@type": "PutOperationHandler",
+            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" },
+            "metadataStrategy": { "@id": "urn:solid-server:default:MetadataStrategy" }
+          },
+          {
+            "@type": "DeleteOperationHandler",
+            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" }
+          },
+          {
+            "@type": "HeadOperationHandler",
+            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" },
+            "eTagHandler": { "@id": "urn:solid-server:default:ETagHandler" }
+          },
+          {
+            "@type": "PatchOperationHandler",
+            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" }
+          },
+          {
+            "@type": "StaticThrowHandler",
+            "onlyHandle": true,
+            "factory": {
+              "@type": "ClassErrorFactory",
+              "error": { "@type": "MethodNotAllowedHttpError" }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

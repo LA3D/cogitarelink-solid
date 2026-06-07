@@ -52,8 +52,12 @@
         </vault/wiki/working/> ,
         </vault/wiki/.operations/> ,
         </vault/wiki/.events/> ,
-        </vault/meta/views/> ,
-        </vault/views/> ;
+        </vault/meta/views/> ;
+        # NB: /vault/views/ is a VIRTUAL URL space served entirely by
+        # ViewSpaceHttpHandler (read-only; sits before LdpHandler). It must NOT be
+        # installed as a real LDP container — the handler claims every request
+        # under it (incl. the container-create PUT), so a real-container install
+        # would 405. Only /vault/meta/views/ (the descriptor home) is real.
 
     overlay:installsShape
         [ overlay:document "shapes/resource.shacl.ttl" ;

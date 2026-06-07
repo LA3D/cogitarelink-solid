@@ -16,6 +16,7 @@ JS_EXTENSIONS := \
     css/extensions/memento \
     css/extensions/metadata-card \
     css/extensions/profile-link \
+    css/extensions/view-layer \
     css/extensions/shared/markdown-parsing
 
 .PHONY: up down reset rebuild rebuild-clean status logs import test test-py test-js install clean sync-validator-tbox check-validator-tbox audit verify
