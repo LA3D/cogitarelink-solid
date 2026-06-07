@@ -42,6 +42,7 @@ import {
   fetchDataset,
   isContainerIdentifier,
   NotFoundHttpError,
+  HttpError,
   INTERNAL_QUADS,
   AS,
   SOLID_AS,
@@ -65,6 +66,13 @@ import { ShaclValidationError } from '../error/ShaclValidationError';
 // storagePath). Re-exported as STAMP_PRED so importers keep one import site; the
 // stampAgreement test asserts config == this constant on both sides.
 export const STAMP_PRED = DEFAULT_STAMP_PRED;
+
+// Server-managed trailer marker (D108 explicit-write invariant §4 / Task 10).
+// Same string as css/extensions/view-layer/src/trailer.ts TRAILER_MARKER —
+// cross-extension import is not possible; same convention as the mem: IRI re-declarations.
+// Any write body containing this HTML-comment prefix is server-generated output that
+// was echo'd back; reject with a 422 rather than silently strip or corrupt the resource.
+const POD_NOTICE_MARKER = "<!-- pod:notice";
 
 export class AdmissionFloorStore extends PassthroughStore {
   protected readonly logger = getLoggerFor(this);
@@ -142,6 +150,11 @@ export class AdmissionFloorStore extends PassthroughStore {
     // call as a fresh BasicRepresentation so the body is re-readable downstream.
     const body = await readableToString(representation.data);
 
+    // Guard: reject before projection so the check fires even when the projector
+    // returns null (ungoverned body). A body containing the server-managed
+    // <!-- pod:notice marker was generated at serve time and must not be written back.
+    this.rejectIfNoticeMarker(body);
+
     const projected = await this.projector.project(id, body);
     if (!projected) {
       // Projector recognised the content-type but the body is not substrate-governed
@@ -192,6 +205,10 @@ export class AdmissionFloorStore extends PassthroughStore {
     }
 
     const body = await readableToString(representation.data);
+
+    // Guard BEFORE committing to the backend — same invariant as setRepresentation.
+    this.rejectIfNoticeMarker(body);
+
     const changes = await super.addResource(
       container,
       new BasicRepresentation(body, representation.metadata),
@@ -220,6 +237,23 @@ export class AdmissionFloorStore extends PassthroughStore {
     }
     await this.materialize(created, projected, body);
     return changes;
+  }
+
+  // Throw a 422 when the body contains the server-managed <!-- pod:notice region.
+  // The block is appended at serve time by TrailerDecoratingStore (view-layer); an
+  // agent that writes it back is echoing served output, not authoring new content.
+  // Explicit rejection (explicit-write invariant §4): teaching 422 > silent strip.
+  private rejectIfNoticeMarker(body: string): void {
+    if (body.includes(POD_NOTICE_MARKER)) {
+      throw new HttpError(
+        422,
+        'PodNoticeMarkerError',
+        "Body contains the server-managed <!-- pod:notice --> region. " +
+        "This block is generated at serve time and must not be written back. " +
+        "Re-fetch the pristine body with ?_profile=doc; make your assertion in prose, " +
+        "typed wikilinks, or a PATCH to the .meta resource.",
+      );
+    }
   }
 
   // Validate the projected graph against the container shape. Resolves on conformance;
