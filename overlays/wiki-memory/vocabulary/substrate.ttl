@@ -550,6 +550,12 @@ sub:extensionGuide
     """ ;
     rdfs:seeAlso </vault/meta/extending-l3.md> .
 
+sub:viewAuthority
+    a rdf:Property ;
+    rdfs:label "view authority" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate#> ;
+    rdfs:comment "Points at the PROF profile whose sh:agentInstruction states the document-vs-graph read/write authority division for this Pod's resources (D114). An agent reading the storage description follows this to learn which view is authoritative for what and when to read ?_profile=fused." .
+
 # ─────────────────────────────────────────────────────────────
 # Frame-model spine (D108) — make each content shape's node-frame
 # machine-readable on the shape itself (the normative spine).

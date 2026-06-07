@@ -374,6 +374,16 @@
             ]
           },
           {
+            "comment": "D114: view-authority contract pointer — the base PROF page profile whose sh:agentInstruction states the document-vs-graph read/write authority division and when to read ?_profile=fused. Met on arrival (D55 Tier-2); teach-the-convention, not per-resource.",
+            "@type": "StaticStorageDescriber",
+            "terms": [
+              {
+                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#viewAuthority",
+                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/page"
+              }
+            ]
+          },
+          {
             "comment": "Entry-point agent guide: explains the wiki-memory profile, substrate stratification, and wiki=profile (not wiki-app) orientation. Satisfies storage-description audit requirement via IRI pointer (StaticStorageDescriber emits IRIs, not literals). FORWARD DEPENDENCY: shapes/substrate/storage-description.shacl.ttl now HARD-REQUIRES this (Violation severity) \u2014 removing this entry flips `make audit` from pass to ERROR. Keep these two files in sync.",
             "@type": "StaticStorageDescriber",
             "terms": [
