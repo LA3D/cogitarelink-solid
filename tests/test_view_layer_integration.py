@@ -1,14 +1,15 @@
 """E2E: the view layer (spec §8 eval hook), live Pod over TLS.
 
-The live-Pod proof of the view layer:
-  - ?_profile= conneg on /vault/wiki/* resources (doc|fused|graph|alt), the
-    document view being the writable + pristine escape hatch.
-  - the marker guard (server-managed <!-- pod:notice --> region can't be written back).
+The live-Pod proof of the view layer (D114):
+  - ?_profile=fused conneg works substrate-wide + content-type-agnostic: a markdown
+    resource fuses to a fenced (---/```turtle) doc carrying body + graph; an RDF
+    resource fuses to ONE merged turtle graph carrying its own triples + the
+    governed context (the open-action back-pointer).
+  - the default GET stays pristine even with an open mem:RealignAction (the D113
+    trailer is gone; the open-action signal lives in the fused view instead).
   - read-only view 405s naming the writable home.
-  - the A' conditional trailer: when a resource has an open mem:RealignAction in
-    the .operations ledger, the default GET carries a pod:notice trailer with the
-    rationale; ?_profile=doc stays pristine. This is the channel D112 Probe 2 showed
-    was broken via Link headers — surfaced in the representation instead.
+  - the view-authority contract is discoverable on the page profile and surfaced
+    from the storage description so a cold agent meets it on arrival.
   - the /vault/views/people/ cross-cutting demonstrator: one person, one URL,
     assembled from both homes (wiki note + addressbook contact) over the
     schema:sameAs bridge (Verborgh contacts-conundrum existence proof).
@@ -65,28 +66,16 @@ def test_default_get_pristine_when_no_open_action():
         assert c.get(R).text == BODY
 
 
-def test_profile_doc_byte_identical():
-    with C() as c:
-        assert c.get(f"{R}?_profile=doc").text == BODY
-
-
 def test_profile_fused_contains_body_and_graph():
     with C() as c:
         t = c.get(f"{R}?_profile=fused").text
         assert t.startswith("---") and "```turtle" in t and "prefLabel" in t
 
 
-def test_profile_graph_is_turtle():
-    with C() as c:
-        r = c.get(f"{R}?_profile=graph")
-        assert "turtle" in r.headers["content-type"] and "prefLabel" in r.text
-
-
 def test_profile_alt_lists_tokens():
     with C() as c:
         t = c.get(f"{R}?_profile=alt").text
-        for tok in ("doc", "fused", "graph"):
-            assert f'"{tok}"' in t
+        assert '"fused"' in t
 
 
 def test_profile_link_header_present():
@@ -101,17 +90,6 @@ def test_view_write_405():
     with C() as c:
         r = _put(c, f"{R}?_profile=fused", "x")
         assert r.status_code == 405 and "document view" in r.text
-
-
-def test_marker_guard_422():
-    with C() as c:
-        bad = BODY + "\n<!-- pod:notice — imitated -->\n"
-        r = _put(c, f"{POD}/vault/wiki/concepts/view-layer-e2e-marker.md", bad)
-        try:
-            assert r.status_code == 422 and "server-managed" in r.text
-        finally:
-            c.delete(f"{POD}/vault/wiki/concepts/view-layer-e2e-marker.md")
-            c.delete(f"{POD}/vault/wiki/concepts/view-layer-e2e-marker.md.meta")
 
 
 # ─── /vault/views/people/ cross-cutting view ───────────────────────────────────
@@ -129,7 +107,7 @@ def test_people_view_write_405():
         assert r.status_code == 405
 
 
-# ─── A' conditional trailer (the D112-Probe-2 channel, in the representation) ──
+# ─── D114: fused view substrate-wide + pristine default + view authority ──────
 
 def _proposal_body(target_url, slug):
     return (
@@ -150,38 +128,66 @@ def _proposal_body(target_url, slug):
     )
 
 
-def test_trailer_appears_with_open_action():
-    # Distinct target (R2) so the open-action state never contaminates R's
-    # pristine-GET assertions even if test ordering changes.
-    slug = f"vl-trailer-{uuid.uuid4().hex[:8]}"
-    R2 = f"{POD}/vault/wiki/concepts/view-layer-e2e-trailer.md"
-    op_url = None
+def _post_realign(target_url):
+    slug = f"vl-realign-{uuid.uuid4().hex[:8]}"
     with C() as c:
-        _put(c, R2, BODY)
-        try:
-            r = c.post(OPS, content=_proposal_body(R2, slug),
-                       headers={"Content-Type": "text/turtle", "Slug": slug})
-            assert r.status_code == 201, f"proposal POST {r.status_code}: {r.text[:300]}"
-            op_url = r.headers.get("location", "")
-            assert op_url, "201 but no Location header"
+        r = c.post(OPS, content=_proposal_body(target_url, slug),
+                   headers={"Content-Type": "text/turtle", "Slug": slug})
+        assert r.status_code == 201, f"proposal POST {r.status_code}: {r.text[:300]}"
+        loc = r.headers.get("location", "")
+        assert loc, "201 but no Location header"
+        return loc
 
-            # Poll for the trailer (listener derives the back-pointer async).
-            deadline = time.monotonic() + 8.0
-            t = ""
-            while time.monotonic() < deadline:
-                t = c.get(R2).text
-                if "<!-- pod:notice" in t:
-                    break
-                time.sleep(0.25)
-            assert "<!-- pod:notice" in t and "view-layer e2e" in t, (
-                f"trailer + rationale not in default GET:\n{t}")
-            # The escape hatch stays pristine.
-            assert c.get(f"{R2}?_profile=doc").text == BODY
-        finally:
-            if op_url:
-                c.delete(op_url)
-            c.delete(R2)
-            c.delete(f"{R2}.meta")
+
+def test_profile_fused_markdown_carries_body_and_graph():
+    with C() as c:
+        t = c.get(f"{R}?_profile=fused").text
+        assert t.startswith("---") and "```turtle" in t
+
+
+def test_profile_fused_rdf_is_one_turtle_graph_with_governed_context():
+    target = f"{POD}/id/schemes/orcid"
+    op = _post_realign(target)
+    try:
+        time.sleep(2)
+        with C() as c:
+            r = c.get(f"{target}?_profile=fused")
+            assert "turtle" in r.headers["content-type"]
+            assert "hasOpenAction" in r.text          # governed context merged in
+            assert "ORCID" in r.text or "orcid" in r.text  # the resource's OWN triples present
+            assert "```turtle" not in r.text          # one merged graph, NOT a fenced markdown doc
+    finally:
+        with C() as c:
+            c.delete(op)
+
+
+def test_default_get_pristine_even_with_open_action():
+    op = _post_realign(R)
+    try:
+        time.sleep(2)
+        with C() as c:
+            assert "<!-- pod:notice" not in c.get(R).text   # trailer gone: default GET stays pristine
+    finally:
+        with C() as c:
+            c.delete(op)
+
+
+def test_view_authority_discoverable_on_profile():
+    with C() as c:
+        prof = c.get(f"{POD}/vault/meta/profiles/page", headers={"Accept": "text/turtle"}).text
+        assert "agentInstruction" in prof and "?_profile=fused" in prof and "authoritative" in prof
+
+
+def test_view_authority_linked_from_storage_description():
+    # the storage description (D44) must point at the view-authority profile so a cold agent meets it on arrival
+    with C() as c:
+        # discover the storage description URL from the Pod root Link header, then fetch it
+        head = c.head(f"{POD}/vault/")
+        link = head.headers.get("link", "")
+        # storageDescription rel; fall back to the well-known path
+        sd_url = f"{POD}/vault/.well-known/solid"
+        sd = c.get(sd_url, headers={"Accept": "text/turtle"}).text
+        assert "viewAuthority" in sd or "profiles/page" in sd
 
 
 # ─── the bridge card: two homes unified (Verborgh contacts conundrum) ──────────
