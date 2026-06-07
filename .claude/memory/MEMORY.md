@@ -55,7 +55,25 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   (D109 derive-rule violation; seeded narrower now stale); seeded exemplars teach phantom
   affordances; PROF not delivered on wiki notes (`describedby` is the actual dual-view
   affordance, unused by curl agents).
-  **▶ NEXT = D112 Probe-2 read-path cold-probe re-run** against the conditional trailer channel (D113). The read-path brainstorm + view layer are BUILT (branch `view-layer`, spec/plan dated 2026-06-07, D113). The trailer addresses Probe-2's delivery-channel failure (Link header → body injection). A passing re-run closes RQ-Substrate-4 (both pieces: URI/namespace slice via D107 + view layer via D113). Teaching agenda (skill-over-build / Knob 1) stays DEFERRED per Chuck's structure-before-teaching reorder.
+- **View-layer read-path cold probe RUN 2026-06-07 — ANSWERED** (report
+  `docs/plans/2026-06-07-view-layer-cold-probe-report.md`; harness `~/dev/probes/viewlayer/`;
+  2-arm design). **Arm A (markdown trailer) PASSED 2/2** vs the D112 Probe-2 baseline of 0/2:
+  the A′ `<!-- pod:notice -->` trailer puts the open-action signal in the body cold curl agents
+  already read; both runs surfaced the planted realign action unprompted as a "not authoritative —
+  verify first" caveat, drawing the actionable **rationale** from the body trailer (the Link
+  header carries only an opaque op IRI — what D112's agents ignored). Trailer is self-sufficient
+  (agents acted without a 2nd fetch); escape hatch `?_profile=doc` byte-identical; 422 marker guard
+  never fired. **Arm B (Turtle `/id/schemes/orcid`, faithful D112 replication) NEGATIVE 0/1
+  (expected, = coverage gap):** the trailer is markdown-only (`contentType==="text/markdown"`
+  guard), the agent GET the RDF record body-only and missed the Link header — same mechanism as
+  D112. **RQ-Atomic-Feedback-1 read-path = POSITIVE for markdown** (delivery→salience, both pass);
+  the body is the reliable agent channel, the Link header is not. **RQ-Substrate-4 now closeable
+  end-to-end** (URI slice via D107/RQ-View-2 + view-layer read-path via D113/this probe) — formal
+  close = a decisions.md edit, Chuck's call. **▶ NEXT = the RDF-resource open-action surface**
+  (FOLLOWUP): the trailer can't cover Turtle resources (scheme records, contacts); the RDF analogue
+  of A′ is folding `.meta`/open-action into the served representation or making the graph/fused view
+  the default for RDF resources. Teaching agenda (skill-over-build / Knob 1) stays DEFERRED per
+  Chuck's structure-before-teaching reorder.
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS

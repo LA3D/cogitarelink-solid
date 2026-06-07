@@ -2,11 +2,12 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## 🔭 D113 view layer (2026-06-07, branch `view-layer`) — BUILT; eval PENDING
+## 🔭 D113 view layer (2026-06-07) — MERGED to main + read-path eval DISCHARGED
 
-Built on branch `view-layer` (15 commits; 41/41 unit tests + 12/12 live e2e; `make audit` 0 ERROR). Merge/push = Chuck's call.
+Merged to main 2026-06-07 (merge commit `9dd3d92`; 41/41 unit + 12/12 live e2e; `make audit` 0 ERROR). Push = Chuck's call.
 
-- [ ] **View-layer cold probe — D112 Probe-2 read-path re-run against the conditional trailer channel. PENDING — this is the eval that closes RQ-Substrate-4.** Probe 2 negative (0/2) showed the `mem:hasOpenAction` Link header never reached curl agents (body-only). The trailer now injects the signal into the body when open curation state exists. Re-run the same cold-agent probe; a passing result closes both RQ-Substrate-4 pieces (URI/namespace slice via D107 + view layer via D113).
+- [x] **View-layer cold probe — D112 Probe-2 read-path re-run. DONE 2026-06-07** (report `docs/plans/2026-06-07-view-layer-cold-probe-report.md`; harness `~/dev/probes/viewlayer/`). Arm A (markdown trailer) **PASSED 2/2** vs the 0/2 baseline — the body trailer delivers the open-action signal cold curl agents read; both surfaced it unprompted as a caveat. RQ-Substrate-4 now **closeable end-to-end** (URI slice D107 + view-layer read-path D113); formal close = a decisions.md edit (Chuck's call).
+- [ ] **RDF-resource open-action surface (the next read-path gap).** Arm B of the probe (Turtle `/id/schemes/orcid`) stayed NEGATIVE 0/1: the trailer is markdown-only (`contentType==="text/markdown"` guard), so scheme records / contacts / any RDF resource still rely on the Link header curl agents miss. The RDF analogue of A′: fold the open-action `.meta` triple into the served representation, or make the graph/fused view the default for RDF resources (an open-action triple in a served-by-default graph view is in-band the way the trailer is for markdown). Next read-path brainstorm.
 - [ ] **WIKI_CLASS_TO_PROFILE covers only 5 classes.** `Place`/`Event`/`Organization` fall through to the `page` profile even though dedicated class profiles exist. Extend the mapping if full per-class PROF hints are wanted on every GET.
 - [ ] **`mem:` IRI re-declaration now has a 3rd site.** `TrailerDecoratingStore` inlines the `mem:hasOpenAction` IRI constant; `ops-index/src/parseProposal.ts` and `profile-link/src/CurationLinkMetadataWriter.ts` already have it. Fold all three into the existing `mem.ttl` agreement-test lock (D112 FOLLOWUP item 5 pattern).
 - [ ] **Fused/graph Turtle serialization uses full IRIs (no prefixes).** Comunica's `@comunica/query-sparql` serializer emits unabbreviated IRIs. Add standard prefix declarations if fused-block readability matters for human review or cold-agent context.
