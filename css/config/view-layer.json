@@ -29,58 +29,6 @@
       "viewsBase": "https://pod.vardeman.me/vault/meta/views/",
       "viewSpaceRoot": "/vault/views/",
       "typeIndexUrl": "https://pod.vardeman.me/vault/settings/publicTypeIndex"
-    },
-    {
-      "comment": "TrailerDecoratingStore (view-layer spec §4.3, decision A′) — the conditional dynamic trailer on default GET. A PassthroughStore that decorates ONLY the outbound LDP read path: it wraps urn:solid-server:default:ResourceStore (the MonitoringStore) and is referenced by the LDP OperationHandler (below) so it sits ABOVE Monitoring in the read path. Internal consumers (markdown-projection / mem-trigger / ops-index listeners, the two view handlers) all reference urn:solid-server:default:ResourceStore directly and therefore BYPASS the trailer — internal reads never see it. Note we do NOT re-@id the MonitoringStore as the trailer: ResourceStore must stay a MonitoringStore so its `changed` event subscription (CDC) keeps working — a PassthroughStore at that @id would emit no events. auxiliaryStrategy is the standard CSS strategy (used to skip decorating .meta auxiliaries).",
-      "@id": "urn:cogitarelink:ResourceStore_Trailer",
-      "@type": "TrailerDecoratingStore",
-      "source": { "@id": "urn:solid-server:default:ResourceStore" },
-      "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" }
-    },
-    {
-      "comment": "Interpose the TrailerDecoratingStore ABOVE MonitoringStore on the LDP read path. The LDP OperationHandler (config/ldp/handler/components/operation-handler.json) is a StatusWaterfallHandler whose Get/Post/Put/Delete/Head/Patch handlers all reference urn:solid-server:default:ResourceStore (= Monitoring) inline. We replace the whole handlers list (overrideParameters — the handlers are anonymous inline objects with no @id to anchor an InsertBefore against) so every operation handler reads/writes through urn:cogitarelink:ResourceStore_Trailer instead. The trailer is a plain passthrough for writes (events still fire once at Monitoring below it) and only decorates GET responses that carry mem:hasOpenAction. The StaticThrowHandler (405 MethodNotAllowed fallback) is replicated verbatim at the tail. CAVEAT (same tradeoff as the K1 overrideParameters workaround): this snapshots the upstream OperationHandler shape, so a CSS bump that adds an operation handler must be mirrored here.",
-      "@type": "Override",
-      "overrideInstance": { "@id": "urn:solid-server:default:OperationHandler" },
-      "overrideParameters": {
-        "@type": "StatusWaterfallHandler",
-        "handlers": [
-          {
-            "@type": "GetOperationHandler",
-            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" },
-            "eTagHandler": { "@id": "urn:solid-server:default:ETagHandler" }
-          },
-          {
-            "@type": "PostOperationHandler",
-            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" }
-          },
-          {
-            "@type": "PutOperationHandler",
-            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" },
-            "metadataStrategy": { "@id": "urn:solid-server:default:MetadataStrategy" }
-          },
-          {
-            "@type": "DeleteOperationHandler",
-            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" }
-          },
-          {
-            "@type": "HeadOperationHandler",
-            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" },
-            "eTagHandler": { "@id": "urn:solid-server:default:ETagHandler" }
-          },
-          {
-            "@type": "PatchOperationHandler",
-            "store": { "@id": "urn:cogitarelink:ResourceStore_Trailer" }
-          },
-          {
-            "@type": "StaticThrowHandler",
-            "onlyHandle": true,
-            "factory": {
-              "@type": "ClassErrorFactory",
-              "error": { "@type": "MethodNotAllowedHttpError" }
-            }
-          }
-        ]
-      }
     }
   ]
 }
