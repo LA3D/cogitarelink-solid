@@ -49,6 +49,31 @@ agree (dual-layer projection); the correction lives only in the open action. Que
 Regression arms (write round-trip, curator loop) both PASSED — this is a "not sufficient,"
 not a regression.
 
+### 2.1 All three channels carry the signal in *bespoke* vocabulary (the wiring finding, 2026-06-08)
+
+Inspecting the actual headers the floor agent received (`curl -i`), the open action is the
+**one rel in the whole block that is a private full-IRI in our own pod namespace**:
+
+```
+rel="type" · rel="timemap"/"timegate" · rel="profile" · rel="describedby"   ← standard / IANA-registered, model has a prior
+rel="…/solid#storageDescription"                                            ← recognized Solid term
+rel="https://pod.vardeman.me/vault/ontology/mem#hasOpenAction"              ← OUR private IRI, no prior — reads as vendor noise
+```
+
+So the **same root cause appears in three places**, all app-private:
+
+| Channel | How we wired it | Why the agent skips it |
+|---|---|---|
+| Body `.meta` triple | `mem:hasOpenAction` (sibling of `skos:broader`) | bespoke vocab + off the predicate path |
+| Link header | `rel="…/mem#hasOpenAction"` | bespoke full-IRI rel — no training prior; reads as noise |
+| (contrast) `describedby`/`profile`/`type`/`timemap` | standard rels | recognized — yet agents *still* didn't follow them, see §4 tension #6 |
+
+Two compounding facts from the trajectories: (a) in a focused/confirm task agents **barely
+engage Link headers at all** — the floor agent had this whole block and went straight to body
+content; (b) when an agent *does* enumerate headers (the D113 `-v` "describe this resource"
+task), it parsed `hasOpenAction` only because the rel string literally spells "hasOpenAction"
+in English — not as a known rel — and still needed the body trailer's rationale to act.
+
 ## 3. The reframe (what the evidence points at)
 
 Stop saying "annotate the triple" — it smuggles in two couplings (our `mem:` vocab + the
@@ -98,7 +123,42 @@ Two separable commitments fall out, and they map cleanly onto Chuck's coupling w
    (`owl:deprecated`, `dcterms:isReplacedBy`, `prov:wasRevisionOf`/`prov:invalidatedAtTime`,
    `schema:supersededBy`) because their training already carries the semantics — where they
    ignore a bespoke `mem:hasOpenAction`? If yes, "send higher signals via standard vocab" is
-   a cheap, general lever independent of the positioning question.
+   a cheap, general lever independent of the positioning question. **But standard vocab is
+   only ONE route to grounding — see tension #5.**
+5. **Grounding: pretraining prior vs in-context definition (Chuck, 2026-06-08).** A bespoke
+   IRI like `mem:hasOpenAction` is *dereferenceable* (you can GET the ontology) but the agent
+   has **no basis to know it is an affordance** — something to act on — unless its definition
+   is in context. Two routes to grounding, not one:
+   - **(5a) Standard vocab** — the definition is already in pretraining (tension #4). Cheap,
+     general, zero load.
+   - **(5b) Bespoke vocab + load the definition into context** — keep `mem:` terms but ensure
+     the agent has the relevant ontology/affordance descriptor in its context window so it
+     knows `hasOpenAction` is an actionable governed-context flag. This is **layered context
+     loading** (D109: base vocabulary index on startup; per-app ontologies loaded dynamically
+     via the interop `ApplicationRegistration`/`AccessNeedGroup`/`registeredShapeTree` path).
+     The eval agents had **no** vocab definitions loaded — so they had no basis to interpret
+     `hasOpenAction` even where it was in context. Untested whether loading it flips behavior.
+   Implication: "use standard vocab" and "load the bespoke ontology" are *alternatives* for
+   the grounding problem; they can also combine. Either way, **an ungrounded bespoke signal is
+   uninterpretable by construction** — which is the deepest read of why all three channels failed.
+6. **Perception channel × tool design × RL distribution (Chuck, 2026-06-08).** Headers are a
+   structurally weak channel for reasons *upstream of vocabulary*: (a) a raw `curl` tool
+   returns headers as undifferentiated text the agent must opt to read; (b) the model's own
+   native fetch tools surface HTTP differently than curl does; (c) **plausibly the model is
+   RL-trained over curl actions in a distribution where headers are rarely load-bearing**, so
+   it is not reinforced to attend to them (hypothesis, hedged — header usage in the wild is
+   not zero, and this is hard to verify from our side). Consequence: **you probably cannot make
+   the header channel land with a stock curl tool, regardless of how standard the rel is.** The
+   fix is tool-side — a curl-*wrapping* tool (or the D114 CLI/MCP contract tool) that
+   **foregrounds** governed context rather than returning raw merged data. Note the CLI fused
+   read already *did* put `hasOpenAction` in the agent's output and the agent still missed it
+   (sibling triple in a JSON blob) — so "foreground" means *actively surface/highlight the
+   governed flag*, not merely include it. This ties directly to the D114 tool-tier decision
+   (curl = degraded floor; CLI/MCP = contract): the contract tool's job is to make governed
+   context **perceptually unmissable**, not just present. Corollary: the **Link-header channel
+   for governed context is likely a dead end** — D112 found it doesn't arrive; we now understand
+   the structural why (tool + RL distribution + bespoke rel). Stop leaning on it; the body/
+   fused/tool channel is where attention lives.
 
 ## 5. The meta-question — are we framing this wrong? (keep open)
 
@@ -142,6 +202,19 @@ linear-attention salience is achievable — which would argue we *under-killed* 
 and should bring back a **standard, content-type-aware, value-level** version of it. That is
 exactly what the experiments are for.
 
+**Two updates to the lean from the 2026-06-08 channel/grounding/tool findings:**
+- The grounding axis (tension #5) gives a *second* route I had collapsed: we may not need
+  standard vocab at all if we **load the bespoke vocab definition into the agent's context**
+  (layered context loading, D109/interop). Standard-vocab and load-the-ontology are
+  alternatives; the lean should test both, not assume standard-vocab is the only grounding.
+- The perception/tool axis (tension #6) says the *channel* matters as much as the vocab: the
+  **tool that delivers the read must foreground governed context**, because raw curl (and
+  probably the model's RL distribution) won't surface it — and even the CLI's merged-JSON
+  fused read didn't, because "present in a blob" ≠ "foregrounded." So the lean now includes a
+  **tool-side commitment**: the D114 CLI/MCP contract tool should actively surface governed
+  flags (a "⚠ governed status" section), not just merge triples. **Abandon the Link-header
+  channel for governed context.**
+
 ## 7. Experiment matrix (run before deciding)
 
 Reuse `~/dev/probes/d114/` (Tier-3 + floor over-trust arms). Each cell = the same over-trust
@@ -156,10 +229,18 @@ contestation (and trace *why* via the reasoning, not just tool calls — the D11
 | E4 | Modality | RDF graph-blob signal | markdown ⚠ on the read line (content-type-aware) | tension #3 |
 | E5 | Disposition | no contract on path | contract injected into the agent's task framing | F1 vs F2 |
 | E6 | Question shape | "what is the broader?" (current) | "what is the broader, and is it current?" | how much cue is needed; baselines the ceiling |
+| E7 | **Grounding** | no vocab definition in context (current) | bespoke `mem:` kept, but its ontology/affordance-descriptor loaded into the agent's context | tension #5 (prior vs in-context definition) — does grounding alone flip behavior without changing vocab? |
+| E8 | **Tool / perception channel** | raw `curl` / merged-JSON `solid-pod read` (current) | a curl-wrapping / CLI tool that **foregrounds** governed flags (a "⚠ governed status" section), not just merges | tension #6 (perception × tool × RL distribution) — is the fix tool-side? |
 
 Notes: E5/E6 calibrate whether the failure is substrate (F1) or agent (F2). E6 with a cue is
 the *ceiling* — if agents still over-trust *with* a "is it current?" cue, that's a strong F2/F3
-signal. Keep n≥2 per cell; raw-audit reasoning; watch the `-v` confound.
+signal. **E7 and E8 are the 2026-06-08 additions and may be the highest-leverage cells:** E7
+tests whether ungroundedness (not vocabulary or position) is the root — keep `mem:` but load
+its definition; E8 tests whether the channel/tool is the root — same signal, a tool that
+foregrounds it. If E7 or E8 flips behavior alone, the fix is cheaper and more general than any
+representation-side reshaping. Also add a **Link-header-vs-body** control (same signal, header
+only vs body/tool-output) to confirm the header channel is dead. Keep n≥2 per cell; raw-audit
+reasoning; watch the `-v` confound.
 
 ## 8. Prior art to pull (before/while experimenting)
 
@@ -168,6 +249,20 @@ signal. Keep n≥2 per cell; raw-audit reasoning; watch the `-v` confound.
   `schema:supersededBy`. Which do current models actually recognize + act on? (E1.)
 - **Statement-level annotation:** RDF 1.2 / RDF-star quoted triples; classic reification;
   singleton properties; named-graph-per-statement. Follow-ability + tooling reality.
+- **Link relations (the wiring finding):** RFC 8288 (Web Linking — extension relation types
+  are full IRIs, exactly our `mem#hasOpenAction` case, and carry no agreed semantics); the
+  IANA Link Relations registry (which short tokens models actually have a prior for); RFC 5829
+  (`predecessor-version`/`successor-version`/`version-history` — registered, model-known,
+  candidate standard carriers for "this has a pending revision"). Plus: is the header channel
+  worth keeping at all given §4 #6? (Likely no for governed context.)
+- **Grounding / in-context vocab loading (tension #5):** D109 layered context loading (base
+  vocabulary index on startup + per-app ontologies via interop registration); the
+  affordance-descriptor architecture (`solid-affordance-descriptors`, D52/D55) — descriptors
+  exist precisely to *tell the agent what an affordance is*; open question is whether they
+  reach context. SHACL `sh:agentInstruction` as the in-context definition carrier.
+- **Tool / perception (tension #6):** the D114 tool-tier decision (curl floor vs CLI/MCP
+  contract); `solid-agent-skills` `solid-pod` CLI (the wrap point); the planned Pod MCP
+  (`jeswr/solid-mcp` seed) — where a "foreground governed context" behavior would live.
 - **Verborgh, *What's in a Pod?*** — contextualized statements (policy/provenance/trust per
   triple) is exactly the hybrid-KG frame; staleness is another such context.
 - **Vault (agentic-memory) notes:** LLM-Wiki-v2 "confirmed by 3 sources, confidence 0.9";
