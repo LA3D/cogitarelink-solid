@@ -67,10 +67,17 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   hasOpenAction/open-action/realign/stale anywhere in either run). Both agents are **predicate-directed**: "find
   `skos:broader` → confirm it" → done; `hasOpenAction` is a SIBLING triple on the same subject, structurally
   invisible to attention scanning for one predicate. Not "opaque pointer not followed" — **never-registered**.
-  ▶ Fix consequence: the staleness must be ATTACHED TO the qualified triple (annotate `skos:broader` itself),
-  not parked as a `<resource> mem:hasOpenAction <op>` back-pointer — a back-pointer can't intercept
-  predicate-directed reading (partly re-vindicates the trailer, which intercepted linear body attention). The
-  view-authority contract is deployed but UNCONSULTED (agents go straight to the resource URL). n=1/arm.
+  **▶ Filed as RQ-Salience-1** (OPEN research thread; framing + evidence + experiment matrix E1–E6 + Claude's
+  not-yet-decided lean in `docs/research/2026-06-08-read-path-salience.md`). Reframe (away from "annotate the
+  triple", which couples to `mem:`): **put contestation in STANDARD vocab — `owl:deprecated`/`dcterms:isReplacedBy`/
+  `prov:wasRevisionOf`/`invalidatedAtTime`, model priors — on the node the agent's own follow-your-nose
+  traversal already visits** (the eval agent *already* fetched the broader target to confirm). App-specific SOURCE
+  of judgment (curation ledger) stays coupled; SURFACED signal must be standard + on-path + no `mem:` literacy.
+  Tensions undecided: node-level (followable/defames global target) vs statement-level (right/unfollowable in
+  RDF); flag vs refuse-to-serve; data-layer vs token-layer salience (we may have UNDER-killed the trailer).
+  Meta-question open: substrate-honesty (F1) vs agent-disposition (F2) vs mis-modeled (F3). **Chuck wants more
+  agentic-behavior experiments before deciding the fix.** view-authority contract deployed but UNCONSULTED
+  (agents go straight to the resource URL). n=1/arm.
   **Regression arms PASS**: Arm 3 write round-trip = 201, zero 422, grammar→`.meta`, fused renders (authoring
   intact); d112 Probe-1 curator re-run = conformant proposal 201, floor taught (2×422→corrected), propose-only
   held, acme untouched (curator loop intact). `make audit` 0 ERROR throughout. **RQ-Substrate-4 read-path STAYS
