@@ -7,6 +7,12 @@ and want more agentic-behavior experiments before committing a fix.
 **Reload context:** this doc + the eval report + the trajectories at `~/dev/probes/d114/runs/`
 + decisions D112/D113/D114 + RQ-View-2 report. This is enough to resume cold.
 
+> **Sibling thread (run FIRST):** RQ-Conneg-1 — *is the view layer over-built relative to pure
+> Solid?* (`docs/research/2026-06-08-solid-view-mechanism-vs-profiles.md`). Its H0/H1 (do agents do
+> plain content negotiation + `describedby` at all?) are upstream of the salience fix: a graph view
+> selected by the standard `Accept` header rides a model prior where `?_profile=fused` is bespoke,
+> so simplification and salience point the same way. Settle the conneg baseline before tuning signals here.
+
 ---
 
 ## 1. The problem in one paragraph

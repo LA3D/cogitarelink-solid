@@ -86,6 +86,18 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   (content-type-agnostic redo of what the trailer's rationale-inlining got right), and/or get the contract onto
   the agent's path, and/or teach open-action semantics. **Push: cleared on Chuck's gate (improvement + no
   regression) — his call.**
+- **▶▶ NEXT SESSION'S FIRST EXPERIMENTS = RQ-Conneg-1** (`docs/research/2026-06-08-solid-view-mechanism-vs-profiles.md`;
+  decisions.md RQ-Conneg-1): **is the view layer over-built relative to pure Solid?** Verborgh's *What's in a Pod?*
+  uses NO PROF/conneg-by-profile/Link-rel-profile/media-type-conneg (verified — views = abstract URL↔graph mappings,
+  deferred); the D114 eval shows agents ignored all our imported machinery; **live-tested: CSS already serves
+  document-vs-graph by pure `Accept` conneg** (`text/markdown`→body; `text/turtle`→a graph, but only `<>` page-level
+  10 lines; full governed graph = `.meta` via `describedby`, 22 lines). `?_profile=fused` = aggregation not selection.
+  Experiment ladder **H0** (do agents do plain conneg/describedby AT ALL? — eval: they conneg containers/`.meta` but
+  default-GET documents) → **H1** (does pure Solid conneg+describedby+fused-as-tool solve the dual view as well as the
+  PROF stack?) → **H2** (does conneg-by-profile add value, or is it mis-instructed / buggy / unusable-because-agents-
+  can't-conneg?). Chuck's suspicion: agents may not do plain conneg well, so can't do conneg-by-profile. Keep regardless:
+  `.meta`/describedby, media-type conneg, fused-as-tool, the Person cross-cutting view (Verborgh's actual contribution).
+  Do NOT pre-emptively rip out (D114 validated). Sibling of RQ-Salience-1 (H0/H1 feed it). Reuse `~/dev/probes/d114/`.
 - Direction (2026-05-15 pivot, D70–D74): wiki-memory L3 is the
   canonical reference profile; vault import is one application, not the MVP.
 - **Live Pod**: dev-allow-all auth (see auto-memory `behavior_before_security.md`). TLS
