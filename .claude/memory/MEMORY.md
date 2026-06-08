@@ -62,10 +62,15 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   Retrieval; correction only in the ledger). **Arm 1 Tier-3** (curl+solid-pod): `solid-pod read` (fused)
   **DID deliver `mem:hasOpenAction` into context** — agent ignored it, answered the stale value high-conf,
   never dereferenced the op, never read the contract. **Arm 2 floor**: same, worse ("modified today → fresh"
-  false inference). **Delivery ✅ / interpretation ✗** — over-trust moved from delivery (D112 dead Link
-  header) to SALIENCE: `hasOpenAction → <op-url>` is an opaque pointer agents don't follow; the view-authority
-  contract is deployed but UNCONSULTED (agents handed a URL go straight to it, never the storage desc/profile).
-  Same failure class as D112 Probe-2, now confirmed to persist with in-band delivery at the tool tier. n=1/arm.
+  false inference). **Delivery ✅ / interpretation ✗.** Reading the FULL reasoning (not just tool calls — Chuck's catch)
+  sharpened the diagnosis: the open action **never entered the agent's attention at all** (zero mentions of
+  hasOpenAction/open-action/realign/stale anywhere in either run). Both agents are **predicate-directed**: "find
+  `skos:broader` → confirm it" → done; `hasOpenAction` is a SIBLING triple on the same subject, structurally
+  invisible to attention scanning for one predicate. Not "opaque pointer not followed" — **never-registered**.
+  ▶ Fix consequence: the staleness must be ATTACHED TO the qualified triple (annotate `skos:broader` itself),
+  not parked as a `<resource> mem:hasOpenAction <op>` back-pointer — a back-pointer can't intercept
+  predicate-directed reading (partly re-vindicates the trailer, which intercepted linear body attention). The
+  view-authority contract is deployed but UNCONSULTED (agents go straight to the resource URL). n=1/arm.
   **Regression arms PASS**: Arm 3 write round-trip = 201, zero 422, grammar→`.meta`, fused renders (authoring
   intact); d112 Probe-1 curator re-run = conformant proposal 201, floor taught (2×422→corrected), propose-only
   held, acme untouched (curator loop intact). `make audit` 0 ERROR throughout. **RQ-Substrate-4 read-path STAYS
