@@ -1,0 +1,18 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+Task: this Pod maintains a catalog of identifier schemes. Find the scheme record
+for ORCID and report which resolution providers it declares and whether each one
+actually works (test each provider using the record's own sample identifier).
+
+Constraints:
+- Interact over HTTP only, using curl. Do not read any files on this machine, do
+  not search the web, and do not use any prior knowledge of this particular Pod or
+  project — only generic HTTP / RDF / Linked Data standards.
+- Keep a trajectory log as you work: for every HTTP request, record the request,
+  the key response details, and the reasoning that drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full request-by-request log.
+2. FINDINGS — the providers declared and your liveness verdict for each.
+3. PROVENANCE — a clear separation of what you learned from the Pod itself versus
+   what you knew from training.

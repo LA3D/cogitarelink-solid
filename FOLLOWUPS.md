@@ -2,11 +2,12 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## 🧪 RQ-Conneg-1 + RQ-Salience-1 experiments (2026-06-09) — H0/H1/E8 RUN
+## 🧪 RQ-Conneg-1 + RQ-Salience-1 experiments (2026-06-09) — RUN; disposition is the lever
 
-Reports in `docs/plans/2026-06-09-rq-conneg-1-{h0,h1,e8-graph-tool}-report.md`; living docs updated
-(`docs/research/2026-06-08-{solid-view-mechanism-vs-profiles,read-path-salience}.md`). Harnesses:
-`~/dev/probes/conneg-h0`, `conneg-h1`, `conneg-e8` (the last reuses the d114 trap + bin).
+Reports in `docs/plans/2026-06-09-rq-{conneg-1-{h0,h1,e8-graph-tool},salience-1-{e1,e5,e5b,bootstrap-test}}-report.md`;
+living docs `docs/research/2026-06-08-{solid-view-mechanism-vs-profiles,read-path-salience}.md`. Harnesses ported
+to `evals/` (portable templates; run from a copy outside any repo): `conneg-h0/h1/e8`, `salience-e1/e5/e5b/bootstrap`
+(salience-e5b + salience-bootstrap reuse the salience-e5 trap; bootstrap also carries `setup/agentguide-{original,augmented}.md`).
 
 - [x] **H0 — agents DO conneg, robustly.** Bare agents go HEAD-first → follow `describedby`→`.meta` →
   request RDF; reason about Link rels by *known semantics*. `describedby` is the load-bearing native
@@ -20,10 +21,27 @@ Reports in `docs/plans/2026-06-09-rq-conneg-1-{h0,h1,e8-graph-tool}-report.md`; 
   the `hasOpenAction` link and split — 1 corrected to Hierarchical Retrieval, 1 **defensibly kept PD**
   (the `RealignAction` is `PotentialActionStatus`/proposed + the target 404s). NEW: surfacing ≠ acting —
   the signal's *applied-vs-proposed* semantics drive the decision; the trap conflates them.
-- [ ] **▶ NEXT — RQ-Salience-1 E1 + E7 (+ E5-as-disposition).** E1 standard supersession vocab
-  (`owl:deprecated`/`dcterms:isReplacedBy`/`prov:invalidatedAtTime`); E7 load the `mem:` definition into
-  context; E5 the "audit governance before trusting a value" disposition may be the highest-leverage,
-  most general lever. Resolve the E1 placement knot first (node-level vs edge-local — RQ-Salience-1 #1).
+- [x] **RQ-Salience-1 ANSWERED — over-trust = agent DISPOSITION (confirm-mode), not delivery/vocab/view.**
+  **E1** standard vocab NOT the lever (0/3; agents in confirm-mode from step 1; non-scanned sibling missed
+  regardless of vocab). **E5** content-laden "audit-before-trust" preamble flips it 3/3 (overcomes the
+  proto-knowledge gap — a disposed agent follows the bespoke link *because it's auditing*). **E5b** the
+  disposition must be CONTENT-LADEN — sharp L3→L4 threshold; generic diligence fails 0/8 (absorbed into
+  confirm-mode). **Bootstrap test** pod-delivered content works when consumed but consumption leaks
+  (cold agents don't bootstrap 0/3; agentGuide pointer too deep 1/3). **Cut A** disposition in the
+  immediate `.well-known` `sh:agentInstruction` literal (`void-description.json`, committed) → efficacy 3/3.
+  **NET: content ✓ · placement ✓ (immediate Layer-0 ≫ pointer) · consumption ✗ (cold agents don't bootstrap → skill/MCP).**
+- [ ] **▶ NEXT — design the read-path memory STRUCTURE** (brainstorming track open; `superpowers:brainstorming`).
+  Two coupled halves the experiments established (gbrain-informed, `garrytan/gbrain`): **(a) Pod Layer-0** =
+  lean self-description leading with orientation + routing index + the disposition literal (defer the RDF
+  catalog machinery — the "less text" lesson; D109 layered-context-loading / minimum-index); **(b) agent-side
+  consume-first disposition** delivered by skill (baked in) / **MCP gateway** (forces consumption + foregrounds
+  governance — the fix for the 0/3 consumption leak) / bootstrap (weakest). The pod makes the disposition
+  *consumable*; it can't *install* it. Chuck flagged **MCP design + pod refactor** as the dependent build.
+  Open sub-threads from E5b: emphasis-vs-content not fully isolated (terse-but-specific L3.5); does the
+  disposition need the failure-mode *taxonomy* or does "hunt for any contestation signal" generalize.
+- [ ] **E7 (grounding) — still UNRUN** (load the `mem:` definition into context, keep bespoke vocab). E1/E5
+  suggest it won't help a *sibling* an agent in confirm-mode never scans, but it's a clean untested cell if
+  the structure design wants the data.
 - [ ] **RQ-Conneg-1 over-build verdict — provisionally CONFIRMED; H2 likely moot.** Pure Solid
   (`describedby` + media-type conneg + PROF-as-hint) suffices; `?_profile=` selection never reached across
   H0/H1/E8. Don't pre-emptively strip (D114 validated); a strip-back is its own spec.

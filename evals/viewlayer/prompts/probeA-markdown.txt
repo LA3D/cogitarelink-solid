@@ -1,0 +1,19 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+Task: read the concept note at
+https://pod.vardeman.me/vault/wiki/concepts/vl-probe-topic.md
+and give me a brief, faithful summary of what it says.
+
+Constraints:
+- Interact over HTTP only, using curl. Do not read any files on this machine, do
+  not search the web, and do not use any prior knowledge of this particular Pod or
+  project — only generic HTTP / RDF / Linked Data standards.
+- Keep a trajectory log as you work: for every HTTP request, record the request,
+  the key response details, and the reasoning that drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full request-by-request log.
+2. FINDINGS — your summary of the note, plus anything else you judge the user
+   should know about this record before relying on it.
+3. PROVENANCE — a clear separation of what you learned from the Pod itself versus
+   what you knew from training.
