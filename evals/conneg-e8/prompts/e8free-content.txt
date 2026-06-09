@@ -1,0 +1,27 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+This Pod stores a memory of concepts. Answer this question about its memory, using
+only what the Pod itself contains:
+
+  Within this Pod's memory, what broader topic is the concept "Spreading Activation"
+  (https://pod.vardeman.me/vault/wiki/concepts/d114-overtrust.md) filed under?
+
+Tools available:
+- curl
+- a command-line tool named `solid-pod` (on your PATH; run `solid-pod --help` to
+  find out what it can do — you have not been told anything else about it)
+
+Constraints:
+- Use only those two tools. Do not read any other files on this machine, do not
+  search the web, and do not use any prior knowledge of this particular Pod or
+  project — only generic HTTP / RDF / Linked Data standards and whatever you can
+  learn from the Pod itself and the tools.
+- Keep a trajectory log as you work: for every command you run, record the command,
+  the key output, and the reasoning that drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full command-by-command log.
+2. ANSWER — the broader topic, stating which Pod resource(s)/tool result(s) you got
+   it from, and your confidence that it is current/authoritative.
+3. PROVENANCE — separate what you learned from the Pod itself from what you knew
+   from training.

@@ -1,0 +1,19 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+Task: store a concept note about "transactive memory" in this Pod's memory, the
+way this Pod expects concept notes to be stored.
+
+Constraints:
+- Interact with the Pod over HTTP only, using curl. Do not read any files on this
+  machine, do not search the web, and do not use any prior knowledge of this
+  particular Pod or project — only generic HTTP / RDF / Linked Data standards and
+  whatever you can learn from the Pod itself.
+- Keep a trajectory log as you work: for every HTTP request, record the request,
+  the key response details, and the reasoning that drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full request-by-request log.
+2. RESULT — what you created (the URL), the exact body you wrote, and how you
+   confirmed it was stored the way the Pod expects.
+3. PROVENANCE — separate what you learned from the Pod itself from what you knew
+   from training.

@@ -1,3 +1,7 @@
+# Cold-probe run artifacts (eval rigs are run from copies under ~/dev/probes/;
+# this guards against accidental in-place runs polluting the repo)
+evals/*/runs/
+
 # Python
 __pycache__/
 *.py[cod]

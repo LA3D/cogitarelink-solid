@@ -1,11 +1,28 @@
 # Cold-probe eval rigs (portable)
 
-The harnesses that ran the D112 curation-protocol probes (2026-06-06) and the
-RQ-View-2 dual-view probes (2026-06-07). Scripts/prompts/grading only — run
-artifacts (trajectory.jsonl, agent reports, pod-state snapshots, captured
-ledger bodies) are machine-local under `~/dev/probes/{d112,rqview2}/runs/` on
-the machine that ran them; the committed reports in `docs/plans/` summarize
-them.
+> **Status:** research apparatus, not product. These rigs are the lab notebook for the
+> RQ-* questions — co-located with the substrate to prevent drift (the substrate must
+> never depend *on* `evals/`). The product conformance suite a forker runs is `tests/`.
+> The eventual fork-facing artifact is a Pod-URL-*parameterized* agentic-affordance suite;
+> these rigs hardcode `pod.vardeman.me` and are a step toward, not yet, that. (See the
+> 2026-06-09 repo-design discussion.)
+
+Rigs present:
+- **d112** — curation-protocol probes (2026-06-06).
+- **rqview2** — dual-view probes (2026-06-07).
+- **d114** — read-path view-authority over-trust trap (2026-06-07); the planters/CLI shim
+  reused by the conneg rigs below.
+- **conneg-h0 / conneg-h1 / conneg-e8** — RQ-Conneg-1 + RQ-Salience-1 experiments (2026-06-09):
+  H0 (do agents conneg?), H1 (over-trust A-vs-B discriminator), E8 (graph-navigation tool).
+  Reports: `docs/plans/2026-06-09-rq-conneg-1-{h0,h1,e8-graph-tool}-report.md`.
+
+**Cross-rig dependencies (copy together):** `conneg-h1` and `conneg-e8` reuse `d114`'s
+over-trust trap (`../d114/setup/plant_overtrust.sh`); `conneg-e8` carries its own portable
+`bin/solid-pod`. When copying out to run, take `d114` alongside `conneg-h1`/`conneg-e8`.
+
+Scripts/prompts/grading only — run artifacts (trajectory.jsonl, agent reports, pod-state
+snapshots, captured ledger bodies) are machine-local under `~/dev/probes/<rig>/runs/` on the
+machine that ran them (gitignored); the committed reports in `docs/plans/` summarize them.
 
 **To run on a new machine:** copy the eval dir somewhere OUTSIDE any repo
 (in-repo cold agents inherit CLAUDE.md/MEMORY = warm), e.g.
