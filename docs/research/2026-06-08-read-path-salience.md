@@ -282,6 +282,26 @@ reasoning; watch the `-v` confound.
   grounding levers; **add E5-as-design** — the disposition "audit governance before trusting a value" may
   be the highest-leverage, most general fix (skill/instruction/learned procedure), independent of vocab.
 
+### E1 RESULT (2026-06-09; report `docs/plans/2026-06-09-rq-salience-1-e1-report.md`; harness `~/dev/probes/salience-e1`)
+
+**Standard supersession vocab did NOT fix it — 0/3.** De-confounded trap (both broader targets
+resolve; contestation = `dcterms:isReplacedBy → HR` on the traversed target PD, node-level, NO
+`mem:hasOpenAction`). Bare content question. Findings:
+- **Vocabulary is not the lever.** The 1 agent that received the signal (read PD's `.meta`) missed
+  `dcterms:isReplacedBy` exactly as H1 agents missed `mem:hasOpenAction` — it was a **sibling of the
+  `prefLabel` it came for**. Standard-vs-bespoke doesn't matter for a triple the agent never *scans*.
+  Proto-knowledge helps an agent *follow* a known rel (`describedby`); it does nothing for a non-scanned sibling.
+- **Node-on-traversed-target placement does NOT escape sibling-invisibility** (tension #1 made flesh):
+  the agent visits the target *for its label*; the signal is a sibling of the label.
+- **Reachability is the bigger barrier (2/3 never received it):** a content question is satisfied by the
+  subject's own `skos:broader` edge + the target's label, so the target's `.meta` is off the required path.
+- **Caveat:** only n=1 actually tested salience-when-reached (~1/3 natural reach rate); the 0/3-at-bare-content
+  claim is solid, the missed-when-reached claim is n=1.
+- **Redirect:** the lever is **placement-on-the-required-path** (applied edge / value-level refuse-to-serve,
+  tension #2) and **disposition (E5)** — E8's directed arm already flipped behavior 2/2; E1 makes E5 look like
+  the *general* lever. A different standard predicate is NOT the next move. E7 (grounding) still untested but
+  unlikely to help a *sibling* without disposition to scan for it.
+
 ## 8. Prior art to pull (before/while experimenting)
 
 - **Standard supersession/deprecation vocab:** `owl:deprecated`; `dcterms:isReplacedBy`/
