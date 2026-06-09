@@ -327,6 +327,27 @@ same curl-only tools; the ONLY change was a Pod-agnostic "audit-before-trust" pr
   gradient); and **where the disposition lives durably** (system prompt / skill / learned procedure /
   substrate-delivered-and-actually-consumed) is the productionization question = the skill-acquisition agenda.
 
+### E5b RESULT (2026-06-09; report `docs/plans/2026-06-09-rq-salience-1-e5b-report.md`; harness `~/dev/probes/salience-e5b`) — disposition must be CONTENT-LADEN
+
+Strength gradient on the same trap/tools, only the preamble varies. **Sharp threshold L3→L4; generic
+diligence does NOT work:**
+- **L0 (none) miss 2/2 · L2 ("authoritative not first") miss 3/3 · L3 ("check full metadata + linked
+  records; complete picture not first value") miss 3/3 · L4 (full E5: names staleness/supersession,
+  hunt for contestation) caught 3/3.** 0/8 of L0–L3 even reached the operation record.
+- **Mechanism (CoT):** L2/L3 agents *fetched SA's `.meta`* (hasOpenAction in the bytes) and stayed in
+  confirm-mode — *"the `.meta` has skos:broader → progressive-disclosure; let me confirm the prefLabel."*
+  **"Check the metadata/linked records" was absorbed into confirm-mode** (check = confirm the value
+  already found); the `hasOpenAction` link never registered because they weren't *hunting for contestation*.
+- **Finding:** the lever is not *any* disposition. It must (a) **name the failure mode** (surface values
+  can be stale/superseded by governance/revision records) and (b) **direct the audit at contestation
+  evidence**. Procedural diligence / anti-first-value emphasis (L3 even said "not the first value") fails;
+  the *semantic content* (supersession is a thing to hunt for) is load-bearing — not emphasis or length.
+- **Open:** emphasis-vs-content not fully isolated (terse-but-specific L3.5 would confirm); does the agent
+  need the failure-mode *taxonomy* (supersession/low-confidence/provenance-dispute) or does "hunt for any
+  contestation signal" generalize? Still Pod-agnostic. **Productionization upshot:** the durable disposition
+  is content-laden (name what can go wrong), more than a "double-check" habit, less than Pod-specific
+  literacy — a teachable/transferable procedure = the skill-acquisition target.
+
 ## 8. Prior art to pull (before/while experimenting)
 
 - **Standard supersession/deprecation vocab:** `owl:deprecated`; `dcterms:isReplacedBy`/
