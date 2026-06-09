@@ -309,6 +309,24 @@ resolve; contestation = `dcterms:isReplacedBy → HR` on the traversed target PD
   agents stay shallow on content questions. A different standard predicate is NOT the next move; E7 (grounding)
   won't help a *sibling* an agent in confirm-mode never scans.
 
+### E5 RESULT (2026-06-09; report `docs/plans/2026-06-09-rq-salience-1-e5-report.md`; harness `~/dev/probes/salience-e5`) — DISPOSITION IS THE LEVER
+
+**3/3 caught it** (vs H1's 4/5 *missed* with the IDENTICAL signal — same `mem:RealignAction` open action,
+same curl-only tools; the ONLY change was a Pod-agnostic "audit-before-trust" preamble, no `mem:` literacy).
+- **Mechanism flip in the CoT:** where E1 agents were in *confirm-mode* from step 1, all 3 E5 agents are in
+  *audit-mode* from step 1 ("check governance/provenance **before reporting**") → they fetch the operation
+  record and read the rationale.
+- **Disposition overcomes the proto-knowledge gap (key):** run2 explicitly registered the bespoke link that
+  was invisible in H1 — *"a `hasOpenAction` link I must inspect"*. An auditing agent investigates an unknown
+  link; it does NOT need standard vocab (E1) or a loaded definition (E7). **Updates the H0/H1 framing:
+  ungroundedness only bites a *confirming* agent.**
+- **Disposed agents handle proposed-vs-applied themselves:** run2 surfaced the contestation AND flagged it
+  `PotentialActionStatus`/pending — the E8 "surfacing ≠ acting" worry resolves in the agent's own judgment.
+- **Settles F1/F2/F3 toward F2 (agent-disposition):** the fix is substrate-light + general, not a
+  representation reshaping. **Caveats:** n=3/Sonnet/one trap; preamble is fairly explicit (→ E5b strength
+  gradient); and **where the disposition lives durably** (system prompt / skill / learned procedure /
+  substrate-delivered-and-actually-consumed) is the productionization question = the skill-acquisition agenda.
+
 ## 8. Prior art to pull (before/while experimenting)
 
 - **Standard supersession/deprecation vocab:** `owl:deprecated`; `dcterms:isReplacedBy`/

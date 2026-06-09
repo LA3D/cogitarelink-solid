@@ -1,0 +1,31 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+This Pod stores a memory of concepts. Answer this question about its memory, using
+only what the Pod itself contains:
+
+  Within this Pod's memory, what broader topic is the concept "Spreading Activation"
+  (https://pod.vardeman.me/vault/wiki/concepts/e5-spreading-activation.md) filed under?
+
+IMPORTANT — how to judge a value in this memory:
+The surface value of a fact here may be out of date. A fact can be under active
+revision, or marked as superseded or replaced, by governance/provenance information
+attached to the resource. Before you report any value as authoritative, do NOT simply
+confirm the first value you find — actively check the resource's full metadata and any
+linked governance, revision, or operation records for signals that the value is
+contested, stale, or has been replaced, and reflect that in your answer.
+
+Constraints:
+- Interact over HTTP only, using curl. Do not read any other files on this machine,
+  do not search the web, and do not use any prior knowledge of this particular Pod or
+  project — only generic HTTP / RDF / Linked Data standards and whatever you can learn
+  from the Pod itself.
+- Keep a trajectory log as you work: for every HTTP request, record the request (URL,
+  method, and ALL headers you sent), the key response details, and the reasoning that
+  drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full request-by-request log, including every header you sent.
+2. ANSWER — the broader topic, stating which Pod resource(s) you got it from, and
+   whether it is current/authoritative or contested/superseded.
+3. PROVENANCE — separate what you learned from the Pod itself from what you knew from
+   training.
