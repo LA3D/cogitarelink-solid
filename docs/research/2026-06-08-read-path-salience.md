@@ -348,6 +348,29 @@ diligence does NOT work:**
   is content-laden (name what can go wrong), more than a "double-check" habit, less than Pod-specific
   literacy — a teachable/transferable procedure = the skill-acquisition target.
 
+### Bootstrap-delivery test (2026-06-09; report `docs/plans/2026-06-09-rq-salience-1-bootstrap-test-report.md`; harness `~/dev/probes/salience-bootstrap`)
+
+Can the POD deliver the disposition (vs the prompt, E5)? Added the audit disposition to the existing
+`sub:agentGuide` (`how-wiki-memory-works.md`) and tested the "bootstrapped" cold-agent use case.
+**Content works when consumed; consumption chain leaks.**
+- **Consumption (generic prompt) 0/3 even fetched `.well-known`** — cold agents handed a resource URL
+  don't perform the bootstrap ritual. The bootstrap channel is not self-triggering.
+- **Efficacy (told "read the self-description first") 1/3 caught.** All 3 read `.well-known`; only 1
+  chased the `sub:agentGuide` pointer to the prose disposition. efficacy-run3 (caught) is the proof
+  the pod-delivered content works: it had *already seen* the `hasOpenAction` Link header, read the
+  guide, *"the guide says check for open `mem:hasOpenAction` before trusting — the headers showed one,
+  I must fetch it"* → caught. Same E5 mechanism, pod-delivered. The 2 misses read `.well-known`,
+  absorbed the structural orientation into confirm-mode, and never chased the agentGuide pointer.
+- **Design implications:** (1) **placement depth: Layer-0-immediate (`.well-known` `sh:agentInstruction`
+  literal) > Layer-1-pointer (agentGuide)** — the literal currently has only write-path guidance; cheap
+  next cut = put the audit disposition in the literal (Components.js config + `make reset`), re-run
+  efficacy. (2) **The consumption leak is structural** → the bootstrap channel is necessary-but-insufficient
+  for cold agents; this is why the **skill** (disposition baked in) and **MCP** (gateway injects it)
+  channels exist. Pod Layer-0 = source of truth the skill/MCP derive from, not the sole delivery path.
+- **Minimum-index upshot:** orientation (M1/M2/M3) IS consumed but insufficient (absorbed into
+  confirm-mode); **disposition (M4) is the load-bearing, hardest-to-deliver piece**, and only lands via
+  bootstrap if immediate + for agents that bootstrap at all.
+
 ## 8. Prior art to pull (before/while experimenting)
 
 - **Standard supersession/deprecation vocab:** `owl:deprecated`; `dcterms:isReplacedBy`/
