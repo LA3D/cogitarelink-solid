@@ -12,8 +12,31 @@ authoritative home:
 
 Repo decision IDs differ from vault IDs; both numberings are reconciled in `decisions.md`.
 
-## Project state (as of 2026-06-07)
+## Project state (as of 2026-06-09)
 
+- **▶▶ RQ-Conneg-1 H0/H1 + E8 graph-tool RUN 2026-06-09** (reports
+  `docs/plans/2026-06-09-rq-conneg-1-{h0,h1,e8-graph-tool}-report.md`; living docs
+  `docs/research/2026-06-08-{solid-view-mechanism-vs-profiles,read-path-salience}.md` updated;
+  harnesses `~/dev/probes/conneg-{h0,h1,e8}`). **H0 — agents DO conneg robustly** (HEAD→`describedby`→`.meta`,
+  RDF Accept; `describedby` is the load-bearing native mechanism; `?_profile=` selection NEVER reached;
+  reason-#3 falsified). **H1 — over-trust is reached-but-missed (A) not never-reached (B), 4:1**: 4/5
+  fetched `.meta` (which carries `hasOpenAction`) + answered the stale value; currency cue did NOT help —
+  **proto-knowledge gap CONFIRMED** (Chuck): `describedby` followed / `mem:hasOpenAction` invisible (no
+  prior, on the `<>` page subject not the `<#this>` concept subject). **E8 — graph-nav tool does NOT fix
+  it; disposition does**: free-CLI agents 2/2 used `sparql`/`read` to *confirm* the body value; agents
+  *directed* to "check operation history" 2/2 followed the `hasOpenAction` link (the one ignored in H1)
+  and SPLIT — 1 corrected to Hierarchical Retrieval, 1 **defensibly kept PD** (`RealignAction` is
+  `PotentialActionStatus`/proposed + target 404s). **NEW: surfacing ≠ acting — applied-vs-proposed
+  semantics drive the decision; the trap conflates them.** **Unified verdict: delivery solved (D114);
+  the view/conneg/tool layer is NOT the over-trust fix (RQ-Conneg-1 over-build verdict provisionally
+  CONFIRMED; H2 likely moot); the lever is DISPOSITION + GROUNDING.** **▶ NEXT = RQ-Salience-1 E1
+  (standard supersession vocab) + E7 (load `mem:` definition) + E5-as-disposition** ("audit governance
+  before trusting a value" — possibly highest-leverage/most general); resolve the E1 node-vs-edge-local
+  placement knot first. **Bug surfaced (→ FOLLOWUPS):** `solid-pod invoke` non-functional for resource-
+  scoped affordances (3 defects: arg-contract / namespace drift `sub:` vs `wiki:` / no `%RESOURCE%` subst)
+  — D52 Tier-2 affordance claim broken for that class; `memory-history` not name-guessable. Both in the
+  held sibling repo; not on the research critical path; fix when CLI is next touched. **`main` uncommitted
+  this session = 3 reports + 2 living-doc edits + MEMORY + FOLLOWUPS** (commit pending; push still Chuck's call).
 - **Branch**: main, clean. **View layer (D113) MERGED to main 2026-06-07** (merge commit `9dd3d92`, no-ff; 41/41 unit + 12/12 e2e green; `make audit` 0 ERROR; view-layer branch deleted). **`main` is now 19 ahead of `origin/main`** (view-layer merge + the 2026-06-06/07 probe reports; push = Chuck's call). **Sibling `solid-agent-skills`: 7 ahead, push HELD** — the 2026-05-24
   pod-curator commits were rebased by mistake then RESTORED via merge (original hashes incl.
   `273b29a` preserved; merge commit `f5f8ed9`); push decision pends Chuck because (a) the

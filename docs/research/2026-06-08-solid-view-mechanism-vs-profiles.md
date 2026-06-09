@@ -1,10 +1,11 @@
 # Is the View Layer Over-Built? Pure Solid Content Negotiation vs the PROF / Conneg-by-Profile Stack (RQ-Conneg-1)
 
-**Status:** OPEN step-back. **This is the FIRST set of experiments for the next session**
-(Chuck, 2026-06-08). Hypothesis: the dual-view machinery we layered on (PROF profiles,
+**Status:** OPEN step-back. **H0 DONE 2026-06-09 — agents DO conneg, robustly** (report:
+`docs/plans/2026-06-09-rq-conneg-1-h0-report.md`; results logged in §7 below). H1 next.
+Hypothesis: the dual-view machinery we layered on (PROF profiles,
 conneg-by-profile `?_profile=`, `Link rel="profile"`, `sub:View`) is **over-built relative to
 what pure Solid + Verborgh's "What's in a Pod" actually call for**, and may be earning nothing
-with real agents. We have NOT tested this. Document completely; decide empirically.
+with real agents. H0 (foundational) is now tested; H1/H2 remain. Document completely; decide empirically.
 **Reload context:** this doc + the D114 eval report + RQ-Salience-1 (`2026-06-08-read-path-salience.md`,
 sibling — do not subordinate this to it) + decisions D86/D107/D113/D114 + the Solid Protocol.
 
@@ -118,10 +119,77 @@ Reuse `~/dev/probes/d114/`. Raw-audit reasoning (the D114 lesson), n≥2/cell, w
   "no," the whole conneg-by-profile edifice is on sand (reason #3).* Variants: bare task; task that
   says "this Pod serves an RDF graph view of each note"; task with the agent told `describedby`/Accept
   conventions in-context.
+  - **✅ RESULT 2026-06-09 (n=2 bare + n=1 each cue; report `docs/plans/2026-06-09-rq-conneg-1-h0-report.md`):
+    YES, robustly — reason #3 is FALSIFIED.** Instrument used a graph-only question (`dct:modified` +
+    `dct:conformsTo`, both absent from the body) to dodge the dual-layer confound. All 4 cold agents
+    reached the authoritative graph and answered correctly, high confidence. Mechanism findings:
+    (1) **bare agents go HEAD-first → follow `describedby`→`.meta` → request RDF with explicit
+    `Accept: text/turtle`** — deliberate Linked-Data discovery, not body-scraping; (2) **`describedby`
+    is the load-bearing native mechanism** (bare agents reach the graph via it, *not* by conneg'ing the
+    document); (3) **Accept-on-the-document conneg appears only when cued** (arms b/c) — a capability
+    they have but don't reach for cold; (4) **PROF-as-a-hint earns its keep** (every agent dereferenced
+    `conformsTo`/`rel=profile` and IDed the SHACL-bundling profile) **but `?_profile=`/`Accept-Profile`
+    selection was NEVER reached** — the exact bespoke layer this RQ suspects. Pre-favors §10's strip
+    criterion; H1 must confirm on the dual-view/over-trust task.
+  - **Behavioral observations (full-trajectory read, all 4 runs — the real yield, beyond pass/fail):**
+    The universal arc was identical: (i) **HEAD the resource first** as a deliberate cheap-metadata-then-follow
+    strategy (*"a HEAD request gives HTTP-layer metadata cheaply… but I need the RDF layer for the
+    authoritative typed timestamp"*); (ii) **read the Link rels and reason about them by known semantics**,
+    not string-match (*"the `rel="describedby"` link points to a `.meta` resource that typically carries RDF
+    metadata"*; RFC 6892/8288 cited in provenance); (iii) follow `describedby`→`.meta`, `Accept: text/turtle`;
+    (iv) dereference the `conformsTo`/`profile` target to characterize it. Four findings that matter:
+    1. **Agents act on standard Link rels because they have a *prior for the rel's meaning*.** Direct,
+       live contrast with the D114 salience failure: `mem:hasOpenAction` was a bespoke full-IRI rel with NO
+       prior → read as noise, skipped; `describedby` is grounded → planned-around and followed. Same agent,
+       same channel, opposite outcome, explained by whether the vocab is in pretraining. **Empirical evidence
+       for RQ-Salience-1 tensions #4/#5 (standard-vocab / grounding).**
+    2. **Agents distinguish HTTP-layer from RDF-layer authority and prefer the authoritative layer** — got
+       `Last-Modified` from the header but went to `.meta` for the "typed, authoritative" `dc:modified`. So in
+       D114 the agent *did* reach `.meta`; the gap was never reach-authority, it was the predicate-scan not
+       landing on the sibling contestation triple. **H0 isolates the salience gap to attention-landing.**
+    3. **The body-check is deliberate falsification**, not an answer attempt (*"checked whether the body
+       carries shape declarations. It does not"*). Asymmetry: for a *metadata* question agents treat the body
+       as non-authoritative; for a *content* question (broader topic) the body carries the projected wikilink
+       (→ RQ-View-2 body-scraping). **Which layer the agent trusts depends on question type** — a real H1 variable.
+    4. **The cue moved the *first* RDF fetch, not discovery competence.** Bare: HEAD→`.meta`. Cue-b: HEAD→conneg
+       the *document* for turtle first, then `.meta`. So `describedby`-following is robust cue-free;
+       document-conneg is the cue-sensitive add-on. `?_profile=`/`Accept-Profile` never surfaced in any reasoning step.
+    - **Bridge to RQ-Salience-1:** the dual-view *retrieval* is essentially solved by pure Solid; H1's real
+      target becomes — with the over-trust trap back — *having reached `.meta` via `describedby`, does the agent
+      register a sibling `hasOpenAction` it has no prior for?* H0 predicts NO (findings 1+2), which argues the
+      salience fix is **vocabulary grounding** (standard supersession terms, or loading the `mem:` definition),
+      not more delivery machinery.
 - **H1 — Does pure Solid (conneg + describedby) solve the dual view as well as the PROF stack?**
   Same over-trust/dual-view tasks, but strip the agent to pure-Solid affordances (no `?_profile=`
   mentioned). Compare behavior to the D114 runs that had the PROF stack available. Does removing the
   bespoke layer change anything? (Expectation from §3: no — agents ignored it anyway.)
+  - **✅ RESULT 2026-06-09 — reframed to the A-vs-B discriminator** (report
+    `docs/plans/2026-06-09-rq-conneg-1-h1-report.md`; H0 had pre-answered the literal "strip
+    `?_profile=`" question — agents never used it). Over-trust trap, pure-Solid curl-only, currency-
+    priming gradient (arm b content / arm a currency-in-question), n=5. **A (reached-but-missed)
+    dominates 4:1 over B (never-reached); 0 caught.** Four of five fetched `.meta` — **which carries
+    `hasOpenAction`** — and answered the stale "Progressive Disclosure"; the one B was the laziest run
+    (single body GET). **The currency cue did NOT help** — both arm-a agents did *more* graph work
+    (Memento timemap, target-resolution) and concluded "high confidence current," confidently wrong:
+    they reasoned about currency in vocab they have a prior for (versions, dangling refs) and never
+    connected it to the `mem:hasOpenAction` triple in the `.meta` they fetched. **Proto-knowledge
+    hypothesis CONFIRMED** (Chuck): `describedby` followed (standard, prior) / `mem:hasOpenAction`
+    invisible (bespoke, no prior) — even in parsed context, and doubly so because it sits on the `<>`
+    page subject not the `<#this>` concept subject a broader-scan targets. **Verdict: delivery is
+    solved (D114); the over-trust fix is NOT view/conneg-side — it is grounding.** Hands to
+    RQ-Salience-1 E1 (standard supersession vocab) + E7 (load the `mem:` definition), prioritised
+    over further delivery/view work.
+  - **E8 graph-tool follow-up ✅ 2026-06-09** (Chuck's question — do graph-*navigation* tools, not just
+    document-read, change it? report `docs/plans/2026-06-09-rq-conneg-1-e8-graph-tool-report.md`):
+    **No, not by presence — disposition.** Free-CLI agents (2/2) used `sparql`/`wiki-search`/`read`
+    only to *re-confirm* the body value (one even `sparql`-FILTERed for 'progressive' — searching to
+    confirm, not audit) and missed it. Directed agents ("check operation history first") 2/2 *followed
+    the `hasOpenAction` link* (the one they ignored in H1) to the `.operations/` resource — then SPLIT:
+    one corrected to Hierarchical Retrieval, one **defensibly kept PD** (the action is
+    `PotentialActionStatus`/proposed + HR 404s). Confirms: the over-trust fix is NOT view/conneg/tool-
+    surface; it's disposition/grounding. For single-resource contestation the graph tool adds no info
+    over the document. Substrate gaps found: `memory-history` affordance not guessable (agents tried
+    `operation-history`→500); `solid-pod invoke` resolves a malformed descriptor URL on unknown affordances.
 - **H2 — Does conneg-by-profile add value once H0/H1 are understood?** Only meaningful if H0 shows
   agents *can* conneg. Then test: (a) with good in-context instructions for `?_profile=`; (b) after a
   correctness audit of our implementation; (c) against a case that genuinely needs multiple

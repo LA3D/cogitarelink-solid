@@ -248,6 +248,40 @@ representation-side reshaping. Also add a **Link-header-vs-body** control (same 
 only vs body/tool-output) to confirm the header channel is dead. Keep n≥2 per cell; raw-audit
 reasoning; watch the `-v` confound.
 
+### Early results (2026-06-09, from RQ-Conneg-1 H1 + E8; reports in `docs/plans/2026-06-09-*`)
+
+- **E5 (disposition) — strongly supported.** Over the D114 trap: agents *not* told to check governance
+  (H1 n=5; E8 free n=2) **never registered** the open action (H1 4/5 fetched `.meta` — which carries
+  `hasOpenAction` — and answered the stale value; the 5th never left the body). Agents *told to* "check
+  operation history" (E8 directed n=2) **2/2 registered it** by following the `hasOpenAction` link to the
+  `.operations/` resource. The gap between blind over-trust and informed judgment is *entirely whether the
+  agent audits governance* — which it will not do cold. **F2 (agent-disposition) is real and load-bearing.**
+- **E6 ceiling (currency cue) — did NOT help (H1 arm a, n=2).** Agents explicitly asked "is this
+  current/authoritative vs stale/superseded?" did *more* graph work (Memento timemap, target resolution)
+  and concluded "high confidence current" — they reasoned about currency in vocab they have a prior for
+  (versions, dangling refs) and never connected it to `mem:hasOpenAction` in the `.meta` they fetched.
+  A cue is not enough without the vocabulary to recognise the signal — **F2/proto-knowledge.**
+- **E8 (tool channel) — graph navigation ≠ fix; disposition is.** Naive `sparql`/`read`/`wiki-search`
+  is used to *confirm* the body value, not audit it (one agent `sparql`-FILTERed for 'progressive'). The
+  `hasOpenAction` link that was inert as a Link header / `.meta` triple in H1 became *followable* once the
+  task disposed the agent to look for history. So "foreground via tool" works through **disposition**, not
+  through a richer merge.
+- **NEW insight — surfacing is necessary but not sufficient; the *signal's semantics* decide (F1/F3).**
+  The two directed agents who both registered the contestation **split**: one corrected to Hierarchical
+  Retrieval; one **defensibly kept Progressive Disclosure** because the `RealignAction` is
+  `schema:PotentialActionStatus` (*proposed, not applied*) and the proposed target **404s**. That is a
+  reasonable reading — a proposed realignment to a non-existent concept is weak grounds to override an
+  asserted value. **Implication:** "flag vs refuse-to-serve" (tension #2) interacts with *applied vs
+  proposed* — a realignment we want treated as binding should be either applied (graph says HR, no
+  contestation to surface) or carry stronger status than "potential." The D114 trap conflates
+  proposed-with-binding; future salience experiments must separate "is the contestation *perceived*?"
+  from "is the contestation *authoritative enough to act on*?" — different questions.
+- **Substrate gaps (→ FOLLOWUPS):** `memory-history` affordance not guessable (agents tried
+  `operation-history`→HTTP 500); `solid-pod invoke` builds a malformed descriptor URL for unknown affordances.
+- **Net next:** E1 (standard supersession vocab) + E7 (load the `mem:` definition) remain the primary
+  grounding levers; **add E5-as-design** — the disposition "audit governance before trusting a value" may
+  be the highest-leverage, most general fix (skill/instruction/learned procedure), independent of vocab.
+
 ## 8. Prior art to pull (before/while experimenting)
 
 - **Standard supersession/deprecation vocab:** `owl:deprecated`; `dcterms:isReplacedBy`/

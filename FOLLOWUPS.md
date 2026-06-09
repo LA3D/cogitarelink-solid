@@ -2,6 +2,49 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## 🧪 RQ-Conneg-1 + RQ-Salience-1 experiments (2026-06-09) — H0/H1/E8 RUN
+
+Reports in `docs/plans/2026-06-09-rq-conneg-1-{h0,h1,e8-graph-tool}-report.md`; living docs updated
+(`docs/research/2026-06-08-{solid-view-mechanism-vs-profiles,read-path-salience}.md`). Harnesses:
+`~/dev/probes/conneg-h0`, `conneg-h1`, `conneg-e8` (the last reuses the d114 trap + bin).
+
+- [x] **H0 — agents DO conneg, robustly.** Bare agents go HEAD-first → follow `describedby`→`.meta` →
+  request RDF; reason about Link rels by *known semantics*. `describedby` is the load-bearing native
+  mechanism; Accept-on-document appears only with a cue; PROF-as-hint used, `?_profile=` selection never.
+  Reason #3 falsified — the conneg floor is solid.
+- [x] **H1 — over-trust is reached-but-missed (A), not never-reached (B), 4:1.** Four of five fetched
+  `.meta` (which carries `hasOpenAction`) and answered the stale value; currency cue did NOT help.
+  Proto-knowledge gap confirmed (Chuck): `describedby` followed / `mem:hasOpenAction` invisible.
+- [x] **E8 — graph-navigation tool does NOT fix it; disposition does.** Free-CLI agents (2/2) used
+  `sparql`/`read` to *confirm* the body value; directed agents (2/2, "check operation history") followed
+  the `hasOpenAction` link and split — 1 corrected to Hierarchical Retrieval, 1 **defensibly kept PD**
+  (the `RealignAction` is `PotentialActionStatus`/proposed + the target 404s). NEW: surfacing ≠ acting —
+  the signal's *applied-vs-proposed* semantics drive the decision; the trap conflates them.
+- [ ] **▶ NEXT — RQ-Salience-1 E1 + E7 (+ E5-as-disposition).** E1 standard supersession vocab
+  (`owl:deprecated`/`dcterms:isReplacedBy`/`prov:invalidatedAtTime`); E7 load the `mem:` definition into
+  context; E5 the "audit governance before trusting a value" disposition may be the highest-leverage,
+  most general lever. Resolve the E1 placement knot first (node-level vs edge-local — RQ-Salience-1 #1).
+- [ ] **RQ-Conneg-1 over-build verdict — provisionally CONFIRMED; H2 likely moot.** Pure Solid
+  (`describedby` + media-type conneg + PROF-as-hint) suffices; `?_profile=` selection never reached across
+  H0/H1/E8. Don't pre-emptively strip (D114 validated); a strip-back is its own spec.
+
+### ⚠ Sibling-repo bug (`solid-agent-skills`) — `solid-pod invoke` non-functional for resource-scoped affordances
+
+Surfaced by E8. **D52's "machine-actionable affordance" (Tier-2 access) is currently broken for the
+post-D107 resource-scoped affordance class** (`memory-history`, `breadcrumb-view`, …). Three compounding
+defects in `solid-agent-skills/src/commands/invoke.ts`:
+1. **Arg-contract mismatch** (`invoke.ts:31-32`): arg 1 is treated as the Pod *root* (builds
+   `<arg1>/meta/affordances/<name>.ttl`); agents pass the *resource* URL (as for `read`/`sparql`) → 500.
+2. **Namespace drift**: matches only `wiki:selectQuery`/`constructQuery`; post-D107 affordances use
+   `sub:selectQuery` → "no query found" even when fetched.
+3. **No `%RESOURCE%` substitution**: query templates (`… as:object <%RESOURCE%> …`) are run verbatim → match nothing.
+Fix = redesign to `invoke <resource-url> <affordance>`: discover catalog via storage description (or `--pod`),
+match by predicate localName, substitute `%RESOURCE%`. ~30-50 LOC + test + `dist` rebuild (~1hr). **Held**:
+sibling repo is push-paused (7 ahead) and its skill-acquisition research questions investing in hand-written CLI;
+NOT on the RQ-Salience-1 critical path (E8's working channel was follow-the-link, not invoke). Fix when CLI is next touched.
+- [ ] **Affordance names not discoverable.** Agent guessed `operation-history` (real: `memory-history`).
+  Add `solid-pod affordances <url>` (list catalog) and/or have `invoke`'s 404 list available names. ~20 LOC, same held repo.
+
 ## 🔭 D113 view layer (2026-06-07) — MERGED to main + read-path eval DISCHARGED
 
 Merged to main 2026-06-07 (merge commit `9dd3d92`; 41/41 unit + 12/12 live e2e; `make audit` 0 ERROR). Push = Chuck's call.
