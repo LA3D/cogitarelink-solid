@@ -46,6 +46,26 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   `/etc/hosts` `127.0.0.1 pod.vardeman.me` + `make reset`; `solid-agent-skills` `npm install && npm run build`
   (dist/ gitignored) + set `$SOLID_AGENT_SKILLS`; `claude` CLI. To run a rig: `cp -R evals/<rig> ~/dev/probes/`
   (OUTSIDE any repo) then run. `evals/` = research apparatus; `tests/` = product conformance; substrate never depends on evals/.
+- **▶▶ RQ-Salience-1 substantially ANSWERED 2026-06-09: over-trust = agent DISPOSITION (confirm-mode), not
+  delivery/vocab/view-layer.** Arc (reports `docs/plans/2026-06-09-rq-salience-1-{e1,e5,e5b,bootstrap-test}-report.md`;
+  living doc `docs/research/2026-06-08-read-path-salience.md`): **E1** standard supersession vocab (`dcterms:isReplacedBy`)
+  NOT the lever (0/3 — CoT: agents in *confirm-mode from step 1*, a non-scanned sibling is missed regardless of vocab).
+  **E5** a Pod-agnostic content-laden "audit-before-trust" preamble flips it **3/3** (overcomes the proto-knowledge gap
+  — a disposed agent follows the bespoke `hasOpenAction` link *because it's auditing*). **E5b** disposition must be
+  CONTENT-LADEN: sharp L3→L4 threshold — "be thorough / check links" (L0/L2/L3) fails 0/8 (absorbed into confirm-mode);
+  only naming the failure mode + directing the hunt (L4) works. **Bootstrap test** (pod delivers the disposition via
+  `sub:agentGuide`): content works when consumed (1/1 that read the guide caught it) but consumption LEAKS — cold agents
+  handed a resource URL don't bootstrap (0/3), and the disposition was one pointer too deep (1/3 chased the agentGuide).
+  **Cut A** moved it into the immediate `.well-known` `sh:agentInstruction` literal (`void-description.json`, committed
+  `a1867a8`): efficacy **3/3** (vs pointer 1/3) — **placement depth load-bearing: immediate Layer-0 ≫ pointer.**
+  **NET: content ✓ (E5) · placement ✓ (cut A) · consumption ✗ (cold agents don't bootstrap → needs the SKILL/MCP channel).**
+  **Structure forming (gbrain-informed, `garrytan/gbrain`):** two coupled halves — (a) Pod Layer-0 = lean self-description
+  + disposition in the immediate literal = source of truth; (b) agent-side *consume-first* disposition delivered by
+  skill (baked in, gbrain's "read RESOLVER first, not optional") / MCP (gateway forces it) / bootstrap (weakest). The
+  pod makes the disposition *consumable*; it can't *install* it. **▶ NEXT = design the structure** (minimum-index /
+  layered-context-loading D109; the MCP gateway channel; pod refactor toward lean Layer-0). Brainstorming track open;
+  Chuck flagged MCP design + pod refactor as the dependent work. RQ-Conneg-1 over-build verdict confirmed (H0/H1/E8;
+  `?_profile=` never reached) — do NOT strip pre-emptively.
 - **Branch**: main, clean. **View layer (D113) MERGED to main 2026-06-07** (merge commit `9dd3d92`, no-ff; 41/41 unit + 12/12 e2e green; `make audit` 0 ERROR; view-layer branch deleted). **[SUPERSEDED 2026-06-09 — BOTH repos now pushed + synced 0/0; see the SYNC DONE bullet above. Historical detail retained below.]** ~~**`main` is now 19 ahead of `origin/main`** (view-layer merge + the 2026-06-06/07 probe reports; push = Chuck's call). **Sibling `solid-agent-skills`: 7 ahead, push HELD**~~ — the 2026-05-24
   pod-curator commits were rebased by mistake then RESTORED via merge (original hashes incl.
   `273b29a` preserved; merge commit `f5f8ed9`); push decision pends Chuck because (a) the
