@@ -297,10 +297,17 @@ resolve; contestation = `dcterms:isReplacedBy → HR` on the traversed target PD
   subject's own `skos:broader` edge + the target's label, so the target's `.meta` is off the required path.
 - **Caveat:** only n=1 actually tested salience-when-reached (~1/3 natural reach rate); the 0/3-at-bare-content
   claim is solid, the missed-when-reached claim is n=1.
-- **Redirect:** the lever is **placement-on-the-required-path** (applied edge / value-level refuse-to-serve,
-  tension #2) and **disposition (E5)** — E8's directed arm already flipped behavior 2/2; E1 makes E5 look like
-  the *general* lever. A different standard predicate is NOT the next move. E7 (grounding) still untested but
-  unlikely to help a *sibling* without disposition to scan for it.
+- **Chain-of-thought audit (D114 discipline):** run2 is *never-registered* (not dismissed) — *"the RDF
+  metadata confirms the answer via `skos:broader`. Let me verify PD for completeness"* → fetched PD.meta →
+  done; `isReplacedBy` was in the bytes, never in the reasoning. **Cross-cutting: all 3 are in CONFIRM-MODE
+  from step 1** — each decides the answer from SA's body/edge on the first response, then frames every later
+  fetch as "verify/confirm/for completeness." An agent in confirm-mode does not audit siblings. Direct CoT
+  evidence that the lever is **disposition** (break confirm-mode → audit-mode), not vocabulary or sibling-placement.
+- **Redirect:** the lever is **disposition (E5)** first — E8's directed arm already flipped behavior 2/2, and
+  E1's CoT shows confirm-mode is the root — and secondarily **placement-on-the-required-path** (the scanned
+  `skos:broader` value itself / token-layer body / value-level refuse-to-serve, tension #2), since E1 also showed
+  agents stay shallow on content questions. A different standard predicate is NOT the next move; E7 (grounding)
+  won't help a *sibling* an agent in confirm-mode never scans.
 
 ## 8. Prior art to pull (before/while experimenting)
 

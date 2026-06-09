@@ -51,6 +51,21 @@ H1-b bespoke-sibling-bare (4/5 missed).
    target's body (label) or skips it, and the target's `.meta` (where the signal lives) is off the
    required path. Echoes H1/E8: the answer is gettable without auditing, so no audit happens.
 
+## Chain-of-thought audit (the D114 discipline — added after first pass)
+
+Reading the actual reasoning, not just calls/answers, confirms and sharpens the above:
+- **run2 is never-registered, not registered-then-dismissed.** Its reasoning: *"The RDF metadata
+  confirms the answer via `skos:broader`. Let me also quickly verify the Progressive Disclosure
+  resource for completeness."* → fetches `PD.meta` → straight to the report, no further reasoning.
+  `dc:isReplacedBy` was in the received bytes and never entered the chain of thought. Same failure
+  class as H1 — attention never landed on it.
+- **All three are in *confirm-mode* from step 1** (the cross-cutting finding): each extracts the
+  answer from SA's body/edge on the FIRST response, then frames every later fetch as confirmation —
+  run1 *"that's the filed-under relationship. Let me verify"*; run2 *"…confirms the answer… verify…
+  for completeness"*; run3 *"that's the answer. Let me also pull the .meta to confirm"*. **An agent
+  in confirm-mode does not audit siblings.** This is direct CoT evidence that the lever is
+  disposition (break confirm-mode → audit-mode), not the vocabulary or the placement of a sibling.
+
 ## Caveat
 
 Only run2 actually tested "salience-when-reached" (n=1) — the others never received the signal
