@@ -370,6 +370,12 @@ Can the POD deliver the disposition (vs the prompt, E5)? Added the audit disposi
 - **Minimum-index upshot:** orientation (M1/M2/M3) IS consumed but insufficient (absorbed into
   confirm-mode); **disposition (M4) is the load-bearing, hardest-to-deliver piece**, and only lands via
   bootstrap if immediate + for agents that bootstrap at all.
+- **Cut A — immediate-literal placement (same day):** moved the disposition into the `.well-known`
+  `sh:agentInstruction` literal (no pointer-follow; `void-description.json` + reset). Efficacy **3/3
+  caught** (vs the agentGuide pointer's 1/3). **Placement depth is load-bearing: immediate Layer-0 ≫
+  Layer-1 pointer.** Does NOT fix the consumption leak (still the efficacy arm — cold agents handed a URL
+  still don't bootstrap; that needs skill/MCP). **Net: content ✓ (E5), placement ✓ (cut A), consumption ✗
+  (skill/MCP).** The literal edit is committed as the first concrete read-path bootstrap piece.
 
 ## 8. Prior art to pull (before/while experimenting)
 

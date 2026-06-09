@@ -67,7 +67,29 @@ only for agents that bootstrap at all. The structural/ontology orientation (M1/M
 confirm-mode without the disposition. So: **orientation is consumed and insufficient; disposition is
 the load-bearing, hardest-to-deliver piece** — consistent with the whole H1→E5b arc.
 
+## Cut A result — immediate-literal placement (2026-06-09, same day)
+
+Moved the read-path audit disposition from the Layer-1 `sub:agentGuide` pointer into the **immediate
+`.well-known` `sh:agentInstruction` literal** (`css/config/void-description.json` + `make reset`), so a
+bootstrapping agent meets it with no pointer-follow. Re-ran the efficacy arm (n=3):
+
+**3/3 caught** (up from the agentGuide placement's 1/3). All three: read `.well-known` → hit the
+"READ PATH: check for `mem:hasOpenAction` before trusting" literal → noticed the `hasOpenAction` Link
+header on the concept → *"I must check it before trusting the value"* → fetched the operation →
+reported the value **CONTESTED**.
+
+**Confirms: placement depth is load-bearing — immediate Layer-0 literal ≫ Layer-1 pointer (3/3 vs 1/3).**
+The disposition must be met on arrival, not behind a `sub:agentGuide` hop most agents don't take.
+
+**BUT cut A does not touch the consumption leak.** This is the *efficacy* arm — agents were told to read
+the self-description. The structural leak (cold agents handed a resource URL don't bootstrap at all, 0/3)
+is unchanged by literal placement and requires the **skill / MCP channel** (force the bootstrap), not a
+better entry literal. Net bootstrap-channel picture: **content ✓ (E5), placement ✓ (cut A, immediate
+literal), consumption ✗ (needs skill/MCP).**
+
 ## Caveats
-- n=3/arm, Sonnet, one trap. Reversible: agentGuide restored to original; trap + op deleted. The
+- n=3/arm, Sonnet, one trap. Reversible: agentGuide restored to original; trap + op deleted. Cut A's
+  literal edit (`void-description.json`) is committed (validated improvement; first concrete piece of the
+  read-path bootstrap). The
   validated augmented guide content is saved at `~/dev/probes/salience-bootstrap/setup/agentguide-augmented.md`
   for baking into the overlay if we proceed.
