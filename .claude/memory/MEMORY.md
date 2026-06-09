@@ -35,9 +35,18 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   placement knot first. **Bug surfaced (→ FOLLOWUPS):** `solid-pod invoke` non-functional for resource-
   scoped affordances (3 defects: arg-contract / namespace drift `sub:` vs `wiki:` / no `%RESOURCE%` subst)
   — D52 Tier-2 affordance claim broken for that class; `memory-history` not name-guessable. Both in the
-  held sibling repo; not on the research critical path; fix when CLI is next touched. **`main` uncommitted
-  this session = 3 reports + 2 living-doc edits + MEMORY + FOLLOWUPS** (commit pending; push still Chuck's call).
-- **Branch**: main, clean. **View layer (D113) MERGED to main 2026-06-07** (merge commit `9dd3d92`, no-ff; 41/41 unit + 12/12 e2e green; `make audit` 0 ERROR; view-layer branch deleted). **`main` is now 19 ahead of `origin/main`** (view-layer merge + the 2026-06-06/07 probe reports; push = Chuck's call). **Sibling `solid-agent-skills`: 7 ahead, push HELD** — the 2026-05-24
+  held sibling repo; not on the research critical path; fix when CLI is next touched.
+- **SYNC DONE 2026-06-09: BOTH repos pushed to GitHub (LA3D org), fully in sync (0/0).** cogitarelink-solid
+  `main`→`3b08c63`; solid-agent-skills `main`→`f5f8ed9` (the pod-curator restore-merge history published
+  intact; the prior "push HELD" is RESOLVED — pushed for Mac Studio multi-machine work, knowingly incl. the
+  stale bundled `pod_audit.py`). **Probe harnesses ported into `cogitarelink-solid/evals/`** as portable
+  templates (d114 + conneg-h0/h1/e8; `2d3096f` convention; `runs/` gitignored; shim via `$(mkcert -CAROOT)`+
+  `$SOLID_AGENT_SKILLS`; commit `3b08c63`) — they no longer live only in `~/dev/probes/`. **Studio bring-up
+  (non-git pieces):** mkcert CA (per-machine secret — `mkcert -install` or copy `rootCA.pem`); Docker Pod +
+  `/etc/hosts` `127.0.0.1 pod.vardeman.me` + `make reset`; `solid-agent-skills` `npm install && npm run build`
+  (dist/ gitignored) + set `$SOLID_AGENT_SKILLS`; `claude` CLI. To run a rig: `cp -R evals/<rig> ~/dev/probes/`
+  (OUTSIDE any repo) then run. `evals/` = research apparatus; `tests/` = product conformance; substrate never depends on evals/.
+- **Branch**: main, clean. **View layer (D113) MERGED to main 2026-06-07** (merge commit `9dd3d92`, no-ff; 41/41 unit + 12/12 e2e green; `make audit` 0 ERROR; view-layer branch deleted). **[SUPERSEDED 2026-06-09 — BOTH repos now pushed + synced 0/0; see the SYNC DONE bullet above. Historical detail retained below.]** ~~**`main` is now 19 ahead of `origin/main`** (view-layer merge + the 2026-06-06/07 probe reports; push = Chuck's call). **Sibling `solid-agent-skills`: 7 ahead, push HELD**~~ — the 2026-05-24
   pod-curator commits were rebased by mistake then RESTORED via merge (original hashes incl.
   `273b29a` preserved; merge commit `f5f8ed9`); push decision pends Chuck because (a) the
   pod-curator skill's bundled `pod_audit.py` is frozen at 2026-05-24 (pre-D107/D111/D112 —
