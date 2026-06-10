@@ -1,0 +1,30 @@
+n01	Bounded Branching	Keeping each navigational node's direct children below a small fan-out limit so routing stays reliable.
+n02	Hierarchical Retrieval	Navigating a typed concept hierarchy from general to specific rather than flat similarity search.
+n03	Progressive Disclosure	Revealing information in layers, from a high-level handle down to detail fetched on demand.
+n04	Typed Edge	A relationship whose label is an operation contract telling an agent what to do when it traverses.
+n05	Procedural Memory	Memory of how to perform tasks, learned and replayed from prior trajectories.
+n06	Episodic Memory	Memory of specific past events and interactions, indexed by when they happened.
+n07	Semantic Memory	Memory of general facts and concepts, independent of when they were learned.
+n08	Working Memory	The small, fast, in-context store an agent actively reasons over right now.
+n09	Write-Ahead Log	A durable append-only record of operations written before they are applied, so state can be recovered after a crash or failure.
+n10	Two-Stage Commit	Writing first to a permissive staging area, then crystallizing to a durable, validated store.
+n11	Content Addressing	Identifying a resource by a hash of its content rather than by its location.
+n12	Tiered Retrieval	Fetching from progressively larger and slower stores only when nearer tiers miss.
+n13	Spreading Activation	Retrieval in which activating one node propagates activation to neighbouring nodes along typed edges.
+n14	Admission Floor	A validation gate that rejects writes failing a minimum structural contract at write time.
+n15	Provenance Trail	A recorded chain of who or what produced or derived a piece of data, and when.
+n16	Lifecycle Metadata	Annotations tracking a memory's freshness, status, and maturity over time.
+n17	Out-of-Distribution Honesty	An agent reporting low confidence or absence of coverage instead of fabricating an answer.
+n18	Dual-Layer Linking	Cheap human-readable links at the token layer plus queryable typed edges at the data layer.
+n19	Hybrid Storage	Combining unstructured blobs with a structured graph index over them.
+n20	Memory Consolidation	A background pass that reorganizes and compresses recent memories into durable structure.
+n21	Conflict Resolution	Detecting and reconciling contradictory claims before combining evidence.
+n22	Hub Avoidance	Skipping expansion of over-connected nodes to keep retrieval focused.
+n23	Type Index	A registry mapping resource classes to the containers that hold them.
+n24	Storage Description	A self-description document an agent reads to learn a store's capabilities.
+n25	Affordance Descriptor	A machine-readable declaration of what an agent can do with a resource.
+n26	Crystallization	Promoting a draft memory into the durable store once it meets the contract.
+n27	Staleness Detection	Flagging a reference that no longer resolves against current truth.
+n28	Realignment	Replacing a stale reference with the current one and recording why the change was made.
+n29	Closed-Loop Curation	A continuous agentic pass that audits the store, proposes repairs, and applies them.
+n30	Bounded Context Window	The hard limit on how much an agent can hold in working memory at one time.

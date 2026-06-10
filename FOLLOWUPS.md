@@ -9,19 +9,20 @@ deployed-web principle (vault theory note `Agents Use the Deployed Web - Deploym
 Determines Standards Usability`), progressive-disclosure audit
 (`docs/research/2026-06-10-progressive-disclosure-audit.md`).
 
-- [ ] **★ Measure pod-side index views BEFORE designing/building them** (Chuck, 2026-06-10).
-  The PD audit's §4 design (derived per-container index views via ViewAssembler + media-type
-  conneg; derived `/llms.txt` at root) is plausible-but-unmeasured — support is vault practice
-  + five-tradition convergence, zero pod-side probes. Run the RQ-Discovery-1 extension probe
-  FIRST so the design is shaped by observed navigation, not assumption: cold agent at pod
-  root, locate-one-resource-among-many task; **arm A** = bare `ldp:contains` (today's
-  baseline); **arm B** = index views *mocked as static resources* (hand-write the view output
-  — no ViewAssembler work needed to probe; lets us iterate the hook format cheaply:
-  definition-line vs prefLabel-only vs type-grouped); **arm C** (optional) = `/llms.txt` at
-  root. Measure: fetch count, wrong-container descents, whether hook lines are *read*
-  (trajectory audit, D114 discipline), time-to-target. n=2-3/arm. Mock-first = we measure the
-  **artifact shape** before committing engine work and can't design it incorrectly. Rig:
-  `evals/` cold-probe template.
+- [x] **★ Measure pod-side index views BEFORE building them — RUN 2026-06-10: definition-line
+  index earns its keep decisively; BUILD it.** Report `docs/plans/2026-06-10-rq-discovery-1-index-view-report.md`;
+  rig `evals/idxview/` (harness `~/dev/probes/idxview/`). Mock-first, 30 opaque-slug concepts, arm A
+  bare `ldp:contains` vs arm B + discoverable definition-line `index.md`; locate-among-30 (target n09
+  Write-Ahead Log, paraphrased so the agent must comprehend). **Result (n=3/arm, all 6 correct):**
+  resource fetches ~18 (A, range 10–30) → ~0.7 (B, range 0–1) = ~20–30×; wrong-resource GETs 9–29 (A)
+  → **0** (B); index read+used **3/3** (B); wall-clock ~halved. Arm A brute-forces every note (opaque
+  slugs); arm B reads the index and routes (b-run2 answered from the index definition with ZERO note
+  GETs). **Gate satisfied — shape validated pre-engine.** Open calls folded into the build (below):
+  (i) delivery/discovery mechanism (this probe favors a discoverable named `index.md` child over
+  conneg, consistent with H0 — `?_profile=` never reached); (ii) cheap format A/B (prefLabel-only vs
+  definition-line — only the rich format was tested; definition line was what got read+quoted);
+  (iii) the deferred root-level/cross-container + `/llms.txt` arm C + the wrong-CONTAINER-descent
+  metric (this probe was single-container, so only wrong-resource descents were measured).
 - [ ] **Profiles strip-back spec — fix what the profiles implementation surfaced** (Chuck,
   2026-06-10). Inputs: RQ-Conneg-1 verdict (H0/H1/E8), sanity check §4, deployed-web
   principle, D86 provenance (DXWG/SELFIE lineage — Chuck's extension; the *selection* half
@@ -38,7 +39,10 @@ Determines Standards Usability`), progressive-disclosure audit
   (d) **RE-CUT D80**: hub-view/breadcrumb-view from invocable affordances (dead surface —
   agents never run handed CONSTRUCTs) to ViewAssembler-served views per the PD audit;
   (e) reconcile D86/D113 decision text with status annotations (part of the distillation pass).
-  **Gate: run AFTER the index-view probe** — one view-layer rework, not two.
+  **Gate CLEARED 2026-06-10 — the index-view probe ran (definition-line index validated, BUILD it).**
+  The D80 re-cut (d) now has a measured target: hub-view/breadcrumb-view → ViewAssembler-served
+  definition-line index views (read off the listing), not handed CONSTRUCTs. Do the strip-back +
+  index-view build as one view-layer rework.
 
 ## 🔧 Code↔decision conformance review findings (2026-06-10) — ALL FIXED same day
 
