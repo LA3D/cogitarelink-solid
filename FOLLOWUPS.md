@@ -40,6 +40,33 @@ Determines Standards Usability`), progressive-disclosure audit
   (e) reconcile D86/D113 decision text with status annotations (part of the distillation pass).
   **Gate: run AFTER the index-view probe** — one view-layer rework, not two.
 
+## 🔧 Code↔decision conformance review findings (2026-06-10)
+
+Full report: `docs/research/2026-06-10-code-decision-conformance-review.md`. 30+ decision
+claims verified conformant; drift clusters in mechanism-text, bootstrap, and test freshness.
+
+- [ ] **⚠ `make test-js` is RED — configGuard flags `css/config/memento.json` "Invalid predicate
+  IRI: baseUrl".** NOT fixed by rebuilding memento's components (all three Memento classes DO
+  declare `baseUrl` in the regenerated scoped contexts — verified); NOT the D113 config edit
+  (bisected: pre-D113 config fails too). Live boot works (D114 `make reset` 13/13, 2026-06-07),
+  so it's a **guard-vs-boot resolution divergence** for the memento module — the guard can't
+  currently catch the 3×-boot class it exists for. Root-cause the replicated ModuleStateBuilder
+  state vs boot.
+- [ ] **`make test-js` has no build dependency** — markdown-projection's CJS mirror runtime-imports
+  the *built* ESM at `dist/`, so stale local builds fail tests confusingly (`loadRoutingMap is not
+  a function`; fixed here by rebuild). Either add a build prereq to the make target or have the
+  mirror fail with a "stale dist — run npm run build" message.
+- [ ] **Batch for next substrate-touch session** (none urgent, all verified): (a) remove the stale
+  hand-seeded `skos:narrower`/`broader` inverses in `overlays/wiki-memory/concepts/{biology,photosynthesis}.md.meta.ttl`
+  (RQ-View-2 finding, violates D109 derive-rule — still live); (b) decide governed-set source of
+  truth — `governedPredicates.ts` hardcoded maps vs the D104/D108 "shapes are canonical" claim
+  (derive from shapes/ at build time, or annotate decisions + keep agreement tests as contract);
+  (c) finish D107 parameterization in bootstrap machinery — `pod_setup.py` hardcoded `/vault/`,
+  `apply.py:159` hardcoded `/vault/meta/views/`, wiki-memory manifest's absolute-IRI view entries;
+  (d) delete dead `buildTwoSubjectPatch()` (never called) + annotate D95/D96 mechanism text
+  (Store-merge, not Patch envelopes — intent conformant); (e) decide D23 ontology-cache fate:
+  deploy `ontology/` to the Pod or annotate repo-only (D49 grounding is half-true while unserved).
+
 ## 🧪 RQ-Conneg-1 + RQ-Salience-1 experiments (2026-06-09) — RUN; disposition is the lever
 
 Reports in `docs/plans/2026-06-09-rq-{conneg-1-{h0,h1,e8-graph-tool},salience-1-{e1,e5,e5b,bootstrap-test}}-report.md`;
