@@ -51,6 +51,15 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   measurement map** (each mechanism lands WITH its cold probe) adds 2 NEW queued probes: **write-side E5b
   twin** (floor vs disposition, graded rationales) + **generalization probe** (addressbook/id-schemes,
   operation-shaped — BEFORE SP2 commits to index-shaped machinery).
+  **APPROACHES SETTLED + SP1 PLAN WRITTEN same session** (`98a369d`): all four §10 forks locked w/ Chuck
+  ((a) on-write static `index.md` child w/ derivation provenance; (b) ONE general `pod-navigate` skill;
+  (c) hand-written v0 + GEPA later; (d) definition-line default). **▶ NEXT SESSION (clean, Opus) =
+  EXECUTE `docs/superpowers/plans/2026-06-10-sp1-pod-navigate-skill-harness.md`** — 9 tasks: `solid-pod
+  validate` (SHACL pre-flight) → `invoke` fix (3 E8 defects) → `affordances` lister → `pod-navigate`
+  SKILL.md (3 baked-in dispositions; D103 deviation recorded) → docs → `evals/skill-nav` rig → run
+  (GATE: skill arm 3/3 catch, trigger measured separately) → report → bookkeeping. Branch
+  `sp1-pod-navigate` in solid-agent-skills; rig/report → this repo main. SP2 plan AFTER the
+  generalization probe + SP1 results.
 - **▶▶ TWO experiments RUN 2026-06-10 (the queued "QT experiments"); both committed to main.**
   **① E7 grounding disposition** (report `docs/plans/2026-06-10-rq-salience-1-e7-report.md`; salience
   doc §8.1.1; rig `evals/salience-e7/`; commit `03c6989`): **grounding is a SECOND independent

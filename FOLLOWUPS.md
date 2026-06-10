@@ -20,13 +20,18 @@ The structure-design brainstorm (`superpowers:brainstorming`) converged the spin
   derivable-repair ONLY; curator is a role, NOT a quality gate, not necessarily a subagent); **§12
   hypothesis→behavioral-measurement map** (Chuck: agentically measure the agentic behavior — each
   mechanism lands WITH its cold probe, not just green tests).
-- [ ] **▶ NEXT SESSION = resume the brainstorm at "propose build approaches" (spec §10), then `writing-plans`.**
-  The real forks: (a) view-materialization where/when (on-write listener vs on-demand ViewAssembler conneg
-  vs cached-derived; discovery favors a size-conspicuous named child resource per the index-view probe);
-  (b) one general app-agnostic navigation skill vs general + thin per-app access-pattern skills bootstrapped
-  from `st:Description`; (c) hand-written vs learned/GEPA skill (skill-acquisition agenda); (d) format A/B
-  (prefLabel-only vs definition-line). Do NOT jump to implementation — finish approaches → design sections →
-  plan first (brainstorming HARD-GATE).
+- [x] **Build approaches SETTLED 2026-06-10 (same-day planning session, Chuck confirmed all four):**
+  (a) on-write listener-refreshed static `index.md` child + derivation provenance in its `.meta`;
+  (b) ONE general navigation skill (`pod-navigate`) consuming `st:Description` (per-app thin skills only
+  if the generalization probe demands); (c) hand-written v0 seeded from proven E5/E7/E5b content,
+  GEPA/eval-loop later; (d) definition-line default, prefLabel-only as probe arm. SP1 plan WRITTEN:
+  `docs/superpowers/plans/2026-06-10-sp1-pod-navigate-skill-harness.md` (9 tasks, eval-gated; scope =
+  SP1 only — SP2 plan follows the generalization probe + SP1 results).
+- [ ] **▶ NEXT SESSION (clean, Opus) = EXECUTE the SP1 plan** via superpowers:subagent-driven-development
+  or executing-plans. Pre-flight in the plan header (Pod `make reset`, solid-agent-skills `npm install &&
+  npm run build`, read auto-memory `cold_probe_harness_pattern` before the eval task). Branch
+  `sp1-pod-navigate` in solid-agent-skills; eval rig + report to cogitarelink-solid main. Gate: skill arm
+  3/3 catch on the E5 trap (trigger + catch measured separately).
 - [ ] **Cheap empirical feed-ins** (can fold into the approaches as they need settling, not run speculatively):
   the **D96 subject-placement fix** (derive `mem:hasOpenAction` onto `<#this>`; re-run E7 `evals/salience-e7`
   to confirm it closes the g-run3 miss — tight loop); **format A/B** (`evals/idxview`, add a prefLabel-only arm);
