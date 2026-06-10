@@ -45,6 +45,14 @@ The structure-design brainstorm (`superpowers:brainstorming`) converged the spin
 - **Build order (locked):** SP1 skill+tool harness FIRST (optimization substrate; skill-creator/GEPA against
   the cold-agent eval) → SP2 surface+materialize the declared interop+ShapeTree layer → SP3 MCP gateway LATER
   (a packaging on top — MCPs clog context + are hard to optimize, Chuck 2026-06-10).
+- **SP1 baseline PINNED 2026-06-10** (`solid-agent-skills/tests/KNOWN-FAILURES.md`, committed on branch
+  `sp1-pod-navigate`). The `solid-agent-skills` legacy suite has **7 deterministic + 4 flaky** pre-existing
+  failures (post-D107 command/e2e drift), confirmed across 3 fresh-Pod runs. **SP1 gate = "new tests green +
+  no failure outside the pinned lists,"** NOT "whole suite green" (never true). 2 of the 7 (`invoke`) close on
+  Task 2; the 5 residual (`search`, `shapes`×2, e2e Step2/Step5) are parked under that repo's skill-suite
+  mid-rebuild agenda (`docs/research/2026-06-03-pod-skill-acquisition.md`) — fixed when the rebuild reaches each
+  command or retired, NOT speculatively. The `shapes` failures' root cause is substrate-side (template-placeholder
+  catalog file — see the D108-review item below).
 
 ## 📐 Progressive disclosure + profiles reconciliation (2026-06-10)
 
@@ -410,6 +418,11 @@ Non-blocking items from the final adversarial review:
    advertised as agent-relevant. Recorded so a future audit doesn't flag the stamp as "ungoverned."
 4. **`make audit` rdflib traceback noise** from template placeholder IRIs (`[YOUR VOCABULARY IRI]`,
    `[YYYY-MM-DD]`) in the extension-guide template — pre-existing, non-fatal (0 ERROR), cosmetic.
+   **NOT purely cosmetic (re-scoped 2026-06-10, SP1 pre-flight):** the same `<[YOUR VOCABULARY IRI]>`
+   placeholder sits in the *served* shape catalog and makes the `solid-agent-skills` `shapes` command throw
+   an N3 parse error (3 of the pinned KNOWN-FAILURES), and would trip a cold agent's `pod-navigate` `validate`
+   path the same way. **Small real fix candidate at the SP2 catalog re-cut:** relocate the template out of the
+   served catalog so the catalog parses clean for agents + tools.
 
 Anti-fragility review (Chuck's three lenses: hardcodes / RDF-model bypass / fragile regex) fixed four
 items pre-merge (`4ca0751`: stampPredicate→config, `isContainerIdentifier`, shared `RDF_CONTENT_TYPES`,
