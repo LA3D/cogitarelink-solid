@@ -6,6 +6,14 @@ are **settled**. **Build approaches are DEFERRED to the next session** (this is 
 buildable plan — see §10). This doc exists to bank the spine so it isn't lost and to fold in
 the follow-ups it subsumes (§9).
 
+**Amended 2026-06-10 (same day, post-review with Chuck; spine unchanged):** sanity-check
+corrections (D82 named as a hard dependency, auth-gated provenance, derived-view
+self-description in §7); two contract refinements (§3: disclosure-vs-operation split,
+per-component consumption profiles); the §6.1 three-station quality partition (floor /
+write-disposition / curation-loop, partitioned by decidability + the unrecoverability of
+agent-only context); and the §12 hypothesis→behavioral-measurement map (two NEW queued probes:
+the write-side E5b twin, the generalization probe against operation-shaped apps).
+
 **Lineage:** continues RQ-Substrate-4 / D70 stratification; consumes the E5 (audit) + E7
 (grounding) read-path results (`docs/research/2026-06-08-read-path-salience.md`) and the
 RQ-Discovery-1 index-view result (`docs/plans/2026-06-10-rq-discovery-1-index-view-report.md`);
@@ -59,6 +67,24 @@ sides are the two halves of this one contract:
 
 - **Construct (SP2)** — the pod *materializes* the disclosure shape at each layer.
 - **Consume (SP1)** — the skill+tool harness *walks* the shape, layer by layer.
+
+**Two refinements (review, 2026-06-10):**
+
+- **Disclosure vs operation.** The disclosure *shape* (orientation + grounding + governance) is
+  universal, but the **index component is one kind of orientation**: navigation-shaped apps
+  (wiki-memory) get item indexes; operation-shaped apps (addressbook = query, id-schemes =
+  resolution/registration) get affordance/operation pointers. `st:Description` is where an app
+  declares which it is. "One discipline" means one disclosure *entrypoint* + a declared per-app
+  operation — NOT that every app is browsed like a wiki. All behavioral evidence to date is
+  wiki-shaped (the E5/E7 trap, the index probe); the generalization probe in §12 tests this
+  BEFORE SP2 commits to index-shaped machinery.
+- **Per-component consumption profiles.** Orientation + index are consumed *naturally* by cold
+  agents (index probe: a-run3 went looking for an index in the container `.meta` unprompted;
+  3/3 read+used it when present). Governance + grounding are **disposition-gated** (E5b: 0/8
+  below the content-laden threshold). So the contract's *routing* benefit is universal — floor
+  tier included — but its *trust* benefit holds only for SP1/SP3-disposed agents. That is D55
+  three-tier stated honestly: an author who fills the shape gets efficiency for everyone,
+  safety only for the disposed.
 
 ## 4. The An layer is declarative — and already specced + deployed-but-inert
 
@@ -121,6 +147,44 @@ purpose/description (the disclosure hook), (c) circumstances/rationale of creati
 — the writing agent's identity (**derive** from auth at write time, per the D112 `prov:agent`
 gap) + the activity. Enforced by the D108 admission floor, **extended to NonRDFSource**.
 
+**Hard dependencies (build-order facts, named here so the approaches session sequences them):**
+
+- **D82 no-clobber.** For markdown resources the projection pipeline REWRITES `.meta` on body
+  change and agent-authored enrichment does NOT survive (`test_agent_enrichment_survives_body_rewrite`
+  is strict-xfail; D112 gated wiki-memory rollout on exactly this). The agent-only-context half
+  of this contract requires the D82 `.meta.agent` sidecar (or equivalent no-clobber) for the
+  projection-rewritten content class. Turtle-body substrates (`/id/`, contacts) sidestep it.
+- **Auth.** Deriving `prov:agent` requires an authenticated WebID; the Pod runs dev-allow-all,
+  so the identity component activates with the security profile (same trigger as the D112
+  maturity scorer) — it is part of the contract's *design*, not of SP2's buildable surface.
+
+**Scope (lean — confirm in approaches):** the contract attaches at **crystallization** (D73
+preserved: `working/` stays low-ceremony, carrying only the derivable parts); full enforcement
+on durable containers. Otherwise the contract re-introduces the write ceremony D73 removed.
+
+### 6.1 Quality, not just presence — three stations by decidability
+
+The floor can enforce *presence*; it cannot judge whether "Created this resource" is a vacuous
+rationale — and D112's probes showed agents satisfy shapes minimally (35/35 omitted optional
+`prov:agent`), so a bare MUST yields boilerplate. The governing asymmetry: **agent-only context
+is unrecoverable after the write.** It exists only in the writing agent's context window; a
+curator can *detect* vacuity later but cannot *reconstruct* what should have been recorded —
+nobody can. Quality therefore has exactly one capture point (write time), and enforcement
+partitions into three stations:
+
+| Station | When | Catches | Mechanism |
+|---|---|---|---|
+| **SHACL floor** (server, synchronous) | write | everything machine-decidable: presence, datatype, minLength, anti-boilerplate `sh:not` patterns | D108 422 + ValidationReport + **content-laden** `sh:agentInstruction` — the E5b lesson applied to the write side: name the failure mode ("record the task that triggered this write, what you concluded, and why — a future agent audits this before trusting the resource; do not restate the title"). The floor demonstrably *teaches* (D112: 2×422 → corrected). Shapes are **per-app** (`st:shape`→SHACL, the An layer); the validation-report channel is uniform substrate machinery. |
+| **Write disposition** (agent-side, SP1) | write | semantic quality — the ONLY station that can | the construct-side twin of audit (E5) + grounding (E7) in the SP1 bundle: declare why / what task / what was concluded, *before* POST. Carries SHACL as a **pre-flight tool** (validate locally against the app's published shapes, iterate, then write) — same shapes, two deliveries; the server gate stays the floor-tier guarantee. |
+| **Curation loop** (asynchronous) | later | vacuity *rate*; drift in derivables | three jobs, none of which is repairing agent-only context: (a) **trust annotation** — flag weak-context resources so the read-path audit disposition discounts them (the consume side prices in write quality; L2 OOD-honesty operating between the contract's two halves); (b) **eval signal** — graded rationale quality is the GEPA/skill-optimization reward for the write skill; (c) **repair for derivable structure only**, where re-derivation is possible. |
+
+The curator stays a **role** (D112: Pod state — ledger, detectors, propose-only), not a quality
+gate and not necessarily a separate subagent. Keep the anti-boilerplate SHACL **shallow** until
+the curation loop's sampling shows the actual vacuity rate: the threat model is
+cooperative-but-lazy (D112's minimal-satisfaction finding), not adversarial — don't build the
+deep SPARQL-constraint ladder pre-emptively. How much quality the floor's report buys vs the
+disposition is an empirical question → the write-side E5b twin probe (§12).
+
 **Loop closure:** this agent-authored context/provenance layer is the **same channel** the
 read-path dispositions consume — "circumstances" is `mem:rationale`'s general form; "which
 agent/when" is the missing `prov:agent`/`prov:wasGeneratedBy`. **The write contract (construct)
@@ -137,12 +201,21 @@ declarations. This is the operational meaning of "construct progressive disclosu
 (The shacl-engine experimental branch — SPARQL node expressions + coverage — is a candidate engine
 upgrade; see the FOLLOWUPS infra note.)
 
+**Derived views are themselves self-describing.** Each materialized index/view carries its own
+derivation provenance (source, query, when) — the substrate's own writes obey the §6 write
+contract. Load-bearing, not cosmetic: the index probe showed ~1/3 of agents trust a derived
+index outright (b-run2: zero confirmation GETs), so a stale materialization would be *believed*;
+the `OperationsIndexListener` retraction bug is a live instance of the stale-derivation class.
+The derivation marker is what the read-path audit disposition checks on a view.
+
 ## 8. Build decomposition
 
-- **SP1 — read-path skill + tool harness (FIRST; the optimization substrate).** Package the
-  proven disposition bundle — audit-before-trust (E5) + ground-unknown-terms (E7), content-laden
+- **SP1 — read+write-path skill + tool harness (FIRST; the optimization substrate).** Package the
+  proven disposition bundle — audit-before-trust (E5) + ground-unknown-terms (E7) +
+  **declare-write-context (the §6.1 write disposition — the construct-side twin)**, content-laden
   per the E5b/E7 thresholds — plus the recursive disclosure-navigation discipline (orient → drill
-  → ground → audit; recurse into the chosen app), as a **skill** (in `solid-agent-skills`) with
+  → ground → audit; recurse into the chosen app) and **SHACL pre-flight as a tool** (validate
+  against the app's shapes before POST), as a **skill** (in `solid-agent-skills`) with
   the tools it needs. Eval: does a *skill-delivered* disposition reproduce the prompt-injected
   gold result? Optimized against the cold-agent eval (skill-creator / GEPA loop, Claude Code as
   executor). **Consumption-channel ordering (Chuck, 2026-06-10): skill+tool harness first; the MCP
@@ -184,6 +257,8 @@ separately (one view-layer rework, not two):**
   gap) = part of the agentic write contract (§6).
 
 **AFFECTS — these inform or are informed by this spec, but stay where they are:**
+- **D82 `.meta.agent` sidecar / no-clobber** — promoted from "deferred broad case" to a **named
+  hard dependency** of the §6 write contract for projection-rewritten resources (see §6).
 - D111 data-deref / fragment-datatype pattern = an R-layer grounding supply channel (E7).
 - The `pod-discover` skill + skill-acquisition (GEPA-gskill) research agenda = the SP1 consume side.
 - `/llms.txt` + root-level/cross-container index + wrong-container-descent metric = deferred Ad-layer
@@ -216,6 +291,10 @@ Not decided here:
 - Does the **general navigation discipline** truly generalize across application *kinds*
   (wiki-memory's SKOS-broader navigation vs a gBrain-style memory vs addressbook query), or does
   each app need a thin declared "how to navigate me" beyond `st:Description`?
+  **→ promoted to a queued generalization probe (§12) — run before SP2 commits to index-shaped
+  machinery.** The §3 disclosure-vs-operation refinement is the working hypothesis.
+- **Write-contract scope at `working/`** — the §6 lean (attach at crystallization; drafts carry
+  derivable parts only) preserves D73 low-ceremony; confirm in the approaches session.
 - How much of the **collection orientation** can be *derived* from the ShapeTree topology
   (`st:contains` + `st:shape` + the AccessNeed) rather than authored, narrowing what the author
   must declare?
@@ -223,3 +302,26 @@ Not decided here:
   and is it derived from the governed typed-edge graph or separately declared?
 - The **configured-client** decision in the profiles strip-back (keep selection machinery for
   non-LLM interop partners, or drop it) — an audience question, not a correctness one.
+
+## 12. Hypothesis → behavioral measurement (agentic eval, not just tests)
+
+Every mechanism in this spec encodes a hypothesis about **agent behavior**. Unit/integration
+tests verify the substrate; they do not verify the hypothesis — a mechanism is not "done" at
+green tests, it is done when its cold probe shows the behavior (eval-as-engineering-feedback;
+the `evals/` rig pattern). The map:
+
+| Hypothesis | Probe | Status |
+|---|---|---|
+| Definition-line index routes cold agents | RQ-Discovery-1, `evals/idxview` | ✅ RUN (20–30× fetch reduction; build gate cleared) |
+| Audit + grounding dispositions fix over-trust | E5/E5b/E7, `evals/salience-*` | ✅ RUN (E5 3/3; E7 2/3; combined gold) |
+| D96 `<#this>` placement closes the registration miss | re-run E7 after the fix | queued (cheap feed-in) |
+| Format A/B — leanest hook that still routes | `evals/idxview` + prefLabel-only arm | queued (cheap feed-in) |
+| **Write quality: how much does the floor's report buy vs the disposition?** (§6.1) | **write-side E5b twin** — arms: (A) presence-only floor; (B) + content-laden ValidationReport `sh:agentInstruction`; (C) + write disposition in the harness. Grade the resulting rationales (vacuous / restates-title / genuine context). | **NEW — queued (cheap feed-in)** |
+| **The disclosure discipline generalizes beyond wiki-shaped apps** (§3) | index-view-style rig against the live **addressbook or id-schemes** app (operation-shaped: query / resolve-register); add the wrong-container-descent metric | **NEW — queued; run BEFORE SP2 commits to index-shaped machinery** |
+| Skill-delivered disposition reproduces prompt-injected gold | the SP1 eval itself (skill-creator / GEPA loop, cold-agent harness) | = SP1's own gate |
+| The full contract walk works cold, multi-app | end-to-end: cold agent + SP1 skill on the SP2-materialized pod; task spans Ad→An→R across two apps | after SP1+SP2 |
+| Write-context quality in the wild | curation-loop sampling (continuous; doubles as the GEPA reward signal, §6.1c) | with SP2 floor extension |
+
+Levels, in order: deterministic conformance (`make test`, floor 422s, agreement tests) →
+per-mechanism cold probes (above) → the end-to-end contract walk → continuous curation-loop
+measurement in operation. SP1 and SP2 each land WITH their probes, not before them.

@@ -8,9 +8,18 @@ Things to come back to. Open items only; closed items move to commit history and
 The structure-design brainstorm (`superpowers:brainstorming`) converged the spine and banked it as a
 **foundation**; build approaches were deliberately deferred. Resume here.
 
-- [ ] **Chuck reviews the foundation spec** — confirm the spine reads right (model `S→Ad→An→Ax→R`,
-  contract C, declarative An via interop+ShapeTree, hook partition, agentic write contract,
-  SPARQL-materialized consistency, SP1-first build order) before approaches.
+- [x] **Chuck reviewed the foundation spec 2026-06-10 (same day) — spine confirmed; spec AMENDED
+  post-review.** Sanity check verified the factual claims (live-but-inert interop layer; E7/index-view
+  report fidelity; storage description + WebID card confirmed unsurfaced by live GET). Amendments
+  (spec header lists them): **D82 named a hard dependency** of the write contract (§6 — agent `.meta`
+  enrichment doesn't survive projection rewrites); `prov:agent` derivation auth-gated (security
+  profile); derived views self-describing w/ derivation provenance (§7); disclosure-vs-operation split
+  + per-component consumption profiles (§3); **§6.1 three-station quality partition** (floor =
+  machine-decidable + teaching 422s / **write disposition = the only quality capture point** — agent-only
+  context is unrecoverable post-write / curation loop = trust-annotation + GEPA eval-signal +
+  derivable-repair ONLY; curator is a role, NOT a quality gate, not necessarily a subagent); **§12
+  hypothesis→behavioral-measurement map** (Chuck: agentically measure the agentic behavior — each
+  mechanism lands WITH its cold probe, not just green tests).
 - [ ] **▶ NEXT SESSION = resume the brainstorm at "propose build approaches" (spec §10), then `writing-plans`.**
   The real forks: (a) view-materialization where/when (on-write listener vs on-demand ViewAssembler conneg
   vs cached-derived; discovery favors a size-conspicuous named child resource per the index-view probe);
@@ -20,7 +29,12 @@ The structure-design brainstorm (`superpowers:brainstorming`) converged the spin
   plan first (brainstorming HARD-GATE).
 - [ ] **Cheap empirical feed-ins** (can fold into the approaches as they need settling, not run speculatively):
   the **D96 subject-placement fix** (derive `mem:hasOpenAction` onto `<#this>`; re-run E7 `evals/salience-e7`
-  to confirm it closes the g-run3 miss — tight loop); **format A/B** (`evals/idxview`, add a prefLabel-only arm).
+  to confirm it closes the g-run3 miss — tight loop); **format A/B** (`evals/idxview`, add a prefLabel-only arm);
+  **NEW — write-side E5b twin** (spec §12: arms presence-only-floor / +content-laden ValidationReport
+  instruction / +write disposition; grade rationale quality — answers "how much does the floor buy vs the
+  disposition" empirically); **NEW — generalization probe** (spec §3/§12: index-view-style rig against the
+  live addressbook or id-schemes app — operation-shaped, not navigation-shaped; run BEFORE SP2 commits to
+  index-shaped machinery).
 - [ ] **SP2 execution checklist** lives in the 📐 section below (profiles/roles strip-back, D80 re-cut,
   index-view build, interop surfacing) + the ⚙ interop-foundation gaps — all FOLD-IN items of the spec §9.
 - **Build order (locked):** SP1 skill+tool harness FIRST (optimization substrate; skill-creator/GEPA against

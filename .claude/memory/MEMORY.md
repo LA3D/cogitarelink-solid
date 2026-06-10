@@ -34,7 +34,23 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   re-cut + index-view build + D96 subject-placement (hasOpenAction→`<#this>`) + interop surfacing (hasRegistrySet on
   WebID card, namespace drift) + prov:agent derivation (spec §9). **▶ NEXT SESSION = build approaches** (spec §10):
   view-materialization where/when; one general nav skill vs general+per-app thin skills from `st:Description`;
-  hand-written vs learned/GEPA; format A/B. Then writing-plans. Chuck to review the spec.
+  hand-written vs learned/GEPA; format A/B. Then writing-plans.
+  **REVIEWED + AMENDED 2026-06-10 (same day; Chuck confirmed spine):** sanity check verified all factual
+  claims (interop layer live-but-inert; reports faithful; unsurfaced claims live-GET-confirmed). Amendments:
+  **D82 = hard dependency** of the write contract (agent `.meta` enrichment doesn't survive projection
+  rewrites — strict-xfail); prov:agent auth-gated (security profile); derived views self-describing w/
+  derivation provenance (§7 — ~1/3 of agents trust an index outright); §3 disclosure-vs-operation split
+  (index = ONE kind of orientation; operation-shaped apps get affordance pointers; `st:Description` declares
+  which) + consumption profiles (index = natural for cold agents, governance = disposition-gated → routing
+  universal, trust SP1/SP3-only); **§6.1 three stations by decidability** (floor = machine-decidable +
+  teaching 422 w/ E5b-content-laden agentInstruction / **write disposition in SP1 = the ONLY quality capture
+  point** — agent-only context unrecoverable post-write / curation loop = trust-annotation + GEPA eval-signal
+  + derivable-repair only; curator = role NOT quality gate; keep anti-boilerplate SHACL shallow — threat
+  model is cooperative-but-lazy); contract attaches at **crystallization** (D73 preserved; confirm in
+  approaches); SP1 bundle now carries declare-write-context + SHACL pre-flight tool; **§12 hypothesis→
+  measurement map** (each mechanism lands WITH its cold probe) adds 2 NEW queued probes: **write-side E5b
+  twin** (floor vs disposition, graded rationales) + **generalization probe** (addressbook/id-schemes,
+  operation-shaped — BEFORE SP2 commits to index-shaped machinery).
 - **▶▶ TWO experiments RUN 2026-06-10 (the queued "QT experiments"); both committed to main.**
   **① E7 grounding disposition** (report `docs/plans/2026-06-10-rq-salience-1-e7-report.md`; salience
   doc §8.1.1; rig `evals/salience-e7/`; commit `03c6989`): **grounding is a SECOND independent
