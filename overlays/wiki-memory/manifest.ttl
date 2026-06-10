@@ -116,50 +116,50 @@
         </vault/meta/profiles/template> ;
 
     overlay:installsView
-        [ overlay:document "views/fused.ttl" ;    overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/fused> ] ,
-        [ overlay:document "views/people.ttl" ;   overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/people> ] ;
+        [ overlay:document "views/fused.ttl" ;    overlay:hostedAt </vault/meta/views/fused> ] ,
+        [ overlay:document "views/people.ttl" ;   overlay:hostedAt </vault/meta/views/people> ] ;
 
     overlay:installsViewArtifact
-        [ overlay:document "views/fused-projection" ;  overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/fused-projection> ] ,
-        [ overlay:document "views/people-projection" ; overlay:hostedAt <https://pod.vardeman.me/vault/meta/views/people-projection> ] ;
+        [ overlay:document "views/fused-projection" ;  overlay:hostedAt </vault/meta/views/fused-projection> ] ,
+        [ overlay:document "views/people-projection" ; overlay:hostedAt </vault/meta/views/people-projection> ] ;
 
     overlay:installsPage [
-        overlay:targetResource <https://pod.vardeman.me/vault/wiki/index.md> ;
+        overlay:targetResource </vault/wiki/index.md> ;
         overlay:body <synthesis/index.md> ;
         overlay:meta <synthesis/index.md.meta.ttl> ;
         dct:title "Wiki-memory L3 synthesis (deploy at substrate root)"
     ] ;
 
     overlay:installsPage [
-        overlay:targetResource <https://pod.vardeman.me/vault/wiki/concepts/how-wiki-memory-works.md> ;
+        overlay:targetResource </vault/wiki/concepts/how-wiki-memory-works.md> ;
         overlay:body <concepts/how-wiki-memory-works.md> ;
         overlay:meta <concepts/how-wiki-memory-works.md.meta.ttl> ;
         dct:title "How Wiki-Memory Works (conceptual model + worked example)"
     ] ;
 
     overlay:installsPage [
-        overlay:targetResource <https://pod.vardeman.me/vault/wiki/concepts/how-identifiers-work.md> ;
+        overlay:targetResource </vault/wiki/concepts/how-identifiers-work.md> ;
         overlay:body <concepts/how-identifiers-work.md> ;
         overlay:meta <concepts/how-identifiers-work.md.meta.ttl> ;
         dct:title "How Identifiers Work (the Pod's PID system; dog-foods the compact-id convention)"
     ] ;
 
     overlay:installsPage [
-        overlay:targetResource <https://pod.vardeman.me/vault/wiki/concepts/photosynthesis.md> ;
+        overlay:targetResource </vault/wiki/concepts/photosynthesis.md> ;
         overlay:body <concepts/photosynthesis.md> ;
         overlay:meta <concepts/photosynthesis.md.meta.ttl> ;
         dct:title "Photosynthesis (gold exemplar concept)"
     ] ;
 
     overlay:installsPage [
-        overlay:targetResource <https://pod.vardeman.me/vault/wiki/concepts/biology.md> ;
+        overlay:targetResource </vault/wiki/concepts/biology.md> ;
         overlay:body <concepts/biology.md> ;
         overlay:meta <concepts/biology.md.meta.ttl> ;
         dct:title "Biology (broader-concept exemplar)"
     ] ;
 
     overlay:installsPage [
-        overlay:targetResource <https://pod.vardeman.me/vault/wiki/people/marie-curie.md> ;
+        overlay:targetResource </vault/wiki/people/marie-curie.md> ;
         overlay:body <people/marie-curie.md> ;
         overlay:meta <people/marie-curie.md.meta.ttl> ;
         dct:title "Marie Curie (thing-frame exemplar)"

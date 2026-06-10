@@ -14,9 +14,9 @@ import argparse, pathlib, sys, time
 import httpx
 
 
-def wait_for_pod(base: str, retries: int = 30, delay: float = 2.0):
+def wait_for_pod(base: str, root: str = "/vault", retries: int = 30, delay: float = 2.0):
     """Wait for pod to be ready (seed config may still be running)."""
-    pod_url = f"{base}/vault/"
+    pod_url = f"{base}{root}/"
     for i in range(retries):
         try:
             r = httpx.get(pod_url, timeout=5)
@@ -50,8 +50,8 @@ def upload_file(client: httpx.Client, local_path: pathlib.Path,
         return False
 
 
-def upload_shapes(client: httpx.Client, shapes_dir: pathlib.Path) -> int:
-    """Upload SHACL shapes to /vault/meta/shapes/.
+def upload_shapes(client: httpx.Client, shapes_dir: pathlib.Path, root: str = "/vault") -> int:
+    """Upload SHACL shapes to <root>/meta/shapes/.
 
     Deprecated post-substrate-cleanup (2026-05-16): shape upload moved to the
     wiki-memory overlay (scripts/overlay/apply.py). Kept as a fallback helper
@@ -59,29 +59,29 @@ def upload_shapes(client: httpx.Client, shapes_dir: pathlib.Path) -> int:
     """
     count = 0
     for f in sorted(shapes_dir.glob("*.ttl")):
-        pod_path = f"/vault/meta/shapes/{f.name}"
+        pod_path = f"{root}/meta/shapes/{f.name}"
         if upload_file(client, f, pod_path, "text/turtle"):
             count += 1
     return count
 
 
-def upload_ontology(client: httpx.Client, onto_dir: pathlib.Path) -> int:
-    """Upload ontology stubs to /vault/ontology/."""
+def upload_ontology(client: httpx.Client, onto_dir: pathlib.Path, root: str = "/vault") -> int:
+    """Upload ontology stubs to <root>/ontology/."""
     count = 0
     for f in sorted(onto_dir.glob("*.ttl")):
-        pod_path = f"/vault/ontology/{f.name}"
+        pod_path = f"{root}/ontology/{f.name}"
         if upload_file(client, f, pod_path, "text/turtle"):
             count += 1
     return count
 
 
-def verify_pod(client: httpx.Client) -> bool:
+def verify_pod(client: httpx.Client, root: str = "/vault") -> bool:
     """Smoke test: check key pod resources exist."""
     checks = [
-        ("/vault/", "Pod root"),
-        ("/vault/profile/card", "WebID card"),
-        ("/vault/settings/publicTypeIndex", "Type Index (empty post-Phase 1)"),
-        ("/vault/.well-known/solid", "Storage description"),
+        (f"{root}/", "Pod root"),
+        (f"{root}/profile/card", "WebID card"),
+        (f"{root}/settings/publicTypeIndex", "Type Index (empty post-Phase 1)"),
+        (f"{root}/.well-known/solid", "Storage description"),
     ]
     ok = True
     for path, label in checks:
@@ -101,11 +101,13 @@ def main():
                    help="Path to SHACL shapes directory")
     p.add_argument("--ontology-dir", default="/ontology",
                    help="Path to ontology directory")
+    p.add_argument("--storage-root", default="/vault",
+                   help="Storage root path on the Pod (default: /vault; D107 §4.4 parameterization)")
     args = p.parse_args()
 
     print(f"Pod setup targeting {args.target}")
 
-    if not wait_for_pod(args.target):
+    if not wait_for_pod(args.target, args.storage_root):
         sys.exit(1)
 
     shapes_dir = pathlib.Path(args.shapes_dir)
@@ -123,10 +125,10 @@ def main():
         n_onto = 0
         if onto_dir.exists():
             print(f"\nUploading ontology from {onto_dir}")
-            n_onto = upload_ontology(c, onto_dir)
+            n_onto = upload_ontology(c, onto_dir, args.storage_root)
 
         print(f"\nVerifying pod structure:")
-        ok = verify_pod(c)
+        ok = verify_pod(c, args.storage_root)
 
     print(f"\nDone: {n_shapes} shapes, {n_onto} ontology files uploaded")
     sys.exit(0 if ok else 1)

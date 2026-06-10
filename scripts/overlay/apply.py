@@ -153,10 +153,13 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             print(f"  prof.meta → dct:conformsTo PROF")
 
         # 5b. Upload view descriptors + their CONSTRUCT-of-record artifacts (view-layer).
-        #     Ensure the views container exists first (matches the shape/profile pattern).
-        #     View descriptors get dct:conformsTo PROF so ProfileLinkMetadataWriter fires.
-        if manifest.views or manifest.view_artifacts:
-            ensure_container(client, absolutize(pod_url, "/vault/meta/views/"))
+        #     Ensure each view's parent container exists first (matches the
+        #     shape/profile pattern). Containers are derived from the manifest's
+        #     hostedAt entries — no hardcoded storage root (D107 §4.4).
+        view_ctrs = {absolutize(pod_url, hd.hosted_at).rsplit("/", 1)[0] + "/"
+                     for hd in [*manifest.views, *manifest.view_artifacts]}
+        for ctr in sorted(view_ctrs):
+            ensure_container(client, ctr)
         for hd in manifest.views:
             url = absolutize(pod_url, hd.hosted_at)
             put_file(client, url, hd.document, hd.content_type)

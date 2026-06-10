@@ -16,5 +16,4 @@
     skos:prefLabel "Biology" ;
     rdfs:label "Biology" ;
     skos:definition "The study of living organisms." ;
-    skos:narrower <photosynthesis.md#this> ;
     schema:mainEntityOfPage <biology.md> .
