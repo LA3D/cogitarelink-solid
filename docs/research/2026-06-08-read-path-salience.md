@@ -447,6 +447,38 @@ D109, unbuilt (D110 stub), nothing surfaced to agents; it is the pod-side app-vo
 grounding channel and a first-class requirement of the structure design, not a deferred
 rebase. Interop-commensurability status: partially not commensurate, by omission.
 
+### 8.1.1 E7 RESULT (2026-06-10) — grounding is a second, independent lever; Chuck's challenge sustained
+
+Run: report `docs/plans/2026-06-10-rq-salience-1-e7-report.md`; harness `~/dev/probes/salience-e7/`
+(Sonnet, curl-only, same de-confounded E5 trap; arms `g` grounding-only / `ga` grounding+audit).
+Pre-flight passed (extension-less `mem` serves 200 Turtle + JSON-LD via D84 conneg; `#hasOpenAction`
+decision-useful; ledger carries `schema:actionStatus PotentialActionStatus`; no 404 wrinkle).
+
+- **Grounding-only caught 2/3; combined caught 1/1 (gold).** The disposition is **disposition-gated,
+  not capability-gated** — install it and 3/4 agents dereference `mem:` (a plain GET). Confirmed in
+  the raw curl order: g-run1 GET `ontology/mem` *before* the ledger — grounding the term *caused* the
+  follow. **A different mechanism from E5's audit lever** (dereference-the-unknown-term, not
+  hunt-for-contestation), reaching the same correction. So vocab dereference IS behavioral, not FAIR
+  hygiene — the §8.1 reframe is empirically confirmed.
+- **The 1 miss is the registration gap (E1/E5b resurfacing).** g-run3: 3 calls, stopped at PD.meta;
+  `mem#hasOpenAction` was in the bytes but never registered as unknown-to-ground — the agent had
+  `skos:broader` (known) as its answer and quit ("no superseding claims"). Pure grounding fires only
+  *after* the bespoke term registers; a confirm-disposed agent skips the scan. Audit supplies the
+  registration that grounding lacks → **combined = gold** (ga-run1: ledger-first via audit, then
+  ground `mem:` for semantics).
+- **Grounding *refines* the proposed-vs-applied read (E8).** All catches surface the contestation
+  (pass the E5 bar). The most careful (g-run2) used the grounded definition to reason that a
+  `PotentialActionStatus` `RealignAction` is *pending review* and the `.meta` triple still binds —
+  more accurate than the trap rationale's own "treat the graph as authoritative" overclaim. Grounding
+  gives the agent the material to correctly *discount* a proposed-but-unapplied action.
+
+**Net for the structure design:** the agent-side disposition bundle should carry BOTH audit-before-trust
+(E5) and ground-unknown-terms (E7); the MCP-gateway is where both get force-consumed (the cold-bootstrap
+leak). Pod side: keep `mem:` richly self-describing + conneg-dereferenceable (validated supply); the
+D111 data-deref pattern and the unbuilt SAI loading chain (D109/D110) are the pod-side grounding
+channels for terms the agent hasn't met. **E7 question CLOSED on supply; open on consumption (= the
+skill/MCP channel, shared with E5).**
+
 ## 9. What "done" looks like for RQ-Salience-1
 
 A read-path probe where a cold agent, asked a graph question whose plain answer is

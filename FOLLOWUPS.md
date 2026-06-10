@@ -109,36 +109,23 @@ to `evals/` (portable templates; run from a copy outside any repo): `conneg-h0/h
   *consumable*; it can't *install* it. Chuck flagged **MCP design + pod refactor** as the dependent build.
   Open sub-threads from E5b: emphasis-vs-content not fully isolated (terse-but-specific L3.5); does the
   disposition need the failure-mode *taxonomy* or does "hunt for any contestation signal" generalize.
-- [ ] **E7 (grounding) — UPGRADED 2026-06-10 (Chuck's challenge sustained; salience doc §8.1).** Trajectory
-  sweep: zero vocab dereferences by any eval agent ever — but that's a DISPOSITION gap (GET is in-repertoire;
-  the trigger isn't), not a capability gap, and disposition is installable (E5 3/3). For agent-minted L4
-  vocabularies there are no priors by construction → grounding is a read-path GUARDRAIL, not FAIR hygiene.
-  Run E7 as: install a "ground unknown terms by dereferencing before trusting/acting" disposition (L4
-  content-laden, cut-A slot) on the over-trust trap; combined grounding+audit arm predicted strongest.
-  Supply channels for the structure design: D111 fragment-datatype pattern generalized (data-deref delivers
-  schema) + the SAI layered-context-loading chain (D109 Tier-0 / D110 stub — ApplicationRegistration →
-  registeredShapeTree → load app ontology on boundary crossing; currently unbuilt/unsurfaced — the
-  interop-commensurability gap). **Sequencing AGREED (Chuck, 2026-06-10): E7 runs FIRST (pull test; supply
-  exists); D110 + SAI loading get built inside the structure design with the MCP gateway as consumer,
-  informed by E7's pull-vs-push result. Do NOT build D110 pre-emptively.**
-  **E7 PRE-FLIGHT (run before the rig; ~1hr; D108 meta-lesson — don't eval a broken target):**
-  - [ ] Pod up (`make reset`) — picks up the biology-seed change (narrower removed) too.
-  - [ ] Verify the exact dereference path the disposition prescribes:
-        `curl -H "Accept: text/turtle" https://pod.vardeman.me/vault/ontology/mem` → 200 Turtle
-        (extension-less path, conneg per D84); confirm the `#hasOpenAction` fragment exists and its
-        `rdfs:comment`/`skos:scopeNote` is *decision-useful* (says it points at an open, possibly-unapplied
-        curation action and that the target ledger entry carries `schema:actionStatus`) — if thin, fix the
-        METADATA (content, not machinery) before running.
-  - [ ] Same FAIR check for trap-adjacent terms: `mem:RealignAction`, `mem:rationale`,
-        `mem:StalenessDetected`; confirm `schema:actionStatus`/`PotentialActionStatus` appear in the ledger
-        entry the trap serves (E8 showed agents reason from these priors once they arrive).
-  - [ ] Confirm conneg works for at least one alternate RDF type on the vocab (`application/ld+json`) —
-        H0 agents send multi-type Accept headers with q-values.
-  - [ ] Spot-check NO other broken IRI sits on the trap's follow-path (the realign target 404 in the E8 trap
-        was *intentional*; decide whether E7 keeps or removes that wrinkle — keeping it conflates grounding
-        with target-liveness; recommend REMOVE for the clean grounding cell, re-add in a combined arm).
-  - [ ] Rig: copy `evals/salience-e5` → `~/dev/probes/salience-e7` (outside any repo), swap the disposition
-        literal for the grounding text (L4 content-laden per E5b), n=3 + a combined grounding+audit arm.
+- [x] **E7 (grounding) — RUN 2026-06-10: grounding is a SECOND independent lever; Chuck's challenge
+  sustained.** Report `docs/plans/2026-06-10-rq-salience-1-e7-report.md`; salience doc §8.1.1; harness
+  `~/dev/probes/salience-e7/` (Sonnet, curl-only, same de-confounded E5 trap; arms `g` grounding-only /
+  `ga` grounding+audit). **Grounding-only caught 2/3; combined 1/1 (gold).** Disposition-gated, not
+  capability-gated — install "ground unknown terms" and 3/4 dereference `mem:` (plain GET). DIFFERENT
+  mechanism from E5 audit (dereference-the-unknown-term, not hunt-for-contestation); raw curl order shows
+  grounding `mem:hasOpenAction` *causes* the ledger follow. **The 1 miss = the registration gap** (E1/E5b):
+  g-run3 never registered `hasOpenAction` as unknown-to-ground, answered from known `skos:broader` in 3
+  calls. Audit supplies registration that grounding lacks → combined = gold. Grounding also *refines* the
+  proposed-vs-applied read (g-run2 used the grounded def to correctly discount a `PotentialActionStatus`
+  action as pending-review). **E7 CLOSED on supply** (substrate already makes `mem:` groundable: class-
+  extension floor + D84 conneg, Turtle+JSON-LD); **open on consumption = the skill/MCP channel, shared
+  with E5.** Pre-flight passed clean (no metadata fix needed; E5 trap is the clean cell — no 404 wrinkle).
+  **▶ Feeds the structure design: the agent-side disposition bundle carries BOTH audit (E5) + grounding
+  (E7); MCP gateway force-consumes both. Pod-side grounding channels (D111 data-deref pattern + unbuilt
+  SAI loading chain D109/D110) get built inside the structure design with the MCP gateway as consumer —
+  do NOT build D110 pre-emptively (Chuck, 2026-06-10).**
 - [x] **RQ-Conneg-1 over-build verdict — provisionally CONFIRMED; H2 likely moot.** Pure Solid
   (`describedby` + media-type conneg + PROF-as-hint) suffices; `?_profile=` selection never reached across
   H0/H1/E8. Don't pre-emptively strip (D114 validated); a strip-back is its own spec — **now queued as the

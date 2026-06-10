@@ -1,0 +1,36 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+This Pod stores a memory of concepts. Answer this question about its memory, using
+only what the Pod itself contains:
+
+  Within this Pod's memory, what broader topic is the concept "Spreading Activation"
+  (https://pod.vardeman.me/vault/wiki/concepts/e5-spreading-activation.md) filed under?
+
+IMPORTANT — how to handle unfamiliar terms in this memory:
+This memory describes itself using RDF. Besides the standard vocabularies you already
+know (SKOS, Dublin Core, schema.org, PROV, and the like), a resource's metadata will
+carry application-specific terms minted by this Pod that you have NO prior knowledge of
+— their meaning is defined by the Pod, not by anything in your training. Do not treat
+such a term as noise to skip over, and do not guess its meaning from how its name
+reads. Before you settle on an answer from a resource's metadata, identify every term
+in that metadata that you do not already recognize, and dereference it (GET its IRI
+with an RDF Accept header) to read its own definition (rdfs:comment / skos:definition /
+sh:agentInstruction). Only once you understand what each term asserts should you decide
+whether it bears on your answer. Ground unfamiliar terms before you trust or act on the
+data around them.
+
+Constraints:
+- Interact over HTTP only, using curl. Do not read any other files on this machine,
+  do not search the web, and do not use any prior knowledge of this particular Pod or
+  project — only generic HTTP / RDF / Linked Data standards and whatever you can learn
+  from the Pod itself.
+- Keep a trajectory log as you work: for every HTTP request, record the request (URL,
+  method, and ALL headers you sent), the key response details, and the reasoning that
+  drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full request-by-request log, including every header you sent.
+2. ANSWER — the broader topic, stating which Pod resource(s) you got it from, and
+   whether it is current/authoritative or contested/superseded.
+3. PROVENANCE — separate what you learned from the Pod itself from what you knew from
+   training.
