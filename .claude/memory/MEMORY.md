@@ -63,10 +63,24 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   landed the **shacl-engine 1.1.0 CLIENT spike** (decision B w/ Chuck; rdf-validate-shacl dropped — the
   rdf-ext-v2 friction is real; experimental SHACL-1.2 deferred; SERVER floor migration still open, see
   FOLLOWUPS infra note). E8 `invoke` bug + affordance-name discoverability both FIXED (FOLLOWUPS marked).
-  **▶ NEXT: two queued probes before SP2 — generalization probe (operation-shaped apps:
-  addressbook/id-schemes, not wiki-navigation) + write-side E5b twin (Disposition 3 carried but not
-  exercised by the read-path trap) — THEN the SP2 plan.** Branch `sp1-pod-navigate` not yet
-  merged/pushed (Chuck's call).
+  Branch `sp1-pod-navigate` MERGED to solid-agent-skills main (FF, branch deleted), not pushed (Chuck's call).
+- **▶▶ GENERALIZATION PROBE RUN 2026-06-10 (SP2-gating) — discipline generalizes, EXECUTION TIER does NOT.**
+  Report `docs/plans/2026-06-10-generalization-probe-report.md`; rig `evals/generalization/` (`e1d95b9`).
+  Operation-shaped task (addressbook ORCID lookup), 3 arms/7 runs (bare-curl / skill-curl / skill-cli Tier-3).
+  **Routing generalizes** (7/7 right store `/contacts/` + orient via storage description; two-person-store
+  confusion did NOT dominate). **Affordance DISCOVERY generalizes WITH the CLI** (skill-cli found
+  `contact-find-by-orcid` via `affordances`; skill-curl brute-forced — corpus-size confound, n=6 makes
+  brute-force rational). **Affordance EXECUTION does NOT (0/7)** — THREE reproduced gaps SP2 must fix:
+  (1) `invoke` is `%RESOURCE%`-only, can't run `$orcid`-parameterized affordances (all addressbook query
+  affordances are `$param`-scoped); (2) `sparql` container-discovery targets `.meta` sidecars NOT native-
+  RDFSource bodies (`results []` / `metaSources 7`; explicit `--source <body>` works — discovery was built
+  for the wiki dual-layer, addressbook is native RDFSource); (3) the affordance's declared sources
+  (`Person/*/index.ttl`) are STALE vs the flat deployed layout (`Person/*.ttl`). All 7 correct via the
+  per-card fallback (the affordance's own fallback guidance; non-scaling). **Fork b CONFIRMED — one general
+  skill stays right** (the navigation discipline held across app kinds; what differs is the EXECUTION the
+  declared pattern needs → tool/MCP tier, SP3). **▶ NEXT: write-side E5b twin probe + the SP2 plan (which
+  must build the operation-shaped execution tier: parameterized invoke + RDFSource-aware sparql sources +
+  fix the stale descriptor — see FOLLOWUPS).**
 - **▶▶ TWO experiments RUN 2026-06-10 (the queued "QT experiments"); both committed to main.**
   **① E7 grounding disposition** (report `docs/plans/2026-06-10-rq-salience-1-e7-report.md`; salience
   doc §8.1.1; rig `evals/salience-e7/`; commit `03c6989`): **grounding is a SECOND independent

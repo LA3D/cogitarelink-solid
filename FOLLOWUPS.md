@@ -69,6 +69,35 @@ The structure-design brainstorm (`superpowers:brainstorming`) converged the spin
   command or retired, NOT speculatively. The `shapes` failures' root cause is substrate-side (template-placeholder
   catalog file — see the D108-review item below).
 
+## 🧭 Generalization probe (2026-06-10) — operation-shaped execution tier (SP2 work)
+
+Report `docs/plans/2026-06-10-generalization-probe-report.md`; rig `evals/generalization/` (`e1d95b9`).
+**Verdict: the disclosure DISCIPLINE generalizes to operation-shaped apps (routing 7/7 + affordance
+discovery with the CLI), but the EXECUTION TIER does NOT (0/7 executed the affordance).** Three reproduced
+gaps the SP2 plan must close so operation-shaped apps (addressbook, id-schemes) are actually usable, not
+just discoverable:
+
+- [ ] **(1) `invoke` can't run parameterized affordances.** `solid-pod invoke` substitutes only
+  `%RESOURCE%` (resource-scoped, D52 Tier-2); the addressbook query affordances are `$param`-scoped
+  (`$orcid`/`$org`/`$email`) and the descriptor declares "the affordance engine substitutes `$orcid` as an
+  IRI." Add a parameter-passing path (e.g. `invoke <container> contact-find-by-orcid --param orcid=<iri>`),
+  distinct from `%RESOURCE%`. (`solid-agent-skills/src/commands/invoke.ts`.)
+- [ ] **(2) `sparql` container auto-discovery targets `.meta` sidecars, not native-RDFSource bodies.**
+  Reproduced: `sparql <…/contacts/Person/> "…owl:sameAs <target>"` → `results []`, `metaSources 7` (it queried
+  the 7 empty `.meta` sidecars); explicit `--source <card-body>` works. The discovery was built for the wiki
+  **dual-layer** model (data in `.meta`); the addressbook is **native RDFSource** (data IS the body). When a
+  container holds RDFSources, enumerate `ldp:contains` → use member *bodies* as sources. (`src/lib/http.ts`
+  `discoverMetaSources` / the `sparql` command.)
+- [ ] **(3) `contact-find-by-orcid` declared sources are STALE.** Its `sh:agentInstruction` says
+  *"Sources: all /vault/contacts/Person/\*/index.ttl files"* — the abandoned per-Person-**container** layout;
+  deployed layout is flat `Person/<name>.ttl` (CSS sub-container constraint, AddressBook sprint). Update the
+  descriptor's source declaration to the flat layout. (`overlays/addressbook/affordances/contact-find-by-orcid.ttl`,
+  + sweep the sibling find-by affordances.) A pod-curator candidate.
+
+**Not blocking the discipline finding** (one general skill stays right — fork b confirmed); these are the
+*execution-tier* build for operation-shaped apps, naturally SP2/SP3 (tool + MCP tier). Optional: a scale
+re-run (≥30 contacts) to de-confound the curl-arm discovery question (n=6 made brute-force rational).
+
 ## 📐 Progressive disclosure + profiles reconciliation (2026-06-10)
 
 > **FOLDED INTO the agentic progressive-disclosure contract spec (2026-06-10):**
