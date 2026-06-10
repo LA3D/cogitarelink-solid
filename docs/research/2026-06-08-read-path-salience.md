@@ -460,12 +460,18 @@ decision-useful; ledger carries `schema:actionStatus PotentialActionStatus`; no 
   follow. **A different mechanism from E5's audit lever** (dereference-the-unknown-term, not
   hunt-for-contestation), reaching the same correction. So vocab dereference IS behavioral, not FAIR
   hygiene — the §8.1 reframe is empirically confirmed.
-- **The 1 miss is the registration gap (E1/E5b resurfacing).** g-run3: 3 calls, stopped at PD.meta;
-  `mem#hasOpenAction` was in the bytes but never registered as unknown-to-ground — the agent had
-  `skos:broader` (known) as its answer and quit ("no superseding claims"). Pure grounding fires only
-  *after* the bespoke term registers; a confirm-disposed agent skips the scan. Audit supplies the
-  registration that grounding lacks → **combined = gold** (ga-run1: ledger-first via audit, then
-  ground `mem:` for semantics).
+- **The 1 miss is a subject-SCOPING decision biased by D96 (sharper than "registration gap" — from
+  the full-reasoning audit).** g-run3 *saw* `hasOpenAction` (named it in its Request-1 summary), then
+  reasoned *"no unfamiliar terms were involved in **this particular triple** — `skos:broader` needs no
+  dereferencing"* and filed `hasOpenAction` as **page-level housekeeping**. The reason it could: the
+  back-pointer is derived onto the **page subject** `<…md>`, but the question is about the **concept
+  subject** `<…md#this>` where `skos:broader` lives — so the two-subject split (D96) lets a
+  concept-question agent partition the governance signal away as "file metadata." g-run1 (caught) made
+  the opposite scoping choice on identical disposition text (*"skos:broader is clear BUT per the
+  instructions I must dereference unfamiliar terms before settling — I see hasOpenAction"*). **→
+  Structure-design action: derive `mem:hasOpenAction` onto (or also onto) `<#this>`, not just `<>`**,
+  so the signal lands on the subject the agent reasons about. Audit supplies the whole-metadata scope
+  grounding-alone lacks → **combined = gold** (ga-run1: ledger-first via audit, then ground `mem:`).
 - **Grounding *refines* the proposed-vs-applied read (E8).** All catches surface the contestation
   (pass the E5 bar). The most careful (g-run2) used the grounded definition to reason that a
   `PotentialActionStatus` `RealignAction` is *pending review* and the `.meta` triple still binds —

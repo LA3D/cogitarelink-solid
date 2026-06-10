@@ -95,6 +95,36 @@ tool call — hence > curl-call count in arm A.)
   validates the shape, not the derivation pipeline.
 - Corpus is disposable (`/vault/probe-{a,b}/`, cleared on next `make reset`).
 
+## Trajectory observations (full-reasoning audit — interesting agentic behavior)
+
+Reading the reasoning, not just the fetch counts, surfaced three things that shape the build:
+
+1. **Demand-pull: an agent without an index reaches for one.** a-run3 (arm A) reasoned, *before*
+   brute-forcing: *"The container has 30 notes… all small markdown files. **Let me check the `.meta`
+   resource first to see if there's an index**, then fetch notes in parallel batches."* It checked
+   `/probe-a/.meta` hoping for an overview, found none, and fell back to reading all 30. This is the
+   strongest validation in the run: the index view fills a need agents *actively feel and look for*,
+   not just one we hypothesized. (It also tells us *where* an agent reaches — the container's `.meta` /
+   description resource is a natural place to advertise or carry the index pointer.)
+2. **Discovery is SIZE-driven, not just name-driven.** b-run1 found the index via byte size, not the
+   filename: *"There's an `index.md` with **4081 bytes — much larger than the individual notes. That's
+   likely a table of contents.**"* Agents read `posix:size` in the container listing and infer
+   "overview" from a resource that is conspicuously larger than its siblings. **Implication for format
+   A/B:** a lean prefLabel-only index may not trip this size heuristic as strongly as a definition-line
+   index — the richer format is *doubly* favored (more routing signal AND more discoverable). And for
+   delivery: a derived index that is visibly larger than its siblings gets read even without a perfect
+   name.
+3. **Verification of the index varied (mild, non-biting over-trust).** b-run1/b-run3 confirmed the
+   index's claim with a single GET of n09; **b-run2 trusted the index outright** (0 confirm GETs,
+   answered from the definition line). The index was accurate so it didn't bite — but it is the same
+   over-trust shape as RQ-Salience-1: a derived view is taken as authoritative without checking the
+   source. Worth noting that a *stale* derived index would be believed by ~1/3 of agents. (Argues for
+   the index being genuinely derived/fresh, and for carrying its own provenance/derivation marker.)
+4. **Arm-A cost is target-position-dependent; "exactly one" inflates it.** a-run2 batched n01–n10,
+   hit n09 in the first batch, and stopped (lucky — 10 fetches); a-run3 read all 30 (twice) because
+   the task's "exactly one" wording drove it to verify uniqueness. The bare baseline's cost ranges from
+   target-position to full-container-plus-reverify; the index makes uniqueness checkable in one read.
+
 ## Implication / next
 
 **Build the per-container definition-line index view** (ViewAssembler-derived, media-type conneg per

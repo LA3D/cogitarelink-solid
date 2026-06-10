@@ -122,10 +122,46 @@ the D111-generalized "data-deref delivers schema" pattern + the unbuilt SAI laye
 chain (D109 Tier-0 / D110) as the pod-side app-vocabulary grounding channels for terms an agent
 hasn't yet met.
 
+## Trajectory observations (full-reasoning audit, not just tool calls — the D114/Chuck discipline)
+
+Reading the agents' interleaved reasoning (not only the curl calls) sharpens the diagnosis and
+surfaces an actionable substrate finding:
+
+1. **The miss is a subject-SCOPING decision, not a perception failure — and the two-subject split
+   (D96) is what enables it.** g-run3 *saw* `hasOpenAction` — it named it in its Request-1 response
+   summary (*"DC metadata… a `bodyHash`, and a `hasOpenAction`"*). Then at Request 2 it reasoned:
+   *"`skos:broader` is a well-known SKOS property… This is the direct answer… **No unfamiliar terms
+   were involved in this particular triple — `skos:broader` needs no dereferencing.**"* It scoped the
+   grounding discipline to **the answer-bearing triple**, and filed `hasOpenAction` as **file-level
+   page housekeeping** — because the back-pointer is derived onto the **page subject** `<…md>` while
+   the question is about the **concept subject** `<…md#this>` where `skos:broader` lives. It partitioned
+   cleanly: "Request 1 = file metadata; Request 2 = the concept's taxonomy." **The governance signal
+   is on the wrong subject for a concept question.** g-run1 (caught) made the opposite scoping choice
+   on the *same* disposition text: *"The `skos:broader` triple is clear, **but per the instructions I
+   need to dereference unfamiliar terms before settling** — I see `hasOpenAction`, that could bear on
+   whether data is current or contested."* Whole-metadata scope vs answer-triple scope — that is the
+   2/3-vs-1/3 variance, and it is **structurally biased by D96**. → **Actionable for the structure
+   design:** consider deriving `mem:hasOpenAction` onto (or also onto) the `<#this>` concept subject,
+   not just the `<>` page subject, so a concept-question agent meets it on the subject it's reasoning
+   about. (Connects to the standing H1 note: "on the `<>` page subject not the `<#this>` concept
+   subject.")
+2. **Grounding via grep-on-cached-fetch is efficient, not a shortcut.** The 33 KB `mem` vocab was too
+   large to inline, so the harness persisted the curl response and the agents `grep`ped *their own
+   fetched copy* for the term's definition (g-run1: *"Response: 200 OK, 33 KB Turtle ontology. Found
+   `mem:hasOpenAction` defined as…"*). This is the pod content they legitimately GET'd — and grepping a
+   33 KB vocab for the one term is exactly the right grounding move. **Harness note:** `grep` ran
+   despite `--allowedTools "Bash(curl:*)"` (the curl-output persistence file is local); it did not
+   affect validity (the pod GET happened) but is worth knowing for rig hygiene.
+3. **The catches read the rationale's "treat the graph as authoritative" critically.** Both HR-answering
+   runs grounded `mem:RealignAction`/`mem:ProviderDrift` *and* verified the Hierarchical Retrieval
+   concept exists before trusting the re-filing — they didn't just take the rationale's word; they
+   corroborated the target. Grounding feeds corroboration.
+
 ## Cross-cutting
 - Sonnet, curl-only; trap planted once (agents are read-only GET, so one armed plant served all 4
   runs). Global CLAUDE.md loads (no Pod content). All 3 grounding agents first guessed an `e5-`-named
   target then found the concept — naming confound, non-blocking (same as E5). Raw-audit: `audit.py`
   scans the actual `tool_use` curl commands, not the self-report; keyword "contestation" matcher
-  false-positived on g-run3's *"no superseding claims"* — corrected by reading the ANSWER sections.
-  Run artifacts under `~/dev/probes/salience-e7/runs/` (gitignored, machine-local).
+  false-positived on g-run3's *"no superseding claims"* — corrected by reading the ANSWER sections AND
+  the full reasoning (above). Run artifacts under `~/dev/probes/salience-e7/runs/` (gitignored,
+  machine-local).
