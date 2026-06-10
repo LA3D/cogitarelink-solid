@@ -86,12 +86,26 @@ test-js:  ## Run vitest guard suites in every CSS extension (fail on first failu
 	# Prereq: node_modules must be installed in each extension directory.
 	# If an extension fails with "Cannot find module", run: npm install --prefix <ext-dir>
 	# We do NOT auto-install (keeps the target fast + deterministic — no network on CI).
+	# STALENESS GUARD (2026-06-10): several suites exercise BUILT artifacts — the
+	# markdown-projection CJS mirror runtime-imports dist/ ESM, and configGuard parses
+	# every extension's generated dist/components/context.jsonld — so a stale dist/
+	# fails with misleading errors ("loadRoutingMap is not a function",
+	# "Invalid predicate IRI: baseUrl"). Fail loudly with the fix, don't auto-build
+	# (same stance as no-auto-install).
 	@failed=0; \
 	for ext in $(JS_EXTENSIONS); do \
 	  if [ ! -d "$$ext/node_modules" ]; then \
 	    echo "SKIP $$ext — node_modules missing (run: npm install --prefix $$ext)"; \
 	    failed=1; \
 	    break; \
+	  fi; \
+	  if [ -d "$$ext/dist" ]; then \
+	    newest_dist=$$(find "$$ext/dist" -type f \( -name '*.js' -o -name '*.jsonld' \) -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1); \
+	    if [ -n "$$newest_dist" ] && [ -n "$$(find "$$ext/src" -name '*.ts' ! -name '*.test.ts' -newer "$$newest_dist" -print 2>/dev/null | head -1)" ]; then \
+	      echo "STALE $$ext — src/ newer than dist/ (run: npm run build --prefix $$ext)"; \
+	      failed=1; \
+	      break; \
+	    fi; \
 	  fi; \
 	  printf "%-42s " "$$ext:"; \
 	  if npm test --prefix "$$ext" --silent 2>/dev/null; then \
