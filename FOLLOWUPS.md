@@ -109,9 +109,16 @@ to `evals/` (portable templates; run from a copy outside any repo): `conneg-h0/h
   *consumable*; it can't *install* it. Chuck flagged **MCP design + pod refactor** as the dependent build.
   Open sub-threads from E5b: emphasis-vs-content not fully isolated (terse-but-specific L3.5); does the
   disposition need the failure-mode *taxonomy* or does "hunt for any contestation signal" generalize.
-- [ ] **E7 (grounding) — still UNRUN** (load the `mem:` definition into context, keep bespoke vocab). E1/E5
-  suggest it won't help a *sibling* an agent in confirm-mode never scans, but it's a clean untested cell if
-  the structure design wants the data.
+- [ ] **E7 (grounding) — UPGRADED 2026-06-10 (Chuck's challenge sustained; salience doc §8.1).** Trajectory
+  sweep: zero vocab dereferences by any eval agent ever — but that's a DISPOSITION gap (GET is in-repertoire;
+  the trigger isn't), not a capability gap, and disposition is installable (E5 3/3). For agent-minted L4
+  vocabularies there are no priors by construction → grounding is a read-path GUARDRAIL, not FAIR hygiene.
+  Run E7 as: install a "ground unknown terms by dereferencing before trusting/acting" disposition (L4
+  content-laden, cut-A slot) on the over-trust trap; combined grounding+audit arm predicted strongest.
+  Supply channels for the structure design: D111 fragment-datatype pattern generalized (data-deref delivers
+  schema) + the SAI layered-context-loading chain (D109 Tier-0 / D110 stub — ApplicationRegistration →
+  registeredShapeTree → load app ontology on boundary crossing; currently unbuilt/unsurfaced — the
+  interop-commensurability gap).
 - [x] **RQ-Conneg-1 over-build verdict — provisionally CONFIRMED; H2 likely moot.** Pure Solid
   (`describedby` + media-type conneg + PROF-as-hint) suffices; `?_profile=` selection never reached across
   H0/H1/E8. Don't pre-emptively strip (D114 validated); a strip-back is its own spec — **now queued as the

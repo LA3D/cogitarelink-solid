@@ -407,6 +407,46 @@ Can the POD deliver the disposition (vs the prompt, E5)? Added the audit disposi
   withdrawn D113 trailer (the token-layer-salience datapoint we may have over-killed);
   the D114 view-authority contract (the unconsulted teach-the-convention artifact).
 
+## 8.1 Vocabulary-dereference base rate + the E7 reframe (2026-06-10, Chuck's challenge)
+
+Trajectory sweep across all ~40 runs on disk: **zero vocabulary dereferences by any
+over-trust-eval agent** — no agent ever fetched `mem:` (available, would have 200'd), none
+ever fetched the broken `fabric:` w3id IRIs, none WebFetched any external vocab. The only
+schema-touching behavior in the corpus is the D112 curator (browsed `/vault/ontology/`,
+learned the `mem:` expansion from in-band `@prefix` lines) and one viewlayer probe. Two
+consequences, the second correcting the first reading:
+
+1. **The negative results are unconfounded** — vocab availability played no role in E1/H1/D114;
+   and no failed dereference ever influenced a trajectory.
+2. **The first-draft conclusion ("dereferenceability is FAIR hygiene, not a behavioral
+   lever") was WRONG — Chuck's challenge sustained.** It conflated capability-absence
+   (`?_profile=`: pattern not in the repertoire; deployed-web principle applies) with
+   **disposition-absence** (vocab dereference: plain GET, fully in-repertoire; only the
+   *trigger* is missing — "unknown term → ground it"). Disposition gaps are installable
+   (E5, 3/3). And for **agent-minted L4 vocabularies there are no model priors by
+   construction** — dereference or an in-band equivalent is the *only* semantics channel;
+   H1's proto-knowledge gap is exactly an ungrounded-application-term failure. The
+   substrate's write side already treats this as a guardrail (class-extension shape floors
+   `rdfs:label`+`rdfs:comment`+rooting into a prior-rich parent); the read side has no
+   counterpart disposition.
+
+**E7 UPGRADED accordingly:** not "load the `mem:` definition into context" but **install a
+grounding disposition** — "before trusting or acting on a term you don't recognize,
+dereference it and read its `rdfs:comment`/`sh:agentInstruction`" — content-laden per the
+E5b L4 threshold, delivered in the cut-A slot, measured on the same over-trust trap. Predicted
+interaction: grounding alone may still miss (the term must first *register* — E1's lesson);
+grounding + audit-disposition is the natural combined arm.
+
+**Three supply-side channels, all in-house:** (a) the grounding disposition (above);
+(b) the **D111 pattern generalized** — design IRIs so data-dereference delivers schema
+(fragment datatypes on self-describing catalog docs; hash namespaces make GET-the-data ≈
+GET-the-schema; cold probes passed 3/3 on a bespoke vocabulary this way); (c) the **SAI
+layered-context-loading chain** (D109 Tier-0: `ApplicationRegistration` + `AccessNeedGroup`
++ `registeredShapeTree` → load the app's ontology on crossing into its data) — named in
+D109, unbuilt (D110 stub), nothing surfaced to agents; it is the pod-side app-vocabulary
+grounding channel and a first-class requirement of the structure design, not a deferred
+rebase. Interop-commensurability status: partially not commensurate, by omission.
+
 ## 9. What "done" looks like for RQ-Salience-1
 
 A read-path probe where a cold agent, asked a graph question whose plain answer is
