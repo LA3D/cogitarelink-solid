@@ -12,8 +12,33 @@ authoritative home:
 
 Repo decision IDs differ from vault IDs; both numberings are reconciled in `decisions.md`.
 
-## Project state (as of 2026-06-09)
+## Project state (as of 2026-06-10)
 
+- **▶▶ TWO experiments RUN 2026-06-10 (the queued "QT experiments"); both committed to main.**
+  **① E7 grounding disposition** (report `docs/plans/2026-06-10-rq-salience-1-e7-report.md`; salience
+  doc §8.1.1; rig `evals/salience-e7/`; commit `03c6989`): **grounding is a SECOND independent
+  over-trust lever — Chuck's challenge sustained.** Grounding-only caught 2/3; combined grounding+audit
+  1/1 (gold). Disposition-gated not capability-gated — install "ground unknown terms" → 3/4 dereference
+  `mem:` (plain GET). DIFFERENT mechanism from E5 audit (dereference-the-unknown-term, not
+  hunt-for-contestation): raw curl order shows grounding `mem:hasOpenAction` *causes* the ledger follow.
+  The 1 miss = the **registration gap** (E1/E5b): never registered hasOpenAction as unknown, answered
+  from known `skos:broader` in 3 calls. Audit supplies registration grounding lacks → combined=gold.
+  **E7 CLOSED on supply** (substrate already makes `mem:` groundable: class-extension floor + D84 conneg
+  Turtle+JSON-LD); **open on consumption = skill/MCP channel (shared w/ E5).** Pre-flight passed clean.
+  **② RQ-Discovery-1 index-view probe** (report `docs/plans/2026-06-10-rq-discovery-1-index-view-report.md`;
+  rig `evals/idxview/`; commit `37ef680`): **definition-line index earns its keep decisively → BUILD it.**
+  Mock-first, 30 opaque-slug concepts, arm A bare `ldp:contains` vs arm B + discoverable definition-line
+  `index.md`, locate-among-30 (n=3/arm, all 6 correct): resource fetches ~18→~0.7 (~20-30×); wrong GETs
+  9-29→0; index read+used 3/3; wall-clock ~halved. Arm A brute-forces every note (opaque slugs); arm B
+  reads index + routes (b-run2: zero note GETs). **Gate satisfied — shape validated pre-engine.**
+  **▶ NEXT: (a) the read-path STRUCTURE design — agent-side disposition bundle carries BOTH audit (E5)
+  + grounding (E7), MCP gateway force-consumes both; pod-side grounding channels = D111 data-deref +
+  unbuilt SAI loading (D109/D110), built inside the structure design w/ MCP as consumer (NOT pre-emptive);
+  (b) the profiles strip-back + index-view BUILD as one view-layer rework (gate now CLEARED) — ViewAssembler
+  definition-line index per container + D80 re-cut; open sub-calls: delivery/discovery mechanism (probe
+  favors named `index.md` child over conneg), prefLabel-only-vs-definition-line format A/B, root-level +
+  `/llms.txt` arm C + wrong-CONTAINER metric (this probe was single-container).** Probe corpora
+  `/vault/probe-{a,b}/` + the E7/E5 trap concepts are disposable (cleared on next `make reset`).
 - **▶▶ RQ-Conneg-1 H0/H1 + E8 graph-tool RUN 2026-06-09** (reports
   `docs/plans/2026-06-09-rq-conneg-1-{h0,h1,e8-graph-tool}-report.md`; living docs
   `docs/research/2026-06-08-{solid-view-mechanism-vs-profiles,read-path-salience}.md` updated;
