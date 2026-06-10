@@ -13,8 +13,7 @@ export type { Projection, ProjectionSubject, ProjectWikilinkArgs } from "./wikil
 export { parseRoutingDoc, loadRoutingMap } from "./routingLoader.js";
 export { projectionPipeline, emitSubstrateInvariants, splitFrontmatter } from "./projectionPipeline.js";
 export type { SubstrateInvariantsArgs } from "./projectionPipeline.js";
-export { MetaWriter, buildTwoSubjectPatch } from "./metaWriter.js";
-export type { TwoSubjectPatchArgs } from "./metaWriter.js";
+export { MetaWriter } from "./metaWriter.js";
 export { detectClass } from "./detectClass.js";
 export { resolveGovernedFromQuads, thingClassOf } from "./resolveGoverned.js";
 export { resolveThingClass, DEFAULT_WIKI_TYPE_INDEX, defaultWikiTypeIndex, WIKI_SEGMENT } from "./typeIndexLookup.js";
