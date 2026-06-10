@@ -2,6 +2,44 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## 📐 Progressive disclosure + profiles reconciliation (2026-06-10)
+
+Context: decision sanity check (`docs/research/2026-06-09-decision-record-sanity-check.md`),
+deployed-web principle (vault theory note `Agents Use the Deployed Web - Deployment Density
+Determines Standards Usability`), progressive-disclosure audit
+(`docs/research/2026-06-10-progressive-disclosure-audit.md`).
+
+- [ ] **★ Measure pod-side index views BEFORE designing/building them** (Chuck, 2026-06-10).
+  The PD audit's §4 design (derived per-container index views via ViewAssembler + media-type
+  conneg; derived `/llms.txt` at root) is plausible-but-unmeasured — support is vault practice
+  + five-tradition convergence, zero pod-side probes. Run the RQ-Discovery-1 extension probe
+  FIRST so the design is shaped by observed navigation, not assumption: cold agent at pod
+  root, locate-one-resource-among-many task; **arm A** = bare `ldp:contains` (today's
+  baseline); **arm B** = index views *mocked as static resources* (hand-write the view output
+  — no ViewAssembler work needed to probe; lets us iterate the hook format cheaply:
+  definition-line vs prefLabel-only vs type-grouped); **arm C** (optional) = `/llms.txt` at
+  root. Measure: fetch count, wrong-container descents, whether hook lines are *read*
+  (trajectory audit, D114 discipline), time-to-target. n=2-3/arm. Mock-first = we measure the
+  **artifact shape** before committing engine work and can't design it incorrectly. Rig:
+  `evals/` cold-probe template.
+- [ ] **Profiles strip-back spec — fix what the profiles implementation surfaced** (Chuck,
+  2026-06-10). Inputs: RQ-Conneg-1 verdict (H0/H1/E8), sanity check §4, deployed-web
+  principle, D86 provenance (DXWG/SELFIE lineage — Chuck's extension; the *selection* half
+  served a configured-client class that didn't arrive, the *hint* half is validated). Its own
+  spec — do NOT rip out ad hoc; preserve the fused merge. Scope:
+  (a) **KEEP**: `Link: rel="profile"` + `dct:conformsTo` + PROF descriptors *as hints*
+  (H0-validated, nearly free) and `?_profile=fused` (aggregation — its one real job);
+  (b) **REMOVE/DEMOTE**: the `?_profile=` *selection* aspiration; `?_profile=alt`
+  introspection (unconsulted in every probe); view-authority-as-PROF-artifact (D114 move 3 —
+  fold its content into the lean Layer-0 literal);
+  (c) **DECIDE explicitly**: the configured-client question — selection machinery earns
+  maintenance only if non-LLM interop partners (DCAT harvester / OGC-style consumers) are
+  expected on this Pod; an audience decision, not a correctness one;
+  (d) **RE-CUT D80**: hub-view/breadcrumb-view from invocable affordances (dead surface —
+  agents never run handed CONSTRUCTs) to ViewAssembler-served views per the PD audit;
+  (e) reconcile D86/D113 decision text with status annotations (part of the distillation pass).
+  **Gate: run AFTER the index-view probe** — one view-layer rework, not two.
+
 ## 🧪 RQ-Conneg-1 + RQ-Salience-1 experiments (2026-06-09) — RUN; disposition is the lever
 
 Reports in `docs/plans/2026-06-09-rq-{conneg-1-{h0,h1,e8-graph-tool},salience-1-{e1,e5,e5b,bootstrap-test}}-report.md`;
@@ -42,9 +80,10 @@ to `evals/` (portable templates; run from a copy outside any repo): `conneg-h0/h
 - [ ] **E7 (grounding) — still UNRUN** (load the `mem:` definition into context, keep bespoke vocab). E1/E5
   suggest it won't help a *sibling* an agent in confirm-mode never scans, but it's a clean untested cell if
   the structure design wants the data.
-- [ ] **RQ-Conneg-1 over-build verdict — provisionally CONFIRMED; H2 likely moot.** Pure Solid
+- [x] **RQ-Conneg-1 over-build verdict — provisionally CONFIRMED; H2 likely moot.** Pure Solid
   (`describedby` + media-type conneg + PROF-as-hint) suffices; `?_profile=` selection never reached across
-  H0/H1/E8. Don't pre-emptively strip (D114 validated); a strip-back is its own spec.
+  H0/H1/E8. Don't pre-emptively strip (D114 validated); a strip-back is its own spec — **now queued as the
+  profiles strip-back item in the 📐 section above (2026-06-10)**.
 
 ### ⚠ Sibling-repo bug (`solid-agent-skills`) — `solid-pod invoke` non-functional for resource-scoped affordances
 
@@ -72,7 +111,11 @@ Merged to main 2026-06-07 (merge commit `9dd3d92`; 41/41 unit + 12/12 live e2e; 
 - [x] **Make the server fused/graph view substrate-wide + content-type-agnostic.** DONE (D114, 2026-06-07) — `?_profile=fused` is now substrate-wide + content-type-agnostic; `?_profile=graph` was dropped as redundant with `describedby`.
 - [x] **`mem:` IRI re-declaration now has a 3rd site.** DONE (D114, 2026-06-07) — the trailer (the 3rd site) is removed; `mem:hasOpenAction` is now only in `ops-index/src/parseProposal.ts` and `profile-link/src/CurationLinkMetadataWriter.ts`.
 - [x] **Eval tested the wrong tier → D114 eval RUN 2026-06-07** (report `docs/plans/2026-06-07-d114-eval-report.md`; harness `~/dev/probes/d114/`). Tier-3 + floor over-trust arms + write/curator regression arms. Result: **delivery improved, over-trust NOT fixed, no regression** (see below).
-- [ ] **★★ RQ-Conneg-1 — is the view layer over-built vs pure Solid? (NEXT SESSION'S FIRST EXPERIMENTS, Chuck).** Framing + experiment ladder (H0 do agents do plain conneg/describedby at all → H1 does pure Solid conneg+describedby solve the dual view as well as the PROF stack → H2 does conneg-by-profile add value or is it mis-instructed/buggy/unusable): **`docs/research/2026-06-08-solid-view-mechanism-vs-profiles.md`** (RQ-Conneg-1 in decisions.md). Grounding: Verborgh uses NO PROF/conneg-by-profile (verified); D114 eval shows agents ignored our imported machinery; **CSS already serves doc-vs-graph by pure `Accept` conneg** (`text/turtle`→graph, but page-level only; full graph = `.meta` via describedby). `?_profile=fused` = aggregation not selection. Keep: `.meta`/describedby, media-type conneg, fused-as-tool, Person cross-cutting view. Shed only if H1 confirms: `?_profile=`/PROF descriptors/Link-rel-profile. Do NOT pre-emptively rip out (D114 validated). Sibling of ↓RQ-Salience-1. Reuse `~/dev/probes/d114/`.
+- [x] **★★ RQ-Conneg-1 — is the view layer over-built vs pure Solid? RUN 2026-06-09** (reports
+  `docs/plans/2026-06-09-rq-conneg-1-{h0,h1,e8-graph-tool}-report.md`; verdict in the 🧪 section above).
+  H0: agents conneg robustly, `describedby` load-bearing, PROF-as-hint used, `?_profile=` selection never
+  reached. H2 likely moot. Over-build verdict provisionally CONFIRMED → strip-back queued in the 📐 section
+  (2026-06-10), gated after the index-view probe.
 - [ ] **★ RQ-Salience-1 — read-path salience (the live RQ-Substrate-4 read-path gap), now an OPEN RESEARCH THREAD.** Framing + evidence + experiment matrix (E1–E6) + Claude's not-yet-decided lean: **`docs/research/2026-06-08-read-path-salience.md`** (registered RQ-Salience-1 in decisions.md). D114 eval: the fused read DELIVERS `mem:hasOpenAction` into context but agents are predicate-directed and **never register** the sibling triple (not opaque-pointer-not-followed — never-seen). Reframe: put contestation in STANDARD vocab on the node the agent's own traversal already visits; app-specific source vs standard surfaced signal; tensions (node vs statement / flag vs refuse-to-serve / data- vs token-layer salience) UNDECIDED; meta-question (substrate-honesty vs agent-disposition vs mis-modeled) open. **Chuck: run more agentic-behavior experiments before deciding the fix** (reuse `~/dev/probes/d114/`). RQ-Substrate-4 read-path stays OPEN under this.
 - [x] **D114 regression check PASS (2026-06-07).** Write round-trip: 201, zero 422, grammar→`.meta`, fused renders. Curator loop (d112 Probe-1 re-run): conformant proposal 201, floor taught (2×422→corrected), propose-only held, acme untouched. No previously-working behavior regressed by the trailer/guard/doc removal.
 - [ ] **`OperationsIndexListener` does not retract the `mem:hasOpenAction` back-pointer on op DELETE** (only derives on POST); a deleted op leaves a dangling back-pointer to a now-404 op until `make reset`. Orthogonal to the view layer (the fused view faithfully reflects `.meta`).
