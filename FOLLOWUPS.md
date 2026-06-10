@@ -27,11 +27,26 @@ The structure-design brainstorm (`superpowers:brainstorming`) converged the spin
   GEPA/eval-loop later; (d) definition-line default, prefLabel-only as probe arm. SP1 plan WRITTEN:
   `docs/superpowers/plans/2026-06-10-sp1-pod-navigate-skill-harness.md` (9 tasks, eval-gated; scope =
   SP1 only — SP2 plan follows the generalization probe + SP1 results).
-- [ ] **▶ NEXT SESSION (clean, Opus) = EXECUTE the SP1 plan** via superpowers:subagent-driven-development
-  or executing-plans. Pre-flight in the plan header (Pod `make reset`, solid-agent-skills `npm install &&
-  npm run build`, read auto-memory `cold_probe_harness_pattern` before the eval task). Branch
-  `sp1-pod-navigate` in solid-agent-skills; eval rig + report to cogitarelink-solid main. Gate: skill arm
-  3/3 catch on the E5 trap (trigger + catch measured separately).
+- [x] **SP1 EXECUTED 2026-06-10 (subagent-driven-development) — GATE PASSED, all 9 tasks done.**
+  Branch `sp1-pod-navigate` (solid-agent-skills): `validate` (SHACL pre-flight — landed the
+  **shacl-engine 1.1.0 spike**, decision B; rdf-validate-shacl dropped, experimental 1.2 deferred) +
+  `invoke` resource-scoped fix (3 E8 defects closed) + `affordances` lister + `pod-navigate` skill
+  (3 baked-in dispositions, D103 deviation). Eval rig `evals/skill-nav/` + report
+  `docs/plans/2026-06-10-sp1-skill-nav-eval-report.md` → cogitarelink-solid main. **Gate MET: skill
+  arm 3/3 catch, trigger 3/3** (pod-navigate fired tool-call #1 unprompted; followed `hasOpenAction`
+  to the ledger + grounded `mem:` vocab + read applied-vs-proposed correctly). Bare arm clean miss =
+  skill is the causal variable. Closes the E5 bootstrap consumption leak (0/3 pod-delivered → 3/3
+  skill-delivered). **▶ NEXT: the two queued probes before SP2 — generalization probe (operation-shaped
+  apps: addressbook/id-schemes) + write-side E5b twin (Disposition 3 carried but not exercised by the
+  read-path trap) — then the SP2 plan.**
+- **SP1 build residue (small, non-urgent):** (a) `solid-agent-skills/src/lib/http.ts` uses dynamic
+  `import('n3')` in `discoverMetaSources`/`listContainerResources` — inconsistent with the module-wide
+  static `import N3 from 'n3'`; hoist when http.ts is next touched. (b) `invoke`'s default source set is
+  wiki-memory-`.operations/`-scoped (documented in-code) — extending `invoke` to addressbook/id-schemes
+  affordances requires `--source` until a per-app default is derived from `st:Description`. (c) `affordances`
+  test covers happy-path only (no `--pod`/error-path case); add when the command is next touched. (d) the
+  pinned legacy-suite baseline (`tests/KNOWN-FAILURES.md`) dropped from 7→5 deterministic (invoke ×2 closed
+  by Task 2); the residual 5 (search/shapes×2/e2e Step2/Step5) stay parked under the skill-suite rebuild agenda.
 - [ ] **Cheap empirical feed-ins** (can fold into the approaches as they need settling, not run speculatively):
   the **D96 subject-placement fix** (derive `mem:hasOpenAction` onto `<#this>`; re-run E7 `evals/salience-e7`
   to confirm it closes the g-run3 miss — tight loop); **format A/B** (`evals/idxview`, add a prefLabel-only arm);
@@ -188,7 +203,13 @@ to `evals/` (portable templates; run from a copy outside any repo): `conneg-h0/h
   H0/H1/E8. Don't pre-emptively strip (D114 validated); a strip-back is its own spec — **now queued as the
   profiles strip-back item in the 📐 section above (2026-06-10)**.
 
-### ⚠ Sibling-repo bug (`solid-agent-skills`) — `solid-pod invoke` non-functional for resource-scoped affordances
+### ✅ Sibling-repo bug (`solid-agent-skills`) — `solid-pod invoke` — FIXED 2026-06-10 (SP1 Task 2, commit `446c8d9`)
+
+**FIXED** on branch `sp1-pod-navigate` (all 3 defects): arg 1 is now the RESOURCE url (catalog
+discovered via its `storageDescription` Link, or `--pod`); descriptor predicates matched by localName
+(`sub:`/`wiki:` both work); `%RESOURCE%` substituted before execution. Verified live (a spec-review
+subagent seeded a real `.operations/` record and confirmed `memory-history` returns correct bindings).
+D52 Tier-2 restored for resource-scoped affordances. Historical defect record below:
 
 Surfaced by E8. **D52's "machine-actionable affordance" (Tier-2 access) is currently broken for the
 post-D107 resource-scoped affordance class** (`memory-history`, `breadcrumb-view`, …). Three compounding
@@ -202,8 +223,9 @@ Fix = redesign to `invoke <resource-url> <affordance>`: discover catalog via sto
 match by predicate localName, substitute `%RESOURCE%`. ~30-50 LOC + test + `dist` rebuild (~1hr). **Held**:
 sibling repo is push-paused (7 ahead) and its skill-acquisition research questions investing in hand-written CLI;
 NOT on the RQ-Salience-1 critical path (E8's working channel was follow-the-link, not invoke). Fix when CLI is next touched.
-- [ ] **Affordance names not discoverable.** Agent guessed `operation-history` (real: `memory-history`).
-  Add `solid-pod affordances <url>` (list catalog) and/or have `invoke`'s 404 list available names. ~20 LOC, same held repo.
+- [x] **Affordance names not discoverable — FIXED 2026-06-10 (SP1 Task 3, commit `edc8257`).**
+  Added `solid-pod affordances <url>` (lists the catalog by name from any resource URL via
+  storageDescription discovery) AND `invoke`'s 404 now returns an `available` list. Both shipped.
 
 ## 🔭 D113 view layer (2026-06-07) — MERGED to main + read-path eval DISCHARGED
 
@@ -556,7 +578,20 @@ ESM projection pipeline `dist/` (which the listener loads at runtime) is rebuilt
 shipping a stale COPY'd local build (commit `569a78c`). Sharpens the older "stop tracking compiled
 dist drift" code-review follow-up below.
 
-## ⚙ Infrastructure note — replace Zazuko `rdf-validate-shacl` with `shacl-engine` (future op, Chuck leaning YES)
+## ⚙ Infrastructure note — replace Zazuko `rdf-validate-shacl` with `shacl-engine` (CLIENT spike LANDED 2026-06-10; server migration still open)
+
+> **SPIKE LANDED 2026-06-10 (SP1 Task 1, decision B with Chuck).** The new `solid-pod validate`
+> CLI pre-flight tool uses **`shacl-engine@1.1.0`** (stable) + `rdf-ext@2.6.0` — the first use of
+> shacl-engine in the codebase, deliberately placed on the new, isolated CLI surface as the
+> lowest-risk spike. It de-risks the server migration: the rdf-ext-v2/clownface friction that
+> motivated this note is real (rdf-validate-shacl@0.6 needed a fragile internal-path import with
+> modern rdf-ext); shacl-engine pairs cleanly (`new Validator(shapes, { factory: rdf })`). Result
+> mapping reaches grapoi internals (`r.focusNode.term.value`, `r.path[0].predicates[0].value`) —
+> works for SHACL-core, verified against a battery of path types. **Experimental SHACL-1.2 branch
+> DEFERRED** per the stable-first stance (revisit for the coverage features once v1 proves out).
+> **STILL OPEN: the SERVER floor migration** — `css/extensions/shape-validator/` still runs Zazuko
+> `rdf-validate-shacl@0.6`. True CLI↔floor validator parity (the pre-flight's design rationale)
+> wants the server migrated too; the CLI spike is the evidence it's clean. Original note follows:
 
 Recorded 2026-06-02 while fresh, at Chuck's request. **Chuck is leaning toward replacing the current
 SHACL validator** — `rdf-validate-shacl@^0.6.0` (Zazuko, wrapped by `shape-validation-component`'s

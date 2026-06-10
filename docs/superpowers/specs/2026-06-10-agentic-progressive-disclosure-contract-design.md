@@ -274,6 +274,23 @@ write-gate items.
 
 ## 10. DEFERRED to next session — build approaches (the real forks)
 
+> **APPROACHES SETTLED + SP1 BUILT + EVAL PASSED 2026-06-10** (plan
+> `docs/superpowers/plans/2026-06-10-sp1-pod-navigate-skill-harness.md`; eval report
+> `docs/plans/2026-06-10-sp1-skill-nav-eval-report.md`): all four forks locked with Chuck —
+> (a) on-write listener-refreshed static `index.md` child + derivation provenance (probe: discovery
+> is name+size-driven, conneg never reached) [SP2]; (b) ONE general `pod-navigate` skill consuming
+> `st:Description`, per-app thin skills only if the generalization probe demands; (c) hand-written
+> v0 seeded from the proven E5/E7/E5b content, GEPA/eval-loop later (the skill-nav rig IS that
+> substrate); (d) definition-line default, prefLabel-only as a probe arm [SP2]. **SP1 shipped on
+> branch `sp1-pod-navigate` (solid-agent-skills): `validate` (shacl-engine 1.1.0 spike — decision B,
+> experimental 1.2 deferred) + `invoke` resource-scoped fix + `affordances` lister + the
+> `pod-navigate` skill (3 baked-in dispositions; D103 deviation recorded).** Gate MET: skill arm
+> **3/3 catch**, trigger 3/3 (pod-navigate fired tool-call #1, unprompted) — the skill channel
+> closes the E5 bootstrap consumption leak (0/3 pod-delivered → 3/3 skill-delivered). **SP2 plan
+> follows the generalization probe + these SP1 results.** Two probes remain queued before SP2:
+> the **generalization probe** (operation-shaped apps) and the **write-side E5b twin** (Disposition 3
+> was carried but not exercised by the read-path trap).
+
 Not decided here:
 - **View materialization where/when** — on-write listener-refreshed static index resource vs
   on-demand ViewAssembler conneg vs cached-derived; how the index is discovered (the probe favors a

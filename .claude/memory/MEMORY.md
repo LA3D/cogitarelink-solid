@@ -53,13 +53,20 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   operation-shaped — BEFORE SP2 commits to index-shaped machinery).
   **APPROACHES SETTLED + SP1 PLAN WRITTEN same session** (`98a369d`): all four §10 forks locked w/ Chuck
   ((a) on-write static `index.md` child w/ derivation provenance; (b) ONE general `pod-navigate` skill;
-  (c) hand-written v0 + GEPA later; (d) definition-line default). **▶ NEXT SESSION (clean, Opus) =
-  EXECUTE `docs/superpowers/plans/2026-06-10-sp1-pod-navigate-skill-harness.md`** — 9 tasks: `solid-pod
-  validate` (SHACL pre-flight) → `invoke` fix (3 E8 defects) → `affordances` lister → `pod-navigate`
-  SKILL.md (3 baked-in dispositions; D103 deviation recorded) → docs → `evals/skill-nav` rig → run
-  (GATE: skill arm 3/3 catch, trigger measured separately) → report → bookkeeping. Branch
-  `sp1-pod-navigate` in solid-agent-skills; rig/report → this repo main. SP2 plan AFTER the
-  generalization probe + SP1 results.
+  (c) hand-written v0 + GEPA later; (d) definition-line default).
+  **SP1 EXECUTED + GATE PASSED 2026-06-10** (subagent-driven-development; all 9 tasks; report
+  `docs/plans/2026-06-10-sp1-skill-nav-eval-report.md`): branch `sp1-pod-navigate` (solid-agent-skills)
+  shipped `validate` + `invoke`-fix + `affordances` + `pod-navigate` skill; rig `evals/skill-nav/` +
+  report → this repo main. **Skill arm 3/3 catch, trigger 3/3** (pod-navigate fired tool-call #1
+  unprompted; bare arm clean miss = skill is the causal variable) — **closes the E5 bootstrap
+  consumption leak (0/3 pod-delivered → 3/3 skill-delivered)**. NOTABLE BUILD DECISION: `validate`
+  landed the **shacl-engine 1.1.0 CLIENT spike** (decision B w/ Chuck; rdf-validate-shacl dropped — the
+  rdf-ext-v2 friction is real; experimental SHACL-1.2 deferred; SERVER floor migration still open, see
+  FOLLOWUPS infra note). E8 `invoke` bug + affordance-name discoverability both FIXED (FOLLOWUPS marked).
+  **▶ NEXT: two queued probes before SP2 — generalization probe (operation-shaped apps:
+  addressbook/id-schemes, not wiki-navigation) + write-side E5b twin (Disposition 3 carried but not
+  exercised by the read-path trap) — THEN the SP2 plan.** Branch `sp1-pod-navigate` not yet
+  merged/pushed (Chuck's call).
 - **▶▶ TWO experiments RUN 2026-06-10 (the queued "QT experiments"); both committed to main.**
   **① E7 grounding disposition** (report `docs/plans/2026-06-10-rq-salience-1-e7-report.md`; salience
   doc §8.1.1; rig `evals/salience-e7/`; commit `03c6989`): **grounding is a SECOND independent
