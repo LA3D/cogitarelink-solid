@@ -14,6 +14,27 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 
 ## Project state (as of 2026-06-10)
 
+- **▶▶ STRUCTURE-DESIGN BRAINSTORM 2026-06-10 → spec FOUNDATION banked (approaches DEFERRED to next session).**
+  Spec: `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md` (commit `3016f72`).
+  **Spine (settled):** progressive disclosure is recursive across BUILDING-BLOCK layers `S→Ad→An→Ax→R` (a pod
+  hosts MULTIPLE agentic apps — 2 already live: wiki-memory + id-schemes; index-view + disposition bundle are
+  GENERIC substrate mechanisms reused at every layer, not wiki-specific). **Contract C** = one uniform disclosure
+  shape per layer (orientation+index+grounding+governance); construct (SP2) + consume (SP1) are its two halves.
+  **An layer is DECLARATIVE + already deployed-but-INERT** = the interop+ShapeTree layer (lightweight = declaration
+  vocab only, NO runtime; st:shape→our SHACL). Live at `/vault/meta/interop/` (2 apps, registry, managers) +
+  `/vault/meta/shapetrees/wiki-memory.tree` but UNSURFACED/UNMATERIALIZED/UNCONSUMED → design = surface+materialize
+  +consume (NOT greenfield). **Hook partition by derivability** (D109 derive/floor/loop): derive item-entries from
+  SHACL-governed metadata via SPARQL (can't drift); declare collection-orientation in `st:Description` guardrailed
+  by SHACL. **Agentic write contract** (L2 invariant, [[agentic_write_contract]]): every agent write → governed
+  `.meta` with derived hooks + agent-declared purpose/circumstances + provenance; spec floor is MAY (LDP 5.2.3.12 /
+  Solid optional), we add the MUST — the defining agentic-vs-Solid difference; construct + E5/E7 consume = two halves
+  of one provenance layer. **Consistency** = every view SPARQL-materialized from one declared source (ViewAssembler
+  D113). **Build order** ([[consumption_channel_ordering]]): SP1 skill+tool harness FIRST (optimization substrate),
+  SP2 surface+materialize, SP3 MCP LATER. **Folds in** (one view-layer rework): profiles/roles strip-back + D80
+  re-cut + index-view build + D96 subject-placement (hasOpenAction→`<#this>`) + interop surfacing (hasRegistrySet on
+  WebID card, namespace drift) + prov:agent derivation (spec §9). **▶ NEXT SESSION = build approaches** (spec §10):
+  view-materialization where/when; one general nav skill vs general+per-app thin skills from `st:Description`;
+  hand-written vs learned/GEPA; format A/B. Then writing-plans. Chuck to review the spec.
 - **▶▶ TWO experiments RUN 2026-06-10 (the queued "QT experiments"); both committed to main.**
   **① E7 grounding disposition** (report `docs/plans/2026-06-10-rq-salience-1-e7-report.md`; salience
   doc §8.1.1; rig `evals/salience-e7/`; commit `03c6989`): **grounding is a SECOND independent
