@@ -2,6 +2,31 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## ▶▶ ACTIVE — agentic progressive-disclosure contract (brainstorm PAUSED at foundation, 2026-06-10)
+
+**Spec (spine, settled):** `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md`.
+The structure-design brainstorm (`superpowers:brainstorming`) converged the spine and banked it as a
+**foundation**; build approaches were deliberately deferred. Resume here.
+
+- [ ] **Chuck reviews the foundation spec** — confirm the spine reads right (model `S→Ad→An→Ax→R`,
+  contract C, declarative An via interop+ShapeTree, hook partition, agentic write contract,
+  SPARQL-materialized consistency, SP1-first build order) before approaches.
+- [ ] **▶ NEXT SESSION = resume the brainstorm at "propose build approaches" (spec §10), then `writing-plans`.**
+  The real forks: (a) view-materialization where/when (on-write listener vs on-demand ViewAssembler conneg
+  vs cached-derived; discovery favors a size-conspicuous named child resource per the index-view probe);
+  (b) one general app-agnostic navigation skill vs general + thin per-app access-pattern skills bootstrapped
+  from `st:Description`; (c) hand-written vs learned/GEPA skill (skill-acquisition agenda); (d) format A/B
+  (prefLabel-only vs definition-line). Do NOT jump to implementation — finish approaches → design sections →
+  plan first (brainstorming HARD-GATE).
+- [ ] **Cheap empirical feed-ins** (can fold into the approaches as they need settling, not run speculatively):
+  the **D96 subject-placement fix** (derive `mem:hasOpenAction` onto `<#this>`; re-run E7 `evals/salience-e7`
+  to confirm it closes the g-run3 miss — tight loop); **format A/B** (`evals/idxview`, add a prefLabel-only arm).
+- [ ] **SP2 execution checklist** lives in the 📐 section below (profiles/roles strip-back, D80 re-cut,
+  index-view build, interop surfacing) + the ⚙ interop-foundation gaps — all FOLD-IN items of the spec §9.
+- **Build order (locked):** SP1 skill+tool harness FIRST (optimization substrate; skill-creator/GEPA against
+  the cold-agent eval) → SP2 surface+materialize the declared interop+ShapeTree layer → SP3 MCP gateway LATER
+  (a packaging on top — MCPs clog context + are hard to optimize, Chuck 2026-06-10).
+
 ## 📐 Progressive disclosure + profiles reconciliation (2026-06-10)
 
 > **FOLDED INTO the agentic progressive-disclosure contract spec (2026-06-10):**
