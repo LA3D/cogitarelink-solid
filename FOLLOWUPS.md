@@ -40,32 +40,37 @@ Determines Standards Usability`), progressive-disclosure audit
   (e) reconcile D86/D113 decision text with status annotations (part of the distillation pass).
   **Gate: run AFTER the index-view probe** — one view-layer rework, not two.
 
-## 🔧 Code↔decision conformance review findings (2026-06-10)
+## 🔧 Code↔decision conformance review findings (2026-06-10) — ALL FIXED same day
 
-Full report: `docs/research/2026-06-10-code-decision-conformance-review.md`. 30+ decision
-claims verified conformant; drift clusters in mechanism-text, bootstrap, and test freshness.
+Full report: `docs/research/2026-06-10-code-decision-conformance-review.md`; fixes in commits
+`ed0925e`..`160b7cd`. Closed items, recorded here briefly because two findings were re-diagnosed:
 
-- [ ] **⚠ `make test-js` is RED — configGuard flags `css/config/memento.json` "Invalid predicate
-  IRI: baseUrl".** NOT fixed by rebuilding memento's components (all three Memento classes DO
-  declare `baseUrl` in the regenerated scoped contexts — verified); NOT the D113 config edit
-  (bisected: pre-D113 config fails too). Live boot works (D114 `make reset` 13/13, 2026-06-07),
-  so it's a **guard-vs-boot resolution divergence** for the memento module — the guard can't
-  currently catch the 3×-boot class it exists for. Root-cause the replicated ModuleStateBuilder
-  state vs boot.
-- [ ] **`make test-js` has no build dependency** — markdown-projection's CJS mirror runtime-imports
-  the *built* ESM at `dist/`, so stale local builds fail tests confusingly (`loadRoutingMap is not
-  a function`; fixed here by rebuild). Either add a build prereq to the make target or have the
-  mirror fail with a "stale dist — run npm run build" message.
-- [ ] **Batch for next substrate-touch session** (none urgent, all verified): (a) remove the stale
-  hand-seeded `skos:narrower`/`broader` inverses in `overlays/wiki-memory/concepts/{biology,photosynthesis}.md.meta.ttl`
-  (RQ-View-2 finding, violates D109 derive-rule — still live); (b) decide governed-set source of
-  truth — `governedPredicates.ts` hardcoded maps vs the D104/D108 "shapes are canonical" claim
-  (derive from shapes/ at build time, or annotate decisions + keep agreement tests as contract);
-  (c) finish D107 parameterization in bootstrap machinery — `pod_setup.py` hardcoded `/vault/`,
-  `apply.py:159` hardcoded `/vault/meta/views/`, wiki-memory manifest's absolute-IRI view entries;
-  (d) delete dead `buildTwoSubjectPatch()` (never called) + annotate D95/D96 mechanism text
-  (Store-merge, not Patch envelopes — intent conformant); (e) decide D23 ontology-cache fate:
-  deploy `ontology/` to the Pod or annotate repo-only (D49 grounding is half-true while unserved).
+- [x] **configGuard "Invalid predicate IRI: baseUrl" — root-caused: STALE LOCAL BUILDS, not a
+  guard divergence.** The failing instance was profile-link's `CurationLinkMetadataWriter`
+  (configured *inside* memento.json — the per-file attribution misled); profile-link's generated
+  `context.jsonld` predated its D112-T8 `baseUrl` param. The guard was RIGHT all along; live boot
+  worked because the container builds fresh. Rebuild fixed it; the markdown-render dist was also
+  stale (caught by the new guard).
+- [x] **Staleness guard added to `make test-js`** — fails loudly per-extension when non-test
+  `src/*.ts` is newer than the newest dist `.js`/`.jsonld`, with the rebuild command (same
+  no-auto-fix stance as the node_modules check). Verified: trips on touch, 12/12 PASS fresh.
+- [x] Batched fixes: (a) biology exemplar's `{.narrower}` body link + projected inverse removed
+  (broader-on-child stays — exemplar now models the derive-rule); (b) governed-set source of
+  truth ANNOTATED in D81 — the agreement chain already existed (TS maps → maps.json → descriptor
+  `sub:governs` → `test_markdown_projection_descriptor.py`); residual = SHACL `agentInstruction`
+  prose lists are hand-synced; (c) D107 bootstrap parameterization done (`pod_setup.py
+  --storage-root`; apply.py derives view containers from manifest; manifest view/page entries →
+  relative IRIs, verified resolving against `https://example.org`); (d) dead
+  `buildTwoSubjectPatch` removed (+D95/D96 mechanism annotation); (e) D23 RE-DIAGNOSED — the
+  ontology cache IS deployed (`pod_setup.upload_ontology` + compose mount); residual = cache-copy
+  *discoverability* (no canonical-IRI→cache link) + non-`.ttl` files not uploaded → folded into
+  the Layer-0/index-view structure design.
+- [ ] **Residuals (small, non-urgent):** SHACL `sh:agentInstruction` governed-list prose ↔
+  `maps.json` agreement test (prose is hand-synced today); vocabulary-IRI constants
+  (`pod.vardeman.me` namespace bases in TS) → config injection if a fork ever needs it;
+  remaining absolute IRIs in manifests beyond the view/page entries (capability pointers etc.) —
+  normalize during the Layer-0 re-cut. NOTE for next `make reset`: deployed seed for biology.md
+  changed (narrower removed) — fresh-volume rebuild picks it up automatically.
 
 ## 🧪 RQ-Conneg-1 + RQ-Salience-1 experiments (2026-06-09) — RUN; disposition is the lever
 
