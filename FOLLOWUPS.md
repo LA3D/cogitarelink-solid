@@ -118,7 +118,27 @@ to `evals/` (portable templates; run from a copy outside any repo): `conneg-h0/h
   Supply channels for the structure design: D111 fragment-datatype pattern generalized (data-deref delivers
   schema) + the SAI layered-context-loading chain (D109 Tier-0 / D110 stub — ApplicationRegistration →
   registeredShapeTree → load app ontology on boundary crossing; currently unbuilt/unsurfaced — the
-  interop-commensurability gap).
+  interop-commensurability gap). **Sequencing AGREED (Chuck, 2026-06-10): E7 runs FIRST (pull test; supply
+  exists); D110 + SAI loading get built inside the structure design with the MCP gateway as consumer,
+  informed by E7's pull-vs-push result. Do NOT build D110 pre-emptively.**
+  **E7 PRE-FLIGHT (run before the rig; ~1hr; D108 meta-lesson — don't eval a broken target):**
+  - [ ] Pod up (`make reset`) — picks up the biology-seed change (narrower removed) too.
+  - [ ] Verify the exact dereference path the disposition prescribes:
+        `curl -H "Accept: text/turtle" https://pod.vardeman.me/vault/ontology/mem` → 200 Turtle
+        (extension-less path, conneg per D84); confirm the `#hasOpenAction` fragment exists and its
+        `rdfs:comment`/`skos:scopeNote` is *decision-useful* (says it points at an open, possibly-unapplied
+        curation action and that the target ledger entry carries `schema:actionStatus`) — if thin, fix the
+        METADATA (content, not machinery) before running.
+  - [ ] Same FAIR check for trap-adjacent terms: `mem:RealignAction`, `mem:rationale`,
+        `mem:StalenessDetected`; confirm `schema:actionStatus`/`PotentialActionStatus` appear in the ledger
+        entry the trap serves (E8 showed agents reason from these priors once they arrive).
+  - [ ] Confirm conneg works for at least one alternate RDF type on the vocab (`application/ld+json`) —
+        H0 agents send multi-type Accept headers with q-values.
+  - [ ] Spot-check NO other broken IRI sits on the trap's follow-path (the realign target 404 in the E8 trap
+        was *intentional*; decide whether E7 keeps or removes that wrinkle — keeping it conflates grounding
+        with target-liveness; recommend REMOVE for the clean grounding cell, re-add in a combined arm).
+  - [ ] Rig: copy `evals/salience-e5` → `~/dev/probes/salience-e7` (outside any repo), swap the disposition
+        literal for the grounding text (L4 content-laden per E5b), n=3 + a combined grounding+audit arm.
 - [x] **RQ-Conneg-1 over-build verdict — provisionally CONFIRMED; H2 likely moot.** Pure Solid
   (`describedby` + media-type conneg + PROF-as-hint) suffices; `?_profile=` selection never reached across
   H0/H1/E8. Don't pre-emptively strip (D114 validated); a strip-back is its own spec — **now queued as the
