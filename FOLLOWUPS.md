@@ -4,10 +4,11 @@ Things to come back to. Open items only; closed items move to commit history and
 
 ## 📐 Progressive disclosure + profiles reconciliation (2026-06-10)
 
-Context: decision sanity check (`docs/research/2026-06-09-decision-record-sanity-check.md`),
-deployed-web principle (vault theory note `Agents Use the Deployed Web - Deployment Density
-Determines Standards Usability`), progressive-disclosure audit
-(`docs/research/2026-06-10-progressive-disclosure-audit.md`).
+> **FOLDED INTO the agentic progressive-disclosure contract spec (2026-06-10):**
+> `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md` (spine /
+> foundation; build approaches deferred). The profiles/roles strip-back, the D80 re-cut, and the
+> index-view BUILD are now §9 "FOLD IN" of that spec — do them as ONE view-layer rework, not
+> separately. The items below remain here as the detailed checklist the spec's SP2 will execute.
 
 - [x] **★ Measure pod-side index views BEFORE building them — RUN 2026-06-10: definition-line
   index earns its keep decisively; BUILD it.** Report `docs/plans/2026-06-10-rq-discovery-1-index-view-report.md`;
@@ -480,6 +481,10 @@ it is the Tier-1 access layer the eval rides on.
 The interop foundation (Application / AccessNeeds / RegistrySet / DataRegistrations /
 ShapeTrees-over-SHACL; branch `d109-grammar-interop-specs`) is **vocabulary-now / runtime-deferred**
 (D109 §5). Two consistency gaps are deliberate but will resurface when the SAI runtime lands:
+> **The SAI runtime has now landed as a target** — surfacing + materializing + consuming this
+> declared-but-inert layer is the core of the agentic progressive-disclosure contract spec
+> (`docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md`, §4/§9).
+> Both gaps below are FOLD-IN items there (SP2 surfacing).
 - **`interop:hasRegistrySet` is asserted in the registry doc, not the WebID card.** A real SAI client
   discovers the RegistrySet by following `hasRegistrySet` from the *dereferenced WebID*; it won't find
   it there. `pod_audit` passes only because it merges card+registry before querying. Fix when the
