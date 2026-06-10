@@ -1,0 +1,21 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+This Pod stores a memory that includes an address book of people. Answer this question
+about its contents, using only what the Pod itself contains:
+
+  Which person recorded in this Pod has the ORCID https://orcid.org/0000-0001-0000-0005 ?
+  Give their full name.
+
+Constraints:
+- Use only what you can learn from the Pod over HTTP. Do not use any prior knowledge of
+  who holds which ORCID — the ORCID-to-person mapping exists only inside this Pod, so you
+  must look it up there.
+- Keep a trajectory log: for every request, record the URL, method, headers you sent, the
+  key response details, and the reasoning that drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full request-by-request log.
+2. ANSWER — the person's full name, stating which Pod resource(s) you got it from and how
+   you located them (did you find a declared way to query by ORCID, or read records one by
+   one?).
+3. PROVENANCE — separate what you learned from the Pod itself from what you knew from training.
