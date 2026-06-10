@@ -67,8 +67,10 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 - **▶▶ GENERALIZATION PROBE RUN 2026-06-10 (SP2-gating) — discipline generalizes, EXECUTION TIER does NOT.**
   Report `docs/plans/2026-06-10-generalization-probe-report.md`; rig `evals/generalization/` (`e1d95b9`).
   Operation-shaped task (addressbook ORCID lookup), 3 arms/7 runs (bare-curl / skill-curl / skill-cli Tier-3).
-  **Routing generalizes** (7/7 right store `/contacts/` + orient via storage description; two-person-store
-  confusion did NOT dominate). **Affordance DISCOVERY generalizes WITH the CLI** (skill-cli found
+  **★ DISPOSITIONS generalize** (trajectory-read finding, strongest result: the audit disposition fired on a
+  NO-TRAP contacts lookup in all 6 skill runs — check `.meta` governance before trusting — bare-curl did not;
+  the skill content transfers beyond the wiki/over-trust context). **Routing generalizes** (7/7 right store
+  `/contacts/` + orient via storage description; run2 saw both stores, chose contacts deliberately). **Affordance DISCOVERY generalizes WITH the CLI** (skill-cli found
   `contact-find-by-orcid` via `affordances`; skill-curl brute-forced — corpus-size confound, n=6 makes
   brute-force rational). **Affordance EXECUTION does NOT (0/7)** — THREE reproduced gaps SP2 must fix:
   (1) `invoke` is `%RESOURCE%`-only, can't run `$orcid`-parameterized affordances (all addressbook query

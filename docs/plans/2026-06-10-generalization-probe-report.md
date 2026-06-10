@@ -28,25 +28,61 @@ it" — or does each app kind need its own thin skill? (spec §11)
 |---|---|---|---|---|---|
 | bare-curl | — | ✓ | no | brute-force | ✓ |
 | skill-curl ×3 | ✓ 3/3 | ✓ 3/3 | **0/3** | brute-force 3/3 | ✓ 3/3 |
-| skill-cli ×3 | ✓ 3/3 | ✓ 3/3 | **2–3/3** (`affordances`→`contact-find-by-orcid`) | tried affordance 3/3, **all fell back to per-card** | ✓ 3/3 |
+| skill-cli ×3 | ✓ 3/3 | ✓ 3/3 | **3/3 discovered, 3/3 diagnosed the gaps in-flight** | graceful fallback per the affordance's own instruction | ✓ 3/3 |
 
-(All 7 answered correctly — read from the ANSWER sections; one skill-curl audit boolean was a
-timing false-negative, corrected on re-read. The `brute-force 6/6` counter fires for the CLI
-arm too because the per-card fallback reads every card.)
+(All 7 answered correctly. **The findings below come from reading the full in-flight reasoning —
+the assistant `text` blocks per step — not the audit booleans or the ANSWER sections, both of which
+mislead here** (one skill-curl "wrong answer" was a flush-timing false-negative; the skill-curl
+"affordance mentions" were in the *final report* answering the prompt's question, not in-flight
+engagement; the `brute-force 6/6` counter fires for the CLI arm because its per-card *fallback*
+reads every card). Reading the trajectories corrected two earlier mis-captures and surfaced the
+disposition-generalization finding — see Behavioral observations.)
 
 ## What each arm did
 
-- **bare-curl:** went to `/contacts/`, GET-looped all six cards, matched the ORCID. Correct, brute-force.
-- **skill-curl (pod-navigate, curl):** invoked the skill, oriented (`.well-known/solid`), routed
-  to `/contacts/` (one run also checked `/wiki/people/`), then **brute-forced the six cards** —
-  never fetched the affordance catalog. Two runs *mentioned* the affordance/SPARQL option in
-  reasoning but chose enumeration (6 cards is cheap). **Corpus-size confound:** at n=6, brute-force
-  is the rational choice, so this arm does not isolate "can't reach the affordance" from "won't bother."
-- **skill-cli (pod-navigate + CLI):** the informative arm. Agents oriented, routed to `/contacts/`,
-  ran `solid-pod affordances` → **discovered `contact-find-by-orcid`** (2/3 read the descriptor),
-  then tried to execute it — and **could not**, for three concrete reasons (below). All fell back
-  to the per-card enumeration the affordance's own `sh:agentInstruction` names as the fallback, and
-  got the right answer.
+- **bare-curl:** went to `/contacts/`, GET-looped all six cards, matched the ORCID. No orientation
+  depth, no audit step. Correct, plain brute-force.
+- **skill-curl (pod-navigate, curl):** invoked the skill, oriented (read the storage description —
+  run2 explicitly *saw both* the `contactCatalog` and the `/wiki/people/` store and chose contacts
+  deliberately), then enumerated the six cards. **In-flight, no curl run ever engaged the affordance
+  catalog** — via raw curl the declared affordance is effectively invisible to a "find-by-ORCID"
+  workflow; the agent goes straight to listing `Person/` and reading cards. (Not "considered and
+  rejected" — never surfaced.) **Corpus-size confound also applies:** at n=6 enumeration is cheap, so
+  this arm cannot isolate "can't reach the affordance" from "the affordance is off the curl path."
+- **skill-cli (pod-navigate + CLI):** the informative arm, and the agents were *competent* — this was
+  deliberate discover→diagnose→graceful-fallback, not blind brute-force. All three oriented, routed
+  to `/contacts/`, ran `solid-pod affordances` → **discovered `contact-find-by-orcid`**, tried to
+  execute it, and **diagnosed both execution gaps in their own words in-flight** (quotes in Behavioral
+  observations), then fell back to the per-card enumeration the affordance's own `sh:agentInstruction`
+  names as the fallback. The agents' reasoning is what *exposed* the gaps I then reproduced.
+
+## Behavioral observations (from reading the in-flight reasoning)
+
+The trajectory-level reasoning told a richer and partly different story than the metrics:
+
+- **★ The audit disposition (Disposition 1) generalized to a no-trap operation task — all 6 skill
+  runs, curl AND CLI.** After finding the ORCID match, every skill run paused to check the card's
+  `.meta` for governance signals *before* reporting, e.g. skill-cli-run1: *"Per the pod-navigate
+  skill's audit discipline (Disposition 1), I must check the card's `.meta` for governance signals
+  before reporting as authoritative"* → read it → found only standard LDP metadata → reported.
+  **bare-curl did not** — it answered straight from the card. The disposition transferred well
+  beyond the wiki/over-trust context it was tuned on, to a contacts lookup with no contestation
+  present. This is stronger evidence that the dispositions generalize than the routing metric, and
+  no audit boolean surfaced it.
+- **The skill-cli agents diagnosed both execution gaps themselves, in-flight** (independently, all
+  three runs): on gap 1 — *"The affordance needs the ORCID parameter, and the sources list seems
+  odd"*; on gap 2 — *"SPARQL is hitting `.meta` files, not the actual Turtle bodies"* /
+  *"SPARQL is only scanning metadata files, not resource bodies."* They then fell back per the
+  affordance's own guidance. The limit was the tooling, not the agent's competence — the agents'
+  own words are what located the gaps reproduced below.
+- **Via raw curl, the affordance is off the path.** No skill-curl run looked at `/meta/affordances/`
+  while working; a "find-by-ORCID" task routed straight to `Person/`-enumeration. The CLI's
+  `affordances` command is the **discovery surface** that makes the operation-shaped access pattern
+  visible — so the CLI's load-bearing role is discovery, not only execution.
+- **Orientation disambiguated the two-person-store correctly, for the right reason.** skill-curl-run2
+  read the storage description, *saw both* `contactCatalog` (`/contacts/`) and the people wiki
+  (`/wiki/people/`), and chose contacts deliberately — the routing isn't luck, it's the disclosure
+  orientation working.
 
 ## The three execution gaps (reproduced deterministically, not agent misreads)
 
@@ -72,18 +108,23 @@ tooling:
 
 ## Verdict
 
-**The disclosure discipline generalizes; the execution tier does not (yet).**
+**The discipline AND the dispositions generalize; only the execution tier does not (yet).**
 
+- **The dispositions generalize** ✓✓ — the strongest result, visible only in the reasoning: all 6
+  skill runs applied the audit disposition (check `.meta` governance before trusting) on a no-trap
+  operation task; bare-curl did not. The skill's behaviour transfers beyond the wiki/over-trust
+  context it was tuned on.
 - **Routing generalizes** ✓ — 7/7 reached the right store; skill agents oriented via the storage
-  description; the two-person-store confusion did not dominate (1 run peeked at `/wiki/people/`).
-- **Affordance discovery generalizes with the CLI** ✓ — skill-cli agents found `contact-find-by-orcid`
-  via `affordances`; skill-curl agents did not (corpus-size + SPARQL affordances are hard to use via
-  curl alone). So the **CLI tier is load-bearing for *discovering and attempting* operation-shaped
-  access patterns** — the pre-registered "curl flails / CLI succeeds" lever, partially borne out
-  (CLI reaches discovery; curl does not).
+  description and disambiguated the two-person-store deliberately (run2 saw both, chose contacts).
+- **Affordance discovery is CLI-gated** ✓ — skill-cli agents found `contact-find-by-orcid` via the
+  `affordances` command and *correctly diagnosed* why it wouldn't execute; skill-curl agents never
+  surfaced the affordance at all (it is off the raw-curl path, compounded by the n=6 corpus
+  confound). So the CLI's load-bearing role is the **discovery surface** (`affordances`), not merely
+  execution — a refinement of the pre-registered "curl flails / CLI succeeds" lever.
 - **Affordance execution does NOT generalize** ✗ — 0/7 executed the affordance as a single query;
-  the three gaps above block it. Agents recovered via per-card enumeration (the affordance's own
-  fallback), correct at n=6 but non-scaling.
+  the three gaps above block it (agent-confirmed in-flight). Agents recovered via the per-card
+  enumeration the affordance's own instruction names as the fallback — correct at n=6, non-scaling.
+  The agents were competent; the tooling was the limit.
 
 This is the value of running the probe **before** SP2 commits to index-shaped machinery: it shows
 the index/disclosure layer is necessary but not sufficient for operation-shaped apps — those need a
@@ -100,9 +141,11 @@ working **execution tier**.
 - **`st:Description` per-app declaration** earns its keep: the index component is wiki-specific; an
   operation-shaped app should declare "discover affordance → invoke with params," and the affordance
   should carry an accurate, executable source set — confirming the §3 disclosure-vs-operation split.
-- **One general skill is still the right call (fork b)** — the *navigation* discipline (orient →
-  route → discover the declared pattern) held across app kinds. What differs is the *execution* the
-  declared pattern needs, which belongs in the tool/MCP tier (SP3), not in per-app skills.
+- **One general skill is still the right call (fork b), reinforced by the trajectories** — not only
+  did the *navigation* discipline (orient → route → discover the declared pattern) hold across app
+  kinds, the *dispositions* transferred too (the audit step fired on a no-trap contacts lookup in all
+  6 skill runs). The skill's content generalizes; what differs is the *execution* the declared
+  pattern needs, which belongs in the tool/MCP tier (SP3), not in per-app skills.
 
 ## Cross-cutting / limitations
 
