@@ -69,34 +69,33 @@ The structure-design brainstorm (`superpowers:brainstorming`) converged the spin
   command or retired, NOT speculatively. The `shapes` failures' root cause is substrate-side (template-placeholder
   catalog file — see the D108-review item below).
 
-## 🧭 Generalization probe (2026-06-10) — operation-shaped execution tier (SP2 work)
+## 🧭 Generalization probe (2026-06-10) — 3 tooling gaps FOUND + FIXED + RE-RUN 2026-06-11
 
-Report `docs/plans/2026-06-10-generalization-probe-report.md`; rig `evals/generalization/` (`e1d95b9`).
-**Verdict: the disclosure DISCIPLINE generalizes to operation-shaped apps (routing 7/7 + affordance
-discovery with the CLI), but the EXECUTION TIER does NOT (0/7 executed the affordance).** Three reproduced
-gaps the SP2 plan must close so operation-shaped apps (addressbook, id-schemes) are actually usable, not
-just discoverable:
+Report `docs/plans/2026-06-10-generalization-probe-report.md` (amended w/ the post-fix re-run); rig
+`evals/generalization/` (`e1d95b9`). **First run verdict ("execution does NOT generalize, 0/7") was
+CONFOUNDED by broken tooling, not agent behavior** (the skill-cli agents diagnosed the gaps in-flight).
+The three gaps were triaged (bug / feature / data), fixed, and the probe re-run. **Corrected verdict:
+discipline + dispositions + execution ALL generalize once the tooling works** (post-fix skill-cli 3/3
+execute the declared query, brute-force 6/6→1/6, 3/3 correct, audit still fires). The curl arm still
+enumerates — a genuine tier boundary (Comunica = CLI/MCP capability), NOT a defect.
 
-- [ ] **(1) `invoke` can't run parameterized affordances.** `solid-pod invoke` substitutes only
-  `%RESOURCE%` (resource-scoped, D52 Tier-2); the addressbook query affordances are `$param`-scoped
-  (`$orcid`/`$org`/`$email`) and the descriptor declares "the affordance engine substitutes `$orcid` as an
-  IRI." Add a parameter-passing path (e.g. `invoke <container> contact-find-by-orcid --param orcid=<iri>`),
-  distinct from `%RESOURCE%`. (`solid-agent-skills/src/commands/invoke.ts`.)
-- [ ] **(2) `sparql` container auto-discovery targets `.meta` sidecars, not native-RDFSource bodies.**
-  Reproduced: `sparql <…/contacts/Person/> "…owl:sameAs <target>"` → `results []`, `metaSources 7` (it queried
-  the 7 empty `.meta` sidecars); explicit `--source <card-body>` works. The discovery was built for the wiki
-  **dual-layer** model (data in `.meta`); the addressbook is **native RDFSource** (data IS the body). When a
-  container holds RDFSources, enumerate `ldp:contains` → use member *bodies* as sources. (`src/lib/http.ts`
-  `discoverMetaSources` / the `sparql` command.)
-- [ ] **(3) `contact-find-by-orcid` declared sources are STALE.** Its `sh:agentInstruction` says
-  *"Sources: all /vault/contacts/Person/\*/index.ttl files"* — the abandoned per-Person-**container** layout;
-  deployed layout is flat `Person/<name>.ttl` (CSS sub-container constraint, AddressBook sprint). Update the
-  descriptor's source declaration to the flat layout. (`overlays/addressbook/affordances/contact-find-by-orcid.ttl`,
-  + sweep the sibling find-by affordances.) A pod-curator candidate.
+- [x] **(1) `invoke` parameterized affordances — was a MISSING FEATURE, now BUILT** (`19f5a75` + `0dc4ecd`).
+  `invoke --param name=value` substitutes `$name` (word-boundary, value verbatim) + a default-source split
+  (`%RESOURCE%` affordances keep the `.operations/` default; `$param` affordances default to
+  `discoverQuerySources(container)`). `contact-find-by-orcid --param orcid=<iri>` returns the right person.
+- [x] **(2) `sparql` RDFSource-blind discovery — was a genuine CODE BUG, now FIXED** (`35bf6f6`).
+  `discoverMetaSources` appended `.meta` to every member (silent-empty over native-RDF containers like
+  contacts / `/id/`). Renamed `discoverQuerySources`; content-type-driven (RDF media type → query the body;
+  markdown/non-RDF → `.meta`). Affected every native-RDF container, not just this probe.
+- [x] **(3) stale affordance descriptors — was DATA drift, now FIXED** (`2ed7b3b`). 6 addressbook descriptors
+  re-pointed from `Person/*/index.ttl` (abandoned per-container layout) to deployed flat `Person/*.ttl`.
 
-**Not blocking the discipline finding** (one general skill stays right — fork b confirmed); these are the
-*execution-tier* build for operation-shaped apps, naturally SP2/SP3 (tool + MCP tier). Optional: a scale
-re-run (≥30 contacts) to de-confound the curl-arm discovery question (n=6 made brute-force rational).
+**Triage rule learned:** of three "the affordance won't execute" symptoms, one was a real code bug
+(silent-wrong-results), one a missing feature, one stale data — distinguish before "fixing." **Fork b
+still confirmed** (one general skill). **Residual non-blocking:** invoke's `discoverQuerySources` default
+does N parallel HEADs (fine at small scale; watch at SP2 scale); optional scale re-run (≥30 contacts) to
+de-confound the curl-arm discovery question (n=6 made brute-force rational — the curl arm can't execute
+SPARQL regardless, so this only sharpens the discovery sub-question).
 
 ## 📐 Progressive disclosure + profiles reconciliation (2026-06-10)
 

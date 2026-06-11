@@ -5,6 +5,40 @@
 **Spec:** `2026-06-10-agentic-progressive-disclosure-contract-design.md` §3/§11/§12 ·
 **Lineage:** sibling of the SP1 skill-nav eval; gates SP2.
 
+---
+
+> ## ⚠ UPDATE 2026-06-11 — tooling fixed, probe RE-RUN: execution DOES generalize
+>
+> The first run (below) concluded "execution does not generalize (0/7)" — but that was **confounded
+> by a tool bug + a missing feature + stale data**, not agent behavior (the skill-cli agents diagnosed
+> the gaps themselves in-flight). All three were fixed and the probe re-run on 2026-06-11. **Corrected
+> headline: the discipline, the dispositions, AND execution all generalize once the tooling works.**
+>
+> **Fixes** (solid-agent-skills `sp1-exec-fixes`; cogitarelink-solid overlay):
+> - **Gap 2 — BUG, FIXED** (`35bf6f6`): `sparql` container discovery was RDFSource-blind (appended
+>   `.meta` to every member → silent-empty over native-RDF containers). Now content-type-driven
+>   (`discoverQuerySources`: RDF body vs `.meta`).
+> - **Gap 1 — missing FEATURE, ADDED** (`19f5a75` + `0dc4ecd`): `invoke --param name=value` runs
+>   `$param`-scoped affordances (+ default-source split: parameter affordances query the container).
+> - **Gap 3 — stale DATA, FIXED** (`2ed7b3b`): 6 addressbook descriptors re-pointed from the abandoned
+>   `Person/*/index.ttl` to the deployed flat `Person/*.ttl`.
+>
+> **Post-fix re-run (skill arms × 3 each, fresh Pod, re-planted):**
+>
+> | Arm | used declared query | brute-force | correct | audit fired |
+> |---|---|---|---|---|
+> | skill-cli ×3 | **3/3** (`sparql`/`invoke` now execute) | **1/6** (was 6/6) | 3/3 | 3/3 |
+> | skill-curl ×3 | 0/3 (curl can't run Comunica SPARQL — a genuine tier boundary, not a bug) | 6/6 | 3/3 | 3/3 |
+>
+> **Corrected verdict:** with the CLI tier working, skill-cli agents **execute the declared affordance
+> in ~1 query** and stop enumerating (brute-force 6/6 → ~1/6, just reading the matched card to confirm).
+> Trajectories: discover affordance → read descriptor (now accurate) → `invoke --param` / `sparql`
+> → match → audit `.meta`. The curl arm still enumerates because executing a SPARQL affordance requires
+> Comunica (a CLI/MCP capability) — confirming the **consumption-channel ordering**: the CLI/MCP tier is
+> load-bearing for *executing* operation-shaped access patterns, not merely discovering them. Routing +
+> dispositions generalize in both arms (unchanged). The original sections below are retained as the
+> bug-discovery record; the three "gaps" are now FIXED (see §"three execution gaps").
+
 ## Question
 
 Every prior behavioral result is **navigation-shaped** (wiki E5/E7 traps, the idxview index).
@@ -84,7 +118,11 @@ The trajectory-level reasoning told a richer and partly different story than the
   (`/wiki/people/`), and chose contacts deliberately — the routing isn't luck, it's the disclosure
   orientation working.
 
-## The three execution gaps (reproduced deterministically, not agent misreads)
+## The three execution gaps (reproduced deterministically, not agent misreads) — ALL FIXED 2026-06-11
+
+> **All three are now FIXED** (see the UPDATE banner at the top). Triage: Gap 2 = a genuine code bug
+> (`35bf6f6`); Gap 1 = a missing feature, now built (`19f5a75`); Gap 3 = stale data, now corrected
+> (`2ed7b3b`). The post-fix re-run confirms the affordance executes end-to-end. Original analysis:
 
 The disclosure *discipline* generalized — agents discovered the right store and the declared
 affordance. But the operation-shaped affordance is **not executable** with the current substrate +
@@ -108,7 +146,9 @@ tooling:
 
 ## Verdict
 
-**The discipline AND the dispositions generalize; only the execution tier does not (yet).**
+**The discipline AND the dispositions generalize. Execution did not — until the tooling was fixed
+(2026-06-11); post-fix it does. See the UPDATE banner.** (The bullets below describe the FIRST run,
+pre-fix; the execution bullet is superseded by the re-run.)
 
 - **The dispositions generalize** ✓✓ — the strongest result, visible only in the reasoning: all 6
   skill runs applied the audit disposition (check `.meta` governance before trusting) on a no-trap
@@ -121,10 +161,11 @@ tooling:
   surfaced the affordance at all (it is off the raw-curl path, compounded by the n=6 corpus
   confound). So the CLI's load-bearing role is the **discovery surface** (`affordances`), not merely
   execution — a refinement of the pre-registered "curl flails / CLI succeeds" lever.
-- **Affordance execution does NOT generalize** ✗ — 0/7 executed the affordance as a single query;
-  the three gaps above block it (agent-confirmed in-flight). Agents recovered via the per-card
-  enumeration the affordance's own instruction names as the fallback — correct at n=6, non-scaling.
-  The agents were competent; the tooling was the limit.
+- **Affordance execution — pre-fix did NOT generalize (0/7); POST-FIX it DOES (skill-cli 3/3).**
+  The three gaps blocked it on the first run (agent-confirmed in-flight); the agents were competent,
+  the tooling was the limit. After fixing the bug + feature + data and re-running, skill-cli agents
+  execute the declared query in ~1 shot (brute-force 6/6 → 1/6). The residual curl limitation is a
+  genuine tier boundary (Comunica = CLI/MCP capability), not a defect. **See the UPDATE banner.**
 
 This is the value of running the probe **before** SP2 commits to index-shaped machinery: it shows
 the index/disclosure layer is necessary but not sufficient for operation-shaped apps — those need a

@@ -72,17 +72,18 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   the skill content transfers beyond the wiki/over-trust context). **Routing generalizes** (7/7 right store
   `/contacts/` + orient via storage description; run2 saw both stores, chose contacts deliberately). **Affordance DISCOVERY generalizes WITH the CLI** (skill-cli found
   `contact-find-by-orcid` via `affordances`; skill-curl brute-forced — corpus-size confound, n=6 makes
-  brute-force rational). **Affordance EXECUTION does NOT (0/7)** — THREE reproduced gaps SP2 must fix:
-  (1) `invoke` is `%RESOURCE%`-only, can't run `$orcid`-parameterized affordances (all addressbook query
-  affordances are `$param`-scoped); (2) `sparql` container-discovery targets `.meta` sidecars NOT native-
-  RDFSource bodies (`results []` / `metaSources 7`; explicit `--source <body>` works — discovery was built
-  for the wiki dual-layer, addressbook is native RDFSource); (3) the affordance's declared sources
-  (`Person/*/index.ttl`) are STALE vs the flat deployed layout (`Person/*.ttl`). All 7 correct via the
-  per-card fallback (the affordance's own fallback guidance; non-scaling). **Fork b CONFIRMED — one general
-  skill stays right** (the navigation discipline held across app kinds; what differs is the EXECUTION the
-  declared pattern needs → tool/MCP tier, SP3). **▶ NEXT: write-side E5b twin probe + the SP2 plan (which
-  must build the operation-shaped execution tier: parameterized invoke + RDFSource-aware sparql sources +
-  fix the stale descriptor — see FOLLOWUPS).**
+  brute-force rational). **First run: Affordance EXECUTION 0/7 — but that was CONFOUNDED by broken tooling,
+  NOT agent behavior** (skill-cli agents diagnosed the gaps in-flight). THREE gaps triaged + FIXED + RE-RUN
+  2026-06-11 (branch `sp1-exec-fixes`, merged): (1) **CODE BUG** `35bf6f6` — `sparql` discovery was
+  RDFSource-blind (appended `.meta` to every member → silent-empty over native-RDF containers); fixed →
+  `discoverQuerySources` (content-type-driven: RDF body vs `.meta`); (2) **missing FEATURE** `19f5a75`+`0dc4ecd`
+  — `invoke --param name=value` runs `$param`-scoped affordances; (3) **stale DATA** `2ed7b3b` — 6 addressbook
+  descriptors `Person/*/index.ttl`→flat `Person/*.ttl`. **CORRECTED VERDICT: discipline + dispositions +
+  execution ALL generalize once the tooling works** — post-fix skill-cli 3/3 execute the declared query
+  (brute-force 6/6→1/6, 3/3 correct, audit still fires); skill-curl still enumerates (genuine tier boundary:
+  Comunica = CLI/MCP capability, not a defect → confirms consumption-channel ordering). **Lesson: triage
+  "affordance won't execute" symptoms into bug/feature/data before fixing.** **Fork b CONFIRMED — one general
+  skill.** **▶ NEXT: write-side E5b twin probe + the SP2 plan.**
 - **▶▶ TWO experiments RUN 2026-06-10 (the queued "QT experiments"); both committed to main.**
   **① E7 grounding disposition** (report `docs/plans/2026-06-10-rq-salience-1-e7-report.md`; salience
   doc §8.1.1; rig `evals/salience-e7/`; commit `03c6989`): **grounding is a SECOND independent
