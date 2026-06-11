@@ -20,3 +20,10 @@ Probe substrate is disposable (`make reset` clears it). Caveat for re-runs: pre-
 read (uniform across arms, but reset the Pod for a clean cell). Known confound to
 de-confound in any follow-up: the investigation task's domain overlaps the vocabulary
 defining `mem:rationale` (see report caveats).
+
+Harness note: the 2026-06-11 run used `--allowedTools "Bash(curl:*)"` (no scratch
+files), which forced inline `-d` Turtle bodies and surfaced curl's leading-`@`
+footgun (5/9 runs had delivery retries; zero reached the Pod). The runner now also
+allows `Write` so agents can compose scratch `.ttl` files — write-path rigs should
+not make scratch composition impossible unless the friction itself is the thing
+being measured. Comparisons against the 2026-06-11 run should account for this.

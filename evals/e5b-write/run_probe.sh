@@ -17,9 +17,15 @@ case "$ARM" in
   *) PROMPT=$(cat prompts/task-ab.txt) ;;
 esac
 
+# allowedTools NOTE (changed 2026-06-11 AFTER the reported run, which was pure
+# "Bash(curl:*)"): Write is allowed so agents can compose a scratch .ttl and send it
+# with `curl --data-binary @file` — the curl-only sandbox forced inline `-d` bodies,
+# which collide with curl's leading-@ file semantics (Turtle starts with @prefix;
+# exit 26). The Pod-interaction constraint (HTTP via curl only) is unchanged and
+# enforced by the prompt; local scratch composition is not a Pod interaction.
 ( cd "$RUN/workdir" && claude -p "$PROMPT" \
     --model sonnet \
-    --allowedTools "Bash(curl:*)" \
+    --allowedTools "Bash(curl:*),Write" \
     --output-format stream-json --verbose \
     > ../trajectory.jsonl 2> ../stderr.log ) || echo "claude exited non-zero (see $RUN/stderr.log)"
 
