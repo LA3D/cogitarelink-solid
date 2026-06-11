@@ -1,5 +1,14 @@
 # Write-side E5b twin probe — floor vs instruction-content vs disposition (2026-06-11)
 
+> **AMENDED same day after a full-trajectory audit** (all 9 runs' complete CoT + the
+> write-call gap calls read, per the raw-audit discipline — the first cut had read only
+> 2 of 9 in full). Verdict unchanged; three findings sharpened: the "first-try" claim is
+> now Pod-side-precise (5/9 runs had harness-side delivery retries — sandbox blocks +
+> the curl `@prefix` footgun — none reaching the Pod; composition preceded all
+> feedback); the `.events/` contamination is scoped to exactly a-run2 + b-run1 (arm A's
+> verdict survives without the tainted datapoint); the curl footgun is promoted to an
+> SP1 skill-guidance candidate.
+
 **Question** (spec §6.1/§12, `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md`):
 how much write-context *quality* does each station buy — the floor's presence requirement,
 the floor's content-laden instruction, the agent-side write disposition (pod-navigate
@@ -66,15 +75,25 @@ no statement of the triggering task — write-provenance without write-context.)
    REQUIRED by the shape or derived server-side (the D108 floor rule); no amount of
    guidance text will yield it as an option.
 
-3. **The 422 teaching channel never fired: 9/9 first-try-conformant, after 9/9 proactive
-   shape reads.** The write path has a consumption forcing function the read path lacks:
-   to get a 201 you must engage the contract, so pod-delivered guidance on the *shape*
-   IS consumed (contrast the read-side bootstrap leak, 0/3 cold consumption of
-   `agentGuide`). Corollary: content-laden text placed ONLY in `sh:message` (the
-   violation channel) would have reached nobody; it must live on the shape itself
-   (`sh:agentInstruction`), where the pre-write read finds it. (Prompt caveat: the task
-   said a write contract exists and must be satisfied — the *existence* pointer was
-   prompt-carried, the engagement was the agents' own.)
+3. **The 422 teaching channel never fired: zero Pod-side rejections (no 422, no 4xx),
+   after 9/9 proactive shape reads.** The write path has a consumption forcing function
+   the read path lacks: to get a 201 you must engage the contract, so pod-delivered
+   guidance on the *shape* IS consumed (contrast the read-side bootstrap leak, 0/3 cold
+   consumption of `agentGuide`). Corollary: content-laden text placed ONLY in
+   `sh:message` (the violation channel) would have reached nobody; it must live on the
+   shape itself (`sh:agentInstruction`), where the pre-write read finds it. (Prompt
+   caveat: the task said a write contract exists and must be satisfied — the *existence*
+   pointer was prompt-carried, the engagement was the agents' own.)
+   *Precision note (full-trajectory audit):* "first-try" is Pod-side. 5/9 runs needed
+   1–6 **delivery** retries that never reached the Pod — harness sandbox blocks on
+   non-curl operations (file redirection denied under `--allowedTools "Bash(curl:*)"`)
+   and the curl `@`-footgun: a Turtle body starts with `@prefix`, so `curl -d '@…'`
+   parses it as a file reference (exit 26). All recovered (`printf | curl
+   --data-binary @-`). In every friction run, the FIRST attempted POST already
+   contained the full final rationale — composition preceded all feedback, Pod or
+   harness. → **SP1 skill nugget:** pod-navigate's write guidance should say "POST
+   Turtle with `--data-binary @-` + heredoc, never `-d` (leading `@prefix` reads as a
+   filename)."
 
 4. **Arm A was not instruction-free in practice — the vocabulary taught it.** Every
    agent read `mem:rationale`'s own `rdfs:comment` ("…what was observed, what it was
@@ -89,10 +108,12 @@ no statement of the triggering task — write-provenance without write-context.)
    instructed structure** (ordered consulted-resources lists matching "including which
    Pod resources you consulted"), at an already-saturated grade ceiling. **What the
    disposition (C) bought over B: nothing measurable on this rig** — same grades, same
-   lengths, same structure; CoT (terse, narrating moves not deliberation) shows no
-   visible pre-write context-composition step either. C could not differentiate because
-   the channel it insures against — the floor's guidance going unconsumed — never
-   failed here (finding 3).
+   lengths, same structure; CoT (terse move-narration in all 9 runs — full-text read,
+   not just pattern-matched) shows no visible pre-write context-composition step in any
+   arm; composition happens inside the write-call construction, and where delivery
+   friction exposed first attempts, the rationale was already complete (finding 3's
+   precision note). C could not differentiate because the channel it insures against —
+   the floor's guidance going unconsumed — never failed here (finding 3).
 
 ## Caveats
 
@@ -103,10 +124,15 @@ no statement of the triggering task — write-provenance without write-context.)
   contact, save a note). De-confounding arm queued as an optional follow-up; do not run
   speculatively.
 - n=3/arm, single model (Sonnet 4.6, the arc's standard instrument), single task.
-- Rig contamination, minor: pre-flight 422s left `mem:UnprocessableWrite` events in
-  `/vault/wiki/.events/`; two agents read them and cited them as evidence "confirming
-  SHACL enforcement." Inadvertent extra teaching surface, uniform across arms. (Also a
-  free observation: the UnprocessableWrite detector is live and agents can consume it.)
+- Rig contamination, scoped by the trajectory audit: pre-flight 422s left
+  `mem:UnprocessableWrite` events in `/vault/wiki/.events/`; exactly TWO runs fetched
+  the event bodies — **a-run2** (arm A's richest rationale; its CoT: "The events show
+  prior failed writes (missing mem:rationale)" — failure evidence naming the very
+  requirement) and **b-run1**. Arm A's verdict survives without the tainted datapoint
+  (a-run1 grade 3 and a-run3 grade 2 never touched the events), but a-run2's grade-3
+  richness is partially attributable to it. Reset the Pod before any re-run. (Free
+  observation: the UnprocessableWrite detector is live and cold agents consume it as
+  teaching.)
 - Two runs died on transient API socket errors and were re-run (`*-apierror*` dirs
   retained; b-run3-apierror1 had already committed a note — consistent with its arm).
 - Global `~/.claude/CLAUDE.md` loads in headless runs (no Pod content).
