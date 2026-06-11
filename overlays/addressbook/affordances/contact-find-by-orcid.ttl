@@ -21,7 +21,7 @@
       <https://orcid.org/0000-0003-4091-6059>. Pass the angle-bracketed form
       in SPARQL; the affordance engine substitutes it as an IRI, not a string.
 
-      Sources: all /vault/contacts/Person/*/index.ttl files (cross-resource query).
+      Sources: all /vault/contacts/Person/*.ttl files (cross-resource query).
       The agent may need to enumerate cards via LDP listing of
       </vault/contacts/Person/> and issue the query per card, or use Comunica
       link-traversal with the Person container as entry point.

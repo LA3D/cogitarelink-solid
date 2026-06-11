@@ -22,7 +22,7 @@
       fragment (case-insensitive). Disambiguate using org-find-by-ror when the
       result set is larger than 1.
 
-      Sources: Organization cards at /vault/contacts/Organization/*/index.ttl
+      Sources: Organization cards at /vault/contacts/Organization/*.ttl
       plus </vault/contacts/people.ttl>. Pass both as --default-graph-uri
       sources when invoking via solid-pod sparql.
 

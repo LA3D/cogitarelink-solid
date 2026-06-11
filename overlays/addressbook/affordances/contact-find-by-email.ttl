@@ -21,7 +21,7 @@
       <mailto:user@example.org>. Must be passed as an IRI, not a plain string.
 
       Sources: </vault/contacts/people.ttl> (aggregated index) plus individual
-      Person card files at /vault/contacts/Person/*/index.ttl. Start with the
+      Person card files at /vault/contacts/Person/*.ttl. Start with the
       aggregated index; fall back to per-card traversal if not found.
 
       Returns 0..1 ?person IRIs. Multiple results indicate duplicate cards for

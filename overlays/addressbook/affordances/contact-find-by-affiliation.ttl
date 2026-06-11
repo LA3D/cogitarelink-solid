@@ -18,7 +18,7 @@
       historical memberships unless the caller filters by date.
 
       Parameter: $org — the Organization card IRI, e.g.,
-      </vault/contacts/Organization/notre-dame/index.ttl#this>.
+      </vault/contacts/Organization/notre-dame.ttl#this>.
 
       Sources: Person card files (for org:hasMembership triples) and Membership
       card files (for org:organization triples). Both are needed because the

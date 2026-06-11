@@ -22,7 +22,7 @@
       card would be unusual but valid.
 
       Parameter: $card — the card IRI with hash fragment (e.g.,
-      </vault/contacts/Person/c4e5.../index.ttl#this>).
+      </vault/contacts/Person/marie-curie.ttl#this>).
 
       Sources required: the /vault/wiki/people/ container's .meta resources.
       Use solid-pod sparql with --default-graph-uri pointing at each relevant

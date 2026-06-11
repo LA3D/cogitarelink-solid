@@ -23,7 +23,7 @@
       Pass the angle-bracketed form in SPARQL; the affordance engine substitutes
       it as an IRI.
 
-      Sources: Organization cards at /vault/contacts/Organization/*/index.ttl.
+      Sources: Organization cards at /vault/contacts/Organization/*.ttl.
       Enumerate via LDP listing of </vault/contacts/Organization/> or use
       Comunica link-traversal with the Organization container as entry point.
 
