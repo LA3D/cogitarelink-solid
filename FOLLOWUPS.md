@@ -2,11 +2,15 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## ▶▶ ACTIVE — agentic progressive-disclosure contract (brainstorm PAUSED at foundation, 2026-06-10)
+## ▶▶ ACTIVE — agentic progressive-disclosure contract (SP1 SHIPPED + generalization probe DONE; 2026-06-11)
 
 **Spec (spine, settled):** `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md`.
-The structure-design brainstorm (`superpowers:brainstorming`) converged the spine and banked it as a
-**foundation**; build approaches were deliberately deferred. Resume here.
+**STATUS 2026-06-11:** the foundation brainstorm converged → approaches settled → **SP1 BUILT + GATE PASSED**
+(pod-navigate skill + `validate`/`invoke`/`affordances`, merged) → **generalization probe RUN** (3 tooling
+gaps found + FIXED + re-run; execution generalizes — see the `🧭 Generalization probe` section below).
+**▶ NEXT = the write-side E5b twin probe (Disposition 3, spec §12), THEN write the SP2 plan** (it inherits
+working operation-shaped execution tooling). Both repos ahead/unpushed (push = Chuck's call). The checklist
+below is the SP1 history (all `[x]`); the live forward items are in `🧭 Generalization`, `📐`, `🧪`, `⚙` sections.
 
 - [x] **Chuck reviewed the foundation spec 2026-06-10 (same day) — spine confirmed; spec AMENDED
   post-review.** Sanity check verified the factual claims (live-but-inert interop layer; E7/index-view

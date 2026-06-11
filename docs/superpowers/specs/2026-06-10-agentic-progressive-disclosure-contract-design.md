@@ -287,9 +287,13 @@ write-gate items.
 > `pod-navigate` skill (3 baked-in dispositions; D103 deviation recorded).** Gate MET: skill arm
 > **3/3 catch**, trigger 3/3 (pod-navigate fired tool-call #1, unprompted) — the skill channel
 > closes the E5 bootstrap consumption leak (0/3 pod-delivered → 3/3 skill-delivered). **SP2 plan
-> follows the generalization probe + these SP1 results.** Two probes remain queued before SP2:
-> the **generalization probe** (operation-shaped apps) and the **write-side E5b twin** (Disposition 3
-> was carried but not exercised by the read-path trap).
+> follows the generalization probe + these SP1 results.**
+>
+> **UPDATE 2026-06-11: the generalization probe RAN** (`docs/plans/2026-06-10-generalization-probe-report.md`)
+> — discipline + dispositions + execution all generalize once tooling works; it found + we FIXED 3 tooling
+> gaps (1 code bug + 1 feature + 1 stale descriptor), so SP2 inherits working operation-shaped execution.
+> **ONE probe still queued before the SP2 plan: the write-side E5b twin** (Disposition 3 was carried in the
+> SP1 skill but not exercised by the read-path trap).
 
 Not decided here:
 - **View materialization where/when** — on-write listener-refreshed static index resource vs
@@ -334,7 +338,7 @@ the `evals/` rig pattern). The map:
 | D96 `<#this>` placement closes the registration miss | re-run E7 after the fix | queued (cheap feed-in) |
 | Format A/B — leanest hook that still routes | `evals/idxview` + prefLabel-only arm | queued (cheap feed-in) |
 | **Write quality: how much does the floor's report buy vs the disposition?** (§6.1) | **write-side E5b twin** — arms: (A) presence-only floor; (B) + content-laden ValidationReport `sh:agentInstruction`; (C) + write disposition in the harness. Grade the resulting rationales (vacuous / restates-title / genuine context). | **NEW — queued (cheap feed-in)** |
-| **The disclosure discipline generalizes beyond wiki-shaped apps** (§3) | index-view-style rig against the live **addressbook or id-schemes** app (operation-shaped: query / resolve-register); add the wrong-container-descent metric | **NEW — queued; run BEFORE SP2 commits to index-shaped machinery** |
+| **The disclosure discipline generalizes beyond wiki-shaped apps** (§3) | index-view-style rig against the live **addressbook** app (operation-shaped: ORCID lookup); + wrong-container-descent metric | **✅ RUN 2026-06-10/11** (`docs/plans/2026-06-10-generalization-probe-report.md`): discipline + dispositions + execution all generalize once tooling works; found+FIXED 3 tooling gaps (bug/feature/data); curl arm = genuine CLI/MCP tier boundary (not a defect) |
 | Skill-delivered disposition reproduces prompt-injected gold | the SP1 eval itself (skill-creator / GEPA loop, cold-agent harness) | = SP1's own gate |
 | The full contract walk works cold, multi-app | end-to-end: cold agent + SP1 skill on the SP2-materialized pod; task spans Ad→An→R across two apps | after SP1+SP2 |
 | Write-context quality in the wild | curation-loop sampling (continuous; doubles as the GEPA reward signal, §6.1c) | with SP2 floor extension |

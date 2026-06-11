@@ -12,8 +12,19 @@ authoritative home:
 
 Repo decision IDs differ from vault IDs; both numberings are reconciled in `decisions.md`.
 
-## Project state (as of 2026-06-10)
+## Project state (as of 2026-06-11)
 
+- **▶▶ CURRENT ANCHOR (2026-06-11) — read this first; supersedes the scattered ▶ NEXT markers below.**
+  **SP1 SHIPPED + GATE PASSED** (pod-navigate skill + `solid-pod validate`/`invoke`/`affordances`; merged to
+  solid-agent-skills main; skill arm 3/3; report `docs/plans/2026-06-10-sp1-skill-nav-eval-report.md`).
+  **GENERALIZATION PROBE DONE** (operation-shaped addressbook): found 3 tooling gaps — 1 code bug
+  (`sparql` RDFSource-blind), 1 missing feature (parameterized `invoke`), 1 stale descriptor — **all FIXED
+  + re-run 2026-06-11 → execution generalizes** (report `docs/plans/2026-06-10-generalization-probe-report.md`,
+  amended w/ post-fix banner; branch `sp1-exec-fixes` merged). **shacl-engine 1.1.0 spike landed in the CLI
+  `validate` (server-floor migration still open).** **▶ NEXT = write-side E5b twin probe (Disposition 3 —
+  spec §12), THEN the SP2 plan** (which now inherits working operation-shaped execution tooling). **REPOS
+  AHEAD/UNPUSHED — push = Chuck's call: solid-agent-skills main +10, cogitarelink-solid main +32.** Full
+  detail: the two bullets immediately below + FOLLOWUPS `▶▶ ACTIVE` / `🧭 Generalization` / `📐`/`🧪` sections.
 - **▶▶ STRUCTURE-DESIGN BRAINSTORM 2026-06-10 → spec FOUNDATION banked (approaches DEFERRED to next session).**
   Spec: `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md` (commit `3016f72`).
   **Spine (settled):** progressive disclosure is recursive across BUILDING-BLOCK layers `S→Ad→An→Ax→R` (a pod
@@ -131,7 +142,9 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   scoped affordances (3 defects: arg-contract / namespace drift `sub:` vs `wiki:` / no `%RESOURCE%` subst)
   — D52 Tier-2 affordance claim broken for that class; `memory-history` not name-guessable. Both in the
   held sibling repo; not on the research critical path; fix when CLI is next touched.
-- **SYNC DONE 2026-06-09: BOTH repos pushed to GitHub (LA3D org), fully in sync (0/0).** cogitarelink-solid
+- **SYNC DONE 2026-06-09: BOTH repos pushed to GitHub (LA3D org), fully in sync (0/0).** [STALE as of
+  2026-06-11 — both repos are AGAIN ahead/unpushed after SP1 + exec-fixes + probes (see CURRENT ANCHOR at
+  top: solid-agent-skills +10, cogitarelink-solid +32). Historical detail follows.] cogitarelink-solid
   `main`→`3b08c63`; solid-agent-skills `main`→`f5f8ed9` (the pod-curator restore-merge history published
   intact; the prior "push HELD" is RESOLVED — pushed for Mac Studio multi-machine work, knowingly incl. the
   stale bundled `pod_audit.py`). **Probe harnesses ported into `cogitarelink-solid/evals/`** as portable
