@@ -21,10 +21,18 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   (`sparql` RDFSource-blind), 1 missing feature (parameterized `invoke`), 1 stale descriptor — **all FIXED
   + re-run 2026-06-11 → execution generalizes** (report `docs/plans/2026-06-10-generalization-probe-report.md`,
   amended w/ post-fix banner; branch `sp1-exec-fixes` merged). **shacl-engine 1.1.0 spike landed in the CLI
-  `validate` (server-floor migration still open).** **▶ NEXT = write-side E5b twin probe (Disposition 3 —
-  spec §12), THEN the SP2 plan** (which now inherits working operation-shaped execution tooling). **REPOS
-  AHEAD/UNPUSHED — push = Chuck's call: solid-agent-skills main +10, cogitarelink-solid main +32.** Full
-  detail: the two bullets immediately below + FOLLOWUPS `▶▶ ACTIVE` / `🧭 Generalization` / `📐`/`🧪` sections.
+  `validate` (server-floor migration still open).** **WRITE-SIDE E5b TWIN PROBE RUN 2026-06-11** (report
+  `docs/plans/2026-06-11-e5b-write-twin-report.md`; rig `evals/e5b-write/`; 3 arms × n=3, 9/9 conformant):
+  **the FLOOR is the load-bearing write-quality station** — presence-only floor already elicited genuine
+  write-context (confound disclosed: agents ground `mem:rationale`'s own content-laden `rdfs:comment` —
+  the vocabulary teaches); **D112 minimal-satisfaction replicates at the PROPERTY level** (8/9 exactly the
+  required predicates; zero volunteered prov:* even w/ the disposition → SP2 MUST require-or-derive every
+  always-wanted property); 422 channel never fired (9/9 proactive shape reads — the write path FORCE-CONSUMES
+  its contract, the inverse of the read-path bootstrap leak); content-laden shape instruction = ~2.5× richer
+  rationales; Disposition 3 added nothing measurable over it (its payoff cell never occurred). **▶ NEXT =
+  write the SP2 plan** (all queued pre-SP2 probes done). **REPOS AHEAD/UNPUSHED — push = Chuck's call:
+  solid-agent-skills main +10, cogitarelink-solid main +32 (pre-twin-probe count).** Full detail: the two
+  bullets immediately below + FOLLOWUPS `▶▶ ACTIVE` / `🧭 Generalization` / `📐`/`🧪` sections.
 - **▶▶ STRUCTURE-DESIGN BRAINSTORM 2026-06-10 → spec FOUNDATION banked (approaches DEFERRED to next session).**
   Spec: `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md` (commit `3016f72`).
   **Spine (settled):** progressive disclosure is recursive across BUILDING-BLOCK layers `S→Ad→An→Ax→R` (a pod

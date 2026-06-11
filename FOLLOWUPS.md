@@ -7,10 +7,19 @@ Things to come back to. Open items only; closed items move to commit history and
 **Spec (spine, settled):** `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md`.
 **STATUS 2026-06-11:** the foundation brainstorm converged → approaches settled → **SP1 BUILT + GATE PASSED**
 (pod-navigate skill + `validate`/`invoke`/`affordances`, merged) → **generalization probe RUN** (3 tooling
-gaps found + FIXED + re-run; execution generalizes — see the `🧭 Generalization probe` section below).
-**▶ NEXT = the write-side E5b twin probe (Disposition 3, spec §12), THEN write the SP2 plan** (it inherits
-working operation-shaped execution tooling). Both repos ahead/unpushed (push = Chuck's call). The checklist
-below is the SP1 history (all `[x]`); the live forward items are in `🧭 Generalization`, `📐`, `🧪`, `⚙` sections.
+gaps found + FIXED + re-run; execution generalizes — see the `🧭 Generalization probe` section below) →
+**write-side E5b twin probe RUN 2026-06-11** (report `docs/plans/2026-06-11-e5b-write-twin-report.md`;
+rig `evals/e5b-write/`; 3 arms × n=3, 9/9 conformant): **the FLOOR is the load-bearing quality station** —
+presence-only already elicited genuine write-context (grounding confound disclosed: the vocabulary's own
+content-laden `rdfs:comment` taught it); **D112 minimal-satisfaction replicates at the PROPERTY level**
+(8/9 wrote exactly the required predicates; zero volunteered prov:* even with the disposition → SP2:
+REQUIRE or derive anything wanted on every write); the 422 channel never fired (9/9 proactive shape reads
+— the write path force-consumes its contract, unlike the read-path bootstrap leak); content-laden shape
+instruction bought ~2.5× richer rationales; the disposition bought nothing measurable over it (its payoff
+cell — unconsumed floor guidance — never occurred here). §6.1 "bare MUST yields boilerplate" NOT confirmed
+for required-string quality. **▶ NEXT = write the SP2 plan** (all queued pre-SP2 probes now done). Both
+repos ahead/unpushed (push = Chuck's call). The checklist below is the SP1 history (all `[x]`); the live
+forward items are in `🧭 Generalization`, `📐`, `🧪`, `⚙` sections.
 
 - [x] **Chuck reviewed the foundation spec 2026-06-10 (same day) — spine confirmed; spec AMENDED
   post-review.** Sanity check verified the factual claims (live-but-inert interop layer; E7/index-view
@@ -54,11 +63,10 @@ below is the SP1 history (all `[x]`); the live forward items are in `🧭 Genera
 - [ ] **Cheap empirical feed-ins** (can fold into the approaches as they need settling, not run speculatively):
   the **D96 subject-placement fix** (derive `mem:hasOpenAction` onto `<#this>`; re-run E7 `evals/salience-e7`
   to confirm it closes the g-run3 miss — tight loop); **format A/B** (`evals/idxview`, add a prefLabel-only arm);
-  **NEW — write-side E5b twin** (spec §12: arms presence-only-floor / +content-laden ValidationReport
-  instruction / +write disposition; grade rationale quality — answers "how much does the floor buy vs the
-  disposition" empirically); **NEW — generalization probe** (spec §3/§12: index-view-style rig against the
-  live addressbook or id-schemes app — operation-shaped, not navigation-shaped; run BEFORE SP2 commits to
-  index-shaped machinery).
+  ~~write-side E5b twin~~ **RUN 2026-06-11** (see the ACTIVE banner; optional de-confounding follow-up arm:
+  same rig, task domain far from the provenance vocabulary — e.g. addressbook lookup-then-note — tests whether
+  arm A's high floor survives without the grounding/topic confounds); ~~generalization probe~~ **RUN
+  2026-06-10/11** (see the 🧭 section below).
 - [ ] **SP2 execution checklist** lives in the 📐 section below (profiles/roles strip-back, D80 re-cut,
   index-view build, interop surfacing) + the ⚙ interop-foundation gaps — all FOLD-IN items of the spec §9.
 - **Build order (locked):** SP1 skill+tool harness FIRST (optimization substrate; skill-creator/GEPA against
