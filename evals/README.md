@@ -15,6 +15,19 @@ Rigs present:
 - **conneg-h0 / conneg-h1 / conneg-e8** — RQ-Conneg-1 + RQ-Salience-1 experiments (2026-06-09):
   H0 (do agents conneg?), H1 (over-trust A-vs-B discriminator), E8 (graph-navigation tool).
   Reports: `docs/plans/2026-06-09-rq-conneg-1-{h0,h1,e8-graph-tool}-report.md`.
+- **salience-e1 / salience-e5 / salience-e5b / salience-bootstrap / salience-e7** — the
+  RQ-Salience-1 disposition arc (2026-06-09/10): standard vocab, audit disposition,
+  content-ladenness dose-response, pod-delivered bootstrap, grounding disposition.
+  Reports: `docs/plans/2026-06-{09,10}-rq-salience-1-*-report.md`.
+- **idxview** — RQ-Discovery-1 definition-line index probe (2026-06-10).
+  Report: `docs/plans/2026-06-10-rq-discovery-1-index-view-report.md`.
+- **skill-nav** — the SP1 gate: skill-delivered disposition vs prompt-injected gold (2026-06-10).
+  Report: `docs/plans/2026-06-10-sp1-skill-nav-eval-report.md`.
+- **generalization** — disclosure discipline against the operation-shaped addressbook app
+  (2026-06-10/11). Report: `docs/plans/2026-06-10-generalization-probe-report.md`.
+- **e5b-write** — write-side E5b twin: floor vs content-laden instruction vs write
+  disposition, graded rationale quality (2026-06-11).
+  Report: `docs/plans/2026-06-11-e5b-write-twin-report.md`.
 
 **Cross-rig dependencies (copy together):** `conneg-h1` and `conneg-e8` reuse `d114`'s
 over-trust trap (`../d114/setup/plant_overtrust.sh`); `conneg-e8` carries its own portable

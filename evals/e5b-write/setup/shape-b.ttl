@@ -1,0 +1,42 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix mem:    <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix schema: <https://schema.org/> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+# ARM B — same constraints as arm A, but the instruction is CONTENT-LADEN
+# (the E5b lesson applied to the write side: name the failure mode, direct
+# the content). Identical machine-decidable floor; only the words differ.
+<#ProbeNoteShape>
+    a sh:NodeShape ;
+    rdfs:label "Probe note write contract" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/probe-w/note.shacl.ttl> ;
+    sh:targetClass schema:Report ;
+    sh:agentInstruction """A note in this container is a schema:Report carrying
+schema:name (a title), schema:text (the finding itself), and mem:rationale.
+All three are required. In mem:rationale, record your WRITE CONTEXT: the task
+that triggered this write, what you concluded, and why — including which Pod
+resources you consulted. You are the only holder of that context and it is
+unrecoverable after your session ends; a future agent will audit it before
+trusting this note. Do not write a rationale that merely restates the title.""" ;
+    sh:property [
+        sh:path schema:name ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "schema:name is required." ;
+    ] ;
+    sh:property [
+        sh:path schema:text ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "schema:text is required." ;
+    ] ;
+    sh:property [
+        sh:path mem:rationale ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "mem:rationale is required — record the task that triggered this write, what you concluded, and why, including which Pod resources you consulted. Do not merely restate the title; a future agent audits this context before trusting the note." ;
+    ] .
