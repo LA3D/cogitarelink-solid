@@ -59,3 +59,13 @@ the machine's Claude subscription login, NEVER a globally-exported API key (a pr
 `ANTHROPIC_API_KEY` silently bills the API account — discovered after the SP1/SP2 probe
 arcs). If a rig is copied to a new machine, `claude` must be logged in (`claude /status`
 to verify the auth source before burning runs).
+
+## Probe model selection (2026-06-12)
+
+**Shakedown on Haiku, measure on Sonnet.** Sonnet is the comparison instrument — all
+disposition/salience baselines (E5/E5b/E7, the SP1/SP2 gates) are Sonnet; never switch
+an established arc's model (different capability = incomparable data, not cheaper data).
+Use `--model haiku` for: rig shakedowns before measured runs (harness mechanics don't
+need the instrument model); mechanism-validation probes (422-teaching, floor
+round-trips); optional capability-gradient arms on established traps (a disposition
+that only works Sonnet-and-up is a finding about the skill's floor, and worth knowing).
