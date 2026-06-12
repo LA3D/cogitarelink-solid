@@ -14,7 +14,7 @@ PROMPT=$(cat prompts/e8$ARM-*.txt)
 BIN="$(pwd)/bin"
 
 ( cd "$RUN/workdir" && PATH="$BIN:$PATH" env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
-    --model sonnet \
+    --model "${PROBE_MODEL:-sonnet}" --max-turns "${PROBE_MAX_TURNS:-60}" \
     --allowedTools "Bash(curl:*)" "Bash(solid-pod:*)" \
     --output-format stream-json --verbose \
     > ../trajectory.jsonl 2> ../stderr.log ) || echo "claude exited non-zero (see $RUN/stderr.log)"

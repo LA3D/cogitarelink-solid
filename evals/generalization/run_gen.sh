@@ -47,7 +47,7 @@ fi
 ( cd "$RUN/workdir" && PATH="$EXTRA_PATH$PATH" \
     NODE_EXTRA_CA_CERTS="${NODE_EXTRA_CA_CERTS:-$(mkcert -CAROOT)/rootCA.pem}" \
     env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
-      --model sonnet \
+      --model "${PROBE_MODEL:-sonnet}" --max-turns "${PROBE_MAX_TURNS:-60}" \
       --allowedTools "$TOOLS" \
       --output-format stream-json --verbose \
     > ../trajectory.jsonl 2> ../stderr.log ) || echo "claude exited non-zero (see $RUN/stderr.log)"

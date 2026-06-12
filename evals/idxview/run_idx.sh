@@ -18,7 +18,7 @@ mkdir -p "$RUN/workdir"
 PROMPT=$(sed "s#CONTAINER_URL#$CONTAINER#g" prompts/task.tmpl.txt)
 
 ( cd "$RUN/workdir" && env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
-    --model sonnet \
+    --model "${PROBE_MODEL:-sonnet}" --max-turns "${PROBE_MAX_TURNS:-60}" \
     --allowedTools "Bash(curl:*)" \
     --output-format stream-json --verbose \
     > ../trajectory.jsonl 2> ../stderr.log ) || echo "claude exited non-zero (see $RUN/stderr.log)"

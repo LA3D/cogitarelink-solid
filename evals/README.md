@@ -72,3 +72,14 @@ Use `--model haiku` for: rig shakedowns before measured runs (harness mechanics 
 need the instrument model); mechanism-validation probes (422-teaching, floor
 round-trips); optional capability-gradient arms on established traps (a disposition
 that only works Sonnet-and-up is a finding about the skill's floor, and worth knowing).
+
+## Probe cost discipline (2026-06-12)
+
+- **Measure every ensemble:** `python3 evals/lib/cost.py runs/*/trajectory.jsonl` — the
+  CLI reports exact `total_cost_usd` per run. (Calibration: 94 historical runs = $32;
+  a typical sonnet probe run is $0.30-0.45, dominated by cache reads + the final report.)
+- **New rigs use `evals/lib/PROMPT-TEMPLATE.md`** — ROUTE (≤10 lines) replaces the
+  request-by-request self-log (the single biggest output sink; stream-json is ground
+  truth and is always raw-audited anyway). NEVER retrofit an established arc's prompt.
+- **Runner knobs:** `PROBE_MODEL=haiku` (shakedowns/mechanism probes), `PROBE_MAX_TURNS`
+  (runaway cap, default 60 — should never bind on a healthy run).
