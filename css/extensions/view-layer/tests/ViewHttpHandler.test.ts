@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { guardedStreamFrom } from "@solid/community-server";
+import { guardedStreamFrom, NotImplementedHttpError } from "@solid/community-server";
 import { Store, DataFactory } from "n3";
 import { ViewHttpHandler } from "../src/ViewHttpHandler";
 import { ViewAssembler } from "../src/ViewAssembler";
@@ -33,6 +33,15 @@ const RDF_META_QUADS = [
   quad(namedNode(RDF_RES), namedNode(HAS_OPEN_ACTION),
        namedNode("https://pod.vardeman.me/id/.operations/abc")),
 ];
+// CSS stamps on-the-fly bookkeeping (posix:mtime/size) into the ResponseMetadata
+// named graph on every INTERNAL_QUADS read — the fused union must exclude it.
+const RESPONSE_META_GRAPH = "urn:npm:solid:community-server:meta:ResponseMetadata";
+const RDF_BOOKKEEPING_QUADS = [
+  quad(namedNode(`${RDF_RES}.meta`), namedNode("http://www.w3.org/ns/posix/stat#mtime"),
+       literal("1749600000"), namedNode(RESPONSE_META_GRAPH)),
+  quad(namedNode(`${RDF_RES}.meta`), namedNode("http://www.w3.org/ns/posix/stat#size"),
+       literal("123"), namedNode(RESPONSE_META_GRAPH)),
+];
 
 const FUSED_PROJECTION = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }";
 
@@ -63,10 +72,11 @@ function makeStore(opts: { bodyMissing?: boolean } = {}) {
       const wantsQuads = !!(prefs?.type && prefs.type["internal/quads"]);
       const wantsTurtle = !!(prefs?.type && prefs.type["text/turtle"]);
 
-      // .meta resource — RDF record's .meta carries the open action.
+      // .meta resource — RDF record's .meta carries the open action. Faithful to
+      // CSS: the INTERNAL_QUADS read also carries the ResponseMetadata named graph.
       if (path === `${RDF_RES}.meta`) {
-        const s = new Store(RDF_META_QUADS);
         if (wantsQuads) {
+          const s = new Store([...RDF_META_QUADS, ...RDF_BOOKKEEPING_QUADS]);
           return { data: guardedStreamFrom(s.getQuads(null, null, null, null)),
                    metadata: meta("internal/quads") };
         }
@@ -199,6 +209,15 @@ describe("ViewHttpHandler.canHandle", () => {
       } as any),
     ).resolves.toBeUndefined();
   });
+
+  // SP2-T7: alt (selection-era catalog) is retired. The request falls through to
+  // plain LDP — the resource itself is served, not a 400.
+  it("?_profile=alt is no longer claimed (falls through to LDP as NotImplemented)", async () => {
+    const h = build();
+    const res = makeResponse();
+    await expect(h.canHandle(input("GET", "alt", res) as any))
+      .rejects.toThrow(NotImplementedHttpError);
+  });
 });
 
 describe("ViewHttpHandler.handle — fused", () => {
@@ -214,10 +233,13 @@ describe("ViewHttpHandler.handle — fused", () => {
     expect(String(res.headers["link"])).toContain("/views/fused");
   });
 
-  it("propagates 404 when the body is missing", async () => {
+  // SP2-T7: a thrown NotFoundHttpError reaches HandlerServerConfigurator, which
+  // writes a blanket 500 — the handler must write the 404 itself (memento idiom).
+  it("?_profile=fused on a missing base resource yields 404, not 500", async () => {
     const h = build({ bodyMissing: true });
     const res = makeResponse();
-    await expect(h.handle(input("GET", "fused", res) as any)).rejects.toThrow();
+    await expect(h.handle(input("GET", "fused", res) as any)).resolves.toBeUndefined();
+    expect(res.statusCode).toBe(404);
   });
 
   // D114 T5: fused must be substrate-wide + content-type-agnostic. An RDF record
@@ -240,30 +262,65 @@ describe("ViewHttpHandler.handle — fused", () => {
     expect(res.body).not.toContain("```turtle");
     expect(String(res.headers["link"])).toContain("/views/fused");
   });
-});
 
-describe("ViewHttpHandler.handle — alt", () => {
-  it("serves the 2-view catalog as turtle naming fused and people tokens (not doc/graph)", async () => {
+  // SP2-T7: the .meta INTERNAL_QUADS read carries CSS's on-the-fly bookkeeping
+  // (posix:mtime/size in the ResponseMetadata named graph) — filtered from the union.
+  it("fused RDF output excludes the CSS ResponseMetadata named-graph quads", async () => {
     const h = build();
     const res = makeResponse();
-    await h.handle(input("GET", "alt", res) as any);
+    await h.handle({
+      request: { method: "GET", url: `/id/schemes/orcid?_profile=fused` } as any,
+      response: res.response,
+    } as any);
     expect(res.statusCode).toBe(200);
-    expect(res.headers["content-type"]).toBe("text/turtle");
-    expect(res.body).toContain("fused");
-    expect(res.body).toContain("people");
-    expect(res.body).not.toContain('"doc"');
-    expect(res.body).not.toContain('"graph"');
+    expect(res.body).toContain("hasOpenAction");
+    expect(res.body).not.toContain("posix");
+    expect(res.body).not.toContain("mtime");
+  });
+
+  // SP2-T7: fused turtle is prefixed (FOLLOWUPS: Comunica/N3 emitted full IRIs).
+  it("fused RDF output is prefixed Turtle (skos prefix declared, used)", async () => {
+    const h = build();
+    const res = makeResponse();
+    await h.handle({
+      request: { method: "GET", url: `/id/schemes/orcid?_profile=fused` } as any,
+      response: res.response,
+    } as any);
+    expect(res.body).toContain("@prefix skos:");
+    expect(res.body).toContain("skos:prefLabel");
+  });
+});
+
+describe("ViewAssembler.serializeTurtle — prefixes (SP2-T7)", () => {
+  it("emits prefixed Turtle (skos/schema/dct/prov/sub prefixes declared)", async () => {
+    const a = new ViewAssembler();
+    const ttl = await a.serializeTurtle([
+      quad(namedNode(`${RES}#this`),
+           namedNode("http://www.w3.org/2004/02/skos/core#prefLabel"), literal("X")),
+      quad(namedNode(`${RES}#this`),
+           namedNode("https://schema.org/name"), literal("X")),
+      quad(namedNode(RES), namedNode("http://purl.org/dc/terms/title"), literal("X")),
+      quad(namedNode(RES), namedNode("http://www.w3.org/ns/prov#wasDerivedFrom"), namedNode(RES)),
+      quad(namedNode(RES),
+           namedNode("https://pod.vardeman.me/vault/ontology/substrate#realization"),
+           literal("X")),
+    ]);
+    for (const p of ["@prefix skos:", "@prefix schema:", "@prefix dct:", "@prefix prov:", "@prefix sub:"]) {
+      expect(ttl).toContain(p);
+    }
+    expect(ttl).toContain("skos:prefLabel");
+    expect(ttl).toContain("sub:realization");
   });
 });
 
 describe("ViewHttpHandler.handle — errors", () => {
-  it("unknown token → 400 listing valid tokens", async () => {
+  it("unknown token → 400 listing valid tokens (alt no longer listed)", async () => {
     const h = build();
     const res = makeResponse();
     await h.handle(input("GET", "bogus", res) as any);
     expect(res.statusCode).toBe(400);
     expect(res.body).toContain("fused");
-    expect(res.body).toContain("alt");
+    expect(res.body).not.toContain("alt");
   });
 
   it("empty token (?_profile=) → 400", async () => {
@@ -282,7 +339,6 @@ describe("ViewHttpHandler.handle — errors", () => {
     await h.handle(input("GET", "doc", res) as any);
     expect(res.statusCode).toBe(400);
     expect(res.body).toContain("fused");
-    expect(res.body).toContain("alt");
   });
 
   it("?_profile=graph → 400 (removed token, hits default arm)", async () => {
@@ -291,7 +347,6 @@ describe("ViewHttpHandler.handle — errors", () => {
     await h.handle(input("GET", "graph", res) as any);
     expect(res.statusCode).toBe(400);
     expect(res.body).toContain("fused");
-    expect(res.body).toContain("alt");
   });
 
   it("PUT → 405 read-only, Allow header, body names the document view + stripped url", async () => {

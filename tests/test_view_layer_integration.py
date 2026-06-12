@@ -72,10 +72,19 @@ def test_profile_fused_contains_body_and_graph():
         assert t.startswith("---") and "```turtle" in t and "prefLabel" in t
 
 
-def test_profile_alt_lists_tokens():
+def test_profile_alt_falls_through_to_ldp():
+    # SP2-T7: alt retired — the handler no longer claims it; plain LDP serves
+    # the document itself (unknown query params are ignored on GET).
     with C() as c:
-        t = c.get(f"{R}?_profile=alt").text
-        assert '"fused"' in t
+        r = c.get(f"{R}?_profile=alt")
+        assert r.status_code == 200 and r.text == BODY
+
+
+def test_profile_fused_missing_resource_404():
+    # SP2-T7: a missing base resource is an honest 404, not the blanket 500.
+    with C() as c:
+        r = c.get(f"{POD}/vault/wiki/concepts/nonexistent-sp2t7.md?_profile=fused")
+        assert r.status_code == 404
 
 
 def test_profile_link_header_present():
@@ -156,6 +165,8 @@ def test_profile_fused_rdf_is_one_turtle_graph_with_governed_context():
             assert "hasOpenAction" in r.text          # governed context merged in
             assert "ORCID" in r.text or "orcid" in r.text  # the resource's OWN triples present
             assert "```turtle" not in r.text          # one merged graph, NOT a fenced markdown doc
+            assert "posix" not in r.text              # SP2-T7: ResponseMetadata bookkeeping filtered
+            assert "@prefix" in r.text                # SP2-T7: prefixed turtle
     finally:
         with C() as c:
             c.delete(op)

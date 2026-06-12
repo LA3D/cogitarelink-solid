@@ -7,36 +7,40 @@
  *
  * Per-resource view tokens (the contract table):
  *   fused → 200 body ⊕ fenced projection turtle (text/markdown)
- *   alt   → 200 the 2-view catalog (text/turtle, 60s cached)
  *   <other/empty> → 400 listing valid tokens
- * Removed: doc (redundant with default GET), graph (redundant with describedby .meta).
+ * Removed: doc (redundant with default GET), graph (redundant with describedby
+ * .meta) — D114; alt (selection-era catalog, unconsulted) — SP2-T7: ?_profile=alt
+ * is NOT claimed (NotImplementedHttpError in canHandle) so it falls through to
+ * plain LDP, which serves the resource itself.
  * Non-GET/HEAD → 405 (lens law: views are read-only; sub:writable false).
  */
 import {
   HttpHandler,
   type HttpHandlerInput,
   type ResourceStore,
+  NotFoundHttpError,
   NotImplementedHttpError,
   INTERNAL_QUADS,
+  SOLID_META,
   readableToString,
   readableToQuads,
 } from "@solid/community-server";
 import { getLoggerFor } from "global-logger-factory";
 import { Store } from "n3";
+import type { Quad } from "n3";
 
 import { ViewAssembler } from "./ViewAssembler";
 import { getProfileToken, stripProfileQuery } from "./uri";
 
 // Per-resource view tokens this handler serves (people is /vault/views/-only,
 // served by ViewSpaceHttpHandler — NOT a per-resource view → 400 here).
-// doc removed: redundant with default GET. graph removed: redundant with describedby .meta.
-const VALID_TOKENS = ["fused", "alt"] as const;
-type ViewToken = (typeof VALID_TOKENS)[number];
+const VALID_TOKENS = ["fused"] as const;
 
 const CACHE_TTL_MS = 60_000;
 
-// The two view descriptor resources merged for the `alt` catalog.
-const DESCRIPTOR_NAMES = ["fused", "people"] as const;
+// CSS stamps on-the-fly bookkeeping (posix:mtime/size, content-type…) into this
+// named graph on every read; it is server noise, not governed context.
+const RESPONSE_META_GRAPH = SOLID_META.ResponseMetadata;
 
 // Derive the .meta path for a resource URL (CSS auxiliary strategy: append
 // ".meta"). Mirrors OperationsIndexListener.metaPath.
@@ -51,7 +55,6 @@ export class ViewHttpHandler extends HttpHandler {
   private readonly baseUrl: string;
   private readonly viewsBase: string;
 
-  private altCache?: { body: string; at: number };
   private projectionCache?: { query: string; at: number };
 
   public constructor(
@@ -80,6 +83,11 @@ export class ViewHttpHandler extends HttpHandler {
     if (!this.fullUrl(raw).startsWith(this.baseUrl)) {
       throw new NotImplementedHttpError("view request outside baseUrl");
     }
+    // SP2-T7: alt retired. Fall through to LDP (the resource itself), not 400 —
+    // a learned/cached ?_profile=alt degrades to the document, it doesn't break.
+    if (getProfileToken(this.fullUrl(raw)) === "alt") {
+      throw new NotImplementedHttpError("alt token retired (SP2-T7) — plain LDP serves the resource");
+    }
   }
 
   public async handle(input: HttpHandlerInput): Promise<void> {
@@ -100,11 +108,18 @@ export class ViewHttpHandler extends HttpHandler {
     }
 
     const head = method === "HEAD";
-    switch (token as ViewToken) {
-      case "fused":
-        return this.serveFused(response, stripped, head);
-      case "alt":
-        return this.serveAlt(response, head);
+    // A thrown NotFoundHttpError would reach HandlerServerConfigurator, whose
+    // blanket catch writes 500 (the LdpHandler error→HTTP converter sits inside
+    // ParsingHttpHandler, which sibling waterfall handlers bypass). Write the
+    // 404 here — the MementoHttpHandler idiom.
+    try {
+      await this.serveFused(response, stripped, head);
+    } catch (error: unknown) {
+      if (NotFoundHttpError.isInstance(error)) {
+        this.writeNotFound(response, stripped);
+        return;
+      }
+      throw error;
     }
   }
 
@@ -119,7 +134,8 @@ export class ViewHttpHandler extends HttpHandler {
   private async serveFused(response: any, target: string, head: boolean): Promise<void> {
     // Read the base resource WITHOUT a restrictive type preference so RDF
     // records don't fail conversion (the markdown-only read threw
-    // NotImplementedHttpError on text/turtle). A 404 here propagates by design.
+    // NotImplementedHttpError on text/turtle). A 404 here is caught by handle()
+    // and written as an HTTP 404 (no empty-200 fabrication).
     const rep = await this.store.getRepresentation({ path: target }, {});
     const ct = rep.metadata?.contentType ?? "";
 
@@ -145,45 +161,25 @@ export class ViewHttpHandler extends HttpHandler {
     );
     const own = await readableToQuads(ownRep.data);
     const metaStore = await this.readMetaQuads(target);
-    const merged = [
+    const merged = this.withoutResponseMetadata([
       ...own.getQuads(null, null, null, null),
       ...metaStore.getQuads(null, null, null, null),
-    ];
+    ]);
     const ttl = await this.assembler.serializeTurtle(merged);
     this.write(response, 200, "text/turtle", "fused", head ? undefined : ttl);
   }
 
-  // ─── alt ──────────────────────────────────────────────────────────────────
-  private async serveAlt(response: any, head: boolean): Promise<void> {
-    const now = Date.now();
-    if (!this.altCache || now - this.altCache.at > CACHE_TTL_MS) {
-      const merged = new Store();
-      for (const name of DESCRIPTOR_NAMES) {
-        try {
-          const s = await this.readMetaQuadsAt(`${this.viewsBase}${name}`);
-          merged.addQuads(s.getQuads(null, null, null, null));
-        } catch (e: unknown) {
-          const msg = e instanceof Error ? e.message : String(e);
-          this.logger.warn(`alt: could not read descriptor ${name}: ${msg}`);
-        }
-      }
-      const body = await this.assembler.serializeTurtle(
-        merged.getQuads(null, null, null, null),
-      );
-      this.altCache = { body, at: now };
-    }
-    this.write(response, 200, "text/turtle", "alt", head ? undefined : this.altCache.body);
+  // Drop CSS's on-the-fly bookkeeping (ResponseMetadata named graph) from a
+  // fused union — server noise, not governed context.
+  private withoutResponseMetadata(quads: Quad[]): Quad[] {
+    return quads.filter((q) => q.graph.value !== RESPONSE_META_GRAPH);
   }
 
   // ─── store reads ────────────────────────────────────────────────────────────
   // .meta quads for a resource (INTERNAL_QUADS preference).
+  // Tolerates a missing .meta → empty store.
   private async readMetaQuads(target: string): Promise<Store> {
-    return this.readMetaQuadsAt(metaPath(target));
-  }
-
-  // Quads from an arbitrary resource path (INTERNAL_QUADS preference).
-  // Tolerates a missing resource → empty store (used by alt).
-  private async readMetaQuadsAt(path: string): Promise<Store> {
+    const path = metaPath(target);
     try {
       const rep = await this.store.getRepresentation(
         { path },
@@ -192,7 +188,7 @@ export class ViewHttpHandler extends HttpHandler {
       return readableToQuads(rep.data);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      this.logger.debug(`readMetaQuadsAt: ${path}: ${msg}`);
+      this.logger.debug(`readMetaQuads: ${path}: ${msg}`);
       return new Store();
     }
   }
@@ -228,6 +224,11 @@ export class ViewHttpHandler extends HttpHandler {
       Link: this.profileLink(view),
     });
     response.end(body);
+  }
+
+  private writeNotFound(response: any, stripped: string): void {
+    response.writeHead(404, { "Content-Type": "text/plain" });
+    response.end(`No resource at <${stripped}> — nothing to fuse.`);
   }
 
   private writeBadToken(response: any, token: string): void {
