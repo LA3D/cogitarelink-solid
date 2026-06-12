@@ -54,11 +54,12 @@ sibling path).
 
 ## Probe billing (2026-06-12)
 
-Every runner launches `env -u ANTHROPIC_API_KEY claude -p …` so headless probe runs ride
-the machine's Claude subscription login, NEVER a globally-exported API key (a profile-level
-`ANTHROPIC_API_KEY` silently bills the API account — discovered after the SP1/SP2 probe
-arcs). If a rig is copied to a new machine, `claude` must be logged in (`claude /status`
-to verify the auth source before burning runs).
+Every runner launches `env -u ANTHROPIC_API_KEY claude -p ...` as DEFENSE IN DEPTH: on a
+machine where the key was never explicitly rejected in Claude Code's auth prompt, a
+profile-level `ANTHROPIC_API_KEY` can bill the API account. (On this machine the key was
+already rejected in `customApiKeyResponses` â probes have always ridden the subscription;
+the env-u makes that machine-independent.) If a rig is copied to a new machine, verify the
+auth source (`claude /status`) before burning runs.
 
 ## Probe model selection (2026-06-12)
 
