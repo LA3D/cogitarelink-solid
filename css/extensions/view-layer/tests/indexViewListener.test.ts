@@ -8,7 +8,7 @@
  *
  * The stub ALSO re-emits a 'changed' event synchronously from setRepresentation
  * (mimicking MonitoringStore) so the re-entrancy guard is genuinely exercised:
- * without the `deriving` flag + index-self skip, a regeneration would loop.
+ * without the index-self path filter in memberContainer, a regeneration would loop.
  */
 import { describe, it, expect } from "vitest";
 import { DataFactory, Store } from "n3";
@@ -53,6 +53,7 @@ function makeStore(initialQuads: Record<string, any[]> = {}) {
   const calls: Array<{ method: string; id: string; contentType?: string }> = [];
   let handler: ((target: any, activity: any, metadata: any) => void) | null = null;
   let emitOnWrite = true;
+  let gate: { path: string; entered: () => void; held: Promise<void> } | null = null;
 
   for (const [path, qds] of Object.entries(initialQuads)) {
     quadsByPath.set(path, new Store(qds));
@@ -72,6 +73,21 @@ function makeStore(initialQuads: Record<string, any[]> = {}) {
     _disableEmitOnWrite() {
       emitOnWrite = false;
     },
+    // One-shot: the NEXT setRepresentation to `path` blocks until release().
+    // `entered` resolves once the write is in flight — the window where the
+    // old global `deriving` flag silently dropped real member events.
+    _gateNextWrite(path: string) {
+      let entered!: () => void;
+      let release!: () => void;
+      const enteredP = new Promise<void>((r) => (entered = r));
+      const held = new Promise<void>((r) => (release = r));
+      gate = { path, entered, held };
+      return { entered: enteredP, release };
+    },
+    _fireSync(target: { path: string }, activity: string) {
+      if (!handler) throw new Error("handler not registered");
+      handler(target, { value: activity }, {});
+    },
     on(event: string, h: Function) {
       if (event === "changed") handler = h as any;
     },
@@ -89,6 +105,12 @@ function makeStore(initialQuads: Record<string, any[]> = {}) {
     async setRepresentation(id: { path: string }, rep: any) {
       const contentType = rep.metadata?.contentType;
       calls.push({ method: "setRepresentation", id: id.path, contentType });
+      if (gate && gate.path === id.path) {
+        const g = gate;
+        gate = null;
+        g.entered();
+        await g.held;
+      }
       if (contentType === INTERNAL_QUADS) {
         quadsByPath.set(id.path, await readableToQuads(rep.data));
       } else {
@@ -211,7 +233,7 @@ describe("IndexViewListener", () => {
     await listener.handle();
 
     // The stub re-emits 'changed' synchronously from every setRepresentation —
-    // the deriving guard plus the index-self skip must hold the line.
+    // the index-self path filter must hold the line on its own.
     await store._fire({ path: member }, `${AS_NS}Update`);
     await new Promise((r) => setTimeout(r, 50));
 
@@ -319,5 +341,36 @@ describe("IndexViewListener", () => {
       (c: any) => c.method === "setRepresentation" && c.id === `${CONCEPTS}index.md`,
     );
     expect(indexWrites.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("T11: a member event arriving DURING a running regeneration is NOT dropped — a fresh regeneration runs after it (the SP2-T5 stale-index flake)", async () => {
+    const alpha = `${CONCEPTS}alpha.md`;
+    const beta = `${CONCEPTS}beta.md`;
+    const store = makeStore({
+      [CONCEPTS]: containsQuads(CONCEPTS, [alpha, beta]),
+      [`${alpha}.meta`]: memberMetaQuads(alpha, "Alpha", "First."),
+      [`${beta}.meta`]: memberMetaQuads(beta, "Beta", "Second."),
+    });
+    const listener = makeListener(store);
+    await listener.handle();
+
+    // Event A: regeneration reads [alpha, beta], then blocks mid-write on index.md.
+    const gate = store._gateNextWrite(`${CONCEPTS}index.md`);
+    store._fireSync({ path: alpha }, `${AS_NS}Update`);
+    await gate.entered;
+
+    // While A's regeneration is in flight: beta is DELETEd. A already read the
+    // pre-delete membership, so only a FRESH regeneration scheduled after A can
+    // produce a correct index.
+    store._setQuads(CONCEPTS, containsQuads(CONCEPTS, [alpha]));
+    store._fireSync({ path: beta }, `${AS_NS}Delete`);
+
+    gate.release();
+    await new Promise((r) => setTimeout(r, 80));
+
+    const body = store._getText(`${CONCEPTS}index.md`);
+    expect(body).toBeDefined();
+    expect(body).toContain("Alpha");
+    expect(body).not.toContain("Beta");
   });
 });

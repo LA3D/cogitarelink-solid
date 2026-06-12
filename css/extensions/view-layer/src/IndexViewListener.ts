@@ -27,11 +27,17 @@
  * merge preserves.
  *
  * Re-entrancy: writing index.md emits a 'changed' event (and the in-band floor
- * materializes index.md.meta during the same write), so the handler (a) skips
- * any index.md / index.md.meta path and (b) is gated by the ops-index-style
- * `deriving` flag while this listener writes. Per-container regenerations are
- * serialized through a promise chain so overlapping member writes can't
- * interleave half-written indexes (single-writer dev Pod, but cheap to hold).
+ * materializes index.md.meta during the same write), but every self-write event
+ * carries an index.md / index.md.meta / container-self path — all of which
+ * memberContainer already filters. So the PATH FILTER alone suppresses
+ * self-writes; there is deliberately NO global in-flight flag (an earlier
+ * ops-index-style `deriving` flag gated event ENTRY and silently DROPPED real
+ * member events arriving during a regeneration, leaving the index stale —
+ * the test_delete_refreshes_index flake). Member events instead ALWAYS enqueue
+ * onto the per-container promise chain: an event landing during a running
+ * regeneration schedules a fresh regeneration after it (the running one may
+ * have read pre-event state), and overlapping member writes serialize rather
+ * than interleave half-written indexes.
  *
  * DELETE delivery: MonitoringStore emits 'changed' with as:Delete for the
  * removed resource itself, so member deletes regenerate from the post-delete
@@ -74,12 +80,10 @@ export class IndexViewListener extends Initializer {
   // The view descriptor IRI for prov:wasGeneratedBy, derived from viewsBase.
   private readonly containerIndexView: string;
 
-  // Re-entrancy guard: our own index.md / index.md.meta writes re-emit
-  // 'changed' through the same MonitoringStore. Mirrors OperationsIndexListener.
-  private deriving = false;
-
   // Per-container serialization: overlapping member writes chain rather than
-  // interleave regenerations.
+  // interleave regenerations. Self-writes (index.md / index.md.meta) re-emit
+  // 'changed' through the same MonitoringStore but are excluded by
+  // memberContainer — no global in-flight flag (it would drop member events).
   private readonly pending = new Map<string, Promise<void>>();
 
   public constructor(
@@ -99,7 +103,6 @@ export class IndexViewListener extends Initializer {
 
   public async handle(): Promise<void> {
     this.store.on("changed", (target: ResourceIdentifier, _activity: unknown): void => {
-      if (this.deriving) return;
       const ctr = this.memberContainer(target.path);
       if (!ctr) return;
       const prev = this.pending.get(ctr) ?? Promise.resolve();
@@ -163,15 +166,10 @@ export class IndexViewListener extends Initializer {
     // post-event, so index.md.meta may gain additional quads after mergeProvenance
     // reads it — the merge preserves unknown triples (merge-don't-clobber), and
     // the next regeneration re-merges, so eventual consistency holds.
-    this.deriving = true;
-    try {
-      await (this.store as any).setRepresentation(
-        indexId,
-        new BasicRepresentation(markdown, indexId, "text/markdown"),
-      );
-    } finally {
-      this.deriving = false;
-    }
+    await (this.store as any).setRepresentation(
+      indexId,
+      new BasicRepresentation(markdown, indexId, "text/markdown"),
+    );
 
     await this.mergeProvenance(ctr, indexId.path);
     this.logger.debug(`index-view: regenerated ${indexId.path} (${members.length} members)`);
@@ -228,14 +226,9 @@ export class IndexViewListener extends Initializer {
         literal(new Date().toISOString(), namedNode(XSD_DATETIME))),
     ];
 
-    this.deriving = true;
-    try {
-      await (this.store as any).setRepresentation(
-        metaId,
-        new BasicRepresentation(next, metaId, INTERNAL_QUADS),
-      );
-    } finally {
-      this.deriving = false;
-    }
+    await (this.store as any).setRepresentation(
+      metaId,
+      new BasicRepresentation(next, metaId, INTERNAL_QUADS),
+    );
   }
 }
