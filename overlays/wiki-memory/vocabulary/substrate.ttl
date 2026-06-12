@@ -554,8 +554,34 @@ sub:extensionGuide
 sub:viewAuthority
     a rdf:Property ;
     rdfs:label "view authority" ;
-    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate#> ;
-    rdfs:comment "Points at the PROF profile whose sh:agentInstruction states the document-vs-graph read/write authority division for this Pod's resources (D114). An agent reading the storage description follows this to learn which view is authoritative for what and when to read ?_profile=fused." .
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:comment "Historical term (D114, retired by SP2-T8 2026-06-12): was a storage-description pointer at a PROF profile whose sh:agentInstruction stated the document-vs-graph read/write authority division. SP2-T8 folded that content into the Layer-0 sh:agentInstruction literal on the storage description itself, eliminating the indirection. The term remains declared here to avoid a breaking change for .meta data written under D114; agents encountering it in legacy .meta should consult the storage description's own sh:agentInstruction instead." ;
+    skos:scopeNote "Do not use in new descriptors. Declared for historical .meta data only." .
+
+# ─────────────────────────────────────────────────────────────
+# Admission-floor stamp predicates (substrate-internal)
+# Written by AdmissionFloorStore / shape-validator; agents must
+# not interpret, write, or rely on their absence (pre-migration
+# resources lack them until the next write or sweep).
+# ─────────────────────────────────────────────────────────────
+
+sub:bodyHash
+    a rdf:Property ;
+    rdfs:label "body hash" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:comment "SHA-256 of the resource body at last projection, stamped by the admission floor on each successful write; the projection backstop skips re-projection when the current body hash matches this value. Substrate-internal bookkeeping — not part of the content graph; agents should ignore it when answering content questions, and must not write it directly." ;
+    skos:scopeNote "Substrate-internal: written exclusively by AdmissionFloorStore / shape-validator; deliberately UNADVERTISED in affordance descriptor sub:governs lists. Absent from pre-migration resources (written on next write or sweep)." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range xsd:string .
+
+sub:projectorVersion
+    a rdf:Property ;
+    rdfs:label "projector version" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:comment "The markdown-projection version that materialized this resource's .meta, stamped by the admission floor alongside sub:bodyHash. Re-projection subtracts exactly its own prior output when this version matches the running projector; on mismatch the prior output cannot be recomputed exactly, so re-projection degrades to pair-shadow replacement and flags the resource for curation. Substrate-internal — agents never write it and should not interpret its absence as an error (pre-migration resources lack it until the next write or sweep)." ;
+    skos:scopeNote "Substrate-internal: written exclusively by AdmissionFloorStore / shape-validator; deliberately UNADVERTISED in affordance descriptor sub:governs lists. Absent from pre-migration resources (written on next write or sweep)." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range xsd:string .
 
 # ─────────────────────────────────────────────────────────────
 # Frame-model spine (D108) — make each content shape's node-frame

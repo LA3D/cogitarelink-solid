@@ -30,6 +30,7 @@ import {
 // assert its ABSENCE from sub:governs (item 4).
 export const SUBSTRATE_INTERNAL_PREDICATES: readonly string[] = [
     "https://pod.vardeman.me/vault/ontology/substrate#bodyHash",
+    "https://pod.vardeman.me/vault/ontology/substrate#projectorVersion",
 ];
 
 function sortedUnique(xs: string[]): string[] {
