@@ -1,0 +1,27 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+This Pod is a memory substrate hosting more than one kind of data. Answer BOTH
+questions below, using only what the Pod itself contains:
+
+  1. Within this Pod's memory, what broader topic is the concept "Photosynthesis"
+     filed under — and is that filing current, or contested/superseded?
+
+  2. The Pod also stores contacts: which person recorded in this Pod has the ORCID
+     https://orcid.org/0000-0001-0000-0005 ? Give their formatted name.
+
+Constraints:
+- Use only what you can learn from the Pod over HTTP. Do not read any other files on
+  this machine, do not search the web, and do not use any prior knowledge of this
+  particular Pod or project — for question 2 the ORCID-to-person mapping exists only
+  inside this Pod, so you must look it up there.
+- Keep a trajectory log as you work: for every request or command, record what you
+  ran, the key response details, and the reasoning that drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full request-by-request log.
+2. ANSWERS — both answers, each stating which Pod resource(s) it came from. For
+   question 1, state explicitly whether the filing is current/authoritative or
+   contested/superseded and how you checked. For question 2, state how you located
+   the person (a declared query mechanism, or reading records one by one?).
+3. PROVENANCE — separate what you learned from the Pod itself from what you knew
+   from training.

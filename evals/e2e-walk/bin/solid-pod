@@ -1,0 +1,5 @@
+#!/bin/bash
+# Tier-3 shim: expose the solid-agent-skills CLI to a cold agent as the bare command
+# `solid-pod`. TLS self-wires in the CLI (mkcert auto-detect); NODE_EXTRA_CA_CERTS is a
+# belt-and-suspenders fallback set by run_e2e.sh. SOLID_AGENT_SKILLS is inherited from run_e2e.sh.
+exec node "${SOLID_AGENT_SKILLS:?SOLID_AGENT_SKILLS unset}/dist/cli.js" "$@"
