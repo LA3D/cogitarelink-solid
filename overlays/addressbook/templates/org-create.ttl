@@ -20,7 +20,10 @@
                                      vcard:hasMember </vault/contacts/Organization/<uuid>/index.ttl#this> . }
         4. On 422: read the SHACL ValidationReport, fix cited fields, retry PUT.
 
-      Minimum to satisfy SHACL: vcard:fn + vcard:inAddressBook + one anchor.
+      Minimum to satisfy SHACL: vcard:fn + vcard:inAddressBook + one anchor +
+      mem:rationale. Every write carries mem:rationale: the task that triggered
+      it, what was concluded, and why — your write-context is unrecoverable
+      after this session.
       ROR preferred for institutional orgs (e.g., Notre Dame: https://ror.org/00mkhxb43,
       CI-Compass: https://ror.org/001zwgm84). Fall back to vcard:hasURL for
       commercial or informal organizations without ROR identifiers.
@@ -32,6 +35,7 @@
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <>  a vcard:VCard, foaf:OrganizationProfileDocument ;
     foaf:primaryTopic <#this> ;
@@ -42,6 +46,9 @@
     a vcard:Organization, foaf:Organization ;
     vcard:fn               \"<<ORGANIZATION_NAME>>\" ;
     vcard:inAddressBook    </vault/contacts/index.ttl#this> ;
+
+    # REQUIRED — the task that triggered this write, what you concluded, and why
+    mem:rationale          \"<<RATIONALE>>\" ;
 
     # AT LEAST ONE anchor — ROR preferred for institutional orgs:
     owl:sameAs             <https://ror.org/<<ROR>>> ;

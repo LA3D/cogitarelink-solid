@@ -115,8 +115,46 @@ def test_contact_no_rationale_fails():
 
 
 # ----- OrganizationCardShape -----
+# mem:rationale on positive fixtures: SP2 §6 write contract — the rationale-less
+# case has its own fixture (ORG_NO_RATIONALE) so each fixture tests one violation.
 
 ORG_VALID_WITH_ROR = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
+
+<#this> a vcard:Organization, foaf:Organization ;
+    vcard:fn "University of Notre Dame" ;
+    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
+    owl:sameAs <https://ror.org/00mkhxb43> ;
+    mem:rationale "Fixture: shape conformance test (test_addressbook_shapes)." .
+"""
+
+ORG_MISSING_FN = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
+
+<#this> a vcard:Organization, foaf:Organization ;
+    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
+    owl:sameAs <https://ror.org/00mkhxb43> ;
+    mem:rationale "Fixture: shape conformance test (test_addressbook_shapes)." .
+"""
+
+ORG_NO_ANCHOR = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
+
+<#this> a vcard:Organization, foaf:Organization ;
+    vcard:fn "Mystery Lab" ;
+    vcard:inAddressBook </contacts/index.ttl#this> ;
+    mem:rationale "Fixture: shape conformance test (test_addressbook_shapes)." .
+"""
+
+ORG_NO_RATIONALE = """
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
@@ -125,25 +163,6 @@ ORG_VALID_WITH_ROR = """
     vcard:fn "University of Notre Dame" ;
     vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
     owl:sameAs <https://ror.org/00mkhxb43> .
-"""
-
-ORG_MISSING_FN = """
-@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
-@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
-@prefix owl:   <http://www.w3.org/2002/07/owl#> .
-
-<#this> a vcard:Organization, foaf:Organization ;
-    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
-    owl:sameAs <https://ror.org/00mkhxb43> .
-"""
-
-ORG_NO_ANCHOR = """
-@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
-@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
-
-<#this> a vcard:Organization, foaf:Organization ;
-    vcard:fn "Mystery Lab" ;
-    vcard:inAddressBook </contacts/index.ttl#this> .
 """
 
 
@@ -162,15 +181,24 @@ def test_org_no_anchor_fails():
     assert not conforms
 
 
+def test_org_no_rationale_fails():
+    conforms, report = _validate(ORG_NO_RATIONALE, "organization-card.shacl.ttl")
+    assert not conforms
+    assert "rationale" in report and "task" in report
+
+
 # ----- GroupShape -----
+# mem:rationale on positive fixtures: SP2 §6 write contract.
 
 GROUP_VALID = """
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <#this> a vcard:Group ;
     vcard:fn "Notre Dame Collaborators" ;
     vcard:hasMember </contacts/Person/7f3a1b8c-9d2e-4c5a-8f1b-2e6d4a8c0f9e/index.ttl#this> ,
-                    </contacts/Person/c4e5d6f7-1234-5678-9abc-def012345678/index.ttl#this> .
+                    </contacts/Person/c4e5d6f7-1234-5678-9abc-def012345678/index.ttl#this> ;
+    mem:rationale "Fixture: shape conformance test (test_addressbook_shapes)." .
 """
 
 GROUP_EMPTY = """
@@ -192,16 +220,19 @@ def test_group_empty_fails():
 
 
 # ----- MembershipShape -----
+# mem:rationale on positive fixtures: SP2 §6 write contract.
 
 MEMBERSHIP_VALID = """
 @prefix org:  <http://www.w3.org/ns/org#> .
 @prefix time: <http://www.w3.org/2006/time#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix mem:  <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <#this> a org:Membership ;
     org:member </contacts/Person/7f3a1b8c.../index.ttl#this> ;
     org:organization </contacts/Organization/a8b9c1d2.../index.ttl#this> ;
-    org:memberDuring [ time:hasBeginning [ time:inXSDDate "2024-01-01"^^xsd:date ] ] .
+    org:memberDuring [ time:hasBeginning [ time:inXSDDate "2024-01-01"^^xsd:date ] ] ;
+    mem:rationale "Fixture: shape conformance test (test_addressbook_shapes)." .
 """
 
 MEMBERSHIP_MISSING_ORG = """

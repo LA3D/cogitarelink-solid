@@ -16,6 +16,15 @@ BARE_CARD = """@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
    vcard:hasEmail <mailto:noctx@example.org> .
 """
 
+BARE_ORG = """@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+<> a vcard:Organization, foaf:Organization ;
+   vcard:fn "Test Org" ;
+   vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
+   owl:sameAs <https://ror.org/00mkhxb43> .
+"""
+
 
 def test_rationale_less_contact_422_with_laden_message():
     r = httpx.post(f"{POD}/vault/contacts/Person/", content=BARE_CARD,
@@ -33,6 +42,16 @@ def test_contact_with_rationale_201():
     assert r.status_code == 201, f"got {r.status_code}: {r.text[:300]}"
     created = r.headers.get("location", f"{POD}/vault/contacts/Person/sp2-wc-ok")
     httpx.delete(created, verify=_CA)
+
+
+def test_rationale_less_org_422_with_laden_message():
+    r = httpx.post(f"{POD}/vault/contacts/Organization/", content=BARE_ORG,
+                   headers={"Content-Type": "text/turtle", "Slug": "sp2-org-probe"}, verify=_CA)
+    assert r.status_code == 422, f"got {r.status_code}: {r.text[:200]}"
+    assert "rationale" in r.text and "task" in r.text  # laden message rides the report
+    # confirm no residue
+    gone = httpx.get(f"{POD}/vault/contacts/Organization/sp2-org-probe", verify=_CA)
+    assert gone.status_code == 404
 
 
 def _sweep(ctr_path):
