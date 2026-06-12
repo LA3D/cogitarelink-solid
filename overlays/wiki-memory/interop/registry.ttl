@@ -39,3 +39,19 @@ reg:working a interop:DataRegistration ;
     interop:registeredShapeTree wikitree:WorkingNoteContainerTree ;
     interop:registeredWith app:wiki-memory ;
     interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+
+@prefix idapp: <https://pod.vardeman.me/vault/meta/interop/id-schemes-application#> .
+@prefix abapp: <https://pod.vardeman.me/vault/meta/interop/addressbook-application#> .
+
+# SP2: the registry covers every deployed app (FOLLOWUPS interop gap + D112 item 6).
+reg:data interop:hasDataRegistration reg:id-schemes , reg:contacts .
+
+reg:id-schemes a interop:DataRegistration ;
+    interop:registeredWith idapp:id-schemes ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+    # No registeredShapeTree yet — id-schemes has no shapetree (D112 T6 note kept).
+
+# abapp:addressbook is created by SP2 Task 2 (forward pointer; 404 until then).
+reg:contacts a interop:DataRegistration ;
+    interop:registeredWith abapp:addressbook ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .

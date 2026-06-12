@@ -48,17 +48,24 @@ def test_application_declares_8_access_needs_each_with_a_resource_tree_and_modes
 OWNER = rdflib.URIRef("https://pod.vardeman.me/vault/profile/card#me")
 REG = REPO / "overlays/wiki-memory/interop/registry.ttl"
 
-def test_registry_chain_owner_to_7_dataregistrations_each_a_container_tree():
+def test_registry_chain_covers_all_apps_wiki_registrations_each_a_container_tree():
     g = rdflib.Graph(); g.parse(REG, format="turtle")
     rset = g.value(OWNER, INTEROP.hasRegistrySet)
     assert rset is not None, "owner WebID has no hasRegistrySet"
     dreg = g.value(rset, INTEROP.hasDataRegistry)
     assert dreg is not None, "RegistrySet has no DataRegistry"
     regs = list(g.objects(dreg, INTEROP.hasDataRegistration))
-    assert len(regs) == 7, f"expected 7 DataRegistrations, got {len(regs)}"
-    for r in regs:
+    assert len(regs) == 9, f"expected 9 DataRegistrations, got {len(regs)}"
+    REG_NS = rdflib.Namespace("https://pod.vardeman.me/vault/meta/interop/registry#")
+    no_tree = {REG_NS["id-schemes"], REG_NS["contacts"]}
+    with_tree = [r for r in regs if r not in no_tree]
+    assert len(with_tree) == 7, f"expected 7 wiki-memory registrations with shapetrees, got {len(with_tree)}"
+    for r in with_tree:
         t = g.value(r, INTEROP.registeredShapeTree)
         assert t is not None and str(t).endswith("ContainerTree"), f"{r}: registeredShapeTree must be a ContainerTree, got {t}"
+    for r in no_tree:
+        assert r in regs, f"expected {r} in registry"
+        assert g.value(r, INTEROP.registeredShapeTree) is None, f"{r}: should have NO registeredShapeTree (deliberate)"
 
 
 # --- Task 4: cross-artifact agreement (anti-drift guard) ---
