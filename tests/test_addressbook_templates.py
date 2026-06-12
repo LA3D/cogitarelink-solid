@@ -36,6 +36,8 @@ PLACEHOLDER_VALUES = {
     "<<HOST>>":                "example.org",
     "<<PREDICATE>>":           "vcard:hasEmail",
     "<<OBJECT>>":              "<mailto:new@example.org>",
+    # SP2 §6 write contract — contact-create template carries mem:rationale
+    "<<RATIONALE>>":           "Test write: template substitution check.",
 }
 
 

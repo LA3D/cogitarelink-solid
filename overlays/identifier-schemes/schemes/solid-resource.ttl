@@ -5,10 +5,12 @@
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix foaf:     <http://xmlns.com/foaf/0.1/> .
 @prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <> a foaf:Document ;
    dct:title "Solid resource identifier-scheme record" ;
    dct:created "2026-06-05"^^xsd:date ;
+   mem:rationale "Seeded by the substrate bootstrap (pod_setup, SP2 2026-06): reference data deployed by the Pod owner, not an agent-session write." ;
    foaf:primaryTopic <https://pod.vardeman.me/id/schemes/#solid-resource> .
 
 <https://pod.vardeman.me/id/schemes/#solid-resource>

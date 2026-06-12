@@ -16,45 +16,66 @@ def load_shapes(filename: str) -> Graph:
 
 
 # ----- ContactCardShape -----
+# mem:rationale on every fixture: SP2 §6 write contract — the rationale-less case
+# has its own fixture (CONTACT_NO_RATIONALE) so each fixture tests one violation.
 
 CONTACT_VALID_WITH_ORCID = """
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <#this> a vcard:Individual, foaf:Person ;
     vcard:fn "Jarek Nabrzyski" ;
     vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
-    owl:sameAs <https://orcid.org/0000-0001-7882-1326> .
+    owl:sameAs <https://orcid.org/0000-0001-7882-1326> ;
+    mem:rationale "Fixture: shape conformance test (test_addressbook_shapes)." .
 """
 
 CONTACT_VALID_WITH_EMAIL = """
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <#this> a vcard:Individual, foaf:Person ;
     vcard:fn "Wang Wei" ;
     vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
-    vcard:hasEmail <mailto:wangwei@example.org> .
+    vcard:hasEmail <mailto:wangwei@example.org> ;
+    mem:rationale "Fixture: shape conformance test (test_addressbook_shapes)." .
 """
 
 CONTACT_MISSING_FN = """
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <#this> a vcard:Individual, foaf:Person ;
     vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
-    owl:sameAs <https://orcid.org/0000-0000-0000-0000> .
+    owl:sameAs <https://orcid.org/0000-0000-0000-0000> ;
+    mem:rationale "Fixture: shape conformance test (test_addressbook_shapes)." .
 """
 
 CONTACT_NO_ANCHOR = """
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <#this> a vcard:Individual, foaf:Person ;
     vcard:fn "Just A Name" ;
-    vcard:inAddressBook </contacts/index.ttl#this> .
+    vcard:inAddressBook </contacts/index.ttl#this> ;
+    mem:rationale "Fixture: shape conformance test (test_addressbook_shapes)." .
+"""
+
+CONTACT_NO_RATIONALE = """
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+
+<#this> a vcard:Individual, foaf:Person ;
+    vcard:fn "No Context" ;
+    vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
+    owl:sameAs <https://orcid.org/0000-0000-0000-0001> .
 """
 
 
@@ -85,6 +106,12 @@ def test_contact_no_anchor_fails():
     conforms, report = _validate(CONTACT_NO_ANCHOR, "contact-card.shacl.ttl")
     assert not conforms
     assert "anchor" in report.lower() or "owl:sameAs" in report or "vcard:hasEmail" in report
+
+
+def test_contact_no_rationale_fails():
+    conforms, report = _validate(CONTACT_NO_RATIONALE, "contact-card.shacl.ttl")
+    assert not conforms
+    assert "rationale" in report and "task" in report
 
 
 # ----- OrganizationCardShape -----
