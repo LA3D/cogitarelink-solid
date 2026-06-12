@@ -10,6 +10,7 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix td:     <https://www.w3.org/2019/wot/td#> .
+@prefix schema: <https://schema.org/> .
 
 <https://pod.vardeman.me/vault/ontology/substrate>
     a owl:Ontology ;
@@ -600,6 +601,25 @@ sub:View
     rdfs:comment "A negotiable representation of pod resources: a PROF profile whose role:mapping artifact is the declared projection query. Selected via ?_profile={token} (conneg-by-profile QSA)." ;
     skos:scopeNote "Views are PROF profiles — each view descriptor declares prof:hasResource artifacts (the projection query, the shape governing the view's output). sub:realization declares whether the view is assembled per-request (sub:Virtual) or stored and rederivable (sub:Materialized). sub:writable carries the lens law: a view is writable iff its get admits a well-behaved put (lossy/derived views are read-only, writes return 405). sub:servesAt is used only for cross-cutting views that mint a new URL space; per-resource views selected by ?_profile= omit it." ;
     rdfs:seeAlso <https://www.w3.org/TR/dx-prof/> .
+
+sub:ContainerIndex
+    a rdfs:Class ;
+    rdfs:subClassOf schema:CreativeWork ;
+    rdfs:label "Container index" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/substrate> ;
+    rdfs:comment "A derived definition-line index of a container's members, materialized by the substrate when members change. One line per member with its label and first definition sentence. Its .meta carries derivation provenance (prov:wasDerivedFrom the container, prov:wasGeneratedBy the declared query, prov:generatedAtTime) — audit that provenance before trusting the listing; the index is a VIEW, not an authority." ;
+    skos:scopeNote "Used as the frontmatter-declared rdf:type of each registered container's index.md child (SP2; RQ-Discovery-1 fork a). The substrate's IndexViewListener regenerates the document and its provenance triples on member writes; agents MUST NOT edit index.md directly — the next member write overwrites it. The materializing query of record is the role:mapping artifact on the container-index view descriptor." ;
+    skos:example """
+        # Frontmatter of /vault/wiki/concepts/index.md:
+        ---
+        type: sub:ContainerIndex
+        ---
+        # In /vault/wiki/concepts/index.md.meta:
+        <index.md> prov:wasDerivedFrom <./> ;
+                   prov:wasGeneratedBy <https://pod.vardeman.me/vault/meta/views/container-index> ;
+                   prov:generatedAtTime "2026-06-12T00:00:00Z"^^xsd:dateTime .
+    """ ;
+    rdfs:seeAlso <https://pod.vardeman.me/vault/meta/views/container-index> .
 
 sub:RealizationMode
     a rdfs:Class ;

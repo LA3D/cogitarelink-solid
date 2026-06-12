@@ -12,6 +12,16 @@ SELECT ?thing ?label ?def WHERE {
   OPTIONAL { { ?thing skos:definition ?def } UNION { ?thing schema:description ?def } }
 }`;
 
+/**
+ * Frontmatter `type:` token for the generated index document (SP2 amendment).
+ * A CURIE the projection's CURIE_PREFIXES map already resolves
+ * (sub: → https://pod.vardeman.me/vault/ontology/substrate#), so
+ * `<#this> a sub:ContainerIndex` materializes through the EXISTING frontmatter
+ * mechanism — frontmatter type wins over the container's D98 class fallback,
+ * and no deployed shape targets sub:ContainerIndex, so the floor passes.
+ */
+export const INDEX_FRONTMATTER_TYPE = "sub:ContainerIndex";
+
 const PREF = "http://www.w3.org/2004/02/skos/core#prefLabel";
 const NAME = "https://schema.org/name";
 const DEF = "http://www.w3.org/2004/02/skos/core#definition";
@@ -41,5 +51,5 @@ export function buildIndexMarkdown(containerUrl: string, quads: Quad[]): string 
     lines.push(`- [${label}](${doc})${firstSentence}`);
   }
   lines.sort((a, b) => a.localeCompare(b, "en"));
-  return `# Index\n\nOne line per member; derived — see this document's .meta for derivation provenance.\n\n${lines.join("\n")}\n`;
+  return `---\ntype: ${INDEX_FRONTMATTER_TYPE}\n---\n# Index\n\nOne line per member; derived — see this document's .meta for derivation provenance.\n\n${lines.join("\n")}\n`;
 }

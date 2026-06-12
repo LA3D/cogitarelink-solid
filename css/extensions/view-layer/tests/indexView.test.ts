@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { describe, it, expect } from "vitest";
 import { DataFactory } from "n3";
-import { buildIndexMarkdown, INDEX_QUERY } from "../src/indexView";
+import { buildIndexMarkdown, INDEX_QUERY, INDEX_FRONTMATTER_TYPE } from "../src/indexView";
 
 const { namedNode, literal, quad } = DataFactory;
 const C = "https://pod.example/vault/wiki/concepts/";
@@ -66,6 +66,15 @@ describe("buildIndexMarkdown", () => {
     for (const term of ["prefLabel", "definition", "schema.org/", "name", "description", "OPTIONAL"]) {
       expect(INDEX_QUERY).toContain(term);
     }
+  });
+
+  it("emits frontmatter typing the index as sub:ContainerIndex (SP2 amendment: honestly-typed substrate document)", () => {
+    const md = buildIndexMarkdown(C, conceptQuads("a", "A"));
+    // Frontmatter MUST be first so splitFrontmatter recognises it; the sub: CURIE
+    // resolves through the projection's existing CURIE_PREFIXES map — frontmatter
+    // type WINS over the container's D98 class fallback, so no shape targets it.
+    expect(md.startsWith(`---\ntype: ${INDEX_FRONTMATTER_TYPE}\n---\n`)).toBe(true);
+    expect(INDEX_FRONTMATTER_TYPE).toBe("sub:ContainerIndex");
   });
 
   it("the header marks the document as derived with provenance pointer", () => {

@@ -20,6 +20,22 @@
       "viewsBase": "https://pod.vardeman.me/vault/meta/views/"
     },
     {
+      "comment": "IndexViewListener (SP2 Task 5; RQ-Discovery-1 fork a: on-write static index.md child — the probe-validated definition-line index, see spec §7 of 2026-06-10-agentic-progressive-disclosure-contract-design). Subscribes to MonitoringStore 'changed' events; on a direct-member write in a registered wiki container, regenerates that container's index.md (frontmatter-typed sub:ContainerIndex — honestly-typed derived view) and merges derivation provenance (prov:wasDerivedFrom container / prov:wasGeneratedBy the container-index view descriptor / prov:generatedAtTime) into index.md.meta. containers = the six DURABLE wiki containers; /working/ is excluded by design (D73 two-stage commit: drafts are not navigable members-of-record until crystallized). K1 note: this listener is wired into the WorkerParallelInitializer Override in mem-trigger.json (the single K1-compliant consolidation point for all listener handlers).",
+      "@id": "urn:cogitarelink:IndexViewListener",
+      "@type": "IndexViewListener",
+      "store": { "@id": "urn:solid-server:default:ResourceStore" },
+      "baseUrl": { "@id": "urn:solid-server:default:variable:baseUrl" },
+      "viewsBase": "https://pod.vardeman.me/vault/meta/views/",
+      "containers": [
+        "/vault/wiki/concepts/",
+        "/vault/wiki/people/",
+        "/vault/wiki/places/",
+        "/vault/wiki/events/",
+        "/vault/wiki/organizations/",
+        "/vault/wiki/procedures/"
+      ]
+    },
+    {
       "comment": "ViewSpaceHttpHandler — the /vault/views/ cross-cutting virtual URL space (view-layer spec §6; Person demonstrator at /vault/views/people/). Read-only; assembles one entity from its multiple writable homes via a descriptor CONSTRUCT, sources enumerated through the Type Index (no source hardcode, D107). Inserted BEFORE LdpHandler alongside ViewHttpHandler. Same Monitoring-level store ref as ViewHttpHandler (bypasses the trailer). viewSpaceRoot = the served container path; typeIndexUrl = the Type Index used to enumerate person-class source containers.",
       "@id": "urn:cogitarelink:ViewSpaceHttpHandler",
       "@type": "ViewSpaceHttpHandler",
