@@ -14,7 +14,9 @@ app:ab-needs a interop:AccessNeedGroup ;
     interop:accessScenario interop:PersonalAccess ;
     interop:hasAccessNeed app:need-contacts .
 
-# No interop:registeredShapeTree — the addressbook (vCard) has no shapetree yet (same stance as id-schemes).
+# Shape tree: abtree:ContactContainerTree at /vault/meta/shapetrees/addressbook.tree
+# (SP2-T3b), declared on the DataRegistration reg:contacts in the registry —
+# the audit checks registry-level registeredShapeTree, not AccessNeed-level.
 app:need-contacts a interop:AccessNeed ;
     interop:accessMode acl:Read , acl:Write ;
     interop:accessNecessity interop:AccessRequired .

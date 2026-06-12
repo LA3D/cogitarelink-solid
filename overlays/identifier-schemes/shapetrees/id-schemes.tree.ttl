@@ -1,0 +1,17 @@
+@prefix st:     <http://www.w3.org/ns/shapetrees#> .
+@prefix idtree: <https://pod.vardeman.me/vault/meta/shapetrees/id-schemes.tree#> .
+@prefix wiki:   <https://pod.vardeman.me/vault/ontology/wiki#> .
+
+# Minimal Shape-Trees doc for the identifier-schemes app (SP2-T3b; SAI §6.1 —
+# the DataRegistration reg:id-schemes declares this container tree). Modeled on
+# wiki-memory.tree.ttl. st:shape = wiki:SchemeRecordShape, the D111 admission
+# floor on /id/schemes/ (canonical copy at /id/scheme-record.shacl.ttl; the same
+# doc is also installed into the /vault/meta/shapes/ catalog so the IRI resolves
+# there — the NodeShape IRI is the absolute wiki: vocabulary IRI, so dual
+# hosting does not fork it).
+
+idtree:SchemeRecordResourceTree a st:ShapeTree ; st:expectsType st:Resource ;
+    st:shape wiki:SchemeRecordShape .
+
+idtree:SchemeRecordContainerTree a st:ShapeTree ; st:expectsType st:Container ;
+    st:contains idtree:SchemeRecordResourceTree .

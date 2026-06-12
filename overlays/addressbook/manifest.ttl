@@ -87,6 +87,10 @@
         [ overlay:contentPath "interop/application.ttl" ;
           overlay:hostedAt "/vault/meta/interop/addressbook-application" ;
           overlay:contentType "text/turtle" ] ,
+        # SP2-T3b: Shape-Trees doc (SAI §6.1) — extension-less, mirrors wiki-memory.tree.
+        [ overlay:contentPath "shapetrees/addressbook.tree.ttl" ;
+          overlay:hostedAt "/vault/meta/shapetrees/addressbook.tree" ;
+          overlay:contentType "text/turtle" ] ,
         [ overlay:contentPath "containers/index.ttl" ;
           overlay:hostedAt "/vault/contacts/index.ttl" ] ,
         [ overlay:contentPath "containers/people.ttl" ;

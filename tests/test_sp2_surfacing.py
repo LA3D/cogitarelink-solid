@@ -67,7 +67,7 @@ def test_shape_catalog_members_all_parse():
     for m in members:
         r = httpx.get(str(m), headers={"Accept": "text/turtle"}, verify=_CA)
         assert r.status_code == 200, f"{m}: {r.status_code}"
-        # N3.js (solid-pod shapes) hard-fails on bracket-placeholder IRIs;
-        # check for the marker text so Python tests catch the same problem.
-        assert "[YOUR VOCABULARY IRI]" not in r.text, \
-            f"{m} contains scaffold placeholder '[YOUR VOCABULARY IRI]' — template must not be in the shape catalog"
+        # N3.js (solid-pod shapes) hard-fails on any unparseable member (e.g. the
+        # scaffold template's bracket-placeholder IRIs); a real parse catches the
+        # same class of problem, not just one known marker string.
+        Graph().parse(data=r.text, format="turtle", publicID=str(m))

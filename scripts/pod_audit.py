@@ -479,13 +479,14 @@ async def audit_interop_registration(client, pod_base, findings):
     """Walk the interop registration graph (Task 7 / D109 interop foundation).
 
     Checks:
-    1. WebID + registry doc: RegistrySet → DataRegistry → 7 DataRegistrations.
-    2. Each registeredShapeTree names a st:ShapeTree in the deployed tree doc.
-    3. Each st:shape in the tree doc resolves to a sh:NodeShape in the shape catalog.
+    1. WebID + registry doc: RegistrySet → DataRegistry → DataRegistrations.
+    2. Each registeredShapeTree names a st:ShapeTree in a deployed tree doc
+       (one doc per app under meta/shapetrees/ since SP2-T3b).
+    3. Each st:shape in the tree docs resolves to a sh:NodeShape in the shape catalog.
     """
     webid_url    = pod_base + "profile/card"
     registry_url = pod_base + "meta/interop/registry"
-    trees_url    = pod_base + "meta/shapetrees/wiki-memory.tree"
+    trees_ctr    = pod_base + "meta/shapetrees/"
     shapes_url   = pod_base + "meta/shapes/"
     webid_iri    = pod_base + "profile/card#me"
 
@@ -545,14 +546,35 @@ async def audit_interop_registration(client, pod_base, findings):
                 "DataRegistration has no interop:registeredShapeTree.",
                 "Add interop:registeredShapeTree pointing at a ShapeTree in the tree doc."))
 
-    # 2. Fetch the ShapeTree doc; verify every referenced tree exists there.
-    trees_r = await client.get(trees_url)
-    if trees_r.status_code != 200:
-        findings.append(finding("ERROR", trees_url, "interop:shapetrees-unreachable",
-            f"ShapeTree document not reachable (HTTP {trees_r.status_code}).",
-            "Seed the wiki-memory.tree file into the Pod."))
+    # 2. Fetch every deployed ShapeTree doc; verify every referenced tree exists.
+    #    Doc set = the shapetrees container members (one .tree doc per app since
+    #    SP2-T3b) ∪ the doc each registered tree IRI claims to live in — so a
+    #    registration pointing at an undeployed doc still surfaces as ERROR, and
+    #    an unregistered container tree in ANY deployed doc fails coverage.
+    doc_urls = {t.split("#")[0] for t in reg_trees.values()}
+    ctr_r = await client.get(trees_ctr, headers={"Accept": "text/turtle"})
+    if ctr_r.status_code == 200:
+        ctr_g = Graph().parse(data=ctr_r.text, format="turtle", publicID=trees_ctr)
+        doc_urls |= {str(o) for o in ctr_g.objects(URIRef(trees_ctr), URIRef(LDP + "contains"))
+                     if str(o).endswith(".tree")}
+    else:
+        findings.append(finding("ERROR", trees_ctr, "interop:shapetrees-unreachable",
+            f"ShapeTree container not reachable (HTTP {ctr_r.status_code}).",
+            "Seed the per-app .tree docs under meta/shapetrees/."))
+    tree_docs = sorted(doc_urls)
+    fetched_trees = await asyncio.gather(*(client.get(u) for u in tree_docs),
+                                         return_exceptions=True)
+    tree_g, ok_docs = Graph(), 0
+    for u, resp in zip(tree_docs, fetched_trees):
+        if isinstance(resp, Exception) or resp.status_code != 200:
+            findings.append(finding("ERROR", u, "interop:shapetrees-unreachable",
+                "ShapeTree document not reachable.",
+                "Seed the app's .tree file into the Pod."))
+            continue
+        tree_g.parse(data=resp.text, format="turtle", publicID=u)
+        ok_docs += 1
+    if not ok_docs:
         return
-    tree_g = Graph().parse(data=trees_r.text, format="turtle", publicID=trees_url)
     defined_trees = {str(s) for s in tree_g.subjects(RDF.type, URIRef(ST + "ShapeTree"))}
     # Container trees = ShapeTrees that expect an st:Container (one per governed container).
     # The registrations must register exactly these — derive the expected set from the data,
@@ -563,8 +585,9 @@ async def audit_interop_registration(client, pod_base, findings):
     for reg_iri, tree_iri in reg_trees.items():
         if tree_iri not in defined_trees:
             findings.append(finding("ERROR", reg_iri, "interop:dangling-shape-tree",
-                f"registeredShapeTree {tree_iri} is not defined (a st:ShapeTree) in {trees_url}.",
-                "Define the missing ShapeTree in wiki-memory.tree or correct the registration."))
+                f"registeredShapeTree {tree_iri} is not defined (a st:ShapeTree) in "
+                f"{tree_iri.split('#')[0]}.",
+                "Define the missing ShapeTree in the app's .tree doc or correct the registration."))
 
     # Set-equality: every container tree must have a registration, and no registration
     # may point at a non-container tree. This is the magic-7 replacement.
@@ -580,8 +603,8 @@ async def audit_interop_registration(client, pod_base, findings):
     # 3. Collect all st:shape IRIs from the tree doc; resolve each against the shape catalog.
     tree_shapes = {str(o) for o in tree_g.objects(None, URIRef(ST + "shape"))}
     if not tree_shapes:
-        findings.append(finding("WARN", trees_url, "interop:no-tree-shapes",
-            "No st:shape predicates found in the ShapeTree document.",
+        findings.append(finding("WARN", trees_ctr, "interop:no-tree-shapes",
+            "No st:shape predicates found in any ShapeTree document.",
             "Ensure resource trees declare st:shape pointing at SHACL NodeShapes."))
         return
 
@@ -614,8 +637,8 @@ async def audit_interop_registration(client, pod_base, findings):
     if not dangling_shapes and coverage_ok and trees_all_defined:
         findings.append(finding("INFO", registry_url, "interop:registration-ok",
             f"Interop registration graph: {len(registrations)} DataRegistrations covering "
-            f"{len(container_trees)} container trees, all shape trees defined, all st:shape "
-            f"IRIs resolve in the catalog.", ""))
+            f"{len(container_trees)} container trees across {ok_docs} tree docs, all shape "
+            f"trees defined, all st:shape IRIs resolve in the catalog.", ""))
 
 
 async def walk_affordances(client, cat_url, canon_base, pod_base, shapes_g, role_members, findings):

@@ -16,7 +16,9 @@ app:id-needs a interop:AccessNeedGroup ;
     interop:accessScenario interop:PersonalAccess ;
     interop:hasAccessNeed app:need-scheme-records .
 
-# No interop:registeredShapeTree — identifier-schemes has no shapetree yet.
+# Shape tree: idtree:SchemeRecordContainerTree at /vault/meta/shapetrees/id-schemes.tree
+# (SP2-T3b), declared on the DataRegistration reg:id-schemes in the registry —
+# the audit checks registry-level registeredShapeTree, not AccessNeed-level.
 # Keep the need minimal (see D112 T6 design note).
 app:need-scheme-records a interop:AccessNeed ;
     interop:accessMode acl:Read , acl:Write ;

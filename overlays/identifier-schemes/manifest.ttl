@@ -28,12 +28,22 @@
     overlay:installsShape
         [ overlay:document "shapes/scheme-record.shacl.ttl" ;
           overlay:hostedAt "/id/scheme-record.shacl.ttl" ] ,
+        # SP2-T3b: SAME doc also catalog-resident — the audit resolves the tree's
+        # st:shape (wiki:SchemeRecordShape, an absolute vocab IRI; dual hosting
+        # doesn't fork it) against /vault/meta/shapes/. /id/ copy stays canonical
+        # (ldp:constrainedBy on /id/schemes/ points there).
+        [ overlay:document "shapes/scheme-record.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/scheme-record.shacl.ttl" ] ,
         [ overlay:document "shapes/curation-proposal.shacl.ttl" ;
           overlay:hostedAt "/id/curation-proposal.shacl.ttl" ] ;
 
     overlay:installsBootstrapContent
         [ overlay:contentPath "interop/application.ttl" ;
           overlay:hostedAt "/vault/meta/interop/id-schemes-application" ;
+          overlay:contentType "text/turtle" ] ,
+        # SP2-T3b: Shape-Trees doc (SAI §6.1) — extension-less, mirrors wiki-memory.tree.
+        [ overlay:contentPath "shapetrees/id-schemes.tree.ttl" ;
+          overlay:hostedAt "/vault/meta/shapetrees/id-schemes.tree" ;
           overlay:contentType "text/turtle" ] ,
         [ overlay:contentPath "schemes/doi.ttl" ;            overlay:hostedAt "/id/schemes/doi" ;            overlay:contentType "text/turtle" ] ,
         [ overlay:contentPath "schemes/orcid.ttl" ;          overlay:hostedAt "/id/schemes/orcid" ;          overlay:contentType "text/turtle" ] ,
