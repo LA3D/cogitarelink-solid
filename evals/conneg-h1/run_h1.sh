@@ -11,7 +11,7 @@ RUN="runs/h1$ARM-$TAG"
 mkdir -p "$RUN/workdir"
 PROMPT=$(cat prompts/h1$ARM-*.txt)
 
-( cd "$RUN/workdir" && claude -p "$PROMPT" \
+( cd "$RUN/workdir" && env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
     --model sonnet \
     --allowedTools "Bash(curl:*)" \
     --output-format stream-json --verbose \

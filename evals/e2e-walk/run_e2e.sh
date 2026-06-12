@@ -36,7 +36,7 @@ fi
 
 ( cd "$RUN/workdir" && PATH="$EXTRA_PATH$PATH" \
     NODE_EXTRA_CA_CERTS="${NODE_EXTRA_CA_CERTS:-$(mkcert -CAROOT)/rootCA.pem}" \
-    claude -p "$PROMPT" \
+    env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
       --model sonnet \
       --allowedTools "$TOOLS" \
       --output-format stream-json --verbose \

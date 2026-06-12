@@ -51,3 +51,11 @@ sibling path).
 - Reset Pod state between ensemble runs; same-uptime only (in-memory seen-maps).
 - ALWAYS raw-audit trajectory.jsonl against the self-reported trajectory.
 - Capture Pod artifacts (check_state.sh) BEFORE cleanup.
+
+## Probe billing (2026-06-12)
+
+Every runner launches `env -u ANTHROPIC_API_KEY claude -p …` so headless probe runs ride
+the machine's Claude subscription login, NEVER a globally-exported API key (a profile-level
+`ANTHROPIC_API_KEY` silently bills the API account — discovered after the SP1/SP2 probe
+arcs). If a rig is copied to a new machine, `claude` must be logged in (`claude /status`
+to verify the auth source before burning runs).

@@ -23,7 +23,7 @@ if [ "$ARM" = "skill" ]; then
   cp -R "$SOLID_AGENT_SKILLS/skills/pod-navigate" "$RUN/workdir/.claude/skills/"
 fi
 
-( cd "$RUN/workdir" && claude -p "$PROMPT" \
+( cd "$RUN/workdir" && env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
     --model sonnet \
     --allowedTools "Bash(curl:*),Skill" \
     --output-format stream-json --verbose \

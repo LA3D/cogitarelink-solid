@@ -10,7 +10,7 @@ RUN="runs/e1-$TAG"
 mkdir -p "$RUN/workdir"
 PROMPT=$(cat prompts/e1-content.txt)
 
-( cd "$RUN/workdir" && claude -p "$PROMPT" \
+( cd "$RUN/workdir" && env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
     --model sonnet \
     --allowedTools "Bash(curl:*)" \
     --output-format stream-json --verbose \

@@ -9,7 +9,7 @@ RUN="runs/probe$N-$TAG"
 mkdir -p "$RUN/workdir"
 PROMPT=$(cat prompts/probe$N-*.txt)
 
-( cd "$RUN/workdir" && claude -p "$PROMPT" \
+( cd "$RUN/workdir" && env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
     --model sonnet \
     --allowedTools "Bash(curl:*)" \
     --output-format stream-json --verbose \

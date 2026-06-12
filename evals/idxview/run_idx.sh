@@ -17,7 +17,7 @@ RUN="runs/$ARM-$TAG"
 mkdir -p "$RUN/workdir"
 PROMPT=$(sed "s#CONTAINER_URL#$CONTAINER#g" prompts/task.tmpl.txt)
 
-( cd "$RUN/workdir" && claude -p "$PROMPT" \
+( cd "$RUN/workdir" && env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
     --model sonnet \
     --allowedTools "Bash(curl:*)" \
     --output-format stream-json --verbose \

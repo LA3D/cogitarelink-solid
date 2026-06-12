@@ -23,7 +23,7 @@ esac
 # which collide with curl's leading-@ file semantics (Turtle starts with @prefix;
 # exit 26). The Pod-interaction constraint (HTTP via curl only) is unchanged and
 # enforced by the prompt; local scratch composition is not a Pod interaction.
-( cd "$RUN/workdir" && claude -p "$PROMPT" \
+( cd "$RUN/workdir" && env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
     --model sonnet \
     --allowedTools "Bash(curl:*),Write" \
     --output-format stream-json --verbose \

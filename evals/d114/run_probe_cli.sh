@@ -10,7 +10,7 @@ mkdir -p "$RUN/workdir"
 PROMPT=$(cat prompts/probe$N-*.txt)
 BIN="$(pwd)/bin"
 
-( cd "$RUN/workdir" && PATH="$BIN:$PATH" claude -p "$PROMPT" \
+( cd "$RUN/workdir" && PATH="$BIN:$PATH" env -u ANTHROPIC_API_KEY claude -p "$PROMPT" \
     --model sonnet \
     --allowedTools "Bash(curl:*)" "Bash(solid-pod:*)" \
     --output-format stream-json --verbose \
