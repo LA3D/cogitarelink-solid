@@ -117,7 +117,8 @@
 
     overlay:installsView
         [ overlay:document "views/fused.ttl" ;    overlay:hostedAt </vault/meta/views/fused> ] ,
-        [ overlay:document "views/people.ttl" ;   overlay:hostedAt </vault/meta/views/people> ] ;
+        [ overlay:document "views/people.ttl" ;   overlay:hostedAt </vault/meta/views/people> ] ,
+        [ overlay:document "views/container-index.ttl" ; overlay:hostedAt </vault/meta/views/container-index> ] ;
 
     overlay:installsViewArtifact
         [ overlay:document "views/fused-projection" ;  overlay:hostedAt </vault/meta/views/fused-projection> ] ,
