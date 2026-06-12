@@ -125,3 +125,34 @@ The skill is the causal variable for the contract walk: identical Pod, identical
 - Workdirs are cold (no repo CLAUDE.md) but the global `~/.claude/CLAUDE.md` loads as always (no Pod content; standard rig disclosure).
 - The `gen-*` slugs and the fixture rationale text disclose plantedness; the bare run even cited the rationale. No effect on the measured behaviors.
 - `pod-navigate` mentions index routing only implicitly ("Look for an index or overview resource"); the Pod's Layer-0 instruction names it explicitly. Neither was needed at the query tier (finding 3).
+
+## 7. Addendum — independent controller audit of all 14 SP2 trajectories (2026-06-12)
+
+All five gate runs plus the nine T12 probe runs were re-read in full (tool calls + complete
+CoT) by the orchestrating session, per the raw-audit rule. Every quantitative claim above
+checked out against the raw trajectories (the g-run3 dismissal quote, the size-triage
+rationale, run3's four real tooling failures, the bare arm's verbatim "no declared query
+mechanism" assertion made without fetching the catalog). Three upgrades from the re-read:
+
+1. **The bare arm reproduces the H1 proto-knowledge gap INSIDE the gate.** It is not
+   "no audit" — bare-run1 ran a four-channel currency check (`photosynthesis.md.meta`,
+   `biology.md.meta`, `index.md` flags, body prose) but exclusively with training-prior
+   vocabulary (`owl:deprecated`, `skos:historyNote`, `skos:changeNote`); it never touched
+   `mem:` governance, `.operations/`, or `memory-history`. The skill's marginal value is
+   WHICH channels get audited, not whether diligence happens — the same A-not-B failure
+   shape H1 measured, now visible as the bare/skill contrast on a clean cell.
+2. **The §6.1 consume-side loop was observed in the wild, unprompted, in the BARE arm.**
+   bare-run1 read the planted contacts' `mem:rationale` and correctly inferred fixture
+   status ("planted deliberately … no meaning outside this Pod"), using write-context to
+   calibrate trust with no skill and no instruction. The T10 write contract's read-path
+   payoff is already live — the first field observation of the contract's two halves
+   meeting (construct: seeded rationale; consume: cold-agent trust pricing).
+3. **`invoke --param` discovery is 0/4, not merely "a sharp edge."** Every skill run that
+   tried the affordance failed the parameter mechanics (bare invoke, heredoc JSON,
+   `--args`, positional JSON — never `--param`); declared-pattern execution succeeded only
+   because agents read the descriptor and ran its SPARQL themselves. The pod-navigate
+   tier-table fix (FOLLOWUPS 🧷 c) is the difference between CLI-mediated and hand-rolled
+   declared execution, not an ergonomic nicety. (Minor, same bucket: skill-run2 briefly
+   bound `mem:` to the substrate# namespace in one query — vocabulary-hygiene shares the
+   (h)/(k) one-line-fix bucket.) Also: g-run1 burned ~18 of 24 calls hunting `sub:bodyHash`
+   (not just g-run3) — 🧷 (h) is more load-bearing than the E7 report implied.
