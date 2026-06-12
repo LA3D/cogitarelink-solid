@@ -555,8 +555,7 @@ async def audit_interop_registration(client, pod_base, findings):
     ctr_r = await client.get(trees_ctr, headers={"Accept": "text/turtle"})
     if ctr_r.status_code == 200:
         ctr_g = Graph().parse(data=ctr_r.text, format="turtle", publicID=trees_ctr)
-        doc_urls |= {str(o) for o in ctr_g.objects(URIRef(trees_ctr), URIRef(LDP + "contains"))
-                     if str(o).endswith(".tree")}
+        doc_urls |= {str(o) for o in ctr_g.objects(URIRef(trees_ctr), URIRef(LDP + "contains"))}
     else:
         findings.append(finding("ERROR", trees_ctr, "interop:shapetrees-unreachable",
             f"ShapeTree container not reachable (HTTP {ctr_r.status_code}).",

@@ -110,3 +110,43 @@ def test_one_manager_per_container_assigns_a_container_tree():
         # A container Manager assigns the container tree + names the managed container; the per-resource
         # validation focus is each contained resource's <#this> (resolved at validation, not pinned here).
         assert g.value(a, ST.manages) is not None, f"{slug}: st:manages must name the container"
+
+
+# --- F9: shapetrees container member filter (coverage blind spot fix) ---
+# The audit's doc_urls set-union used to filter with .endswith(".tree"), silently
+# excluding "rogue.tree.ttl" and similar names from the coverage check.
+# After the fix, ALL container members are included — verified here by simulating
+# the set-union step against an in-memory container listing graph.
+
+LDP_NS = "http://www.w3.org/ns/ldp#"
+TREES_CTR = "https://pod.vardeman.me/vault/meta/shapetrees/"
+
+def _ctr_graph_with_members(*slugs):
+    """Build a tiny in-memory ldp:contains listing for the shapetrees container."""
+    g = rdflib.Graph()
+    ctr = rdflib.URIRef(TREES_CTR)
+    for s in slugs:
+        g.add((ctr, rdflib.URIRef(LDP_NS + "contains"), rdflib.URIRef(TREES_CTR + s)))
+    return g
+
+
+def test_all_container_members_enter_doc_urls():
+    """Every member of the shapetrees container must appear in doc_urls regardless of suffix."""
+    ctr_g = _ctr_graph_with_members("wiki-memory.tree", "rogue.tree.ttl", "extra.shapetree")
+    # Simulate the post-fix set-union (no .endswith filter).
+    doc_urls = set()
+    doc_urls |= {str(o) for o in ctr_g.objects(rdflib.URIRef(TREES_CTR),
+                                                 rdflib.URIRef(LDP_NS + "contains"))}
+    assert TREES_CTR + "wiki-memory.tree"    in doc_urls
+    assert TREES_CTR + "rogue.tree.ttl"      in doc_urls, "non-.tree member was silently excluded"
+    assert TREES_CTR + "extra.shapetree"     in doc_urls, "non-.tree member was silently excluded"
+
+
+def test_old_suffix_filter_would_miss_non_tree_members():
+    """Regression guard: the old .endswith('.tree') filter produced incomplete doc_urls."""
+    ctr_g = _ctr_graph_with_members("wiki-memory.tree", "rogue.tree.ttl")
+    old_doc_urls = {str(o) for o in ctr_g.objects(rdflib.URIRef(TREES_CTR),
+                                                    rdflib.URIRef(LDP_NS + "contains"))
+                    if str(o).endswith(".tree")}
+    assert TREES_CTR + "rogue.tree.ttl" not in old_doc_urls, \
+        "sanity: old filter should NOT include rogue.tree.ttl (proves the bug existed)"

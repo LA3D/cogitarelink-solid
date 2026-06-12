@@ -231,9 +231,14 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         if isinstance(s_node, _BNode):
             ha  = next(g.objects(s_node, OVERLAY.hostedAt), None)
             doc = next(g.objects(s_node, OVERLAY.document), None)
-            if ha:
-                local = overlay_dir / str(doc) if doc else overlay_dir / "shapes" / Path(str(ha)).name
-                shapes.append(HostedDocument(local, str(ha)))
+            if not ha:
+                doc_label = str(doc) if doc else "<unknown>"
+                raise ValueError(
+                    f"installsShape blank node in overlay '{name}' has overlay:document "
+                    f"'{doc_label}' but is missing overlay:hostedAt — manifest defect."
+                )
+            local = overlay_dir / str(doc) if doc else overlay_dir / "shapes" / Path(str(ha)).name
+            shapes.append(HostedDocument(local, str(ha)))
         else:
             ha_str = str(s_node)
             local = overlay_dir / "shapes" / Path(ha_str).name

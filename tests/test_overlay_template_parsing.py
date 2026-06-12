@@ -2,6 +2,57 @@
 import pytest
 from pathlib import Path
 
+# ---------------------------------------------------------------------------
+# F4: malformed installsShape blank node (document present, hostedAt absent)
+# ---------------------------------------------------------------------------
+
+_OVERLAY_PREFIX = "@prefix overlay: <https://pod.vardeman.me/vault/ontology/overlay#> ."
+
+def _manifest_with_malformed_shape(tmp_path):
+    """Blank node carries overlay:document but no overlay:hostedAt — manifest defect."""
+    text = f"""
+{_OVERLAY_PREFIX}
+<https://pod.vardeman.me/vault/ontology/overlay#test-overlay>
+    a overlay:Overlay ;
+    overlay:name "test" ;
+    overlay:version "0.1" ;
+    overlay:installsShape
+        [ overlay:document "shapes/bad-shape.ttl" ] .
+"""
+    (tmp_path / "manifest.ttl").write_text(text)
+    (tmp_path / "shapes").mkdir()
+    (tmp_path / "shapes" / "bad-shape.ttl").write_text("# bad shape")
+    return tmp_path
+
+
+def test_installs_shape_missing_hosted_at_raises_value_error(tmp_path):
+    _manifest_with_malformed_shape(tmp_path)
+    from scripts.overlay.common import parse_manifest
+    with pytest.raises(ValueError) as exc_info:
+        parse_manifest(tmp_path, pod_url="https://pod.vardeman.me/vault/")
+    msg = str(exc_info.value)
+    assert "bad-shape.ttl" in msg, f"expected document name in error: {msg}"
+
+
+def test_installs_shape_well_formed_blank_node_parses(tmp_path):
+    """A blank node WITH hostedAt must still parse (regression guard for the fix)."""
+    text = f"""
+{_OVERLAY_PREFIX}
+<https://pod.vardeman.me/vault/ontology/overlay#test-overlay>
+    a overlay:Overlay ;
+    overlay:name "test" ;
+    overlay:version "0.1" ;
+    overlay:installsShape
+        [ overlay:document "shapes/good.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/good.ttl" ] .
+"""
+    (tmp_path / "manifest.ttl").write_text(text)
+    (tmp_path / "shapes").mkdir()
+    (tmp_path / "shapes" / "good.ttl").write_text("# good shape")
+    from scripts.overlay.common import parse_manifest
+    m = parse_manifest(tmp_path, pod_url="https://pod.vardeman.me/vault/")
+    assert len(m.shape_urls) == 1
+
 
 def test_manifest_parses_provides_capability(tmp_path):
     manifest_text = """
