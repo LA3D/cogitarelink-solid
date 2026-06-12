@@ -2,24 +2,27 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## ▶▶ ACTIVE — agentic progressive-disclosure contract (SP1 SHIPPED + generalization probe DONE; 2026-06-11)
+## ▶▶ ACTIVE — agentic progressive-disclosure contract (SP1 + SP2 SHIPPED; 2026-06-12)
 
 **Spec (spine, settled):** `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md`.
-**STATUS 2026-06-11:** the foundation brainstorm converged → approaches settled → **SP1 BUILT + GATE PASSED**
-(pod-navigate skill + `validate`/`invoke`/`affordances`, merged) → **generalization probe RUN** (3 tooling
-gaps found + FIXED + re-run; execution generalizes — see the `🧭 Generalization probe` section below) →
-**write-side E5b twin probe RUN 2026-06-11** (report `docs/plans/2026-06-11-e5b-write-twin-report.md`;
-rig `evals/e5b-write/`; 3 arms × n=3, 9/9 conformant): **the FLOOR is the load-bearing quality station** —
-presence-only already elicited genuine write-context (grounding confound disclosed: the vocabulary's own
-content-laden `rdfs:comment` taught it); **D112 minimal-satisfaction replicates at the PROPERTY level**
-(8/9 wrote exactly the required predicates; zero volunteered prov:* even with the disposition → SP2:
-REQUIRE or derive anything wanted on every write); the 422 channel never fired (9/9 proactive shape reads
-— the write path force-consumes its contract, unlike the read-path bootstrap leak); content-laden shape
-instruction bought ~2.5× richer rationales; the disposition bought nothing measurable over it (its payoff
-cell — unconsumed floor guidance — never occurred here). §6.1 "bare MUST yields boilerplate" NOT confirmed
-for required-string quality. **▶ NEXT = write the SP2 plan** (all queued pre-SP2 probes now done). Both
-repos ahead/unpushed (push = Chuck's call). The checklist below is the SP1 history (all `[x]`); the live
-forward items are in `🧭 Generalization`, `📐`, `🧪`, `⚙` sections.
+**STATUS 2026-06-12: SP2 EXECUTED — all 14 tasks, GATE MET** (4/4 both-correct, audit disposition 4/4,
+declared-pattern 3/4 w/ a documented harness-load de-confound — run3's miss was a rig-inflicted HTTP/2
+crash + `--param` discoverability, run4 sequential re-run clean; gate report
+`docs/plans/2026-06-12-sp2-e2e-walk-report.md`). Plan: `docs/superpowers/plans/2026-06-12-sp2-consumable-pod.md`
+(branch `sp2-consumable-pod`). **Probe results (T12):** **E7 re-run** — the registration bucket is FIXED
+3/3 (D96 `<#this>` placement closed the never-registered miss) but catch dropped to 0/3 — the failure
+MOVED downstream to grounded-then-dismissed (agents read the vocabulary definition and stop before the
+instance dereference); **NEW LEVER = decision-laden `mem:` rdfs:comments** (E5b applied to the vocabulary:
+put the "dereference the open action before trusting" rule in the comment grounding agents already read;
+report `docs/plans/2026-06-12-sp2-e7-rerun-report.md`). **In-situ index probe** — 0/6 runs consulted
+`index.md` at n=5 descriptive slugs → **the index's payoff regime is BOUNDED** (opaque-slug/many-member
+containers; index = the curl-tier orientation channel, the query tier bypasses it for declared
+affordances/SPARQL); format A/B moot in situ, re-cut on the mock corpus
+(report `docs/plans/2026-06-12-sp2-index-insitu-report.md`). **▶ NEXT = the `🧷 NAMED FOLLOW-ONS` list
+below**; suggested order: (1) the decision-laden `mem:` vocabulary pass (the E7 lever), (2) the sibling
+CLI pass — pod-navigate tier-table `--param` line + the 6 sharp edges from the gate report §5 —, then
+(3) the push decision (both repos ahead/unpushed — Chuck's call). The checklist below is the SP1
+history (all `[x]`); other live items are in `🧭 Generalization`, `📐`, `🧪`, `⚙` sections.
 
 - [x] **SP2-T5 residue (surfaced during T8 verification 2026-06-12): `IndexViewListener` drops member
   events that arrive while a regeneration is in flight** — the `deriving` guard is GLOBAL
@@ -90,6 +93,45 @@ forward items are in `🧭 Generalization`, `📐`, `🧪`, `⚙` sections.
   command or retired, NOT speculatively. The `shapes` failures' root cause is substrate-side (template-placeholder
   catalog file — see the D108-review item below).
 
+## 🧷 NAMED FOLLOW-ONS (post-SP2, 2026-06-12)
+
+One line each; details in the gate/probe reports (`docs/plans/2026-06-12-sp2-*.md`) + the SP2 plan.
+
+- [ ] **(k) stale `sub:viewAuthority` vocab prose** (`overlays/wiki-memory/vocabulary/substrate.ttl:554`,
+  pre-existing): its `rdfs:comment` still describes the retired storage-description pointer — fix alongside
+  (h) `sub:bodyHash` in the one-line vocab pass.
+- [ ] **(j) `test_index_views::test_concept_write_refreshes_index_with_provenance` is load-timing-sensitive**:
+  fails occasionally under full-suite back-to-back write load, deterministic-green in isolation (4×) —
+  same class as the timemap flake; widen the settle poll or serialize the file if it recurs.
+
+- [ ] **(a) Markdown-lane write contract — GATED ON D82** (`.meta.agent` sidecar / no-clobber): agent
+  `.meta` enrichment doesn't survive projection rewrites (strict-xfail), so `mem:rationale` can't be
+  required on wiki lanes yet; Turtle lanes shipped (T10/T10b).
+- [ ] **(b) `prov:agent` derivation — GATED ON the security profile** (Chuck 2026-06-12): deriving the
+  authenticated WebID at write time is meaningless under dev-allow-all; lands with auth.
+- [ ] **(c) Sibling-repo pass (`solid-agent-skills`):** un-pin the 2 `shapes` KNOWN-FAILURES (root cause
+  was the template-placeholder catalog file, relocated by SP2-T3) + add the `invoke --param` line to the
+  pod-navigate tier table + the 6 CLI sharp edges from the gate report §5.5 (parameterless-`$param`
+  silent-empty, bare-IRI param error hint, multi-source HTTP/2 crash under load, no sub-container
+  recursion in source discovery, extensionless descriptor GET 404).
+- [ ] **(d) Decision-laden `mem:` vocabulary comments** — the E7 re-run lever: move the decision rule
+  ("an open RealignAction means dereference it before trusting the governed value") into the
+  `rdfs:comment`s grounding agents already read (E5b applied to the vocabulary).
+- [ ] **(e) Index-legibility-as-index** — the in-situ lever: a type hint on the container listing
+  (nothing marks `index.md` as the index; at descriptive-slug scale agents never opened it).
+- [ ] **(f) Optional de-confounded write-twin arm** — re-run `evals/e5b-write/` with a task domain far
+  from the provenance vocabulary (tests whether arm A's high floor survives without the grounding/topic
+  confounds).
+- [ ] **(g) `ViewSpaceHttpHandler` 404-throw twin bug** — filed by T7 (see the NB on the FIXED
+  `?_profile=fused` 404 item in the 🔧 section): `handle` still THROWS `NotFoundHttpError` (unknown
+  view-space / unknown person slug) → latent 500; fix with the same MementoHttpHandler idiom when
+  next touched.
+- [ ] **(h) `sub:bodyHash` undefined in the substrate ontology** — the E7 re-run found agents burning
+  grounding budget dereferencing it to nothing; one-line vocab fix candidate (rdfs:comment in sub:).
+- [ ] **(i) Organization/Group/Membership lanes carry the write contract but ZERO seeds** (T10b note):
+  the shapes + templates require `mem:rationale` but no seed dog-foods them; seed when addressbook
+  is next touched.
+
 ## 🧭 Generalization probe (2026-06-10) — 3 tooling gaps FOUND + FIXED + RE-RUN 2026-06-11
 
 Report `docs/plans/2026-06-10-generalization-probe-report.md` (amended w/ the post-fix re-run); rig
@@ -140,7 +182,7 @@ SPARQL regardless, so this only sharpens the discovery sub-question).
   definition-line — only the rich format was tested; definition line was what got read+quoted);
   (iii) the deferred root-level/cross-container + `/llms.txt` arm C + the wrong-CONTAINER-descent
   metric (this probe was single-container, so only wrong-resource descents were measured).
-- [ ] **Profiles strip-back spec — fix what the profiles implementation surfaced** (Chuck,
+- [x] **Profiles strip-back spec — fix what the profiles implementation surfaced** (Chuck,
   2026-06-10). Inputs: RQ-Conneg-1 verdict (H0/H1/E8), sanity check §4, deployed-web
   principle, D86 provenance (DXWG/SELFIE lineage — Chuck's extension; the *selection* half
   served a configured-client class that didn't arrive, the *hint* half is validated). Its own
@@ -160,6 +202,11 @@ SPARQL regardless, so this only sharpens the discovery sub-question).
   The D80 re-cut (d) now has a measured target: hub-view/breadcrumb-view → ViewAssembler-served
   definition-line index views (read off the listing), not handed CONSTRUCTs. Do the strip-back +
   index-view build as one view-layer rework.
+  **✅ EXECUTED 2026-06-12 as SP2-T6/T7/T8/T9** (plan `docs/superpowers/plans/2026-06-12-sp2-consumable-pod.md`):
+  T6 = the D80 re-cut (hub-view/breadcrumb-view → served index views); T7 = `alt` token dropped +
+  ViewHttpHandler 404 fix + fused-graph cleanup; T8 = lean Layer-0 re-cut (Cut-A literal byte-identical)
+  + PROF hint completeness; T9 = D86/D80/D113 decision-text reconciliation + D115. The index-view BUILD
+  itself = SP2-T4/T5 (derived `sub:ContainerIndex` `index.md` per container w/ derivation provenance).
 
 ## 🔧 Code↔decision conformance review findings (2026-06-10) — ALL FIXED same day
 
