@@ -97,6 +97,13 @@ history (all `[x]`); other live items are in `🧭 Generalization`, `📐`, `�
 
 One line each; details in the gate/probe reports (`docs/plans/2026-06-12-sp2-*.md`) + the SP2 plan.
 
+- [ ] **(★ NEXT) Provenance-scoped projection replacement — spec DRAFTED, awaiting Chuck's review:**
+  `docs/superpowers/specs/2026-06-12-provenance-scoped-projection-replacement.md` — subtraction-based
+  re-projection (`.meta − f(old body) ∪ f(new body)`); floor keeps enforcement, strip stops clobbering;
+  **dissolves D82** (sidecar unbuilt) and ungates (a) below. Open knob §7: version-stamp+sweep (lean)
+  vs projected-set inventory. Prior-art grounded (LDP/OBO/Graphiti/wiki-lineage); named-graph option
+  killed by spike (on-disk .meta is Turtle). Supersedes the F7 review fix once built.
+
 - [ ] **(k) stale `sub:viewAuthority` vocab prose** (`overlays/wiki-memory/vocabulary/substrate.ttl:554`,
   pre-existing): its `rdfs:comment` still describes the retired storage-description pointer — fix alongside
   (h) `sub:bodyHash` in the one-line vocab pass.
