@@ -36,3 +36,23 @@ def test_registry_covers_all_three_apps():
     regs = set(g.objects(None, INTEROP.hasDataRegistration))
     REG = Namespace(f"{POD}/vault/meta/interop/registry#")
     assert REG["id-schemes"] in regs and REG["contacts"] in regs, f"got: {sorted(str(r) for r in regs)}"
+
+
+ST = Namespace("http://www.w3.org/ns/shapetrees#")
+
+
+def test_addressbook_application_declared():
+    g = _graph("/vault/meta/interop/addressbook-application")
+    app = URIRef(f"{POD}/vault/meta/interop/addressbook-application#addressbook")
+    assert (app, INTEROP.applicationName, None) in g
+
+
+def test_each_app_declares_consumption_shape():
+    body = _graph("/vault/meta/shapetrees/wiki-memory.tree").serialize(format="turtle").lower()
+    assert "index-shaped" in body, \
+        "wiki-memory st:Description must declare its consumption shape"
+    for path in ("/vault/meta/interop/id-schemes-application",
+                 "/vault/meta/interop/addressbook-application"):
+        body = _graph(path).serialize(format="turtle").lower()
+        assert "operation-shaped" in body, \
+            f"{path} must declare operation-shaped"

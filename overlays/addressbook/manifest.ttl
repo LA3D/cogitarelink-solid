@@ -84,6 +84,9 @@
         <https://pod.vardeman.me/id/schemes/did> ;
 
     overlay:installsBootstrapContent
+        [ overlay:contentPath "interop/application.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/addressbook-application" ;
+          overlay:contentType "text/turtle" ] ,
         [ overlay:contentPath "containers/index.ttl" ;
           overlay:hostedAt "/vault/contacts/index.ttl" ] ,
         [ overlay:contentPath "containers/people.ttl" ;

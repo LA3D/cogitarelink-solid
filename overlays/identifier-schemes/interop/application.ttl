@@ -2,6 +2,7 @@
 @prefix acl:     <http://www.w3.org/ns/auth/acl#> .
 @prefix mem:     <https://pod.vardeman.me/vault/ontology/mem#> .
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix st:      <http://www.w3.org/ns/shapetrees#> .
 @prefix app:     <https://pod.vardeman.me/vault/meta/interop/id-schemes-application#> .
 
 app:id-schemes a interop:Application ;
@@ -47,3 +48,13 @@ shaped per D111 FOLLOWUPS item 1. File: as:object = the record;
 mem:stalenessClass mem:Materialization (a derivable projection the graph does not yet
 carry — not drift); mem:rationale naming which projection is missing. The proposal
 body must contain the EXACT triples to add, so the resolving act is mechanical.""" .
+
+# SP2 consumption hint — OPERATION-SHAPED navigation contract.
+app:id-schemes-description a st:Description ;
+    st:describes app:id-schemes ;
+    sh:agentInstruction """This app is OPERATION-SHAPED: resolve and register
+identifiers via the catalog's declared affordances and scheme records
+(/id/schemes/ — server-derived index document at /id/schemes/ itself). To resolve:
+match the identifier against each record's idot:luiPattern, substitute into a
+provider's idot:urlPattern. To register: POST a conformant scheme record (the
+container's shape teaches via 422). Curation lane: /id/.operations/ (propose-only).""" .

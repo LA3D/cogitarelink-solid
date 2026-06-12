@@ -1,6 +1,8 @@
 @prefix st:       <http://www.w3.org/ns/shapetrees#> .
 @prefix wikitree: <https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree#> .
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix app:      <https://pod.vardeman.me/vault/meta/interop/application#> .
 
 # Resource trees — one per governed class; st:shape -> the deployed SHACL NodeShape IRI.
 wikitree:ConceptResourceTree      a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:ConceptShape .
@@ -21,3 +23,14 @@ wikitree:EventContainerTree        a st:ShapeTree ; st:expectsType st:Container 
 wikitree:OrganizationContainerTree a st:ShapeTree ; st:expectsType st:Container ; st:contains wikitree:OrganizationResourceTree .
 wikitree:ProcedureContainerTree    a st:ShapeTree ; st:expectsType st:Container ; st:contains wikitree:HowToResourceTree .
 wikitree:WorkingNoteContainerTree  a st:ShapeTree ; st:expectsType st:Container ; st:contains wikitree:WorkingNoteResourceTree .
+
+# SP2 consumption hint — INDEX-SHAPED navigation contract.
+# Co-located with the shapetree rather than the application doc — the description is tree-scoped.
+wikitree:wiki-memory-description a st:Description ;
+    st:describes app:wiki-memory ;
+    sh:agentInstruction """This app is INDEX-SHAPED: each registered container
+maintains a definition-line index.md child (derived; its .meta carries derivation
+provenance — audit it before trusting). Route through the index, not by enumerating
+members. Navigation axis = skos:broader/narrower between concepts; addressing
+axis = the Type Index (class -> container). Write path: draft in working/, then
+crystallize (two-stage, D73).""" .
