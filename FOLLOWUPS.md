@@ -21,6 +21,14 @@ for required-string quality. **▶ NEXT = write the SP2 plan** (all queued pre-S
 repos ahead/unpushed (push = Chuck's call). The checklist below is the SP1 history (all `[x]`); the live
 forward items are in `🧭 Generalization`, `📐`, `🧪`, `⚙` sections.
 
+- [ ] **SP2-T5 residue (surfaced during T8 verification 2026-06-12): `IndexViewListener` drops member
+  events that arrive while a regeneration is in flight** — the `deriving` guard is GLOBAL
+  (`if (this.deriving) return;`), so a member write landing inside another container's index write
+  window is silently swallowed and that index stays stale until the NEXT member event. Manifests as
+  the order/timing flake in `tests/test_index_views.py::test_delete_refreshes_index` (fails ~2/3
+  under back-to-back write/delete sequences, passes in isolation). Fix shape: replace the global
+  flag with self-write filtering in `memberContainer` (index.md/index.md.meta already excluded —
+  the flag may be redundant) or queue-don't-drop. `css/extensions/view-layer/src/IndexViewListener.ts:102`.
 - [x] **Chuck reviewed the foundation spec 2026-06-10 (same day) — spine confirmed; spec AMENDED
   post-review.** Sanity check verified the factual claims (live-but-inert interop layer; E7/index-view
   report fidelity; storage description + WebID card confirmed unsurfaced by live GET). Amendments

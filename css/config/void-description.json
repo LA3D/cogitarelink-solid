@@ -374,16 +374,6 @@
             ]
           },
           {
-            "comment": "D114: view-authority contract pointer — the base PROF page profile whose sh:agentInstruction states the document-vs-graph read/write authority division and when to read ?_profile=fused. Met on arrival (D55 Tier-2); teach-the-convention, not per-resource.",
-            "@type": "StaticStorageDescriber",
-            "terms": [
-              {
-                "StaticStorageDescriber:_terms_key": "https://pod.vardeman.me/vault/ontology/substrate#viewAuthority",
-                "StaticStorageDescriber:_terms_value": "https://pod.vardeman.me/vault/meta/profiles/page"
-              }
-            ]
-          },
-          {
             "comment": "Entry-point agent guide: explains the wiki-memory profile, substrate stratification, and wiki=profile (not wiki-app) orientation. Satisfies storage-description audit requirement via IRI pointer (StaticStorageDescriber emits IRIs, not literals). FORWARD DEPENDENCY: shapes/substrate/storage-description.shacl.ttl now HARD-REQUIRES this (Violation severity) \u2014 removing this entry flips `make audit` from pass to ERROR. Keep these two files in sync.",
             "@type": "StaticStorageDescriber",
             "terms": [
@@ -394,12 +384,12 @@
             ]
           },
           {
-            "comment": "Entry-point literal sh:agentInstruction (D108 Front-1). Quoted value => StaticStorageDescriber emits a rdfs:Literal (verified: rdf-string stringToTerm yields a Literal for a quoted string), so the 30-second conceptual model is served INLINE at .well-known/solid, not only behind the sub:agentGuide IRI pointer. The agentGuide IRI term STAYS (substrate audit shape requires it).",
+            "comment": "Entry-point literal sh:agentInstruction (D108 Front-1; SP2-T8 lean re-cut). Quoted value => StaticStorageDescriber emits a rdfs:Literal (verified: rdf-string stringToTerm yields a Literal for a quoted string), so the orientation is served INLINE at .well-known/solid, not only behind the sub:agentGuide IRI pointer. The agentGuide IRI term STAYS (substrate audit shape requires it). Ordered: what-this-is -> orientation (derived index.md routing) -> governed graph (view-authority content folded in from the D114 sub:viewAuthority pointer, which H0/E8 showed agents never consult) -> dispositions (the READ PATH sentences are the E5-validated Cut-A literal, preserved VERBATIM for eval comparability) -> write path. Deliberately NO interop-registry routing here (An-layer declarations are not Layer-0 routing).",
             "@type": "StaticStorageDescriber",
             "terms": [
               {
                 "StaticStorageDescriber:_terms_key": "http://www.w3.org/ns/shacl#agentInstruction",
-                "StaticStorageDescriber:_terms_value": "\"This Pod's memory is a SKOS concept backbone. Every wiki page has TWO RDF subjects with three frame roles: the page document <> (dct:title), the entity <#this> (schema:name), and -- when the entity is a concept -- the SKOS unit <#this> (skos:prefLabel). skos:broader/narrower/related is the navigation axis. Writes are validated by SHACL shapes; a 422 returns a sh:ValidationReport you correct against. Typed identifiers carry their dispatch in the literal datatype -- dereference it to reach the scheme catalog at /id/schemes/. Read sub:agentGuide before writing. READ PATH: before TRUSTING any value you read, check for governance signals -- a resource's .meta and Link headers may carry mem:hasOpenAction pointing to an open mem:RealignAction in /id/.operations/ whose mem:rationale flags the current value stale and names its replacement; if present the value is CONTESTED, report it as such (with the proposed correction), not as settled. Do not report the first value you find as authoritative without this check.\""
+                "StaticStorageDescriber:_terms_value": "\"This Pod's memory is a SKOS concept backbone. Every wiki page has TWO RDF subjects with three frame roles: the page document <> (dct:title), the entity <#this> (schema:name), and -- when the entity is a concept -- the SKOS unit <#this> (skos:prefLabel). skos:broader/narrower/related is the navigation axis. ORIENT: each content container serves a derived index.md child -- a definition-line listing of its members (substrate-derived; its .meta carries derivation provenance). Route through the index instead of enumerating container members. GOVERNED GRAPH: a resource's .meta description resource -- follow its describedby Link header -- is authoritative for typed edges and governed context (open actions, provenance, staleness). The markdown body is authoritative for prose; body wikilinks are a convenience projection of the graph, not the ground truth for typed predicates. GET ?_profile=fused when your question concerns one resource's graph (body plus governed graph in one representation); SPARQL is for cross-resource aggregate queries. Always audit governance before trusting a value. READ PATH: before TRUSTING any value you read, check for governance signals -- a resource's .meta and Link headers may carry mem:hasOpenAction pointing to an open mem:RealignAction in /id/.operations/ whose mem:rationale flags the current value stale and names its replacement; if present the value is CONTESTED, report it as such (with the proposed correction), not as settled. Do not report the first value you find as authoritative without this check. Typed identifiers carry their dispatch in the literal datatype -- dereference it to reach the scheme catalog at /id/schemes/. WRITE PATH: writes are validated by SHACL shapes; a 422 returns a sh:ValidationReport you correct against. Two-stage commit: draft in working/, then crystallize to the durable container. Read sub:agentGuide before writing.\""
               }
             ]
           }

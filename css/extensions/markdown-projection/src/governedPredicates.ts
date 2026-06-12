@@ -191,6 +191,12 @@ export const WIKI_CLASS_TO_PROFILE: Record<string, string> = {
     [WIKI + "Person"]:      PROFILE_BASE + "person",
     [WIKI + "Procedure"]:   PROFILE_BASE + "procedure",
     [WIKI + "WorkingNote"]: PROFILE_BASE + "working",
+    // Place/Event/Organization have no wiki: dispatch class — their pages type
+    // via CURIE frontmatter (type: schema:Place), so fmDispatch IS the schema:
+    // class IRI; key on it directly (SP2-T8 class-profile-hint completeness).
+    [SCHEMA + "Place"]:        PROFILE_BASE + "place",
+    [SCHEMA + "Event"]:        PROFILE_BASE + "event",
+    [SCHEMA + "Organization"]: PROFILE_BASE + "organization",
 };
 export const DEFAULT_PROFILE = PROFILE_BASE + "page";
 

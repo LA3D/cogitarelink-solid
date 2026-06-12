@@ -73,6 +73,44 @@ def test_shape_catalog_members_all_parse():
         Graph().parse(data=r.text, format="turtle", publicID=str(m))
 
 
+SH = Namespace("http://www.w3.org/ns/shacl#")
+
+
+def test_layer0_is_lean_and_orientation_first():
+    g = _graph("/vault/.well-known/solid")
+    body = g.serialize(format="turtle")
+    assert "_profile=alt" not in body
+    assert "viewAuthority" not in body  # folded into the instruction literal, not a pointer artifact
+    instr = " ".join(str(o) for o in g.objects(None, SH.agentInstruction))
+    for marker in ("index.md", "audit", "describedby", ".meta"):
+        assert marker in instr, f"Layer-0 instruction must orient: missing {marker}"
+    assert "registry" not in instr.lower(), "Layer-0 must NOT route through the An registries (harmonization delta 1)"
+
+
+def test_place_event_organization_get_class_profiles():
+    """SP2-T8: schema:Place/Event/Organization pages get their CLASS profile, not the page fallback.
+
+    Mirrors test_two_subject_projection_e2e: PUT a minimal typed page, then assert the
+    response Link header carries rel="profile" with the class-specific profile IRI
+    (dct:conformsTo derived by the projector -> ProfileLinkMetadataWriter).
+    """
+    probes = {"places/sp2-t8-place.md": ("schema:Place", "place"),
+              "events/sp2-t8-event.md": ("schema:Event", "event"),
+              "organizations/sp2-t8-org.md": ("schema:Organization", "organization")}
+    try:
+        for path, (cls, slug) in probes.items():
+            url = f"{POD}/vault/wiki/{path}"
+            body = f"---\ntitle: SP2 T8 Probe\ntype: {cls}\n---\n\n# SP2 T8 Probe"
+            httpx.put(url, content=body, headers={"Content-Type": "text/markdown"},
+                      verify=_CA).raise_for_status()
+            link = httpx.head(url, verify=_CA).headers.get("link", "")
+            assert f'<{POD}/vault/meta/profiles/{slug}>; rel="profile"' in link, \
+                f"{path}: expected {slug} class profile, got: {link!r}"
+    finally:
+        for path in probes:
+            httpx.delete(f"{POD}/vault/wiki/{path}", verify=_CA)
+
+
 def test_d80_recut_no_handed_constructs():
     """D80 re-cut: hub-view and breadcrumb-view must not carry handed query artifacts.
 

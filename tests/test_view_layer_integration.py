@@ -189,16 +189,17 @@ def test_view_authority_discoverable_on_profile():
         assert "agentInstruction" in prof and "?_profile=fused" in prof and "authoritative" in prof
 
 
-def test_view_authority_linked_from_storage_description():
-    # the storage description (D44) must point at the view-authority profile so a cold agent meets it on arrival
+def test_view_authority_carried_by_storage_description():
+    # SP2-T8 re-cut: the D114 sub:viewAuthority POINTER is gone (H0/E8: agents never
+    # consult pointers); its CONTENT lives in the immediate sh:agentInstruction literal
+    # so a cold agent meets the authority division on arrival, and the page profile
+    # stays discoverable via prof:hasResource.
     with C() as c:
-        # discover the storage description URL from the Pod root Link header, then fetch it
-        head = c.head(f"{POD}/vault/")
-        link = head.headers.get("link", "")
-        # storageDescription rel; fall back to the well-known path
         sd_url = f"{POD}/vault/.well-known/solid"
         sd = c.get(sd_url, headers={"Accept": "text/turtle"}).text
-        assert "viewAuthority" in sd or "profiles/page" in sd
+        assert "viewAuthority" not in sd
+        assert "profiles/page" in sd
+        assert "describedby" in sd and "authoritative" in sd
 
 
 # ─── the bridge card: two homes unified (Verborgh contacts conundrum) ──────────
