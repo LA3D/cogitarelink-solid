@@ -71,3 +71,18 @@ def test_shape_catalog_members_all_parse():
         # scaffold template's bracket-placeholder IRIs); a real parse catches the
         # same class of problem, not just one known marker string.
         Graph().parse(data=r.text, format="turtle", publicID=str(m))
+
+
+def test_d80_recut_no_handed_constructs():
+    """D80 re-cut: hub-view and breadcrumb-view must not carry handed query artifacts.
+
+    Post-re-cut, both descriptors point agents at the served views rather than
+    handing them a CONSTRUCT/SELECT to run. The handed queries are dead surface —
+    evals show agents never execute them (SP2-T6).
+    """
+    for name in ("hub-view.ttl", "breadcrumb-view.ttl"):
+        body = _graph(f"/vault/meta/affordances/{name}").serialize(format="turtle")
+        assert "constructQuery" not in body and "selectQuery" not in body, \
+            f"{name}: still carries a handed query artifact (constructQuery or selectQuery)"
+        assert "index.md" in body or "views/" in body or "container-index" in body, \
+            f"{name}: must reference the served view (index.md / views/ / container-index)"
