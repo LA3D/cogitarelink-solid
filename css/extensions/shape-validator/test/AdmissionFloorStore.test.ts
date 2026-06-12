@@ -37,6 +37,7 @@ import { BasicRepresentation, RepresentationMetadata } from "@solid/community-se
 import { ShaclValidationError } from "../src/error/ShaclValidationError";
 import { LDP } from "../src/util/Vocabularies";
 import { AdmissionFloorStore, STAMP_PRED } from "../src/storage/AdmissionFloorStore";
+import { VERSION_PRED } from "../src/util/StampPredicate";
 
 const { namedNode, quad, literal } = DataFactory;
 
@@ -92,10 +93,13 @@ function conceptProjection() {
   };
 }
 
-function makeProjector(projection: any) {
+// snapshot defaults to the first-write signature; pass one to simulate a prior state.
+function makeProjector(projection: any, snapshot: any = { oldBody: null, oldMetaTtl: null }) {
   return {
+    version: "9.9.9-test",
     canProject: vi.fn((rep: any) => rep.metadata.contentType === "text/markdown"),
     project: vi.fn(async () => projection),
+    snapshot: vi.fn(async () => snapshot),
     materialize: vi.fn(async () => undefined),
   };
 }
@@ -131,11 +135,36 @@ describe("AdmissionFloorStore.setRepresentation — markdown body path", () => {
     expect(projector.materialize).toHaveBeenCalledTimes(1);
     const [, quads, governed] = projector.materialize.mock.calls[0];
     expect(governed).toContain(STAMP_PRED);
+    expect(governed).toContain(VERSION_PRED);
     expect(governed).toContain(SKOS_PREFLABEL);
-    // stamp quad present on the resource subject
-    const stamp = quads.find((q: any) => q.predicate.value === STAMP_PRED);
-    expect(stamp).toBeTruthy();
-    expect(stamp.subject.value).toBe(RESOURCE);
+    // stamp quads present on the resource subject: exactly one bodyHash + one version
+    const hashStamps = quads.filter((q: any) => q.predicate.value === STAMP_PRED);
+    expect(hashStamps).toHaveLength(1);
+    expect(hashStamps[0].subject.value).toBe(RESOURCE);
+    const versionStamps = quads.filter((q: any) => q.predicate.value === VERSION_PRED);
+    expect(versionStamps).toHaveLength(1);
+    expect(versionStamps[0].subject.value).toBe(RESOURCE);
+    // the version value flows from the injected projector (the floor stays profile-agnostic)
+    expect(versionStamps[0].object.value).toBe("9.9.9-test");
+  });
+
+  it("takes the pre-commit snapshot AFTER validation, BEFORE commit, and hands it to materialize", async () => {
+    validateMock.mockResolvedValue({ conforms: true });
+    const { identifierStrategy, auxiliaryStrategy } = makeStrategies();
+    const snapshot = { oldBody: "# old", oldMetaTtl: `<${RESOURCE}#this> <urn:a> "b" .` };
+    const projector = makeProjector(conceptProjection(), snapshot);
+    const source = makeSource();
+    const store = new AdmissionFloorStore(source as any, identifierStrategy, auxiliaryStrategy, projector as any);
+
+    await store.setRepresentation({ path: RESOURCE }, md(RESOURCE, "---\ntype: concept\n---\n# P"));
+
+    expect(projector.snapshot).toHaveBeenCalledTimes(1);
+    expect(projector.snapshot.mock.calls[0][0].path).toBe(RESOURCE);
+    // ordering: snapshot BEFORE the commit (CSS writeMetadataFile clobbers .meta — D82 root cause)
+    expect(projector.snapshot.mock.invocationCallOrder[0])
+      .toBeLessThan(source.setRepresentation.mock.invocationCallOrder[0]);
+    // the SAME snapshot object reaches materialize as the 4th argument
+    expect(projector.materialize.mock.calls[0][3]).toBe(snapshot);
   });
 
   it("rejects a non-conforming concept: throws ShaclValidationError and does NOT commit", async () => {
@@ -153,6 +182,8 @@ describe("AdmissionFloorStore.setRepresentation — markdown body path", () => {
 
     expect(source.setRepresentation).not.toHaveBeenCalled();
     expect(projector.materialize).not.toHaveBeenCalled();
+    // snapshot is taken only AFTER validation succeeds — a rejected PUT touches nothing
+    expect(projector.snapshot).not.toHaveBeenCalled();
   });
 
   it("passes RDF (non-markdown) bodies straight through: no project / validate / materialize", async () => {
@@ -376,6 +407,11 @@ describe("AdmissionFloorStore.addResource — POST gating", () => {
     expect(projector.project).toHaveBeenCalledTimes(1);
     expect(projector.project.mock.calls[0][0].path).toBe(RESOURCE); // created id, not container
     expect(projector.materialize).toHaveBeenCalledTimes(1);
+    // POST creates a fresh resource: the floor passes the first-write snapshot signature
+    // (no FS read — the resource cannot have a prior body/.meta) so the projector stays
+    // on the trivially-fine degraded branch WITHOUT a degraded signal.
+    expect(projector.snapshot).not.toHaveBeenCalled();
+    expect(projector.materialize.mock.calls[0][3]).toEqual({ oldBody: null, oldMetaTtl: null });
     expect(source.deleteResource).not.toHaveBeenCalled();
   });
 

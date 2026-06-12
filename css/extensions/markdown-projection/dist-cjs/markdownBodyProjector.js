@@ -53,9 +53,12 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MarkdownBodyProjector = void 0;
+const n3_1 = require("n3");
 const path = __importStar(require("path"));
+const fs_1 = require("fs");
 const fsPaths_1 = require("./fsPaths");
 const NoOpPostProjectionHook_1 = require("./NoOpPostProjectionHook");
+const stampPredicates_1 = require("./stampPredicates");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function debug(...args) {
     // eslint-disable-next-line no-console
@@ -80,7 +83,23 @@ function getPipeline() {
 // fsPathFromUrl is imported from fsPaths.ts (same package) — hoisted there from
 // listener.ts to break the listener↔projector circular import (R-T2). One
 // definition for the URL→fs-path mapping.
+// Version stamped into .meta as sub:projectorVersion. Source of truth = this package's
+// version: __dirname is src-cjs (vitest) or dist-cjs (runtime), each one level under the
+// extension root, so "../package.json" resolves in both. The hand-maintained ESM mirror
+// PROJECTOR_VERSION (projectionPipeline.ts) is pinned equal by versionAgreement.test.ts.
+function pkgVersion() {
+    try {
+        return JSON.parse((0, fs_1.readFileSync)(path.resolve(__dirname, "..", "package.json"), "utf8")).version;
+    }
+    catch {
+        return "0.0.0";
+    }
+}
 class MarkdownBodyProjector {
+    // Projector implementation version (BodyProjector contract): the floor stamps this
+    // into .meta beside the body hash; materialize() compares the PRIOR .meta's stamp
+    // against it to decide exact-vs-degraded subtraction (spec §6).
+    version = pkgVersion();
     baseUrl;
     // Filesystem root the Pod stores resources under; used by materialize() to
     // resolve the on-disk path of a resource so MetaWriter can write its .meta.
@@ -113,8 +132,12 @@ class MarkdownBodyProjector {
     canProject(representation) {
         return representation.metadata.contentType === "text/markdown";
     }
-    async project(identifier, body) {
-        const { projectionPipeline, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap, resolveGovernedFromQuads, } = await getPipeline();
+    // ONE pipeline-invocation path shared by project() and the old-body recompute in
+    // materialize() — f(body_old) must run with the SAME typeIndex/routing/storageBase
+    // wiring as f(body_new) or the subtraction drifts. (Type-Index drift between the two
+    // writes is the accepted caveat from the spec.)
+    async runPipelineFor(identifier, body) {
+        const { projectionPipeline, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap, } = await getPipeline();
         const storageBase = this.storageBase;
         // Lazy-init TypeIndexLoader (mirrors listener.ts lines 275-277)
         if (this.typeIndexLoader === null) {
@@ -126,7 +149,11 @@ class MarkdownBodyProjector {
             this.routingMap = await loadRoutingMap(storageBase, fetch, BOOTSTRAP_PREDICATE_TO_CLASS);
         }
         const typeIndex = await this.typeIndexLoader.getTypeIndex();
-        const quads = await projectionPipeline.run(identifier.path, body, typeIndex, this.routingMap ?? undefined, undefined, storageBase);
+        return await projectionPipeline.run(identifier.path, body, typeIndex, this.routingMap ?? undefined, undefined, storageBase);
+    }
+    async project(identifier, body) {
+        const { resolveGovernedFromQuads } = await getPipeline();
+        const quads = await this.runPipelineFor(identifier, body);
         // After Bug-F filtering, the wiki: class is removed from the page resource
         // triples when invariants are emitted. The thing class (skos:Concept,
         // schema:Person, …) is only on <#this>. Governed-predicate resolution
@@ -140,23 +167,85 @@ class MarkdownBodyProjector {
             return null;
         return { quads, governed };
     }
+    // Pre-commit snapshot (BodyProjector contract) — the floor calls this BEFORE
+    // super.setRepresentation commits (CSS's writeMetadataFile clobbers .meta during
+    // commit, the D82 root cause). Reads BOTH files from the FS; absent → null.
+    async snapshot(identifier) {
+        const fsPath = (0, fsPaths_1.fsPathFromUrl)(identifier.path, this.baseUrl, this.dataDir);
+        const read = (p) => {
+            try {
+                return (0, fs_1.readFileSync)(p, "utf8");
+            }
+            catch {
+                return null;
+            }
+        };
+        return { oldBody: read(fsPath), oldMetaTtl: read(`${fsPath}.meta`) };
+    }
+    // Degraded-subtraction signal: a PRIOR .meta exists but exact recompute was
+    // impossible (old body missing, or its projector-version stamp absent/mismatched —
+    // every pre-migration resource starts there; the migration sweep re-baselines).
+    // Task 5 wires the curation signal (mem:DeriveClass via the event path); until
+    // then a logger warn keeps the degraded path observable (and spyable in tests).
+    signalDegraded(identifier) {
+        debug(`degraded pairShadow subtraction for ${identifier.path}: prior .meta exists but exact recompute was impossible (missing old body or projector-version mismatch); residue possible until the curation sweep`);
+    }
+    // Parse a snapshot .meta serialization. Base IRI = the .meta document URL, mirroring
+    // MetaWriter's read cycle so relative subjects resolve identically.
+    parseSnapshotMeta(ttl, resourceUrl) {
+        try {
+            return new n3_1.Parser({ baseIRI: `${resourceUrl}.meta` }).parse(ttl);
+        }
+        catch {
+            return [];
+        }
+    }
+    // The stamp quads (sub:bodyHash + sub:projectorVersion) the floor wrote into the
+    // PRIOR .meta are projection-owned: include them in oldProjected so subtraction
+    // removes the stale stamps instead of letting them accumulate write over write.
+    oldStampQuads(snapMeta, resourceUrl) {
+        return snapMeta.filter((q) => q.subject.value === resourceUrl && stampPredicates_1.STAMP_PREDS.has(q.predicate.value));
+    }
     // Write `quads` to the resource's .meta sidecar via provenance-scoped
     // replacement (spec 2026-06-12 §4 — agent triples survive by construction;
     // `governed` no longer drives the replacement, it stays the floor's validation
     // dispatch). The floor delegates here because MetaWriter is ESM-only (loaded
     // via the runtime pipeline import) and the floor must stay profile-agnostic.
     //
+    // Exact path (spec §5 primary): the snapshot carries the pre-commit body + .meta
+    // AND the .meta's projector-version stamp matches the running projector →
+    // oldProjected = f(body_old) recomputed through the SAME pipeline path, plus the
+    // prior stamp quads. Otherwise degraded pairShadow; if a prior .meta existed,
+    // signalDegraded fires (first writes stay silent).
+    //
     // After writing .meta, surfaces <#this>-subject edges to postProjectionHook
     // (consumed by mem-trigger's ContradictionDetector). Hook errors are swallowed —
     // substrate event archival must not block .meta writes. Mirrors listener.ts's
     // hook-call block exactly (same edge-extraction + try/catch-swallow pattern).
-    async materialize(identifier, quads, governed) {
+    async materialize(identifier, quads, governed, snapshot) {
         const { MetaWriter } = await getPipeline();
         const fsPath = (0, fsPaths_1.fsPathFromUrl)(identifier.path, this.baseUrl, this.dataDir);
-        // T2 interim: degraded pairShadow (oldProjected null) — strictly narrower
-        // than the old predicate strip. Task 5 upgrades this path to exact
-        // subtraction from the pre-commit snapshot (spec §5 primary path).
-        await new MetaWriter().replaceProjected(fsPath, quads, null, { resourceUrl: identifier.path });
+        let oldProjected = null;
+        if (snapshot.oldMetaTtl !== null) {
+            const snapMeta = this.parseSnapshotMeta(snapshot.oldMetaTtl, identifier.path);
+            const versionMatches = snapMeta.some((q) => q.subject.value === identifier.path
+                && q.predicate.value === stampPredicates_1.VERSION_PRED
+                && q.object.value === this.version);
+            if (snapshot.oldBody !== null && versionMatches) {
+                const oldQuads = await this.runPipelineFor(identifier, snapshot.oldBody);
+                oldProjected = [...oldQuads, ...this.oldStampQuads(snapMeta, identifier.path)];
+            }
+            else {
+                // A prior .meta exists but exactness was impossible → flag for the lane.
+                this.signalDegraded(identifier);
+            }
+        }
+        // First write (no prior .meta): degraded branch over an absent/empty .meta is
+        // trivially fine — no signal.
+        await new MetaWriter().replaceProjected(fsPath, quads, oldProjected, {
+            resourceUrl: identifier.path,
+            snapshotTtl: snapshot.oldMetaTtl ?? undefined,
+        });
         // Surface <#this>-subject edges to the post-projection hook.
         // thisIri matches the convention in listener.ts (resource path + "#this").
         const thisIri = `${identifier.path}#this`;

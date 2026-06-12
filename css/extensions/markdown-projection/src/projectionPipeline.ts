@@ -24,6 +24,17 @@ import { PAGE_GOVERNED_PREDICATES, WIKI_CLASS_TO_THING_CLASS,
 
 const { namedNode, literal, quad } = DataFactory;
 
+// ---------------------------------------------------------------------------
+// Projector version (provenance-scoped projection spec §6)
+// ---------------------------------------------------------------------------
+// Stamped into .meta as sub:projectorVersion (beside sub:bodyHash) by the admission
+// floor, so the NEXT write can decide exact recompute-subtraction (stamp matches the
+// running projector) vs degraded pairShadow + curation signal (it doesn't).
+// Hand-maintained mirror of package.json "version": a JSON import is awkward in the
+// dual NodeNext-ESM/CJS build, so test/versionAgreement.test.ts pins this equal to
+// package.json (the repo's mirror-test idiom). Bump BOTH together.
+export const PROJECTOR_VERSION = "0.1.0";
+
 const DCT_TITLE                = "http://purl.org/dc/terms/title";
 const DCT_CONFORMS_TO          = "http://purl.org/dc/terms/conformsTo";
 const PROV_GEN_BY              = "http://www.w3.org/ns/prov#wasGeneratedBy";
