@@ -101,6 +101,17 @@ def test_view_write_405():
         assert r.status_code == 405 and "document view" in r.text
 
 
+def test_view_write_405_alt_token():
+    # F1 regression: alt fell through canHandle BEFORE the method check, and a
+    # live PUT ?_profile=alt landed on the underlying resource (CSS strips the
+    # query). ANY ?_profile= write must stay claimed → 405, nothing created.
+    url = f"{POD}/vault/wiki/concepts/vl-f1-alt-{uuid.uuid4().hex[:8]}.md"
+    with C() as c:
+        r = _put(c, f"{url}?_profile=alt", "# must never land\n")
+        assert r.status_code == 405, f"expected 405, got {r.status_code}: {r.text[:200]}"
+        assert c.get(url).status_code == 404, "the guarded PUT created the resource"
+
+
 # ─── /vault/views/people/ cross-cutting view ───────────────────────────────────
 
 def test_people_view_lists_members():

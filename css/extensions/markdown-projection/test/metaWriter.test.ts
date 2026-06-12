@@ -43,6 +43,38 @@ describe("MetaWriter", () => {
         expect(titles[0]?.object.value).toBe("hello");
     });
 
+    // F7: prov:wasGeneratedBy is page-governed, but the pipeline only ever EMITS
+    // it on the .meta DOCUMENT subject — stripping it by predicate on ALL
+    // subjects deleted the index view's derivation pointer (<resource>
+    // prov:wasGeneratedBy <view-descriptor>) on re-projection.
+    it("preserves prov:wasGeneratedBy on non-meta-document subjects, still replaces it on the .meta doc subject", async () => {
+        const target = join(dir, "idx.md");
+        const url = "https://pod.example/vault/wiki/concepts/index.md";
+        const PROV_GEN_BY = "http://www.w3.org/ns/prov#wasGeneratedBy";
+        const existing = [
+            `<${url}> <${PROV_GEN_BY}> <https://pod.example/vault/meta/views/container-index> .`,
+            `<${url}.meta> <${PROV_GEN_BY}> <urn:stale-affordance> .`,
+        ].join("\n");
+        writeFileSync(`${target}.meta`, existing);
+
+        const projected = [quad(
+            namedNode(`${url}.meta`),
+            namedNode(PROV_GEN_BY),
+            namedNode("https://pod.example/meta/affordances/markdown-projection"),
+        )];
+        await writer.replaceGoverned(target, projected, [PROV_GEN_BY], url);
+
+        const out = new Store(new Parser().parse(readFileSync(`${target}.meta`, "utf8")));
+        const onResource = out.getQuads(namedNode(url), namedNode(PROV_GEN_BY), null, null);
+        expect(onResource).toHaveLength(1);
+        expect(onResource[0].object.value)
+            .toBe("https://pod.example/vault/meta/views/container-index");
+        const onMetaDoc = out.getQuads(namedNode(`${url}.meta`), namedNode(PROV_GEN_BY), null, null);
+        expect(onMetaDoc).toHaveLength(1);
+        expect(onMetaDoc[0].object.value)
+            .toBe("https://pod.example/meta/affordances/markdown-projection");
+    });
+
     it("removes old governed triples on replace", async () => {
         const target = join(dir, "baz.md");
         const existing = `<urn:baz> <urn:title> "old title" .`;

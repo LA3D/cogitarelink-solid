@@ -373,4 +373,97 @@ describe("IndexViewListener", () => {
     expect(body).toContain("Alpha");
     expect(body).not.toContain("Beta");
   });
+
+  it("T12 (F8): a 5-event burst during a running regeneration coalesces to ≤2 regenerations AND the final index reflects post-burst state", async () => {
+    const alpha = `${CONCEPTS}alpha.md`;
+    const beta = `${CONCEPTS}beta.md`;
+    const store = makeStore({
+      [CONCEPTS]: containsQuads(CONCEPTS, [alpha]),
+      [`${alpha}.meta`]: memberMetaQuads(alpha, "Alpha", "First."),
+      [`${beta}.meta`]: memberMetaQuads(beta, "Beta", "Second."),
+    });
+    const listener = makeListener(store);
+    await listener.handle();
+
+    // Regeneration A reads [alpha], then blocks mid-write on index.md.
+    const gate = store._gateNextWrite(`${CONCEPTS}index.md`);
+    store._fireSync({ path: alpha }, `${AS_NS}Update`);
+    await gate.entered;
+
+    // A 5-event burst lands while A is in flight; the membership now includes beta.
+    store._setQuads(CONCEPTS, containsQuads(CONCEPTS, [alpha, beta]));
+    for (let i = 0; i < 5; i += 1) store._fireSync({ path: beta }, `${AS_NS}Update`);
+
+    gate.release();
+    await new Promise((r) => setTimeout(r, 80));
+
+    // Trailing-coalesce: the running regen + ONE more that sees final state.
+    const indexWrites = store._calls.filter(
+      (c: any) => c.method === "setRepresentation" && c.id === `${CONCEPTS}index.md`,
+    );
+    expect(indexWrites.length).toBeLessThanOrEqual(2);
+    const body = store._getText(`${CONCEPTS}index.md`);
+    expect(body).toContain("Alpha");
+    expect(body).toContain("Beta");
+  });
+});
+
+// F5: with NESTED registered containers, the member's container must be the
+// LONGEST matching prefix — the old first-match loop returned undefined for an
+// inner member when the outer container matched first (order-dependent).
+describe("IndexViewListener — nested containers (F5 longest-prefix)", () => {
+  const OUTER = `${BASE}/vault/x/`;
+  const INNER = `${BASE}/vault/x/y/`;
+  const orders: Record<string, string[]> = {
+    "outer-first": [OUTER, INNER],
+    "inner-first": [INNER, OUTER],
+  };
+
+  for (const [name, containers] of Object.entries(orders)) {
+    it(`inner member event routes to the INNER container (${name})`, async () => {
+      const m = `${INNER}m.md`;
+      const store = makeStore({
+        [OUTER]: containsQuads(OUTER, []),
+        [INNER]: containsQuads(INNER, [m]),
+        [`${m}.meta`]: memberMetaQuads(m, "Inner Note"),
+      });
+      const listener = new IndexViewListener(store as any, BASE, containers, VIEWS_BASE);
+      await listener.handle();
+
+      await store._fire({ path: m }, `${AS_NS}Update`);
+
+      expect(store._getText(`${INNER}index.md`)).toContain("Inner Note");
+      expect(store._getText(`${OUTER}index.md`)).toBeUndefined();
+    });
+
+    it(`outer member event routes to the OUTER container (${name})`, async () => {
+      const m = `${OUTER}m.md`;
+      const store = makeStore({
+        [OUTER]: containsQuads(OUTER, [m]),
+        [INNER]: containsQuads(INNER, []),
+        [`${m}.meta`]: memberMetaQuads(m, "Outer Note"),
+      });
+      const listener = new IndexViewListener(store as any, BASE, containers, VIEWS_BASE);
+      await listener.handle();
+
+      await store._fire({ path: m }, `${AS_NS}Update`);
+
+      expect(store._getText(`${OUTER}index.md`)).toContain("Outer Note");
+      expect(store._getText(`${INNER}index.md`)).toBeUndefined();
+    });
+
+    it(`nested non-member resource is still ignored (${name})`, async () => {
+      const store = makeStore({
+        [OUTER]: containsQuads(OUTER, []),
+        [INNER]: containsQuads(INNER, []),
+      });
+      const listener = new IndexViewListener(store as any, BASE, containers, VIEWS_BASE);
+      await listener.handle();
+
+      await store._fire({ path: `${OUTER}.ops/f` }, `${AS_NS}Update`);
+
+      const writes = store._calls.filter((c) => c.method === "setRepresentation");
+      expect(writes.length).toBe(0);
+    });
+  }
 });

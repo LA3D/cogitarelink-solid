@@ -65,7 +65,7 @@ function meta(contentType: string) {
   return { contentType };
 }
 
-function makeStore(opts: { bodyMissing?: boolean } = {}) {
+function makeStore(opts: { bodyMissing?: boolean; projectionMissing?: boolean } = {}) {
   return {
     async getRepresentation(id: { path: string }, prefs: any) {
       const path = id.path;
@@ -100,6 +100,10 @@ function makeStore(opts: { bodyMissing?: boolean } = {}) {
 
       // fused-projection query text.
       if (path === `${VIEWS}fused-projection`) {
+        if (opts.projectionMissing) {
+          const { NotFoundHttpError } = await import("@solid/community-server");
+          throw new NotFoundHttpError();
+        }
         return { data: guardedStreamFrom(FUSED_PROJECTION), metadata: meta("text/plain") };
       }
 
@@ -164,7 +168,7 @@ function makeResponse() {
   };
 }
 
-function build(opts: { bodyMissing?: boolean } = {}) {
+function build(opts: { bodyMissing?: boolean; projectionMissing?: boolean } = {}) {
   return new ViewHttpHandler(
     makeStore(opts) as any,
     new ViewAssembler(),
@@ -211,12 +215,28 @@ describe("ViewHttpHandler.canHandle", () => {
   });
 
   // SP2-T7: alt (selection-era catalog) is retired. The request falls through to
-  // plain LDP — the resource itself is served, not a 400.
-  it("?_profile=alt is no longer claimed (falls through to LDP as NotImplemented)", async () => {
+  // plain LDP — the resource itself is served, not a 400. GET/HEAD ONLY (F1).
+  it("?_profile=alt is no longer claimed on GET (falls through to LDP as NotImplemented)", async () => {
     const h = build();
     const res = makeResponse();
     await expect(h.canHandle(input("GET", "alt", res) as any))
       .rejects.toThrow(NotImplementedHttpError);
+  });
+
+  // F1: a non-GET/HEAD with ANY ?_profile= token stays claimed — a fall-through
+  // PUT lands the write on the underlying resource (CSS strips the query).
+  it("PUT ?_profile=alt IS claimed (write guard — lens law)", async () => {
+    const h = build();
+    const res = makeResponse();
+    await expect(h.canHandle(input("PUT", "alt", res) as any)).resolves.toBeUndefined();
+  });
+
+  it("PUT ?_profile=alt handled → 405 read-only", async () => {
+    const h = build();
+    const res = makeResponse();
+    await h.handle(input("PUT", "alt", res) as any);
+    expect(res.statusCode).toBe(405);
+    expect(res.headers["allow"]).toBe("GET, HEAD, OPTIONS");
   });
 });
 
@@ -240,6 +260,18 @@ describe("ViewHttpHandler.handle — fused", () => {
     const res = makeResponse();
     await expect(h.handle(input("GET", "fused", res) as any)).resolves.toBeUndefined();
     expect(res.statusCode).toBe(404);
+  });
+
+  // F2: a missing fused-projection ARTIFACT is a server-side gap, not a missing
+  // page. Pre-fix, its NotFoundHttpError reached handle()'s catch and wrote
+  // "404 No resource at <page>" — a false claim about an existing page. It must
+  // surface as InternalServerError (the configurator writes the honest 500).
+  it("missing view artifact on an EXISTING page is NOT a 404 naming the page", async () => {
+    const h = build({ projectionMissing: true });
+    const res = makeResponse();
+    await expect(h.handle(input("GET", "fused", res) as any))
+      .rejects.toThrow(/fused view artifact missing/);
+    expect(res.statusCode).not.toBe(404);
   });
 
   // D114 T5: fused must be substrate-wide + content-type-agnostic. An RDF record

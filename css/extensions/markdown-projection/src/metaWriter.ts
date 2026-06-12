@@ -32,6 +32,8 @@ import type { NamedNode } from "n3";
 
 const STALE_LOCK_MS = 30_000;
 
+const PROV_GEN_BY = "http://www.w3.org/ns/prov#wasGeneratedBy";
+
 export class MetaWriter {
     /**
      * Replace all governed-predicate triples in the .meta file with the
@@ -61,10 +63,20 @@ export class MetaWriter {
             const existing = this.readExisting(metaPath, metaBaseIri);
             const govSet   = new Set(governed);
 
-            // Keep triples whose predicate is NOT in the governed set
+            // Keep triples whose predicate is NOT in the governed set.
+            // prov:wasGeneratedBy gets a one-predicate SUBJECT scope (F7): the
+            // pipeline only ever emits it on the .meta DOCUMENT subject
+            // (projectionPipeline.ts), so stripping it by predicate on other
+            // subjects deleted derivation pointers like the index view's
+            // <resource> prov:wasGeneratedBy <view-descriptor>. NOT generalized
+            // to pair-scoping — that collides with the replace-stale-values
+            // contract; broad agent-triple survival stays D82's problem.
             const preserved = existing
                 .getQuads(null, null, null, null)
-                .filter(q => !govSet.has(q.predicate.value));
+                .filter(q => !govSet.has(q.predicate.value)
+                    || (q.predicate.value === PROV_GEN_BY
+                        && metaBaseIri !== undefined
+                        && q.subject.value !== metaBaseIri));
 
             const merged = new Store([...preserved, ...projected]);
             await this.write(metaPath, merged);

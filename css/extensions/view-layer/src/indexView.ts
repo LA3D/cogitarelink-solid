@@ -27,6 +27,10 @@ const NAME = "https://schema.org/name";
 const DEF = "http://www.w3.org/2004/02/skos/core#definition";
 const DESC = "https://schema.org/description";
 
+// Soft-wrapped span literals carry newlines through the projection (F3) —
+// collapse all whitespace so every index entry stays a single line.
+const ws = (s: string): string => s.replace(/\s+/g, " ").trim();
+
 /** Definition-line index over a container's member `<...#this>` subjects. */
 export function buildIndexMarkdown(containerUrl: string, quads: Quad[]): string {
   const bySubject = new Map<string, { label?: string; def?: string }>();
@@ -47,8 +51,8 @@ export function buildIndexMarkdown(containerUrl: string, quads: Quad[]): string 
     if (!label) continue;
     const doc = subject.slice(containerUrl.length).replace(/#.*$/, "");
     if (!doc || doc === "index.md" || doc === "index") continue;
-    const firstSentence = def ? ` — ${def.split(/(?<=\.)\s+/)[0]}` : "";
-    lines.push(`- [${label}](${doc})${firstSentence}`);
+    const firstSentence = def ? ` — ${ws(def).split(/(?<=\.)\s+/)[0]}` : "";
+    lines.push(`- [${ws(label)}](${doc})${firstSentence}`);
   }
   lines.sort((a, b) => a.localeCompare(b, "en"));
   return `---\ntype: ${INDEX_FRONTMATTER_TYPE}\n---\n# Index\n\nOne line per member; derived — see this document's .meta for derivation provenance.\n\n${lines.join("\n")}\n`;

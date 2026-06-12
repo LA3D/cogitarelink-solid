@@ -45,6 +45,20 @@ describe("buildIndexMarkdown", () => {
     expect(md).not.toContain("Second sentence");
   });
 
+  // F3: soft-wrapped span literals carry newlines through the projection — the
+  // index line must be whitespace-normalized (label AND definition).
+  it("definition with embedded newline yields a single-line bullet", () => {
+    const md = buildIndexMarkdown(C, conceptQuads("multi", "Multi", "Multi:\nsecond line. More."));
+    const line = md.trim().split("\n").find((l) => l.startsWith("- "));
+    expect(line).toBe("- [Multi](multi.md) — Multi: second line.");
+  });
+
+  it("label with embedded newline is normalized", () => {
+    const md = buildIndexMarkdown(C, conceptQuads("wrap", "Two\nLines", "Ok."));
+    const line = md.trim().split("\n").find((l) => l.startsWith("- "));
+    expect(line).toBe("- [Two Lines](wrap.md) — Ok.");
+  });
+
   it("skips the index resource itself", () => {
     const quads = [
       ...conceptQuads("index", "The Index"),

@@ -33,11 +33,11 @@
  * self-writes; there is deliberately NO global in-flight flag (an earlier
  * ops-index-style `deriving` flag gated event ENTRY and silently DROPPED real
  * member events arriving during a regeneration, leaving the index stale —
- * the test_delete_refreshes_index flake). Member events instead ALWAYS enqueue
- * onto the per-container promise chain: an event landing during a running
- * regeneration schedules a fresh regeneration after it (the running one may
- * have read pre-event state), and overlapping member writes serialize rather
- * than interleave half-written indexes.
+ * the test_delete_refreshes_index flake). Member events instead TRAILING-
+ * COALESCE per container (F8): an event landing during a running regeneration
+ * sets a queued flag (no new work per event), and on completion exactly ONE
+ * more regeneration runs — it reads post-burst state, so nothing is dropped
+ * and a K-event burst costs ≤2 regenerations instead of K.
  *
  * DELETE delivery: MonitoringStore emits 'changed' with as:Delete for the
  * removed resource itself, so member deletes regenerate from the post-delete
@@ -80,11 +80,12 @@ export class IndexViewListener extends Initializer {
   // The view descriptor IRI for prov:wasGeneratedBy, derived from viewsBase.
   private readonly containerIndexView: string;
 
-  // Per-container serialization: overlapping member writes chain rather than
-  // interleave regenerations. Self-writes (index.md / index.md.meta) re-emit
-  // 'changed' through the same MonitoringStore but are excluded by
-  // memberContainer — no global in-flight flag (it would drop member events).
-  private readonly pending = new Map<string, Promise<void>>();
+  // Per-container trailing-coalesce state (F8): an entry exists while a
+  // regeneration loop is running; `queued` marks events that arrived during it.
+  // Self-writes (index.md / index.md.meta) re-emit 'changed' through the same
+  // MonitoringStore but are excluded by memberContainer — no global in-flight
+  // flag (it would drop member events).
+  private readonly running = new Map<string, { queued: boolean }>();
 
   public constructor(
     private readonly store: MonitoringStore,
@@ -104,57 +105,74 @@ export class IndexViewListener extends Initializer {
   public async handle(): Promise<void> {
     this.store.on("changed", (target: ResourceIdentifier, _activity: unknown): void => {
       const ctr = this.memberContainer(target.path);
-      if (!ctr) return;
-      const prev = this.pending.get(ctr) ?? Promise.resolve();
-      const next = prev
-        .then((): Promise<void> => this.regenerate(ctr))
-        .catch((err: unknown): void => {
-          const msg = err instanceof Error ? err.message : String(err);
-          this.logger.error(`index-view: ${ctr}: ${msg}`);
-        })
-        .finally((): void => {
-          // Prune the entry once the chain has settled so the map doesn't
-          // accumulate resolved promises indefinitely.
-          if (this.pending.get(ctr) === next) this.pending.delete(ctr);
-        });
-      this.pending.set(ctr, next);
+      if (ctr) this.schedule(ctr);
     });
     this.logger.info(`IndexViewListener attached (${this.containerUrls.length} containers)`);
+  }
+
+  // Trailing-coalesce (F8): events during a running regeneration set `queued`;
+  // on completion, ONE more regeneration runs (it sees final state). The flag
+  // resets at the top of each pass, so a K-burst costs ≤2 regenerations while
+  // the never-drop guarantee holds (the trailing pass reads post-event state).
+  private schedule(ctr: string): void {
+    const st = this.running.get(ctr);
+    if (st) {
+      st.queued = true;
+      return;
+    }
+    const entry = { queued: false };
+    this.running.set(ctr, entry);
+    void (async (): Promise<void> => {
+      do {
+        entry.queued = false;
+        try {
+          await this.regenerate(ctr);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          this.logger.error(`index-view: ${ctr}: ${msg}`);
+        }
+      } while (entry.queued);
+      this.running.delete(ctr);
+    })();
   }
 
   /**
    * The registered container `path` is a DIRECT member (or a member's .meta) of,
    * or undefined. The container itself, index.md, index.md.meta, and nested
-   * resources (.operations/ etc.) all return undefined.
+   * resources (.operations/ etc.) all return undefined. With NESTED registered
+   * containers the LONGEST matching prefix wins (F5) — the old first-match loop
+   * let an outer container swallow an inner member's event, order-dependently.
    */
   private memberContainer(path: string): string | undefined {
     const p = path.endsWith(".meta") ? path.slice(0, -".meta".length) : path;
+    let best: string | undefined;
     for (const ctr of this.containerUrls) {
-      if (!p.startsWith(ctr)) continue;
-      const rest = p.slice(ctr.length);
-      if (!rest || rest.includes("/") || rest === "index.md") return undefined;
-      return ctr;
+      if (p.startsWith(ctr) && (!best || ctr.length > best.length)) best = ctr;
     }
-    return undefined;
+    if (!best) return undefined;
+    const rest = p.slice(best.length);
+    if (!rest || rest.includes("/") || rest === "index.md") return undefined;
+    return best;
   }
 
   private async regenerate(ctr: string): Promise<void> {
     const members = await this.members(ctr);
 
-    // Gather every member's .meta quads (tolerate missing — e.g. a freshly
-    // deleted member, or a member whose projection hasn't landed yet).
+    // Gather every member's .meta quads in parallel (tolerate missing — e.g. a
+    // freshly deleted member, or a member whose projection hasn't landed yet).
     const allStore = new Store();
-    for (const member of members) {
+    const metas = await Promise.all(members.map(async (member): Promise<Quad[]> => {
       try {
         const rep = await (this.store as any).getRepresentation(
           { path: `${member}.meta` },
           { type: { [INTERNAL_QUADS]: 1 } },
         );
-        allStore.addQuads((await readableToQuads(rep.data)).getQuads(null, null, null, null));
+        return (await readableToQuads(rep.data)).getQuads(null, null, null, null);
       } catch {
-        // No .meta — skip this member.
+        return [];  // No .meta — skip this member.
       }
-    }
+    }));
+    for (const qs of metas) allStore.addQuads(qs);
 
     const markdown = buildIndexMarkdown(ctr, allStore.getQuads(null, null, null, null));
     const indexId = { path: `${ctr}index.md` };

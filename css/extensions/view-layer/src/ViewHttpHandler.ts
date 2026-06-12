@@ -9,15 +9,18 @@
  *   fused → 200 body ⊕ fenced projection turtle (text/markdown)
  *   <other/empty> → 400 listing valid tokens
  * Removed: doc (redundant with default GET), graph (redundant with describedby
- * .meta) — D114; alt (selection-era catalog, unconsulted) — SP2-T7: ?_profile=alt
- * is NOT claimed (NotImplementedHttpError in canHandle) so it falls through to
- * plain LDP, which serves the resource itself.
- * Non-GET/HEAD → 405 (lens law: views are read-only; sub:writable false).
+ * .meta) — D114; alt (selection-era catalog, unconsulted) — SP2-T7: GET/HEAD
+ * ?_profile=alt is NOT claimed (NotImplementedHttpError in canHandle) so it
+ * falls through to plain LDP, which serves the resource itself.
+ * Non-GET/HEAD with ANY ?_profile= token (alt included) stays CLAIMED → 405
+ * (lens law: view URLs never accept writes; a fall-through write would land on
+ * the underlying resource because CSS strips the query — F1).
  */
 import {
   HttpHandler,
   type HttpHandlerInput,
   type ResourceStore,
+  InternalServerError,
   NotFoundHttpError,
   NotImplementedHttpError,
   INTERNAL_QUADS,
@@ -83,9 +86,13 @@ export class ViewHttpHandler extends HttpHandler {
     if (!this.fullUrl(raw).startsWith(this.baseUrl)) {
       throw new NotImplementedHttpError("view request outside baseUrl");
     }
-    // SP2-T7: alt retired. Fall through to LDP (the resource itself), not 400 —
-    // a learned/cached ?_profile=alt degrades to the document, it doesn't break.
-    if (getProfileToken(this.fullUrl(raw)) === "alt") {
+    // SP2-T7: alt retired. On GET/HEAD fall through to LDP (the resource
+    // itself), not 400 — a learned/cached ?_profile=alt degrades to the
+    // document, it doesn't break. NON-read methods stay claimed (F1): a
+    // fall-through PUT lands the write on the underlying resource (CSS strips
+    // the query) — handle()'s writeReadOnly 405 must fire instead.
+    const method = (input.request.method ?? "GET").toUpperCase();
+    if (getProfileToken(this.fullUrl(raw)) === "alt" && (method === "GET" || method === "HEAD")) {
       throw new NotImplementedHttpError("alt token retired (SP2-T7) — plain LDP serves the resource");
     }
   }
@@ -197,10 +204,24 @@ export class ViewHttpHandler extends HttpHandler {
   private async readProjectionQuery(): Promise<string> {
     const now = Date.now();
     if (!this.projectionCache || now - this.projectionCache.at > CACHE_TTL_MS) {
-      const rep = await this.store.getRepresentation(
-        { path: `${this.viewsBase}fused-projection` },
-        { type: { "text/markdown": 1, "text/plain": 1, "application/sparql-query": 1 } },
-      );
+      let rep;
+      try {
+        rep = await this.store.getRepresentation(
+          { path: `${this.viewsBase}fused-projection` },
+          { type: { "text/markdown": 1, "text/plain": 1, "application/sparql-query": 1 } },
+        );
+      } catch (error: unknown) {
+        // F2: a missing view ARTIFACT must not reach handle()'s NotFound catch,
+        // which would write "404 No resource at <page>" — a false claim about an
+        // existing page. A server-side artifact gap is honestly a 500 (the
+        // configurator's blanket catch fires).
+        if (NotFoundHttpError.isInstance(error)) {
+          throw new InternalServerError(
+            `fused view artifact missing at <${this.viewsBase}fused-projection>`,
+          );
+        }
+        throw error;
+      }
       const query = await readableToString(rep.data);
       this.projectionCache = { query, at: now };
     }
