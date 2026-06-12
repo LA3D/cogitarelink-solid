@@ -37,8 +37,8 @@ function sortedUnique(xs: string[]): string[] {
 }
 
 /**
- * The runtime governed-predicate UNION: every predicate replaceGoverned() can
- * own across the page frame (PAGE_GOVERNED_PREDICATES) and every Thing class
+ * The runtime governed-predicate UNION: every predicate the floor validates
+ * across the page frame (PAGE_GOVERNED_PREDICATES) and every Thing class
  * (the union of all THING_GOVERNED_PREDICATES value lists). This is the set the
  * affordance descriptor's sub:governs must equal (minus rdf:type, which the
  * descriptor advertises separately as the type axis, and minus the substrate-

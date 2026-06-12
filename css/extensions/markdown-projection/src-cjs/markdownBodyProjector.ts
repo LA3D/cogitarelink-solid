@@ -163,9 +163,10 @@ export class MarkdownBodyProjector {
         return { quads, governed };
     }
 
-    // Write `quads` to the resource's .meta sidecar, replacing only `governed`
-    // predicates (D81 Model A — agent-owned triples outside the governed set are
-    // preserved). The floor delegates here because MetaWriter is ESM-only (loaded
+    // Write `quads` to the resource's .meta sidecar via provenance-scoped
+    // replacement (spec 2026-06-12 §4 — agent triples survive by construction;
+    // `governed` no longer drives the replacement, it stays the floor's validation
+    // dispatch). The floor delegates here because MetaWriter is ESM-only (loaded
     // via the runtime pipeline import) and the floor must stay profile-agnostic.
     //
     // After writing .meta, surfaces <#this>-subject edges to postProjectionHook
@@ -179,7 +180,10 @@ export class MarkdownBodyProjector {
     ): Promise<void> {
         const { MetaWriter } = await getPipeline();
         const fsPath = fsPathFromUrl(identifier.path, this.baseUrl, this.dataDir);
-        await new MetaWriter().replaceGoverned(fsPath, quads, governed, identifier.path);
+        // T2 interim: degraded pairShadow (oldProjected null) — strictly narrower
+        // than the old predicate strip. Task 5 upgrades this path to exact
+        // subtraction from the pre-commit snapshot (spec §5 primary path).
+        await new MetaWriter().replaceProjected(fsPath, quads, null, { resourceUrl: identifier.path });
 
         // Surface <#this>-subject edges to the post-projection hook.
         // thisIri matches the convention in listener.ts (resource path + "#this").

@@ -3,7 +3,7 @@ import type { Representation, ResourceIdentifier } from '@solid/community-server
 
 export interface ProjectionResult {
   quads: Quad[];          // the candidate .meta graph for this body
-  governed: string[];     // governed predicate IRIs (for replaceGoverned merge)
+  governed: string[];     // governed predicate IRIs (the floor's validation dispatch set)
 }
 
 // Produces the candidate .meta graph from a (non-RDF) body. Implemented per content-type
@@ -12,7 +12,7 @@ export interface ProjectionResult {
 export interface BodyProjector {
   canProject(representation: Representation): boolean;
   project(identifier: ResourceIdentifier, body: string): Promise<ProjectionResult | null>;
-  // Write the given quads to the resource's .meta, replacing only `governed` predicates
+  // Write the given quads to the resource's .meta, replacing the projection's own prior output (pair-shadow until the exact-subtraction snapshot lands)
   // (preserving agent-owned triples, D81). The projector owns this because MetaWriter is
   // ESM-only and the floor must stay profile-agnostic (no markdown/SKOS/wiki/pipeline
   // symbols may appear in the floor source).

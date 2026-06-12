@@ -102,7 +102,7 @@ interface ProjectionModule {
     // MarkdownBodyProjector uses the SAME helper — one definition for both paths.
     resolveGovernedFromQuads: (quads: import("n3").Quad[], thingIri: string) => string[] | undefined;
     detectClass: (triples: import("n3").Quad[]) => string | undefined;
-    MetaWriter: new() => { replaceGoverned(target: string, projected: import("n3").Quad[], governed: string[], resourceUrl?: string): Promise<void> };
+    MetaWriter: new() => { replaceProjected(target: string, newProjected: import("n3").Quad[], oldProjected: import("n3").Quad[] | null, opts?: { resourceUrl?: string; snapshotTtl?: string }): Promise<void> };
     resolveThingClass: (path: string, typeIndex: Record<string, string>, frontmatterType: string | undefined) => string | undefined;
     TypeIndexLoader: new(podBase: string) => {
         getTypeIndex(): Promise<Record<string, string>>;
@@ -399,7 +399,10 @@ export class MarkdownProjectionListener extends Initializer {
         }
 
         const writer = new MetaWriter();
-        await writer.replaceGoverned(fsPath, triples, governed, target.path);
+        // T2 interim: degraded pairShadow (oldProjected null) — strictly narrower
+        // than the old predicate strip. Task 3 upgrades this path to exact
+        // subtraction via Memento (spec §5 backstop path).
+        await writer.replaceProjected(fsPath, triples, null, { resourceUrl: target.path });
         debug(`wrote .meta for ${target.path} (${triples.length} triples, ${governed.length} governed predicates)`);
 
         // After .meta is written, surface <#this>-subject edges to the

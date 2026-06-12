@@ -315,7 +315,10 @@ class MarkdownProjectionListener extends Initializer_1.Initializer {
             return;
         }
         const writer = new MetaWriter();
-        await writer.replaceGoverned(fsPath, triples, governed, target.path);
+        // T2 interim: degraded pairShadow (oldProjected null) — strictly narrower
+        // than the old predicate strip. Task 3 upgrades this path to exact
+        // subtraction via Memento (spec §5 backstop path).
+        await writer.replaceProjected(fsPath, triples, null, { resourceUrl: target.path });
         debug(`wrote .meta for ${target.path} (${triples.length} triples, ${governed.length} governed predicates)`);
         // After .meta is written, surface <#this>-subject edges to the
         // post-projection hook (consumed by mem-trigger's ContradictionDetector).
