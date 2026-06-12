@@ -143,6 +143,10 @@ selection half served a client that never arrived.)
 (server-side enforcement, derived indexes, views-as-URLs) they empirically rediscovered it,
 and in two places (cold orientation, agent-facing st:Description) we fill or extend gaps the
 specs acknowledge or leave open. SP2 can proceed on the existing block list with the five
-deltas above; the two forks are closed (Turtle-first; drop selection machinery). The one
-remaining pre-plan fork is **prov:agent derivation timing** (derive-now under dev-allow-all
-vs defer to the security profile).
+deltas above; the two forks are closed (Turtle-first; drop selection machinery). The third
+fork — **prov:agent derivation timing** — was closed same day (Chuck, 2026-06-12):
+**DEFER to the security profile**, recorded as a named SP2 follow-on. Rationale: D112
+already scoped identity-derivation as activating with auth, and a derived placeholder
+identity under dev-allow-all asserts provenance the substrate cannot warrant — which cuts
+against the trust-envelope framing this pass landed on (provenance must be *warrantable*,
+not just present).
