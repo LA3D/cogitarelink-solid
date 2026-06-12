@@ -1,6 +1,7 @@
 # Provenance-Scoped Projection Replacement (dissolving D82)
 
-**Status:** DRAFT for Chuck's review. One open knob (§7). Supersedes the F7 review fix
+**Status:** APPROACH CONFIRMED (Chuck 2026-06-12) — §7 DECIDED: version-stamp +
+migration sweep. Ready for the implementation plan. Supersedes the F7 review fix
 (the `prov:wasGeneratedBy` subject-scope special case in `MetaWriter`, commit `8b6e816`)
 once built. **Decision lineage:** the SP2 review found the projection's predicate-keyed
 strip clobbering non-projection triples (F7); the frame-scoped-strip proposal was
@@ -35,6 +36,19 @@ admission floor already enforces who may write governed pairs, with 422s + teach
 - **The strongest single-graph precedent** (Graphiti) tags per-edge provenance and
   invalidates rather than deletes — already our curation posture
   (`mem:RealignAction`, Memento).
+- **UMP corroboration (universalmemoryprotocol.io, v0.1, reviewed 2026-06-12):** the
+  draft Universal Memory Protocol independently lands on the same three commitments —
+  non-destructive updates (`revise` + `supersedes`/`superseded_by` chains, bi-temporal
+  `valid_at` queries ≈ our Memento+supersession), a REQUIRED write-time provenance
+  contract at L2+ (`actor`, `actor_kind` ∈ {user, agent, model, import, scan},
+  `method` ≈ our `hadPlan`; our twin-probe "require-or-derive" finding standardized),
+  and consolidation left to engines (our curation-lane stance). Its sharpest lesson for
+  THIS spec: UMP never faces our clobber problem because ownership is RECORD-granular
+  (one writer per record + supersession — the wiki-lineage one-writer-per-layer pattern
+  again). A Solid `.meta` is deliberately a SHARED-write graph (dual-layer, D58/D81),
+  so we need provenance-scoping *within* the unit — which is exactly what subtraction
+  provides. Maturity caveat: v0.1, no named implementations; treat as convergence
+  evidence, not a binding target.
 - The **subject-frame strip** (the F7 fix's generalization) has no named precedent;
   it would be a bespoke middle between LDP's predicate scope and the mainstream's
   provenance scope. Dropped in favor of provenance scope.
@@ -115,9 +129,9 @@ exact because `f_old` no longer exists in the deployed code.
   version bump (a `pod_audit`-style script, ~50 lines, runs the floor path with
   Memento-old bodies).
 
-## 7. The open knob (Chuck's call)
+## 7. The knob — DECIDED (Chuck, 2026-06-12): version-stamp + migration sweep
 
-**(i) Version-stamp + migration sweep** (the lean, §6): one extra triple per resource;
+**(i) Version-stamp + migration sweep** (CHOSEN): one extra triple per resource;
 exact within version; explicit, auditable re-baseline at version bumps; drift is
 *detected*, degraded handling is *flagged*.
 
@@ -167,4 +181,6 @@ External (research pass 2026-06-12): LDP server-managed triples (w3.org/TR/ldp �
 409s); OBO/ROBOT release artefacts + `is_inferred` annotation; Graphiti/Zep bitemporal
 edge invalidation; Web Annotation (assertions as separate resources); m-ld SU-Set;
 Karpathy LLM-wiki layers / gbrain RESOLVER + index conventions / ByteRover context.md
-/ AKBP rebuildable-cache doctrine; SMW separate property store.
+/ AKBP rebuildable-cache doctrine; SMW separate property store; Universal Memory
+Protocol v0.1 (universalmemoryprotocol.io/specification — record model §2, revise/
+supersession §3, provenance-required-at-L2 write contract, conformance levels §7).
