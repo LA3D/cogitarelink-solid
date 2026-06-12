@@ -12,27 +12,26 @@ authoritative home:
 
 Repo decision IDs differ from vault IDs; both numberings are reconciled in `decisions.md`.
 
-## Project state (as of 2026-06-11)
+## Project state (as of 2026-06-12)
 
-- **▶▶ CURRENT ANCHOR (2026-06-11) — read this first; supersedes the scattered ▶ NEXT markers below.**
-  **SP1 SHIPPED + GATE PASSED** (pod-navigate skill + `solid-pod validate`/`invoke`/`affordances`; merged to
-  solid-agent-skills main; skill arm 3/3; report `docs/plans/2026-06-10-sp1-skill-nav-eval-report.md`).
-  **GENERALIZATION PROBE DONE** (operation-shaped addressbook): found 3 tooling gaps — 1 code bug
-  (`sparql` RDFSource-blind), 1 missing feature (parameterized `invoke`), 1 stale descriptor — **all FIXED
-  + re-run 2026-06-11 → execution generalizes** (report `docs/plans/2026-06-10-generalization-probe-report.md`,
-  amended w/ post-fix banner; branch `sp1-exec-fixes` merged). **shacl-engine 1.1.0 spike landed in the CLI
-  `validate` (server-floor migration still open).** **WRITE-SIDE E5b TWIN PROBE RUN 2026-06-11** (report
-  `docs/plans/2026-06-11-e5b-write-twin-report.md`; rig `evals/e5b-write/`; 3 arms × n=3, 9/9 conformant):
-  **the FLOOR is the load-bearing write-quality station** — presence-only floor already elicited genuine
-  write-context (confound disclosed: agents ground `mem:rationale`'s own content-laden `rdfs:comment` —
-  the vocabulary teaches); **D112 minimal-satisfaction replicates at the PROPERTY level** (8/9 exactly the
-  required predicates; zero volunteered prov:* even w/ the disposition → SP2 MUST require-or-derive every
-  always-wanted property); 422 channel never fired (9/9 proactive shape reads — the write path FORCE-CONSUMES
-  its contract, the inverse of the read-path bootstrap leak); content-laden shape instruction = ~2.5× richer
-  rationales; Disposition 3 added nothing measurable over it (its payoff cell never occurred). **▶ NEXT =
-  write the SP2 plan** (all queued pre-SP2 probes done). **REPOS AHEAD/UNPUSHED — push = Chuck's call:
-  solid-agent-skills main +10, cogitarelink-solid main +32 (pre-twin-probe count).** Full detail: the two
-  bullets immediately below + FOLLOWUPS `▶▶ ACTIVE` / `🧭 Generalization` / `📐`/`🧪` sections.
+- **▶▶ CURRENT ANCHOR (2026-06-12) — read this first; supersedes the scattered ▶ NEXT markers below.**
+  **SP2 EXECUTED + GATE MET 2026-06-12** (branch `sp2-consumable-pod`, all 14 tasks; plan
+  `docs/superpowers/plans/2026-06-12-sp2-consumable-pod.md`; gate report
+  `docs/plans/2026-06-12-sp2-e2e-walk-report.md` — 4/4 both-correct, audit disposition 4/4,
+  declared-pattern 3/4 w/ documented harness-load de-confound). What shipped: **An layer SURFACED**
+  (3 interop apps + ShapeTrees + `hasRegistrySet` on the WebID card; `make audit` generalized over
+  them); **derived `sub:ContainerIndex` index views** (on-write `index.md` per container w/ derivation
+  provenance); **strip-back + lean Layer-0** (`?_profile=alt` gone, D80 re-cut to served views, Cut-A
+  disposition literal byte-identical); **Turtle-lane write contract uniform** (`mem:rationale` required
+  + laden 422s, seeds dog-food; T10b: addressbook Org/Group/Membership lanes too); **D96 `<#this>`
+  placement.** Probes (T12): **E7 re-run** — registration bucket FIXED 3/3, catch 0/3 — the failure
+  MOVED to grounded-then-dismissed; **NEW LEVER = decision-laden `mem:` rdfs:comments** (E5b applied
+  to the vocabulary); **in-situ index probe** — 0/6 consulted at n=5 descriptive slugs — payoff regime
+  BOUNDED (index = curl-tier channel, the query tier bypasses it; format A/B moot in situ, re-cut on
+  the mock). **▶ NEXT = FOLLOWUPS `🧷 NAMED FOLLOW-ONS`** (suggested order: decision-laden vocab pass →
+  sibling CLI pass incl. pod-navigate `--param` tier-table line + the 6 gate-report sharp edges → push
+  decision). **REPOS AHEAD/UNPUSHED — push = Chuck's call; counts in flux until the SP2 merge.** Full
+  detail: FOLLOWUPS `▶▶ ACTIVE` / `🧷` sections + the gate/probe reports.
 - **▶▶ STRUCTURE-DESIGN BRAINSTORM 2026-06-10 → spec FOUNDATION banked (approaches DEFERRED to next session).**
   Spec: `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md` (commit `3016f72`).
   **Spine (settled):** progressive disclosure is recursive across BUILDING-BLOCK layers `S→Ad→An→Ax→R` (a pod

@@ -1,0 +1,29 @@
+You are working against a Solid Pod. A collection of concept notes lives in the
+container at:
+
+  CONTAINER_URL
+
+Your task:
+
+  Exactly one concept note in this collection explains why a single document in this
+  memory carries MORE THAN ONE subject in its metadata — a record-level subject and an
+  entity-level subject, each labeled with a different property — and what an agent must
+  supply versus what the substrate derives when writing. Find that one concept note and
+  report its full URL.
+
+Constraints:
+- Interact over HTTP only, using curl. Do not read any other files on this machine,
+  do not search the web, and do not use prior knowledge of this particular Pod — only
+  generic HTTP / RDF / Linked Data standards and whatever you can learn from the Pod.
+- Work efficiently: you are being observed for how many requests you make. Make as few
+  HTTP requests as you need to be confident of the answer.
+EXTRA_CONSTRAINT
+- Keep a trajectory log: for every HTTP request record the URL and method, and the
+  reasoning that drove your next step.
+
+Your final output must contain three sections:
+1. TRAJECTORY — the full request-by-request log.
+2. ANSWER — the full URL of the one matching concept note, and the evidence from its
+   content that confirms it is the match.
+3. PROVENANCE — how you located it: what you read, and whether anything in the
+   container helped you avoid fetching notes one by one.

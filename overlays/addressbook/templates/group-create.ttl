@@ -21,13 +21,17 @@
         4. On 422: read the SHACL ValidationReport, fix cited fields, retry PUT.
 
       Required: vcard:fn + at least one vcard:hasMember (URI of a Person or
-      Organization card, i.e., the #this fragment IRI). Empty groups fail shape.
+      Organization card, i.e., the #this fragment IRI) + mem:rationale. Empty
+      groups fail shape. Every write carries mem:rationale: the task that
+      triggered it, what was concluded, and why — your write-context is
+      unrecoverable after this session.
     """ ;
 
     tmpl:templateBody """
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <>  a vcard:VCard ;
     dct:creator </vault/profile/card#me> ;
@@ -36,6 +40,9 @@
 <#this>
     a vcard:Group ;
     vcard:fn               \"<<GROUP_NAME>>\" ;
+
+    # REQUIRED — the task that triggered this write, what you concluded, and why
+    mem:rationale          \"<<RATIONALE>>\" ;
 
     # AT LEAST ONE member required (IRI of a Person or Organization card):
     vcard:hasMember

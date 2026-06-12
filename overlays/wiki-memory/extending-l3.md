@@ -59,7 +59,7 @@ Vocabulary policy:
 
 ### 3. Write the SHACL shape
 
-Copy `template.shacl.ttl` from `/vault/meta/shapes/template.shacl.ttl` and modify the MODIFY markers. Required edits:
+Copy `template.shacl.ttl` from `/vault/meta/templates/shape-template.shacl.ttl` and modify the MODIFY markers. Required edits:
 
 - `@prefix YOURPFX:` → your domain prefix and URI
 - `YOURPFX:YourThingShape` → your shape name
@@ -300,6 +300,6 @@ The storage description advertises `sub:extensionGuide` so agents arriving cold 
 ## See Also
 
 - [[Wiki Memory L3 Profile]]{.related} — the substrate this extends
-- [[Template SHACL Shape]]{.related} — `/vault/meta/shapes/template.shacl.ttl`
+- [[Template SHACL Shape]]{.related} — `/vault/meta/templates/shape-template.shacl.ttl`
 - [[Memory Operations Vocabulary]]{.related} — `/vault/ontology/mem`
 - D98, D99, D100 in `SOLID-Pod-Decisions.md`

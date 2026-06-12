@@ -1,0 +1,17 @@
+@prefix st:     <http://www.w3.org/ns/shapetrees#> .
+@prefix abtree: <https://pod.vardeman.me/vault/meta/shapetrees/addressbook.tree#> .
+
+# Minimal Shape-Trees doc for the AddressBook app (SP2-T3b; SAI §6.1 — the
+# DataRegistration reg:contacts declares this container tree). Modeled on
+# wiki-memory.tree.ttl: resource trees carry st:shape -> the DEPLOYED SHACL
+# NodeShape IRI (catalog-resident under /vault/meta/shapes/, audit-resolvable).
+
+# Resource trees — one per governed contact class.
+abtree:ContactResourceTree      a st:ShapeTree ; st:expectsType st:Resource ;
+    st:shape <https://pod.vardeman.me/vault/meta/shapes/contact-card.shacl.ttl#ContactCardShape> .
+abtree:OrganizationResourceTree a st:ShapeTree ; st:expectsType st:Resource ;
+    st:shape <https://pod.vardeman.me/vault/meta/shapes/organization-card.shacl.ttl#OrganizationCardShape> .
+
+# Container tree — /vault/contacts/ holds flat Person/*.ttl + Organization/*.ttl.
+abtree:ContactContainerTree a st:ShapeTree ; st:expectsType st:Container ;
+    st:contains abtree:ContactResourceTree, abtree:OrganizationResourceTree .

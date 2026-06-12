@@ -98,7 +98,11 @@ def test_curl_grade_registration_loop_and_derived_entry():
         '@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . '
         '@prefix idot: <http://identifiers.org/idot/> .\n'
         '@prefix dct: <http://purl.org/dc/terms/> .\n'
-        f'<> a foaf:Document ; dct:title "e2e scheme" ; foaf:primaryTopic <{CAT}#zz-e2e> .\n'
+        '@prefix mem: <https://pod.vardeman.me/vault/ontology/mem#> .\n'
+        # mem:rationale: SP2 §6 write contract — conformant writes carry write-context
+        f'<> a foaf:Document ; dct:title "e2e scheme" ;\n'
+        '  mem:rationale "Test write: D111 registration-loop e2e (test_id_schemes_integration)." ;\n'
+        f'  foaf:primaryTopic <{CAT}#zz-e2e> .\n'
         f'<{CAT}#zz-e2e> a idot:Namespace, skos:Concept, rdfs:Datatype ;\n'
         '  skos:prefLabel "ZZ"@en ; skos:definition "e2e scheme record"@en ;\n'
         '  idot:luiPattern "^Z\\\\d+$" ; idot:sampleID "Z1" .\n'

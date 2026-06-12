@@ -132,7 +132,7 @@ class Manifest:
     optional_capabilities: list[CapabilityRequirement]
     vocabularies: list[VocabularyDeclaration]
     container_paths: list[str]        # e.g., "/vault/wiki/pages/"
-    shape_urls: list[str]             # full Pod URLs
+    shapes: list[HostedDocument]      # (local_path, hosted_at) pairs
     affordance_urls: list[str]
     role_scheme_urls: list[str]
     profile_urls: list[str]
@@ -149,6 +149,10 @@ class Manifest:
     views: list[HostedDocument] = field(default_factory=list)          # overlay:installsView — PROF view descriptors (view-layer)
     view_artifacts: list[HostedDocument] = field(default_factory=list) # overlay:installsViewArtifact — SPARQL CONSTRUCT-of-record
     registers_schemes: tuple[URIRef, ...] = ()  # overlay:registersScheme — /id/schemes/<key> records this overlay needs (D111)
+
+    @property
+    def shape_urls(self) -> list[str]:
+        return [s.hosted_at for s in self.shapes]
 
     @property
     def view_urls(self) -> list[str]:
@@ -218,18 +222,22 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
             vocabs.append(VocabularyDeclaration(URIRef(ns), overlay_dir / str(doc), str(host)))
 
     containers = [str(o) for o in many(OVERLAY.installsContainer)]
-    # installsShape supports both flat URI refs (legacy) and structured blank nodes
+    # installsShape: flat URI ref (legacy) or structured blank node
     # [ overlay:document "shapes/foo.ttl" ; overlay:hostedAt "/vault/meta/shapes/foo.ttl" ]
-    # extract hostedAt when present, fall back to str(node) for plain URIRefs
+    # When overlay:document is present use it as local path; otherwise derive from hostedAt filename.
     from rdflib import BNode as _BNode
     shapes = []
     for s_node in many(OVERLAY.installsShape):
         if isinstance(s_node, _BNode):
-            ha = next(g.objects(s_node, OVERLAY.hostedAt), None)
+            ha  = next(g.objects(s_node, OVERLAY.hostedAt), None)
+            doc = next(g.objects(s_node, OVERLAY.document), None)
             if ha:
-                shapes.append(str(ha))
+                local = overlay_dir / str(doc) if doc else overlay_dir / "shapes" / Path(str(ha)).name
+                shapes.append(HostedDocument(local, str(ha)))
         else:
-            shapes.append(str(s_node))
+            ha_str = str(s_node)
+            local = overlay_dir / "shapes" / Path(ha_str).name
+            shapes.append(HostedDocument(local, ha_str))
     affordances = [str(o) for o in many(OVERLAY.installsAffordance)]
     role_schemes = sorted(str(o) for o in many(OVERLAY.installsRoleScheme))
     profiles = sorted(str(o) for o in many(OVERLAY.installsProfile))
@@ -364,7 +372,7 @@ def parse_manifest(overlay_dir: Path, pod_url: str | None = None) -> Manifest:
         name=name, version=version, overlay_iri=overlay_iri, profile_iri=profile_iri,
         required_capabilities=req_caps, optional_capabilities=opt_caps,
         vocabularies=vocabs,
-        container_paths=containers, shape_urls=shapes, affordance_urls=affordances,
+        container_paths=containers, shapes=shapes, affordance_urls=affordances,
         role_scheme_urls=role_schemes, profile_urls=profiles,
         type_registrations=type_regs,
         provides=cap_provisions,

@@ -7,6 +7,7 @@ const { namedNode } = DataFactory;
 const MEM_HAS_OPEN_ACTION = namedNode(
   "https://pod.vardeman.me/vault/ontology/mem#hasOpenAction",
 );
+const SCHEMA_MAIN_ENTITY = namedNode("https://schema.org/mainEntity");
 
 function makeInput(identifier: string, actionUrls: string[]) {
   const metadata = new RepresentationMetadata(namedNode(identifier));
@@ -80,5 +81,35 @@ describe("CurationLinkMetadataWriter", () => {
     expect(link).toContain(
       `<${action2}>; rel="${MEM_HAS_OPEN_ACTION.value}"`,
     );
+  });
+
+  // D96 (SP2-T11): the listener now places the back-pointer on the page's
+  // schema:mainEntity (<#this>) for wiki-lane resources. The writer must still
+  // surface it — a <#this>-subject pointer is invisible to metadata.getAll
+  // (which is <>-subject-bound), so the writer reads both subjects.
+  it("emits Link when the back-pointer sits on the <#this> mainEntity subject", async () => {
+    const page = "http://localhost:3000/vault/wiki/concepts/probe.md";
+    const actionUrl = "http://localhost:3000/vault/wiki/.operations/p1.ttl";
+    const { metadata, response, headers } = makeInput(page, []);
+    metadata.add(SCHEMA_MAIN_ENTITY, namedNode(`${page}#this`));
+    metadata.addQuad(namedNode(`${page}#this`), MEM_HAS_OPEN_ACTION, namedNode(actionUrl));
+
+    await writer.handle({ metadata, response } as any);
+    expect(headers.link).toBeDefined();
+    expect(headers.link!.join(", ")).toContain(
+      `<${actionUrl}>; rel="${MEM_HAS_OPEN_ACTION.value}"`,
+    );
+  });
+
+  it("does not double-emit when the same action sits on both subjects", async () => {
+    const page = "http://localhost:3000/vault/wiki/concepts/probe.md";
+    const actionUrl = "http://localhost:3000/vault/wiki/.operations/p1.ttl";
+    const { metadata, response, headers } = makeInput(page, [actionUrl]);
+    metadata.add(SCHEMA_MAIN_ENTITY, namedNode(`${page}#this`));
+    metadata.addQuad(namedNode(`${page}#this`), MEM_HAS_OPEN_ACTION, namedNode(actionUrl));
+
+    await writer.handle({ metadata, response } as any);
+    const links = headers.link!.join(", ").split(", ").filter((l) => l.includes(actionUrl));
+    expect(links.length).toBe(1);
   });
 });

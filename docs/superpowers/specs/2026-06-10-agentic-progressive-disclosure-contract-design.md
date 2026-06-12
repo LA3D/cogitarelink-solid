@@ -225,6 +225,24 @@ The derivation marker is what the read-path audit disposition checks on a view.
   Ad + An disclosure views via SPARQL/ViewAssembler from the interop+ShapeTree declarations; the
   D96 subject-placement fix; the agentic write contract enforcement (floor extended to
   NonRDFSource); lean Layer-0; **the profiles/roles strip-back + D80 re-cut folded in (§9).**
+
+  > **SP2 EXECUTED 2026-06-12 — GATE MET** (plan
+  > `docs/superpowers/plans/2026-06-12-sp2-consumable-pod.md`; gate report
+  > `docs/plans/2026-06-12-sp2-e2e-walk-report.md`): all 14 tasks on branch `sp2-consumable-pod` —
+  > An layer surfaced (3 interop apps + ShapeTrees + `hasRegistrySet` on the WebID card), derived
+  > `sub:ContainerIndex` index views with derivation provenance, profiles strip-back + lean Layer-0
+  > (Cut-A literal byte-identical), Turtle-lane write contract (`mem:rationale` floor + laden 422s,
+  > seeds dog-food), D96 `<#this>` placement. Gate: 4/4 both-correct, audit disposition 4/4,
+  > declared-pattern 3/4 (run3's miss harness-load-confounded; run4 sequential de-confound clean).
+  > **Two probe-lever findings (T12):** the E7 re-run closed the *registration* bucket (3/3) but
+  > catch dropped to 0/3 — the failure moved downstream to grounded-then-dismissed; the next lever
+  > is **decision-laden `mem:` rdfs:comments** (E5b applied to the vocabulary). The in-situ index
+  > probe bounded the index's payoff regime (0/6 consulted at n=5 descriptive slugs — curl-tier
+  > orientation channel; the query tier bypasses it; format A/B re-cut on the mock). **Named
+  > follow-ons** (FOLLOWUPS `🧷`): markdown-lane write contract GATED ON D82; `prov:agent`
+  > derivation GATED ON the security profile (Chuck 2026-06-12); the decision-laden vocabulary
+  > pass; the sibling CLI sharp edges + pod-navigate `--param` tier-table line.
+
 - **SP3 — the MCP gateway (LATER).** A packaging of the proven skill+tool layer for harnesses
   without skill access. Not designed here.
 

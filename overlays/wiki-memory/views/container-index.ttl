@@ -1,0 +1,28 @@
+@prefix sub:  <https://pod.vardeman.me/vault/ontology/substrate#> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix role: <http://www.w3.org/ns/dx/prof/role/> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://pod.vardeman.me/vault/meta/views/container-index> a sub:View, prof:Profile ;
+  dct:title "Container index view (definition-line index.md child)" ;
+  # No prof:hasToken: this view is not ?_profile=-selected. It materializes as
+  # each registered container's index.md child at write time (SP2; RQ-Discovery-1).
+  prof:hasResource [ a prof:ResourceDescriptor, sub:DerivedNavigationAffordance ;
+    prof:hasRole role:mapping ;
+    skos:note "SELECT-as-view: the declared projection producing one definition line per member <...#this> subject (label, dash, first sentence of the definition). Inlined as sub:selectQuery rather than hosted as a separate artifact: this descriptor IS the query of record, agreement-tested against the extension's INDEX_QUERY constant (D113 declared-query principle — edit both)." ;
+    dct:format "application/sparql-query" ;
+    sub:selectQuery """PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX schema: <https://schema.org/>
+SELECT ?thing ?label ?def WHERE {
+  { ?thing skos:prefLabel ?label } UNION { ?thing schema:name ?label }
+  OPTIONAL { { ?thing skos:definition ?def } UNION { ?thing schema:description ?def } }
+}""" ;
+    prof:hasArtifact <https://pod.vardeman.me/vault/meta/views/container-index> ] ;
+  sub:realization sub:Materialized ;
+  sub:writable false ;
+  sh:agentInstruction "Each registered container serves a derived index.md child built from this query. Derived — audit its .meta derivation provenance before trusting." ;
+  prof:isProfileOf <https://pod.vardeman.me/vault/meta/profiles/page> ;
+  prof:isTransitiveProfileOf <https://pod.vardeman.me/vault/meta/profiles/page>, <https://solidproject.org/TR/protocol> .

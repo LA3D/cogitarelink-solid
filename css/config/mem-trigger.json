@@ -5,7 +5,8 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/memento/^0.1.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@cogitarelink/markdown-projection/^0.1.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/shape-validation-component/^2.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/mem-trigger/^0.1.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/mem-trigger/^0.1.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/view-layer/^0.1.0/components/context.jsonld"
   ],
   "@graph": [
     {
@@ -84,7 +85,7 @@
       }
     },
     {
-      "comment": "Replace WorkerParallelInitializer handlers with all four listeners. This Override is imported AFTER markdown-projection.json (which sets [Memento, MarkdownProjection]) so its overrideParameters wins. K1: only one Override per instance, hence the consolidation pattern (same as memento.json ↔ markdown-projection.json relationship). All four listeners MUST be listed here because Override semantics replace rather than append. ops-index appended at the tail: CDC order = Memento (git) → MarkdownProjection (meta projection) → MemTrigger (event emission) → OpsIndex (back-pointer derivation).",
+      "comment": "Replace WorkerParallelInitializer handlers with all five listeners. This Override is imported AFTER markdown-projection.json (which sets [Memento, MarkdownProjection]) so its overrideParameters wins. K1: only one Override per instance, hence the consolidation pattern (same as memento.json ↔ markdown-projection.json relationship). All five listeners MUST be listed here because Override semantics replace rather than append. CDC order = Memento (git) → MarkdownProjection (meta projection) → MemTrigger (event emission) → OpsIndex (back-pointer derivation) → IndexView (derived index.md children, SP2 — last so it reads .meta state the earlier listeners have settled).",
       "@type": "Override",
       "overrideInstance": { "@id": "urn:solid-server:default:WorkerParallelInitializer" },
       "overrideParameters": {
@@ -93,7 +94,8 @@
           { "@id": "urn:cogitarelink:MementoCommitListener" },
           { "@id": "urn:cogitarelink:MarkdownProjectionListener" },
           { "@id": "urn:cogitarelink:MemTriggerListener" },
-          { "@id": "urn:cogitarelink:OperationsIndexListener" }
+          { "@id": "urn:cogitarelink:OperationsIndexListener" },
+          { "@id": "urn:cogitarelink:IndexViewListener" }
         ]
       }
     }

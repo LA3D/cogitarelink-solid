@@ -1,6 +1,7 @@
 @prefix sh:    <http://www.w3.org/ns/shacl#> .
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <https://pod.vardeman.me/vault/meta/shapes/group.shacl.ttl#GroupShape>
     a sh:NodeShape ;
@@ -8,10 +9,12 @@
     sh:closed false ;
     sh:agentInstruction """
       A vcard:Group is a named collection of contacts. Required: vcard:fn
-      (one) and vcard:hasMember (at least one — empty groups have no purpose).
-      Members must be IRIs of Person or Organization cards. Groups are
-      author-controlled with mnemonic slugs (kebab-case); collisions are
-      manageable because you control naming.
+      (one), vcard:hasMember (at least one — empty groups have no purpose),
+      and mem:rationale. Members must be IRIs of Person or Organization cards.
+      Groups are author-controlled with mnemonic slugs (kebab-case); collisions
+      are manageable because you control naming.
+      Every write carries mem:rationale: the task that triggered it, what was
+      concluded, and why — your write-context is unrecoverable after this session.
     """ ;
 
     sh:property [
@@ -26,4 +29,15 @@
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
         sh:message "Group must have at least one vcard:hasMember (IRI of a Person or Organization card)." ;
+    ] ;
+
+    # SP2 §6 agentic write contract (Turtle lane; twin-probe grounded 2026-06-11):
+    # REQUIRED — agents fill required literals richly and never volunteer optional
+    # ones (e5b-write; D112 35/35). The laden instruction lives on the SHAPE (read
+    # pre-write 9/9); sh:message only fires on violation.
+    sh:property [
+        sh:path mem:rationale ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "mem:rationale is required — record the task that triggered this write, what you concluded, and why, including what you consulted. Do not merely restate the record's name; a future agent audits this context before trusting it." ;
     ] .

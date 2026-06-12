@@ -2,7 +2,6 @@
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
 @prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
-@prefix cap:      <https://pod.vardeman.me/vault/ontology/capability#> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:       <http://www.w3.org/ns/shacl#> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
@@ -14,9 +13,5 @@
    rdfs:label "Breadcrumb chain (skos:broader+ walk)" ;
    sub:requiresCapability <https://pod.vardeman.me/vault/meta/capabilities/derived-view.ttl> ;
    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
-   sh:agentInstruction "From a given start IRI, walks the skos:broader chain to the root. Bind ?start to your starting resource and run the SELECT below in your own SPARQL engine pointed at this Pod's wiki containers." ;
-   sub:selectQuery """
-       PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-       SELECT ?ancestor
-       WHERE { <START> skos:broader+ ?ancestor . }
-   """ .
+   rdfs:seeAlso <https://pod.vardeman.me/vault/meta/views/container-index> ;
+   sh:agentInstruction "Breadcrumbs are the skos:broader chain on the resource's <#this> subject in its .meta: follow broader upward hop by hop. No query invocation is needed; each hop is one .meta read (the describedby Link header)." .

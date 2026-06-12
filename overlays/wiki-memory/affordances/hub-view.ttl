@@ -2,7 +2,6 @@
 @prefix prof:     <http://www.w3.org/ns/dx/prof/> .
 @prefix wiki:     <https://pod.vardeman.me/vault/ontology/wiki#> .
 @prefix sub:      <https://pod.vardeman.me/vault/ontology/substrate#> .
-@prefix cap:      <https://pod.vardeman.me/vault/ontology/capability#> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:       <http://www.w3.org/ns/shacl#> .
 @prefix wikirole: <https://pod.vardeman.me/vault/ontology/wikirole#> .
@@ -11,20 +10,11 @@
        prof:ResourceDescriptor ;
    dct:conformsTo <http://www.w3.org/TR/dx-prof/> ;
    prof:hasRole wikirole:derived-class-affordance ;
-   rdfs:label "Hub derivation" ;
+   rdfs:label "Hub navigation" ;
    sub:deriveClass wiki:Hub ;
    sub:targetClass wiki:Resource ;
    sub:requiresCapability <https://pod.vardeman.me/vault/meta/capabilities/derived-view.ttl> ;
    sub:threshold 3 ;
    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
-   sh:agentInstruction "A wiki:Resource becomes a wiki:Hub when ≥3 distinct wiki:Resource instances point at it via skos:broader. Run the CONSTRUCT below in your own SPARQL engine (Comunica recommended), with this Pod's wiki containers as data sources. The Pod does not host a SPARQL endpoint." ;
-   sub:constructQuery """
-       PREFIX wiki: <https://pod.vardeman.me/vault/ontology/wiki#>
-       PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-       CONSTRUCT { ?hub a wiki:Hub . }
-       WHERE {
-           SELECT ?hub (COUNT(DISTINCT ?child) AS ?n)
-           WHERE { ?child skos:broader ?hub . ?hub a wiki:Resource . }
-           GROUP BY ?hub HAVING (?n >= 3)
-       }
-   """ .
+   rdfs:seeAlso <https://pod.vardeman.me/vault/meta/views/container-index> ;
+   sh:agentInstruction "Hub navigation is served, not queried: each wiki container maintains a derived definition-line index.md child listing every member with its definition (see /vault/meta/views/container-index for the declared projection). Read the container's index.md, then navigate the concept's skos:broader / skos:narrower edges in its .meta. A concept with three or more inbound broader links is a hub." .

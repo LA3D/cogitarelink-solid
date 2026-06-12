@@ -1,6 +1,8 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix org:  <http://www.w3.org/ns/org#> .
 @prefix time: <http://www.w3.org/2006/time#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix mem:  <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <https://pod.vardeman.me/vault/meta/shapes/membership.shacl.ttl#MembershipShape>
     a sh:NodeShape ;
@@ -9,9 +11,11 @@
     sh:agentInstruction """
       A reified org:Membership records a Person's affiliation with an
       Organization over a time interval. Required: org:member (the Person),
-      org:organization (the Org), and org:memberDuring (time:Interval with
-      time:hasBeginning; time:hasEnd optional for ongoing). Optional:
-      org:role (vcard:role or bibo:Author etc.). UUIDv4 slug.
+      org:organization (the Org), org:memberDuring (time:Interval with
+      time:hasBeginning; time:hasEnd optional for ongoing), and mem:rationale.
+      Optional: org:role (vcard:role or bibo:Author etc.). UUIDv4 slug.
+      Every write carries mem:rationale: the task that triggered it, what was
+      concluded, and why — your write-context is unrecoverable after this session.
     """ ;
 
     sh:property [
@@ -32,4 +36,15 @@
         sh:path org:memberDuring ;
         sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "Membership must declare org:memberDuring with at least time:hasBeginning." ;
+    ] ;
+
+    # SP2 §6 agentic write contract (Turtle lane; twin-probe grounded 2026-06-11):
+    # REQUIRED — agents fill required literals richly and never volunteer optional
+    # ones (e5b-write; D112 35/35). The laden instruction lives on the SHAPE (read
+    # pre-write 9/9); sh:message only fires on violation.
+    sh:property [
+        sh:path mem:rationale ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "mem:rationale is required — record the task that triggered this write, what you concluded, and why, including what you consulted. Do not merely restate the record's name; a future agent audits this context before trusting it." ;
     ] .

@@ -32,6 +32,10 @@ import { parseProposal, MEM_HAS_OPEN_ACTION, POTENTIAL } from "./parseProposal.j
 
 const { namedNode, quad } = DataFactory;
 
+// D96 (SP2-T11): wiki pages declare <> schema:mainEntity <#this>; the back-pointer
+// goes on the Thing subject agents actually scan. RDF-native lanes keep <>.
+const SCHEMA_MAIN_ENTITY = "https://schema.org/mainEntity";
+
 // Matches any resource directly under a .operations/ container
 // e.g. /vault/wiki/.operations/proposal.ttl or /id/.operations/p1.ttl
 const LEDGER_RE = /\/\.operations\/[^/]+$/u;
@@ -145,13 +149,19 @@ export class OperationsIndexListener extends Initializer {
       existingQuads = [];
     }
 
-    // Remove the specific back-pointer quad (regardless of present/absent — idempotent).
-    const targetNode = namedNode(targetUrl);
+    // D96: if the target's .meta declares schema:mainEntity, the back-pointer
+    // subject is the Thing (<#this>); otherwise the resource URL as before.
+    const mainEntity = existingQuads.find(
+      (q: any) => q.subject.value === targetUrl && q.predicate.value === SCHEMA_MAIN_ENTITY,
+    )?.object.value;
+    const subjectUrl = mainEntity ?? targetUrl;
+
+    // Remove this op's back-pointer from ANY subject (idempotent; also cleans a
+    // stale pre-D96 <>-placement, or a <#this>-placement after mainEntity vanished).
     const predNode = namedNode(MEM_HAS_OPEN_ACTION);
     const opNode = namedNode(opUrl);
     const kept = existingQuads.filter(
       (q: any) => !(
-        q.subject.value === targetUrl &&
         q.predicate.value === MEM_HAS_OPEN_ACTION &&
         q.object.value === opUrl
       ),
@@ -159,7 +169,7 @@ export class OperationsIndexListener extends Initializer {
 
     // Add the back-pointer if present=true.
     const next = present
-      ? [...kept, quad(targetNode, predNode, opNode)]
+      ? [...kept, quad(namedNode(subjectUrl), predNode, opNode)]
       : kept;
 
     // Write back via the store, with the re-entrancy guard active.

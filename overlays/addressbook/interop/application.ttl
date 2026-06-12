@@ -1,0 +1,33 @@
+@prefix interop: <http://www.w3.org/ns/solid/interop#> .
+@prefix acl:     <http://www.w3.org/ns/auth/acl#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix st:      <http://www.w3.org/ns/shapetrees#> .
+@prefix app:     <https://pod.vardeman.me/vault/meta/interop/addressbook-application#> .
+
+app:addressbook a interop:Application ;
+    interop:applicationName "AddressBook" ;
+    interop:applicationDescription "vCard contact store (D87): /vault/contacts/ — flat Person/Organization records, find-by-ORCID/ROR affordances." ;
+    interop:hasAccessNeedGroup app:ab-needs .
+
+app:ab-needs a interop:AccessNeedGroup ;
+    interop:accessNecessity interop:AccessRequired ;
+    interop:accessScenario interop:PersonalAccess ;
+    interop:hasAccessNeed app:need-contacts .
+
+# Shape tree: abtree:ContactContainerTree at /vault/meta/shapetrees/addressbook.tree
+# (SP2-T3b), declared on the DataRegistration reg:contacts in the registry —
+# the audit checks registry-level registeredShapeTree, not AccessNeed-level.
+app:need-contacts a interop:AccessNeed ;
+    interop:accessMode acl:Read , acl:Write ;
+    interop:accessNecessity interop:AccessRequired .
+
+# SP2 consumption hint (spec §3 disclosure-vs-operation split; audience extension
+# of st:Description's human-facing "data listings" — recorded in decisions.md D115).
+app:addressbook-description a st:Description ;
+    st:describes app:addressbook ;
+    sh:agentInstruction """This app is OPERATION-SHAPED: do not enumerate members to
+answer lookups. Discover its affordances (`solid-pod affordances <any-resource-url>`)
+and invoke the declared query — e.g. contact-find-by-orcid with
+--param orcid=<iri> — or run the descriptor's SPARQL yourself. Container listing is
+the fallback, not the access pattern. Data: /vault/contacts/ (vCard Individuals,
+flat Person/*.ttl + Organization/*.ttl).""" .

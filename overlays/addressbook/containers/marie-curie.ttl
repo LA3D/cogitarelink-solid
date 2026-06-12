@@ -1,5 +1,6 @@
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 # Bridge contact: the addressbook home for the wiki person marie-curie.
 # The wiki note (/vault/wiki/people/marie-curie.md) declares schema:sameAs to
@@ -10,4 +11,5 @@
     a vcard:Individual ;
     vcard:fn "Marie Curie" ;
     vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
-    owl:sameAs <http://www.wikidata.org/entity/Q7186> .
+    owl:sameAs <http://www.wikidata.org/entity/Q7186> ;
+    mem:rationale "Seeded by the substrate bootstrap (pod_setup, SP2 2026-06): reference data deployed by the Pod owner, not an agent-session write." .
