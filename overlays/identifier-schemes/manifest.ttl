@@ -8,13 +8,12 @@
 #
 # ORDERING (verified empirically — Task 1 CSS battery): CSS returns H400 when
 # re-constraining a NON-EMPTY container. So the ldp:constrainedBy MUST be
-# applied while /id/schemes/ is still empty. apply.py's installsContainerMetaPatch
-# (block 11) runs AFTER bootstrap content (block 9b) — too late for a container
-# that holds the seed records. Instead the constrainedBy + catalog typing live
-# in the container .meta at containers/id/schemes/.meta, which apply.py block 8
-# applies AT CONTAINER CREATION, before any record lands. (apply.py block 8 was
-# extended to resolve container .meta paths for containers OUTSIDE the /vault
-# storage root — /id/ is one such.) The 8 records + roles deploy via
+# applied while /id/schemes/ is still empty. The constrainedBy + catalog typing
+# live in the container .meta at containers/id/schemes/.meta, which apply.py
+# block 8 applies AT CONTAINER CREATION, before any record lands. (apply.py
+# block 8 was extended to resolve container .meta paths for containers OUTSIDE
+# the /vault storage root — /id/ is one such. installsContainerMetaPatch now
+# also runs pre-content, as block 8b.) The 8 records + roles deploy via
 # installsBootstrapContent.
 <https://pod.vardeman.me/vault/ontology/overlay#identifier-schemes>
     a overlay:Overlay ;

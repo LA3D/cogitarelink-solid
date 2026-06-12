@@ -213,6 +213,27 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
                     n3_patch_inserts_nt(client, meta_url, inserts)
                     print(f"  meta  → {meta_url}")
 
+        # 8b. PATCH .meta on typed subcontainers (e.g., ldp:constrainedBy for shape
+        #     validation). MUST run before ANY content upload (9b bootstrap, 9c page
+        #     installs): CSS refuses to (re)constrain a non-empty container, and the
+        #     IndexViewListener derives an index.md child as soon as the first member
+        #     lands — so a post-content constrainedBy PATCH loses deterministically.
+        #     The patch only needs the container to exist and be EMPTY; the shape it
+        #     points to is fetched lazily by the floor at write time.
+        for meta_patch in manifest.container_meta_patches:
+            meta_url = meta_patch.container_url.rstrip("/") + "/.meta"
+            r = client.patch(
+                meta_url,
+                content=meta_patch.patch_body.encode("utf-8"),
+                headers={"Content-Type": "text/n3"},
+                timeout=10,
+            )
+            if r.status_code not in (200, 201, 205):
+                raise RuntimeError(
+                    f"Failed to PATCH {meta_url}: {r.status_code} {r.text[:200]}"
+                )
+            print(f"  meta patch → {meta_url}")
+
         # 9. Merge JSON-LD context fragment
         ctx_fragment = overlay_dir / "context-fragment.jsonld"
         if ctx_fragment.exists():
@@ -251,20 +272,8 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
             n3_patch_inserts(client, ti_url, build_type_index_graph(manifest, ti_url))
             print(f"  type index → {len(manifest.type_registrations)} registrations patched in")
 
-        # 11. PATCH .meta on typed subcontainers (e.g., ldp:constrainedBy for shape validation)
-        for meta_patch in manifest.container_meta_patches:
-            meta_url = meta_patch.container_url.rstrip("/") + "/.meta"
-            r = client.patch(
-                meta_url,
-                content=meta_patch.patch_body.encode("utf-8"),
-                headers={"Content-Type": "text/n3"},
-                timeout=10,
-            )
-            if r.status_code not in (200, 201, 205):
-                raise RuntimeError(
-                    f"Failed to PATCH {meta_url}: {r.status_code} {r.text[:200]}"
-                )
-            print(f"  meta patch → {meta_url}")
+        # 11. (moved to 8b) Container-meta patches now run BEFORE content upload —
+        #     see the 8b comment for why ordering is load-bearing.
 
         # 11b. PATCH .meta on specific resources (e.g., dct:conformsTo + ldp:constrainedBy
         #      on /vault/profile/card so SHACL validation engages on writes; D86 PROF

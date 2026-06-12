@@ -7,9 +7,9 @@
 # apply.py block 8 — BEFORE bootstrap content lands — because CSS rejects
 # (re)constraining a NON-EMPTY container with H400 ("A container can only be
 # (re)constrained when there are no resources present"). This is the empty-
-# container ordering constraint verified empirically in Task 1. The Block-11
-# installsContainerMetaPatch path runs AFTER bootstrap, so it cannot carry the
-# constrainedBy for a container that holds the 8 seed records.
+# container ordering constraint verified empirically in Task 1.
+# (installsContainerMetaPatch has since moved pre-content too — apply.py
+# block 8b — but the at-creation .meta remains the canonical carrier here.)
 <> a dcat:Catalog, skos:ConceptScheme ;
     dct:title "Identifier-scheme catalog" ;
     ldp:constrainedBy <https://pod.vardeman.me/id/scheme-record.shacl.ttl> .
