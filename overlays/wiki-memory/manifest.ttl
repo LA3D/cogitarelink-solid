@@ -83,7 +83,7 @@
         [ overlay:document "shapes/working.shacl.ttl" ;
           overlay:hostedAt "/vault/meta/shapes/working.shacl.ttl" ] ,
         [ overlay:document "shapes/template.shacl.ttl" ;
-          overlay:hostedAt "/vault/meta/shapes/template.shacl.ttl" ] ;
+          overlay:hostedAt "/vault/meta/templates/shape-template.shacl.ttl" ] ;
 
     overlay:installsAffordance
         </vault/meta/affordances/markdown-projection.ttl> ,

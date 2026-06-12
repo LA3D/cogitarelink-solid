@@ -56,3 +56,18 @@ def test_each_app_declares_consumption_shape():
         body = _graph(path).serialize(format="turtle").lower()
         assert "operation-shaped" in body, \
             f"{path} must declare operation-shaped"
+
+
+def test_shape_catalog_members_all_parse():
+    """All shapes catalog members must parse cleanly — no scaffold placeholders."""
+    g = _graph("/vault/meta/shapes/")
+    LDP = Namespace("http://www.w3.org/ns/ldp#")
+    members = list(g.objects(None, LDP.contains))
+    assert members, "catalog empty?"
+    for m in members:
+        r = httpx.get(str(m), headers={"Accept": "text/turtle"}, verify=_CA)
+        assert r.status_code == 200, f"{m}: {r.status_code}"
+        # N3.js (solid-pod shapes) hard-fails on bracket-placeholder IRIs;
+        # check for the marker text so Python tests catch the same problem.
+        assert "[YOUR VOCABULARY IRI]" not in r.text, \
+            f"{m} contains scaffold placeholder '[YOUR VOCABULARY IRI]' — template must not be in the shape catalog"

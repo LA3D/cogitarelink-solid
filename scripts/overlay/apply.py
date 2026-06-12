@@ -122,9 +122,9 @@ def apply_overlay(overlay_dir: Path, pod_url: str) -> None:
 
         # 3. Upload shape files + patch .meta with dct:conformsTo SHACL spec
         #    so ProfileLinkMetadataWriter emits Link: rel="profile" per D86.
-        for shape_url in manifest.shape_urls:
-            local = overlay_dir / "shapes" / Path(shape_url).name
-            url = absolutize(pod_url, shape_url)
+        for shape in manifest.shapes:
+            local = shape.document
+            url = absolutize(pod_url, shape.hosted_at)
             put_file(client, url, local, "text/turtle")
             print(f"  shape → {url}")
             meta_url = f"{url}.meta"
