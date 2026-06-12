@@ -159,18 +159,8 @@ def test_round_trip(body_file: str, container: str, expected_meta: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    reason=(
-        "CSS FileDataAccessor.writeMetadataFile() overwrites the .meta file on each "
-        "resource PUT, erasing any user-added triples before the MonitoringStore event "
-        "fires and MetaWriter can read them. The MetaWriter's Model A preservation logic "
-        "is correct (verified in unit tests) but operates too late in the request pipeline. "
-        "Fix requires either: (a) MetaWriter reading pre-write .meta state via git history, "
-        "or (b) a separate .meta.agent sidecar that CSS never touches, merged at read time. "
-        "Tracked as a known limitation of the current MetaWriter architecture."
-    ),
-    strict=True,
-)
+# D82 resolved by provenance-scoped projection (spec 2026-06-12): the floor
+# snapshots .meta pre-commit and subtracts exactly its own prior output (PSP-T3).
 def test_agent_enrichment_survives_body_rewrite() -> None:
     """Model A: PUT body → PATCH adds non-governed triple → PUT body again → enrichment persists."""
     body = (FIX / "bodies" / "wiki-memory-l3-profile.md").read_text()
