@@ -26,7 +26,8 @@ import * as path from "path";
 import { readFileSync } from "fs";
 import { fsPathFromUrl } from "./fsPaths";
 import { NoOpPostProjectionHook } from "./NoOpPostProjectionHook";
-import { STAMP_PREDS, VERSION_PRED } from "./stampPredicates";
+import { projectedStampQuads, VERSION_PRED } from "./stampPredicates";
+import { signalDegraded as queueDegradedSignal, eventsContainerFor } from "./curationSignal";
 
 // Pre-commit snapshot handed in by the admission floor (it is the only component that
 // sees body/.meta before CSS's writeMetadataFile clobbers .meta — the D82 root cause).
@@ -87,12 +88,37 @@ function getPipeline(): Promise<any> {
 // version: __dirname is src-cjs (vitest) or dist-cjs (runtime), each one level under the
 // extension root, so "../package.json" resolves in both. The hand-maintained ESM mirror
 // PROJECTOR_VERSION (projectionPipeline.ts) is pinned equal by versionAgreement.test.ts.
-function pkgVersion(): string {
+export function pkgVersion(): string {
     try {
         return JSON.parse(readFileSync(path.resolve(__dirname, "..", "package.json"), "utf8")).version as string;
     } catch {
         return "0.0.0";
     }
+}
+
+/**
+ * ONE pipeline-invocation expression shared by the floor projector (runPipelineFor)
+ * and the listener backstop's two runs (f(body_new) + the Memento-recovered
+ * f(body_old), PSP T5). The positional arg wiring of projectionPipeline.run is the
+ * thing that silently drifts between callers — keep it in exactly one place (the
+ * T3 one-invocation-path rule).
+ */
+export async function invokeProjection(
+    pipelineModule: { projectionPipeline: { run(uri: string, body: string, typeIndex?: Record<string, string>, predicateToClass?: Record<string, string>, literalBinding?: Record<string, string>, storageBase?: string): Promise<Quad[]> } },
+    resourcePath: string,
+    body: string,
+    typeIndex: Record<string, string> | undefined,
+    routingMap: Record<string, string> | null,
+    storageBase: string,
+): Promise<Quad[]> {
+    return pipelineModule.projectionPipeline.run(
+        resourcePath,
+        body,
+        typeIndex,
+        routingMap ?? undefined,
+        undefined,
+        storageBase,
+    );
 }
 
 export class MarkdownBodyProjector {
@@ -146,12 +172,8 @@ export class MarkdownBodyProjector {
     // wiring as f(body_new) or the subtraction drifts. (Type-Index drift between the two
     // writes is the accepted caveat from the spec.)
     private async runPipelineFor(identifier: ResourceIdentifier, body: string): Promise<Quad[]> {
-        const {
-            projectionPipeline,
-            TypeIndexLoader,
-            BOOTSTRAP_PREDICATE_TO_CLASS,
-            loadRoutingMap,
-        } = await getPipeline();
+        const mod = await getPipeline();
+        const { TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap } = mod;
 
         const storageBase = this.storageBase;
 
@@ -168,14 +190,7 @@ export class MarkdownBodyProjector {
 
         const typeIndex = await this.typeIndexLoader.getTypeIndex();
 
-        return await projectionPipeline.run(
-            identifier.path,
-            body,
-            typeIndex,
-            this.routingMap ?? undefined,
-            undefined,
-            storageBase,
-        );
+        return await invokeProjection(mod, identifier.path, body, typeIndex, this.routingMap, storageBase);
     }
 
     public async project(
@@ -215,10 +230,14 @@ export class MarkdownBodyProjector {
     // Degraded-subtraction signal: a PRIOR .meta exists but exact recompute was
     // impossible (old body missing, or its projector-version stamp absent/mismatched —
     // every pre-migration resource starts there; the migration sweep re-baselines).
-    // Task 5 wires the curation signal (mem:DeriveClass via the event path); until
-    // then a logger warn keeps the degraded path observable (and spyable in tests).
+    // PSP T5: queues a mem:StalenessDetected/mem:Materialization event record on the
+    // shared pending buffer (this projector runs IN-BAND inside the floor's
+    // setRepresentation and holds no store, so it cannot write the event itself);
+    // MarkdownProjectionListener drains the buffer into /wiki/.events/ on the
+    // 'changed' event this very write emits. SHARED with the listener backstop path.
     public signalDegraded(identifier: ResourceIdentifier): void {
-        debug(`degraded pairShadow subtraction for ${identifier.path}: prior .meta exists but exact recompute was impossible (missing old body or projector-version mismatch); residue possible until the curation sweep`);
+        debug(`degraded pairShadow subtraction for ${identifier.path}: prior .meta exists but exact recompute was impossible (missing old body or projector-version mismatch); residue possible until the curation sweep — curation signal queued`);
+        queueDegradedSignal(identifier.path, eventsContainerFor(this.storageBase));
     }
 
     // Parse a snapshot .meta serialization. Base IRI = the .meta document URL, mirroring
@@ -229,14 +248,6 @@ export class MarkdownBodyProjector {
         } catch {
             return [];
         }
-    }
-
-    // The stamp quads (sub:bodyHash + sub:projectorVersion) the floor wrote into the
-    // PRIOR .meta are projection-owned: include them in oldProjected so subtraction
-    // removes the stale stamps instead of letting them accumulate write over write.
-    private oldStampQuads(snapMeta: Quad[], resourceUrl: string): Quad[] {
-        return snapMeta.filter((q) =>
-            q.subject.value === resourceUrl && STAMP_PREDS.has(q.predicate.value));
     }
 
     // Write `quads` to the resource's .meta sidecar via provenance-scoped
@@ -273,7 +284,9 @@ export class MarkdownBodyProjector {
                 && q.object.value === this.version);
             if (snapshot.oldBody !== null && versionMatches) {
                 const oldQuads = await this.runPipelineFor(identifier, snapshot.oldBody);
-                oldProjected = [...oldQuads, ...this.oldStampQuads(snapMeta, identifier.path)];
+                // Stamp quads in the PRIOR .meta are projection-owned: include them in
+                // oldProjected so stale stamps are replaced, never accumulated.
+                oldProjected = [...oldQuads, ...projectedStampQuads(snapMeta, identifier.path)];
             } else {
                 // A prior .meta exists but exactness was impossible → flag for the lane.
                 this.signalDegraded(identifier);

@@ -16,3 +16,20 @@
 export const STAMP_PRED = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash";
 export const VERSION_PRED = "https://pod.vardeman.me/vault/ontology/substrate#projectorVersion";
 export const STAMP_PREDS: ReadonlySet<string> = new Set([STAMP_PRED, VERSION_PRED]);
+
+// Quad-shaped structural type (avoids a runtime n3 dependency in this mirror module).
+interface QuadLike {
+    subject: { value: string };
+    predicate: { value: string };
+}
+
+/**
+ * The stamp quads the projection wrote into a PRIOR .meta are projection-owned:
+ * exact subtraction must include them in oldProjected so stale bodyHash /
+ * projectorVersion values are replaced, never accumulated. ONE definition shared
+ * by the floor path (markdownBodyProjector.materialize) and the listener backstop
+ * (PSP T5 — hoisted here from the projector's private helper).
+ */
+export function projectedStampQuads<T extends QuadLike>(quads: T[], resourceUrl: string): T[] {
+    return quads.filter((q) => q.subject.value === resourceUrl && STAMP_PREDS.has(q.predicate.value));
+}

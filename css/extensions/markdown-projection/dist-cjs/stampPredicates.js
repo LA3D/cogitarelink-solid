@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.STAMP_PREDS = exports.VERSION_PRED = exports.STAMP_PRED = void 0;
+exports.projectedStampQuads = projectedStampQuads;
 // stampPredicates.ts — CJS mirror of the floor's two .meta stamp predicates.
 //
 // The IRIs are owned by shape-validator (src/util/StampPredicate.ts) and wired into the
@@ -19,3 +20,13 @@ exports.STAMP_PREDS = exports.VERSION_PRED = exports.STAMP_PRED = void 0;
 exports.STAMP_PRED = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash";
 exports.VERSION_PRED = "https://pod.vardeman.me/vault/ontology/substrate#projectorVersion";
 exports.STAMP_PREDS = new Set([exports.STAMP_PRED, exports.VERSION_PRED]);
+/**
+ * The stamp quads the projection wrote into a PRIOR .meta are projection-owned:
+ * exact subtraction must include them in oldProjected so stale bodyHash /
+ * projectorVersion values are replaced, never accumulated. ONE definition shared
+ * by the floor path (markdownBodyProjector.materialize) and the listener backstop
+ * (PSP T5 — hoisted here from the projector's private helper).
+ */
+function projectedStampQuads(quads, resourceUrl) {
+    return quads.filter((q) => q.subject.value === resourceUrl && exports.STAMP_PREDS.has(q.predicate.value));
+}

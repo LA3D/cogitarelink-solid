@@ -21,9 +21,21 @@ import type { VocabularyTerm } from "rdf-vocabulary";
 import * as path from "path";
 import { readFileSync, existsSync } from "fs";
 import { createHash } from "crypto";
-import { Parser } from "n3";
+import { randomUUID } from "crypto";
+import { Parser, DataFactory } from "n3";
+import type { Quad } from "n3";
+import { BasicRepresentation } from "@solid/community-server/dist/http/representation/BasicRepresentation";
+import type { ResourceStore } from "@solid/community-server/dist/storage/ResourceStore";
 import { NoOpPostProjectionHook } from "./NoOpPostProjectionHook";
-import { MarkdownBodyProjector } from "./markdownBodyProjector";
+import { MarkdownBodyProjector, invokeProjection, pkgVersion } from "./markdownBodyProjector";
+import { recoverPriorBody } from "./gitRead";
+import { VERSION_PRED, projectedStampQuads } from "./stampPredicates";
+import {
+    pendingCurationSignals,
+    signalDegraded as queueDegradedSignal,
+    eventsContainerFor,
+    timestampSlug,
+} from "./curationSignal";
 
 // Re-export NoOpPostProjectionHook so Components.js can construct it via the
 // `@type: "NoOpPostProjectionHook"` declaration in markdown-projection.json.
@@ -185,6 +197,7 @@ export interface MarkdownProjectionListenerArgs {
     dataDir: string;
     storagePath?: string;
     stampPredicate?: string;
+    gitDir?: string;
 }
 
 export class MarkdownProjectionListener extends Initializer {
@@ -199,6 +212,17 @@ export class MarkdownProjectionListener extends Initializer {
     // DEFAULT_STAMP_PRED). Must equal the AdmissionFloorStore's stampPredicate so
     // the backstop's stamp-match skip recognises floor-written .meta.
     private readonly stampPredicate: string;
+    // Memento git repo root (= rootFilePath), injected via Components.js — mirrors
+    // memento.json's MementoCommitListener.gitDir wiring (same variable). The backstop
+    // reads the resource's prior committed body from here for exact subtraction (PSP T5,
+    // spec §5). Empty string disables the git path → degraded pairShadow (the unit-test
+    // store-stub case + any deploy that opts out of Memento).
+    private readonly gitDir: string;
+    // Projector version this listener stamps into .meta — must equal the floor
+    // projector's version so a floor-then-listener write recognises its own stamp on
+    // the next subtraction. Single-sourced via pkgVersion() (same package.json the
+    // MarkdownBodyProjector reads), pinned to the ESM mirror by versionAgreement.test.ts.
+    private readonly version: string = pkgVersion();
     private readonly postProjectionHook: IPostProjectionHook;
     // Serialise concurrent writes per the D68 chain pattern
     private chain: Promise<void> = Promise.resolve();
@@ -217,6 +241,7 @@ export class MarkdownProjectionListener extends Initializer {
         postProjectionHook?: IPostProjectionHook,
         storagePath = "/vault",
         stampPredicate: string = DEFAULT_STAMP_PRED,
+        gitDir = "",
     ) {
         super();
         this.store = store;
@@ -227,6 +252,7 @@ export class MarkdownProjectionListener extends Initializer {
         const sp = storagePath.startsWith("/") ? storagePath : `/${storagePath}`;
         this.storagePath = sp.replace(/\/$/, "");
         this.stampPredicate = stampPredicate;
+        this.gitDir = gitDir;
         this.postProjectionHook = postProjectionHook ?? new NoOpPostProjectionHook();
     }
 
@@ -253,7 +279,11 @@ export class MarkdownProjectionListener extends Initializer {
                 this.onChange(target, activityIri);
             },
         );
-        debug(`attached to MonitoringStore (baseUrl=${this.baseUrl}, dataDir=${this.dataDir})`);
+        // Drain any signals the floor projector queued before handle() ran (mirrors
+        // MemTriggerListener.handle's startup drainPendingEvents).
+        void this.drainCurationSignals().catch((err: Error) =>
+            debug(`startup drainCurationSignals error: ${err.message}`));
+        debug(`attached to MonitoringStore (baseUrl=${this.baseUrl}, dataDir=${this.dataDir}, gitDir=${this.gitDir || "(disabled)"})`);
     }
 
     // ------------------------------------------------------------------
@@ -277,9 +307,40 @@ export class MarkdownProjectionListener extends Initializer {
 
         this.chain = this.chain
             .then(async () => { await this.project(target); })
+            .then(async () => { await this.drainCurationSignals(); })
             .catch((err: Error) => {
                 debug(`projection failed for ${target.path}: ${err.message}`);
             });
+    }
+
+    /**
+     * Drain pendingCurationSignals into <storageBase>/wiki/.events/, one timestamped
+     * .ttl per signal, via store.setRepresentation — MIRRORS mem-trigger's EventEmitter.emit
+     * (timestampSlug + randomUUID filename, text/turtle, in-process store write). The
+     * MarkdownBodyProjector floor path queues onto the SAME buffer (it holds no store +
+     * runs in-band inside setRepresentation); this listener, an Initializer with store
+     * access, is the single drainer. Emit failures drop the signal without throwing —
+     * substrate event archival must not block .meta writes (same stance as MemTrigger).
+     */
+    private async drainCurationSignals(): Promise<void> {
+        while (pendingCurationSignals.length > 0) {
+            const ttl = pendingCurationSignals.shift();
+            if (ttl === undefined) break;
+            // Recover the events container from the signal's as:target so the filename
+            // lands beside the record (the buffer carries only Turtle strings).
+            const match = ttl.match(/<([^>]*\/\.events\/)>/);
+            const container = match ? match[1] : eventsContainerFor(this.storageBase);
+            const path = `${container}${timestampSlug(new Date())}-${randomUUID()}.ttl`;
+            try {
+                await (this.store as unknown as ResourceStore).setRepresentation(
+                    { path },
+                    new BasicRepresentation(ttl, "text/turtle"),
+                );
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error(`[markdown-projection] drainCurationSignals: emit failed (signal dropped): ${(err as Error).message}`);
+            }
+        }
     }
 
     private async project(target: ResourceIdentifier): Promise<void> {
@@ -317,10 +378,10 @@ export class MarkdownProjectionListener extends Initializer {
         }
 
         // Load ESM projection pipeline lazily
-        const { projectionPipeline, resolveGovernedFromQuads, detectClass, MetaWriter,
+        const mod = await getPipeline();
+        const { resolveGovernedFromQuads, detectClass, MetaWriter,
                 resolveThingClass, TypeIndexLoader,
-                BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap, splitFrontmatter } =
-            await getPipeline();
+                BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap, splitFrontmatter } = mod;
 
         // Storage root = baseUrl + storagePath (injected via Components.js,
         // default "/vault" — no longer hardcoded; RQ-Substrate-4 Phase 3 / D107 §4.4).
@@ -377,7 +438,9 @@ export class MarkdownProjectionListener extends Initializer {
             }
         }
 
-        const triples = await projectionPipeline.run(target.path, body, typeIndex, this.routingMap ?? undefined, undefined, storageBase);
+        // ONE pipeline-invocation path shared with the floor projector + the old-body
+        // recompute below (PSP T3 rule — positional arg wiring lives in invokeProjection).
+        const triples = await invokeProjection(mod, target.path, body, typeIndex, this.routingMap, storageBase);
 
         if (!detectClass(triples)) {
             debug(`no rdf:type projected for ${target.path} — resource may lack type frontmatter`);
@@ -398,12 +461,66 @@ export class MarkdownProjectionListener extends Initializer {
             return;
         }
 
+        // Stamp this write: bodyHash + projectorVersion on the <> page subject —
+        // mirrors AdmissionFloorStore.stampQuad/versionQuad so the NEXT write (floor or
+        // listener) recognises its own projection for exact subtraction (spec §6). These
+        // are projection-owned, so they go into `triples`; the PRIOR stamp quads go into
+        // oldProjected (recovered below) and are thus replaced, never accumulated.
+        const newBodyHash = createHash("sha256").update(body).digest("hex");
+        const stamped: Quad[] = [
+            ...triples,
+            DataFactory.quad(
+                DataFactory.namedNode(target.path),
+                DataFactory.namedNode(this.stampPredicate),
+                DataFactory.literal(newBodyHash),
+            ),
+            DataFactory.quad(
+                DataFactory.namedNode(target.path),
+                DataFactory.namedNode(VERSION_PRED),
+                DataFactory.literal(this.version),
+            ),
+        ];
+
+        // Backstop exact subtraction (spec §5): recover the body whose projection the
+        // CURRENT on-disk .meta carries — its sub:bodyHash stamp is the recovery target —
+        // from the Memento git history, and require BOTH (a) the old body is recoverable
+        // AND (b) the .meta's projector-version stamp == this projector's version. f(old)
+        // through the SAME pipeline path = exactly the projection sitting in .meta, so
+        // subtracting it can never strand an agent triple or leave a wrong residue. If
+        // either condition fails AND a prior .meta exists, degrade to pairShadow + queue a
+        // curation signal (first writes — no prior .meta — stay silent). PREFER degraded
+        // over a wrong subtraction (recoverPriorBody returns null on any ambiguity).
+        let oldProjected: Quad[] | null = null;
+        const priorMeta = existingMeta
+            ? new Parser({ baseIRI: `${target.path}.meta` }).parse(existingMeta)
+            : [];
+        const stampHash = priorMeta.find((q) =>
+            q.subject.value === target.path && q.predicate.value === this.stampPredicate)?.object.value;
+        const versionMatches = priorMeta.some((q) =>
+            q.subject.value === target.path
+            && q.predicate.value === VERSION_PRED
+            && q.object.value === this.version);
+        if (existingMeta && stampHash !== undefined && versionMatches && this.gitDir) {
+            const rel = path.relative(this.dataDir, fsPath);
+            const oldBody = await recoverPriorBody(this.gitDir, rel, newBodyHash, stampHash);
+            if (oldBody !== null) {
+                const oldQuads = await invokeProjection(mod, target.path, oldBody, typeIndex, this.routingMap, storageBase);
+                // Prior stamp quads are projection-owned → include them so they are
+                // replaced, not accumulated (same logic as markdownBodyProjector.materialize).
+                oldProjected = [...oldQuads, ...projectedStampQuads(priorMeta, target.path)];
+            }
+        }
+        if (oldProjected === null && existingMeta) {
+            // A prior .meta exists but exact recompute was impossible (old body
+            // unrecoverable / no git history / projector-version mismatch) → degraded
+            // pairShadow; residue possible. Flag the resource for the D112 curation lane.
+            queueDegradedSignal(target.path, eventsContainerFor(storageBase));
+            debug(`degraded pairShadow for ${target.path}: prior .meta exists but exact recompute impossible; curation signal queued`);
+        }
+
         const writer = new MetaWriter();
-        // T2 interim: degraded pairShadow (oldProjected null) — strictly narrower
-        // than the old predicate strip. Task 3 upgrades this path to exact
-        // subtraction via Memento (spec §5 backstop path).
-        await writer.replaceProjected(fsPath, triples, null, { resourceUrl: target.path });
-        debug(`wrote .meta for ${target.path} (${triples.length} triples, ${governed.length} governed predicates)`);
+        await writer.replaceProjected(fsPath, stamped, oldProjected, { resourceUrl: target.path });
+        debug(`wrote .meta for ${target.path} (${stamped.length} triples, ${governed.length} governed predicates, exact=${oldProjected !== null})`);
 
         // After .meta is written, surface <#this>-subject edges to the
         // post-projection hook (consumed by mem-trigger's ContradictionDetector).

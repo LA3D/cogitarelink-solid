@@ -53,12 +53,15 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MarkdownBodyProjector = void 0;
+exports.pkgVersion = pkgVersion;
+exports.invokeProjection = invokeProjection;
 const n3_1 = require("n3");
 const path = __importStar(require("path"));
 const fs_1 = require("fs");
 const fsPaths_1 = require("./fsPaths");
 const NoOpPostProjectionHook_1 = require("./NoOpPostProjectionHook");
 const stampPredicates_1 = require("./stampPredicates");
+const curationSignal_1 = require("./curationSignal");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function debug(...args) {
     // eslint-disable-next-line no-console
@@ -94,6 +97,16 @@ function pkgVersion() {
     catch {
         return "0.0.0";
     }
+}
+/**
+ * ONE pipeline-invocation expression shared by the floor projector (runPipelineFor)
+ * and the listener backstop's two runs (f(body_new) + the Memento-recovered
+ * f(body_old), PSP T5). The positional arg wiring of projectionPipeline.run is the
+ * thing that silently drifts between callers — keep it in exactly one place (the
+ * T3 one-invocation-path rule).
+ */
+async function invokeProjection(pipelineModule, resourcePath, body, typeIndex, routingMap, storageBase) {
+    return pipelineModule.projectionPipeline.run(resourcePath, body, typeIndex, routingMap ?? undefined, undefined, storageBase);
 }
 class MarkdownBodyProjector {
     // Projector implementation version (BodyProjector contract): the floor stamps this
@@ -137,7 +150,8 @@ class MarkdownBodyProjector {
     // wiring as f(body_new) or the subtraction drifts. (Type-Index drift between the two
     // writes is the accepted caveat from the spec.)
     async runPipelineFor(identifier, body) {
-        const { projectionPipeline, TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap, } = await getPipeline();
+        const mod = await getPipeline();
+        const { TypeIndexLoader, BOOTSTRAP_PREDICATE_TO_CLASS, loadRoutingMap } = mod;
         const storageBase = this.storageBase;
         // Lazy-init TypeIndexLoader (mirrors listener.ts lines 275-277)
         if (this.typeIndexLoader === null) {
@@ -149,7 +163,7 @@ class MarkdownBodyProjector {
             this.routingMap = await loadRoutingMap(storageBase, fetch, BOOTSTRAP_PREDICATE_TO_CLASS);
         }
         const typeIndex = await this.typeIndexLoader.getTypeIndex();
-        return await projectionPipeline.run(identifier.path, body, typeIndex, this.routingMap ?? undefined, undefined, storageBase);
+        return await invokeProjection(mod, identifier.path, body, typeIndex, this.routingMap, storageBase);
     }
     async project(identifier, body) {
         const { resolveGovernedFromQuads } = await getPipeline();
@@ -185,10 +199,14 @@ class MarkdownBodyProjector {
     // Degraded-subtraction signal: a PRIOR .meta exists but exact recompute was
     // impossible (old body missing, or its projector-version stamp absent/mismatched —
     // every pre-migration resource starts there; the migration sweep re-baselines).
-    // Task 5 wires the curation signal (mem:DeriveClass via the event path); until
-    // then a logger warn keeps the degraded path observable (and spyable in tests).
+    // PSP T5: queues a mem:StalenessDetected/mem:Materialization event record on the
+    // shared pending buffer (this projector runs IN-BAND inside the floor's
+    // setRepresentation and holds no store, so it cannot write the event itself);
+    // MarkdownProjectionListener drains the buffer into /wiki/.events/ on the
+    // 'changed' event this very write emits. SHARED with the listener backstop path.
     signalDegraded(identifier) {
-        debug(`degraded pairShadow subtraction for ${identifier.path}: prior .meta exists but exact recompute was impossible (missing old body or projector-version mismatch); residue possible until the curation sweep`);
+        debug(`degraded pairShadow subtraction for ${identifier.path}: prior .meta exists but exact recompute was impossible (missing old body or projector-version mismatch); residue possible until the curation sweep — curation signal queued`);
+        (0, curationSignal_1.signalDegraded)(identifier.path, (0, curationSignal_1.eventsContainerFor)(this.storageBase));
     }
     // Parse a snapshot .meta serialization. Base IRI = the .meta document URL, mirroring
     // MetaWriter's read cycle so relative subjects resolve identically.
@@ -199,12 +217,6 @@ class MarkdownBodyProjector {
         catch {
             return [];
         }
-    }
-    // The stamp quads (sub:bodyHash + sub:projectorVersion) the floor wrote into the
-    // PRIOR .meta are projection-owned: include them in oldProjected so subtraction
-    // removes the stale stamps instead of letting them accumulate write over write.
-    oldStampQuads(snapMeta, resourceUrl) {
-        return snapMeta.filter((q) => q.subject.value === resourceUrl && stampPredicates_1.STAMP_PREDS.has(q.predicate.value));
     }
     // Write `quads` to the resource's .meta sidecar via provenance-scoped
     // replacement (spec 2026-06-12 §4 — agent triples survive by construction;
@@ -233,7 +245,9 @@ class MarkdownBodyProjector {
                 && q.object.value === this.version);
             if (snapshot.oldBody !== null && versionMatches) {
                 const oldQuads = await this.runPipelineFor(identifier, snapshot.oldBody);
-                oldProjected = [...oldQuads, ...this.oldStampQuads(snapMeta, identifier.path)];
+                // Stamp quads in the PRIOR .meta are projection-owned: include them in
+                // oldProjected so stale stamps are replaced, never accumulated.
+                oldProjected = [...oldQuads, ...(0, stampPredicates_1.projectedStampQuads)(snapMeta, identifier.path)];
             }
             else {
                 // A prior .meta exists but exactness was impossible → flag for the lane.
