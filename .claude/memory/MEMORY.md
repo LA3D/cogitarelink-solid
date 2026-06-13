@@ -14,8 +14,20 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 
 ## Project state (as of 2026-06-12)
 
-- **▶▶ CURRENT ANCHOR (2026-06-12) — read this first; supersedes the scattered ▶ NEXT markers below.**
-  **SP2 EXECUTED + GATE MET 2026-06-12** (branch `sp2-consumable-pod`, all 14 tasks; plan
+- **▶▶ CURRENT ANCHOR (2026-06-13) — read this first; supersedes the scattered ▶ NEXT markers below.**
+  **PSP SHIPPED 2026-06-13 (D116; branch `prov-scoped-projection`, 8 tasks PSP-T1–T8; controller merges
+  after a final whole-branch review).** Subtraction-based re-projection (`.meta − f(old body) ∪ f(new
+  body)`) replaces the predicate-keyed strip: agent `.meta` enrichment now survives body rewrites BY
+  CONSTRUCTION, so **D82 is DISSOLVED** (the `.meta.agent` sidecar is UNBUILT, the strict-xfail flipped to
+  a normal passing test). Floor path = exact pre-commit snapshot; listener backstop = Memento old-body +
+  degraded pair-shadow that emits a `mem:StalenessDetected`/`mem:Materialization` curation signal;
+  drift handled by `sub:projectorVersion` stamp + a migration sweep; F7 SP2-review fix superseded.
+  Probe PASS 2/2 (`evals/proj-enrich/`, Haiku, $0.26). Prior-art grounded (LDP server-managed-triples /
+  OBO `is_inferred` / Graphiti invalidate-not-delete / UMP). **▶ NEXT = the markdown-lane write contract
+  (FOLLOWUPS 🧷 (a), now UNGATED — `mem:rationale` required on wiki lanes at crystallization, D73
+  preserved) OR the rest of the 🧷 queue.** **REPOS AHEAD/UNPUSHED — push = Chuck's call.** SP2 detail
+  (the prior anchor) follows below.
+- **▶▶ SP2 EXECUTED + GATE MET 2026-06-12** (branch `sp2-consumable-pod`, all 14 tasks; plan
   `docs/superpowers/plans/2026-06-12-sp2-consumable-pod.md`; gate report
   `docs/plans/2026-06-12-sp2-e2e-walk-report.md` — 4/4 both-correct, audit disposition 4/4,
   declared-pattern 3/4 w/ documented harness-load de-confound). What shipped: **An layer SURFACED**
@@ -28,10 +40,10 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
   MOVED to grounded-then-dismissed; **NEW LEVER = decision-laden `mem:` rdfs:comments** (E5b applied
   to the vocabulary); **in-situ index probe** — 0/6 consulted at n=5 descriptive slugs — payoff regime
   BOUNDED (index = curl-tier channel, the query tier bypasses it; format A/B moot in situ, re-cut on
-  the mock). **▶ NEXT = FOLLOWUPS `🧷 NAMED FOLLOW-ONS`** (suggested order: decision-laden vocab pass →
-  sibling CLI pass incl. pod-navigate `--param` tier-table line + the 6 gate-report sharp edges → push
-  decision). **REPOS AHEAD/UNPUSHED — push = Chuck's call; counts in flux until the SP2 merge.** Full
-  detail: FOLLOWUPS `▶▶ ACTIVE` / `🧷` sections + the gate/probe reports.
+  the mock). **▶ NEXT (superseded by the PSP anchor above; the 🧷 (a) markdown-lane contract was the
+  first item PSP unblocked):** FOLLOWUPS `🧷 NAMED FOLLOW-ONS` (decision-laden vocab pass → sibling CLI
+  pass incl. pod-navigate `--param` tier-table line + the 6 gate-report sharp edges → push decision).
+  Full detail: FOLLOWUPS `▶▶ ACTIVE` / `🧷` sections + the gate/probe reports.
 - **▶▶ STRUCTURE-DESIGN BRAINSTORM 2026-06-10 → spec FOUNDATION banked (approaches DEFERRED to next session).**
   Spec: `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md` (commit `3016f72`).
   **Spine (settled):** progressive disclosure is recursive across BUILDING-BLOCK layers `S→Ad→An→Ax→R` (a pod
