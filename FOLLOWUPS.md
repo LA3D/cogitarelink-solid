@@ -384,9 +384,10 @@ suite green Pod-up + Pod-down. **Cold probes run 2026-06-06** (report
    tracks which resources it has annotated in-memory. A restart between a Create event (adds the
    `mem:hasOpenAction` back-pointer) and a Delete event (removes it) leaves a dangling pointer on the
    resource `.meta`. By-design v1; revisit with persistence or a sweep-repair pass.
-3. **wiki-memory rollout gated on D82.** The `mem:hasOpenAction` back-pointer pattern requires the
-   agent `.meta` enrichment to survive body rewrites (D82 `.meta.agent` sidecar). The `/id/` slice
-   sidesteps this (Turtle bodies, no projection rewrite). Full wiki-memory rollout waits on D82.
+3. **wiki-memory rollout gated on D82 — UNGATED 2026-06-13 (D116).** The `mem:hasOpenAction`
+   back-pointer pattern needed agent `.meta` enrichment to survive body rewrites; provenance-scoped
+   projection (D116) makes it survive by construction (D82 dissolved, sidecar unbuilt). Full
+   wiki-memory rollout no longer waits.
 4. **Maturity scorer NOT built — and BLOCKED by ledger anonymity (probe artifact audit 2026-06-06).**
    Ledger signals are defined (clean-trace rate, reversal rate, plan-version stability) but the
    scorer is per-agent and the ledger is anonymous: 35/35 agent-authored probe proposals omitted
@@ -471,8 +472,9 @@ Residue (deliberate, tracked):
 4. **Pod-template `resources/` residue** — `test_no_para_residue` runtime-skips while the reset template
    seeds the empty PARA-era container; fix the template, the test then enforces.
 5. `make test-js` suppresses stderr on failure (print-on-fail would help debugging); minor.
-6. `test_agent_enrichment_survives_body_rewrite` stays strict-xfail (D82 `.meta.agent` sidecar — the one
-   genuinely-deferred case).
+6. `test_agent_enrichment_survives_body_rewrite` — xfail FLIPPED 2026-06-13 (D116); now a normal
+   expected-pass (provenance-scoped projection; the floor snapshots `.meta` pre-commit, the actual root
+   cause was CSS's writeMetadataFile clobber, not the sidecar's absence).
 
 ## 🔬 Agentic-fragility audit (2026-06-03) — ✅ REMEDIATED 2026-06-04 (branch `fragility-remediation`)
 
