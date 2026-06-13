@@ -29,7 +29,7 @@ import type { ResourceStore } from "@solid/community-server/dist/storage/Resourc
 import { NoOpPostProjectionHook } from "./NoOpPostProjectionHook";
 import { MarkdownBodyProjector, invokeProjection, pkgVersion } from "./markdownBodyProjector";
 import { recoverPriorBody } from "./gitRead";
-import { VERSION_PRED, projectedStampQuads } from "./stampPredicates";
+import { STAMP_PRED, VERSION_PRED, projectedStampQuads } from "./stampPredicates";
 import {
     pendingCurationSignals,
     signalDegraded as queueDegradedSignal,
@@ -76,7 +76,13 @@ function debug(...args: unknown[]): void {
 // IRI is wired via config (the stampPredicate constructor param, like
 // storagePath); this default keeps the unit tests green. The stampAgreement
 // test asserts both config files == the floor's exported default.
-export const DEFAULT_STAMP_PRED = "https://pod.vardeman.me/vault/ontology/substrate#bodyHash";
+//
+// Single-sourced from stampPredicates.STAMP_PRED (the same CJS mirror the floor's
+// exact-subtraction path reads) instead of re-declaring the literal — its three
+// siblings (shape-validator StampPredicate, src-cjs/stampPredicates, src/maps) are
+// drift-pinned, and this re-export keeps the public DEFAULT_STAMP_PRED name the
+// constructor default + tests use.
+export const DEFAULT_STAMP_PRED = STAMP_PRED;
 
 /**
  * Returns false (skip) when existingMetaTtl already contains a stamp on stampPred
