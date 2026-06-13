@@ -104,6 +104,23 @@ One line each; details in the gate/probe reports (`docs/plans/2026-06-12-sp2-*.m
   degraded pair-shadow with curation signal / version stamp (`sub:projectorVersion`) + migration sweep.
   Knob §7 settled = version-stamp+sweep. Probe PASS 2/2 (`evals/proj-enrich/`, Haiku, $0.26). Spec +
   plan + probe report cited in D116. Ungates (a) below.
+  **Post-merge review-followups DONE (`psp-review-followups`, 2026-06-13):** migration-sweep
+  outcome classification (rebaselined/skipped/rejected/error; exits nonzero only on transport error,
+  surfaces shape-rejections for human review); listener `bodyHash` constant de-duplicated (imports
+  `STAMP_PRED`); live floor old-version re-baseline test added. **Residue (low-severity, deferred):**
+  (psp-1) the floor does NOT protect its own `sub:projectorVersion`/`sub:bodyHash` stamps against an
+  agent N3 PATCH to `.meta` — an agent can mangle the version stamp, forcing degraded re-baseline on
+  the next write (safe fallback: degraded + curation signal, no data loss; but stamps are meant to be
+  substrate-internal — fold the stamp predicates into the floor's governed/protected set when the
+  write-contract work touches `.meta` PATCH validation). (psp-2) curation-signal push/drain gate
+  asymmetry: floor pushes on content-type `text/markdown`, listener drains on `.md` extension — a
+  `text/markdown` write to a non-`.md` URL delays (never loses) the signal until the next `.md` write
+  or restart; near-unreachable (the Pod binds the two). (psp-3) `gitRead` `maxBuffer` 64 MiB → a body
+  over 64 MiB rejects (caught → degraded), never wrong-subtracts; unreachable for wiki bodies. (psp-4)
+  the markdown-projection `dist-cjs/*.jsonld` is hand-edited + committed (the Dockerfile skips
+  componentsjs-generator for this extension) — overwritten if the generator is ever run; same K1 drift
+  class as the existing stampPredicate precedent. Deployment re-verified end-to-end on a fresh image
+  (gitDir wired, floor exact subtraction live).
 
 - [x] **(k) stale `sub:viewAuthority` vocab prose — CLOSED (PSP-T4):** `rdfs:comment` re-cut off the
   retired storage-description pointer.
