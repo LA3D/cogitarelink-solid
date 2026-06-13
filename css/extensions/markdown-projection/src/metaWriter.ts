@@ -2,16 +2,16 @@
 //
 // Writes projected triples to .meta sidecar files with:
 //   - File lock (O_CREAT | O_EXCL) mirroring D68 .git/memento.lock pattern
-//   - Model A predicate replacement: only governed predicates are replaced;
-//     agent-owned triples (predicates NOT in the governed set) are preserved
+//   - Provenance-scoped replacement (spec 2026-06-12 §4): the subtraction removes
+//     exactly the quad set the projection produced LAST time — recomputed from the
+//     old body, not matched by schema. Agent triples survive by construction,
+//     including ones using governed predicates on other subjects.
 //
-// The "replace-governed" contract means:
-//   - Old governed triples are removed
-//   - New projected triples are inserted
-//   - Non-governed triples are left untouched
+//   .meta_next = ( .meta_current − f(body_old) ) ∪ f(body_new)
 //
-// This lets agents annotate resources without their edits being wiped by
-// the next body-projection pass (D50/D71/D72).
+// The governed-predicate set is no longer a clobber list — it remains the floor's
+// validation dispatch + the agent-facing declaration (sub:governs, D81 Model A).
+// Ownership enforcement belongs to the admission floor (D108), not here.
 //
 // (A buildTwoSubjectPatch N3-Patch generator lived here 2026-05-19 → 2026-06-10;
 // it was never wired into the write path — the Store-merge above IS the
@@ -28,72 +28,74 @@ import {
     constants,
 } from "fs";
 import { Parser, Quad, Store, Writer } from "n3";
-import type { NamedNode } from "n3";
+import { subtractProjected, pairShadow } from "./projectionDelta.js";
 
 const STALE_LOCK_MS = 30_000;
 
-const PROV_GEN_BY = "http://www.w3.org/ns/prov#wasGeneratedBy";
+export interface ReplaceOpts {
+    resourceUrl?: string;
+    /** Pre-commit .meta snapshot (Turtle). When given, the on-disk .meta is IGNORED —
+     *  the caller (the floor) read it BEFORE CSS's writeMetadataFile clobbered it
+     *  (the D82 root cause; see tests/test_wiki_memory_l3_listener_integration.py:162's
+     *  xfail message). */
+    snapshotTtl?: string;
+}
 
 export class MetaWriter {
     /**
-     * Replace all governed-predicate triples in the .meta file with the
-     * projected quads, leaving non-governed triples untouched.
+     * Replace the prior projection's quads in the .meta file with the new
+     * projection, leaving everything else untouched (spec §4 subtraction).
      *
-     * @param target      Absolute path to the resource file (NOT the .meta file)
-     * @param projected   New triples to write for governed predicates
-     * @param governed    Set of predicate URIs this caller owns
-     * @param resourceUrl HTTP URL of the resource (used as base IRI for .meta parsing
-     *                    so that relative URIs in agent-owned triples survive the
-     *                    parse → write → re-parse cycle unchanged)
+     * @param target       Absolute path to the resource file (NOT the .meta file)
+     * @param newProjected f(body_new) — the quads to write
+     * @param oldProjected f(body_old) — exact subtraction; null → degraded
+     *                     pairShadow (caller owns the curation signal, spec §5)
+     * @param opts         resourceUrl is the base IRI for .meta parsing so relative
+     *                     URIs survive the parse → write → re-parse cycle unchanged;
+     *                     snapshotTtl overrides the on-disk .meta as current state
      */
-    async replaceGoverned(
+    async replaceProjected(
         target: string,
-        projected: Quad[],
-        governed: string[],
-        resourceUrl?: string,
+        newProjected: Quad[],
+        oldProjected: Quad[] | null,
+        opts: ReplaceOpts = {},
     ): Promise<void> {
         const metaPath = `${target}.meta`;
         const lockPath = `${metaPath}.lock`;
         // Base IRI for parsing existing .meta: use the meta-file URL so that
         // CSS-style relative subjects (<wiki-memory-l3-profile.md>) and PATCH-inserted
         // self-references (<>) both resolve to absolute URIs and survive the write cycle.
-        const metaBaseIri = resourceUrl ? `${resourceUrl}.meta` : undefined;
+        const metaBaseIri = opts.resourceUrl ? `${opts.resourceUrl}.meta` : undefined;
 
         await this.withLock(lockPath, async () => {
-            const existing = this.readExisting(metaPath, metaBaseIri);
-            const govSet   = new Set(governed);
+            const existing = opts.snapshotTtl !== undefined
+                ? this.parseTtl(opts.snapshotTtl, metaBaseIri)
+                : this.readExisting(metaPath, metaBaseIri);
+            const current = existing.getQuads(null, null, null, null);
 
-            // Keep triples whose predicate is NOT in the governed set.
-            // prov:wasGeneratedBy gets a one-predicate SUBJECT scope (F7): the
-            // pipeline only ever emits it on the .meta DOCUMENT subject
-            // (projectionPipeline.ts), so stripping it by predicate on other
-            // subjects deleted derivation pointers like the index view's
-            // <resource> prov:wasGeneratedBy <view-descriptor>. NOT generalized
-            // to pair-scoping — that collides with the replace-stale-values
-            // contract; broad agent-triple survival stays D82's problem.
-            const preserved = existing
-                .getQuads(null, null, null, null)
-                .filter(q => !govSet.has(q.predicate.value)
-                    || (q.predicate.value === PROV_GEN_BY
-                        && metaBaseIri !== undefined
-                        && q.subject.value !== metaBaseIri));
+            const preserved = oldProjected === null
+                ? pairShadow(current, newProjected)
+                : subtractProjected(current, oldProjected);
 
-            const merged = new Store([...preserved, ...projected]);
+            const merged = new Store([...preserved, ...newProjected]);
             await this.write(metaPath, merged);
         });
     }
 
     // -------------------------------------------------------------------------
 
-    private readExisting(metaPath: string, baseIRI?: string): Store {
-        if (!existsSync(metaPath)) return new Store();
+    private parseTtl(ttl: string, baseIRI?: string): Store {
         try {
-            const ttl = readFileSync(metaPath, "utf8");
             const parser = baseIRI ? new Parser({ baseIRI }) : new Parser();
             return new Store(parser.parse(ttl));
         } catch {
             return new Store();
         }
+    }
+
+    private readExisting(metaPath: string, baseIRI?: string): Store {
+        if (!existsSync(metaPath)) return new Store();
+        return this.parseTtl(readFileSync(metaPath, "utf8"), baseIRI);
     }
 
     private async write(metaPath: string, store: Store): Promise<void> {

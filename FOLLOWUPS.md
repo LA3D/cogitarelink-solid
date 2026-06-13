@@ -97,23 +97,24 @@ history (all `[x]`); other live items are in `🧭 Generalization`, `📐`, `�
 
 One line each; details in the gate/probe reports (`docs/plans/2026-06-12-sp2-*.md`) + the SP2 plan.
 
-- [ ] **(★ NEXT) Provenance-scoped projection replacement — spec DRAFTED, awaiting Chuck's review:**
-  `docs/superpowers/specs/2026-06-12-provenance-scoped-projection-replacement.md` — subtraction-based
-  re-projection (`.meta − f(old body) ∪ f(new body)`); floor keeps enforcement, strip stops clobbering;
-  **dissolves D82** (sidecar unbuilt) and ungates (a) below. Open knob §7: version-stamp+sweep (lean)
-  vs projected-set inventory. Prior-art grounded (LDP/OBO/Graphiti/wiki-lineage); named-graph option
-  killed by spike (on-disk .meta is Turtle). Supersedes the F7 review fix once built.
+- [x] **Provenance-scoped projection replacement — EXECUTED 2026-06-13 (D116; branch `prov-scoped-projection`,
+  PSP-T1–T8):** subtraction-based re-projection (`.meta − f(old body) ∪ f(new body)`); floor keeps
+  enforcement, strip + F7 special case deleted. **D82 DISSOLVED** (sidecar unbuilt, xfail flipped to a
+  normal passing test). Result: floor path exact (pre-commit snapshot) / listener Memento-backstop +
+  degraded pair-shadow with curation signal / version stamp (`sub:projectorVersion`) + migration sweep.
+  Knob §7 settled = version-stamp+sweep. Probe PASS 2/2 (`evals/proj-enrich/`, Haiku, $0.26). Spec +
+  plan + probe report cited in D116. Ungates (a) below.
 
-- [ ] **(k) stale `sub:viewAuthority` vocab prose** (`overlays/wiki-memory/vocabulary/substrate.ttl:554`,
-  pre-existing): its `rdfs:comment` still describes the retired storage-description pointer — fix alongside
-  (h) `sub:bodyHash` in the one-line vocab pass.
+- [x] **(k) stale `sub:viewAuthority` vocab prose — CLOSED (PSP-T4):** `rdfs:comment` re-cut off the
+  retired storage-description pointer.
 - [ ] **(j) `test_index_views::test_concept_write_refreshes_index_with_provenance` is load-timing-sensitive**:
   fails occasionally under full-suite back-to-back write load, deterministic-green in isolation (4×) —
   same class as the timemap flake; widen the settle poll or serialize the file if it recurs.
 
-- [ ] **(a) Markdown-lane write contract — GATED ON D82** (`.meta.agent` sidecar / no-clobber): agent
-  `.meta` enrichment doesn't survive projection rewrites (strict-xfail), so `mem:rationale` can't be
-  required on wiki lanes yet; Turtle lanes shipped (T10/T10b).
+- [ ] **(a) Markdown-lane write contract — GATE LIFTED, NOW SCHEDULABLE** (was gated on D82; D82 dissolved
+  by D116 2026-06-13): agent `.meta` enrichment now survives projection rewrites by construction
+  (provenance-scoped subtraction), so `mem:rationale` CAN be required on wiki lanes at crystallization
+  (D73 preserved). Turtle lanes already shipped (T10/T10b). **Not built — this is the natural next build.**
 - [ ] **(b) `prov:agent` derivation — GATED ON the security profile** (Chuck 2026-06-12): deriving the
   authenticated WebID at write time is meaningless under dev-allow-all; lands with auth.
 - [ ] **(c) Sibling-repo pass (`solid-agent-skills`):** un-pin the 2 `shapes` KNOWN-FAILURES (root cause
@@ -133,8 +134,9 @@ One line each; details in the gate/probe reports (`docs/plans/2026-06-12-sp2-*.m
   `?_profile=fused` 404 item in the 🔧 section): `handle` still THROWS `NotFoundHttpError` (unknown
   view-space / unknown person slug) → latent 500; fix with the same MementoHttpHandler idiom when
   next touched.
-- [ ] **(h) `sub:bodyHash` undefined in the substrate ontology** — the E7 re-run found agents burning
-  grounding budget dereferencing it to nothing; one-line vocab fix candidate (rdfs:comment in sub:).
+- [x] **(h) `sub:bodyHash` undefined in the substrate ontology — CLOSED (PSP-T4):** defined in `sub:`
+  (alongside the new `sub:projectorVersion`); agents no longer burn grounding budget dereferencing it to
+  nothing.
 - [ ] **(i) Organization/Group/Membership lanes carry the write contract but ZERO seeds** (T10b note):
   the shapes + templates require `mem:rationale` but no seed dog-foods them; seed when addressbook
   is next touched.
@@ -382,9 +384,10 @@ suite green Pod-up + Pod-down. **Cold probes run 2026-06-06** (report
    tracks which resources it has annotated in-memory. A restart between a Create event (adds the
    `mem:hasOpenAction` back-pointer) and a Delete event (removes it) leaves a dangling pointer on the
    resource `.meta`. By-design v1; revisit with persistence or a sweep-repair pass.
-3. **wiki-memory rollout gated on D82.** The `mem:hasOpenAction` back-pointer pattern requires the
-   agent `.meta` enrichment to survive body rewrites (D82 `.meta.agent` sidecar). The `/id/` slice
-   sidesteps this (Turtle bodies, no projection rewrite). Full wiki-memory rollout waits on D82.
+3. **wiki-memory rollout gated on D82 — UNGATED 2026-06-13 (D116).** The `mem:hasOpenAction`
+   back-pointer pattern needed agent `.meta` enrichment to survive body rewrites; provenance-scoped
+   projection (D116) makes it survive by construction (D82 dissolved, sidecar unbuilt). Full
+   wiki-memory rollout no longer waits.
 4. **Maturity scorer NOT built — and BLOCKED by ledger anonymity (probe artifact audit 2026-06-06).**
    Ledger signals are defined (clean-trace rate, reversal rate, plan-version stability) but the
    scorer is per-agent and the ledger is anonymous: 35/35 agent-authored probe proposals omitted
@@ -469,8 +472,9 @@ Residue (deliberate, tracked):
 4. **Pod-template `resources/` residue** — `test_no_para_residue` runtime-skips while the reset template
    seeds the empty PARA-era container; fix the template, the test then enforces.
 5. `make test-js` suppresses stderr on failure (print-on-fail would help debugging); minor.
-6. `test_agent_enrichment_survives_body_rewrite` stays strict-xfail (D82 `.meta.agent` sidecar — the one
-   genuinely-deferred case).
+6. `test_agent_enrichment_survives_body_rewrite` — xfail FLIPPED 2026-06-13 (D116); now a normal
+   expected-pass (provenance-scoped projection; the floor snapshots `.meta` pre-commit, the actual root
+   cause was CSS's writeMetadataFile clobber, not the sidecar's absence).
 
 ## 🔬 Agentic-fragility audit (2026-06-03) — ✅ REMEDIATED 2026-06-04 (branch `fragility-remediation`)
 
@@ -548,6 +552,12 @@ Non-blocking items from the final adversarial review:
    an N3 parse error (3 of the pinned KNOWN-FAILURES), and would trip a cold agent's `pod-navigate` `validate`
    path the same way. **Small real fix candidate at the SP2 catalog re-cut:** relocate the template out of the
    served catalog so the catalog parses clean for agents + tools.
+5. **Hand-edited `dist-cjs/*.jsonld` for markdown-projection (PSP-T5, `gitDir` param)** — `listener.jsonld`
+   + `components/context.jsonld` carry the new `gitDir` parameter by hand-edit; they would be OVERWRITTEN
+   if `componentsjs-generator` is ever re-run on this extension. Latent drift point of the same class as the
+   existing `stampPredicate`→config precedent (and the K1 CSS-version-bump notes): the generated artifact
+   and the source-of-truth can silently diverge. Low risk (the generator is not in the build path), recorded
+   so a future regen knows to re-apply.
 
 Anti-fragility review (Chuck's three lenses: hardcodes / RDF-model bypass / fragile regex) fixed four
 items pre-merge (`4ca0751`: stampPredicate→config, `isContainerIdentifier`, shared `RDF_CONTENT_TYPES`,

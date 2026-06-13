@@ -111,6 +111,35 @@ def test_place_event_organization_get_class_profiles():
             httpx.delete(f"{POD}/vault/wiki/{path}", verify=_CA)
 
 
+SUB = Namespace("https://pod.vardeman.me/vault/ontology/substrate#")
+RDFS = Namespace("http://www.w3.org/2000/01/rdf-schema#")
+
+
+def test_vocab_stamp_predicates_defined():
+    """PSP-T4/followup h: sub:bodyHash and sub:projectorVersion must be declared
+    in the substrate vocabulary so agents hunting their definition find it."""
+    g = _graph("/vault/ontology/substrate")
+    body_hash = URIRef("https://pod.vardeman.me/vault/ontology/substrate#bodyHash")
+    proj_ver = URIRef("https://pod.vardeman.me/vault/ontology/substrate#projectorVersion")
+    assert (body_hash, RDFS.label, None) in g, "sub:bodyHash missing from substrate vocab"
+    assert (proj_ver, RDFS.label, None) in g, "sub:projectorVersion missing from substrate vocab"
+
+
+def test_vocab_view_authority_comment_recut():
+    """PSP-T4/followup k: sub:viewAuthority rdfs:comment must not instruct
+    agents to follow a storage-description pointer (dead pattern, retired by SP2-T8)."""
+    g = _graph("/vault/ontology/substrate")
+    va = URIRef("https://pod.vardeman.me/vault/ontology/substrate#viewAuthority")
+    comments = list(g.objects(va, RDFS.comment))
+    assert comments, "sub:viewAuthority has no rdfs:comment"
+    for c in comments:
+        c_str = str(c).lower()
+        assert "follows this" not in c_str, \
+            "sub:viewAuthority comment still instructs agents to follow the pointer (dead pattern)"
+        assert "retired" in c_str or "historical" in c_str, \
+            "sub:viewAuthority comment must flag the term as historical/retired"
+
+
 def test_d80_recut_no_handed_constructs():
     """D80 re-cut: hub-view and breadcrumb-view must not carry handed query artifacts.
 

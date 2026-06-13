@@ -105,8 +105,10 @@ function parentRepFor(container: string, shapeUrl: string) {
 
 function makeProjector(projection: any) {
   return {
+    version: "9.9.9-test",
     canProject: vi.fn((rep: any) => rep.metadata.contentType === "text/markdown"),
     project: vi.fn(async () => projection),
+    snapshot: vi.fn(async () => ({ oldBody: null, oldMetaTtl: null })),
     materialize: vi.fn(async () => undefined),
   };
 }

@@ -1,7 +1,7 @@
 /**
  * Hook for surfacing post-projection body edges to the memory-substrate
  * trigger pipeline. Implemented by mem-trigger; consumed by markdown-projection's
- * listener after MetaWriter.replaceGoverned completes. Default binding is a
+ * listener after MetaWriter writes the .meta sidecar. Default binding is a
  * no-op so markdown-projection works in environments where mem-trigger is
  * not installed.
  *

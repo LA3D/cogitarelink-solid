@@ -25,6 +25,9 @@
           },
           "stampPredicate": {
             "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_stampPredicate"
+          },
+          "gitDir": {
+            "@id": "mpl:dist-cjs/listener.jsonld#MarkdownProjectionListener_gitDir"
           }
         }
       },

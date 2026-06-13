@@ -10,6 +10,20 @@ summarized in §2) and revised to this design; the named-graph alternative was k
 a spike (§3). **Payoff:** D82 (`.meta.agent` sidecar) dissolves; the markdown-lane write
 contract (🧷 follow-on (a)) unblocks.
 
+**▶▶ EXECUTED 2026-06-13 (D116; branch `prov-scoped-projection`, 8 tasks PSP-T1–T8).** Plan:
+`docs/superpowers/plans/2026-06-12-provenance-scoped-projection.md`. The subtraction contract,
+the three-station partition, the floor pre-commit snapshot + listener Memento backstop (degraded
+pair-shadow + `mem:StalenessDetected`/`mem:Materialization` curation signal), the
+`sub:projectorVersion` stamp + migration sweep, and the F7 special-case deletion all shipped as
+designed; knob §7 settled = version-stamp + sweep. **D82 DISSOLVED** — `.meta.agent` sidecar
+unbuilt, `test_agent_enrichment_survives_body_rewrite` flipped strict-xfail → expected-pass; the
+markdown-lane write contract (🧷 (a)) ungated. **Probe PASS 2/2** (`evals/proj-enrich/`, Haiku,
+$0.26; report `docs/plans/2026-06-13-psp-enrichment-probe-report.md`). **One recorded residue:**
+the hand-edited `dist-cjs/*.jsonld` (`gitDir` param, PSP-T5) is overwritten if
+`componentsjs-generator` is re-run — same drift class as the `stampPredicate`→config precedent
+(FOLLOWUPS markdown-projection tech-debt §5). Decision text: D116 in
+`.claude/skills/decision-lookup/decisions.md`. Controller merges after a final whole-branch review.
+
 ## 1. Problem
 
 `MetaWriter.replaceGoverned` makes re-projection idempotent by stripping previously

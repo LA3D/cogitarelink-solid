@@ -11,7 +11,7 @@ export type { Frontmatter } from "./frontmatterProjection.js";
 export { projectWikilinks, projectWikilink, HINT_TO_PROJECTION, BOOTSTRAP_PREDICATE_TO_CLASS } from "./wikilinkProjection.js";
 export type { Projection, ProjectionSubject, ProjectWikilinkArgs } from "./wikilinkProjection.js";
 export { parseRoutingDoc, loadRoutingMap } from "./routingLoader.js";
-export { projectionPipeline, emitSubstrateInvariants, splitFrontmatter } from "./projectionPipeline.js";
+export { projectionPipeline, emitSubstrateInvariants, splitFrontmatter, PROJECTOR_VERSION } from "./projectionPipeline.js";
 export type { SubstrateInvariantsArgs } from "./projectionPipeline.js";
 export { MetaWriter } from "./metaWriter.js";
 export { detectClass } from "./detectClass.js";

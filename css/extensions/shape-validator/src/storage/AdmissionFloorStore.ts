@@ -52,9 +52,9 @@ import { Store, Parser, DataFactory } from 'n3';
 import { createHash } from 'crypto';
 import { getLoggerFor } from 'global-logger-factory';
 import { RDF_CONTENT_TYPES } from '../util/ContentTypes';
-import { DEFAULT_STAMP_PRED } from '../util/StampPredicate';
+import { DEFAULT_STAMP_PRED, VERSION_PRED } from '../util/StampPredicate';
 import { LDP } from '../util/Vocabularies';
-import type { BodyProjector } from './BodyProjector';
+import type { BodyProjector, ProjectionSnapshot } from './BodyProjector';
 import { validateQuadsAgainstShape } from './validators/validateQuadsAgainstShape.js';
 import { ShaclValidationError } from '../error/ShaclValidationError';
 
@@ -154,14 +154,20 @@ export class AdmissionFloorStore extends PassthroughStore {
     // container's permissive shape conforms trivially, so drafts pass here.)
     await this.conformsOrReject(projected.quads, shapeUrls);
 
+    // Pre-commit snapshot — taken AFTER validation succeeds (a rejected PUT touches
+    // nothing) but BEFORE the commit: CSS's writeMetadataFile clobbers .meta during
+    // commit (the D82 root cause), and the in-band floor is the only component that
+    // sees the prior body + .meta. The projector subtracts f(body_old) from it.
+    const snapshot = await this.projector.snapshot(id);
+
     // Commit the body first (so the resource exists on disk before MetaWriter
-    // resolves its path), then materialize the admitted graph + body-hash stamp.
+    // resolves its path), then materialize the admitted graph + stamps.
     const committed = await super.setRepresentation(
       id,
       new BasicRepresentation(body, representation.metadata),
       conditions,
     );
-    await this.materialize(id, projected, body);
+    await this.materialize(id, projected, body, snapshot);
     return committed;
   }
 
@@ -219,7 +225,10 @@ export class AdmissionFloorStore extends PassthroughStore {
       await this.source.deleteResource(created);
       throw error;
     }
-    await this.materialize(created, projected, body);
+    // POST creates a fresh resource — there is no prior body/.meta by construction,
+    // so pass the first-write snapshot signature (the projector's degraded branch is
+    // trivially fine over an absent .meta and stays SILENT for first writes).
+    await this.materialize(created, projected, body, { oldBody: null, oldMetaTtl: null });
     return changes;
   }
 
@@ -242,16 +251,23 @@ export class AdmissionFloorStore extends PassthroughStore {
     throw new ShaclValidationError(shapeUrls[0], result.reportTurtle!);
   }
 
-  // Materialize the admitted graph + a body-hash stamp into the resource's .meta,
-  // replacing only governed predicates (D81 Model A). Delegated to the projector
-  // because MetaWriter is ESM-only and the floor stays profile-agnostic.
+  // Materialize the admitted graph + the two stamps (body hash + projector version)
+  // into the resource's .meta via provenance-scoped replacement (spec §4/§5; the
+  // snapshot carries the pre-commit state the subtraction recomputes from). Delegated
+  // to the projector because MetaWriter is ESM-only and the floor stays profile-agnostic.
   private async materialize(
     id: ResourceIdentifier,
     projected: { quads: Quad[]; governed: string[] },
     body: string,
+    snapshot: ProjectionSnapshot,
   ): Promise<void> {
-    const stamped = [ ...projected.quads, this.stampQuad(id, body) ];
-    await this.projector.materialize(id, stamped, [ ...projected.governed, this.stampPredicate ]);
+    const stamped = [ ...projected.quads, this.stampQuad(id, body), this.versionQuad(id) ];
+    await this.projector.materialize(
+      id,
+      stamped,
+      [ ...projected.governed, this.stampPredicate, VERSION_PRED ],
+      snapshot,
+    );
   }
 
   /**
@@ -324,6 +340,18 @@ export class AdmissionFloorStore extends PassthroughStore {
       DataFactory.namedNode(id.path),
       DataFactory.namedNode(this.stampPredicate),
       DataFactory.literal(hash),
+    );
+  }
+
+  // Projector-version stamp (spec §6): lets the projector decide exact-vs-degraded
+  // subtraction on the NEXT write (recompute is only exact within one projector
+  // version). The value flows through the injected projector instance — the floor
+  // imports nothing from the profile bundle.
+  private versionQuad(id: ResourceIdentifier) {
+    return DataFactory.quad(
+      DataFactory.namedNode(id.path),
+      DataFactory.namedNode(VERSION_PRED),
+      DataFactory.literal(this.projector.version),
     );
   }
 }
