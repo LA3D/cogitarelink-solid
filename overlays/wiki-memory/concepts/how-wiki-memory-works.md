@@ -1,4 +1,5 @@
 ---
+rationale: "Orientation memory for the wiki-memory L3 profile — explains page-as-unit, dual-layer linking, and the crystallize lifecycle so a cold agent can author conformant notes. Authored as the agentGuide-linked entry point."
 title: How Wiki-Memory Works
 type: Concept
 ---

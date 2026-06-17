@@ -1,4 +1,5 @@
 ---
+rationale: "Bootstrapped memory for the D111 identifier-scheme substrate — explains compact-id form and the /id/schemes/ catalog so a cold agent can register and resolve PIDs. Authored from the D111 cold-probe findings; dog-foods the compact-id convention."
 title: How Identifiers Work
 type: concept
 created: 2026-06-05
