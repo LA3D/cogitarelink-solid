@@ -163,6 +163,7 @@ const XSD_DT  = "http://www.w3.org/2001/XMLSchema#dateTime";
 const DCT     = "http://purl.org/dc/terms/";
 const FOAF    = "http://xmlns.com/foaf/0.1/";
 const WIKI    = "https://pod.vardeman.me/vault/ontology/wiki#";
+const MEM     = "https://pod.vardeman.me/vault/ontology/mem#";
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
 // Placeholder subject URI — callers must replace with actual resource URI
@@ -178,6 +179,7 @@ export interface Frontmatter {
     aliases?: string[];
     identifier?: string;
     citekey?: string;
+    rationale?: string;
     [k: string]: unknown;
 }
 
@@ -210,6 +212,13 @@ export function projectFrontmatter(fm: Frontmatter): Quad[] {
         for (const a of fm.aliases) {
             out.push(quad(subj, namedNode(FOAF + "nick"), literal(a)));
         }
+    }
+
+    // mem:rationale — the agentic-write-contract literal (markdown-lane). xsd:string
+    // (n3 default for a plain literal). Required by the durable per-type shapes; the
+    // floor 422s a durable write whose projection omits it. working/ is permissive.
+    if (typeof fm.rationale === "string" && fm.rationale.trim() !== "") {
+        out.push(quad(subj, namedNode(MEM + "rationale"), literal(fm.rationale)));
     }
 
     return out;
