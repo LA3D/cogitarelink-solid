@@ -2,6 +2,30 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## 🧱 Runtime-derived governed-predicate partition (the real target — shape-governance reconciliation, 2026-06-18)
+
+`governedPredicates.ts` is a hand-maintained static map. Task 5 of the reconciliation chose **Path B**
+(keep the hand file + an agreement test that every durable shape's required `sh:path` is governed on the
+right subject — `tests/test_governed_predicates_agreement.py`) over codegen, on the **agentic** argument:
+codegen would split the agent-facing teaching (the shapes' `sh:agentInstruction`, which agents read) from
+the agent-invisible behavior file, risking taught≠enforced — and governance is *silent* (no 422), so agents
+can't self-correct, and a curator agent can't make a shape change take effect without a human re-running a
+generator. **Real fix:** derive the governed set at RUNTIME from the deployed shapes the floor already loads
+— single source (taught == enforced by construction), no static file, no second generator, immediately
+curator-evolvable. Cost: shape-parsing on the projection path (the static map exists for speed). Do this
+when the projection path is next touched; until then the agreement test is the guardrail.
+
+## 🔵 RDF-native lanes: ShapeTree↔container-layout reconciliation (shape-governance reconciliation, 2026-06-18)
+
+The ShapeTree→`constrainedBy` derivation + the write contract shipped for the **wiki lane** (validated live).
+The RDF-native lanes (addressbook, id-schemes) are deferred: their ShapeTrees diverge from the deployed
+container layout — addressbook constrains `/vault/contacts/{Person,Organization}/` *subcontainers* while its
+tree manages `/vault/contacts/`; id-schemes lives outside `/vault` (`/id/schemes/`, `/id/scheme-record.shacl.ttl`).
+`scripts/overlay/derive_constraints.py` already derives their shape sets correctly (`DURABLE_CONTAINERS`),
+but writing their `.meta` + de-duplicating their per-app `mem:rationale` (Tasks 7/9) needs a decision on how
+to reconcile each tree with its real layout (reshape the tree to manage subcontainers? normalize id-schemes
+onto `/vault/meta/shapes/`?). The apps function today on their existing (duplicated) contract.
+
 ## ▶▶ ACTIVE — agentic progressive-disclosure contract (SP1 + SP2 SHIPPED; 2026-06-12)
 
 **Spec (spine, settled):** `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md`.

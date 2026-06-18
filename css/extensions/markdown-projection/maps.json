@@ -63,7 +63,8 @@
     "https://schema.org/mainEntity",
     "https://pod.vardeman.me/vault/ontology/wiki#maturity",
     "http://www.w3.org/ns/prov#wasGeneratedBy",
-    "https://pod.vardeman.me/vault/ontology/wiki#embeds"
+    "https://pod.vardeman.me/vault/ontology/wiki#embeds",
+    "https://pod.vardeman.me/vault/ontology/mem#rationale"
   ],
   "thingGovernedByClass": {
     "http://www.w3.org/2004/02/skos/core#Concept": [
@@ -229,6 +230,7 @@
     "http://www.w3.org/ns/org#hasMembership",
     "http://www.w3.org/ns/prov#wasGeneratedBy",
     "http://xmlns.com/foaf/0.1/nick",
+    "https://pod.vardeman.me/vault/ontology/mem#rationale",
     "https://pod.vardeman.me/vault/ontology/wiki#embeds",
     "https://pod.vardeman.me/vault/ontology/wiki#maturity",
     "https://schema.org/about",
