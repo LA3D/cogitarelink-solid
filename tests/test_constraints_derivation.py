@@ -17,8 +17,14 @@ def test_wiki_concepts_unions_tree_shapes_plus_contract():
     assert WRITE_CONTRACT_SHAPE in got
     assert any(s.endswith("concept.shacl.ttl") for s in got)
     assert any(s.endswith("source.shacl.ttl") for s in got)
-    # NOTE: page.shacl.ttl / thing.shacl.ttl asserted in test_wiki_concepts_includes_page_and_thing
-    # once Task 8 adds the multiple st:shape values to the wiki ResourceTrees.
+
+
+def test_wiki_concepts_includes_page_and_thing():
+    """Task 8: the dual-layer base (Page governs <>, Thing governs <#this>) is now in
+    the floored gate — closes the audit's '<> ungoverned' finding."""
+    got = derive_constrainedby("overlays/wiki-memory", "https://pod.vardeman.me/vault/wiki/concepts/")
+    assert any(s.endswith("page.shacl.ttl") for s in got)
+    assert any(s.endswith("thing.shacl.ttl") for s in got)
 
 
 def test_contract_injected_for_rdf_native_lanes():

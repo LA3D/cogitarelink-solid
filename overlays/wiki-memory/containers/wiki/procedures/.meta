@@ -9,7 +9,7 @@
 <> a ldp:Container, ldp:BasicContainer ;
    dct:title "Wiki Procedures" ;
    solid:forClass schema:HowTo ;
-   sub:shape </vault/meta/shapes/howto.shacl.ttl> , </vault/meta/shapes/write-contract.shacl.ttl> ;
-   ldp:constrainedBy </vault/meta/shapes/howto.shacl.ttl> , </vault/meta/shapes/write-contract.shacl.ttl> ;
+   sub:shape </vault/meta/shapes/howto.shacl.ttl> , </vault/meta/shapes/page.shacl.ttl> , </vault/meta/shapes/thing.shacl.ttl> , </vault/meta/shapes/write-contract.shacl.ttl> ;
+   ldp:constrainedBy </vault/meta/shapes/howto.shacl.ttl> , </vault/meta/shapes/page.shacl.ttl> , </vault/meta/shapes/thing.shacl.ttl> , </vault/meta/shapes/write-contract.shacl.ttl> ;
    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
    sh:agentInstruction "Procedural memory: how-tos, workflows, recipes. Typed as schema:HowTo. Body markdown carries the procedure; schema:step for structured access." .
