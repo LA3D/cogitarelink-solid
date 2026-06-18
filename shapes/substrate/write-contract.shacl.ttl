@@ -1,0 +1,23 @@
+# shapes/substrate/write-contract.shacl.ttl
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix sub:  <https://pod.vardeman.me/vault/ontology/substrate#> .
+@prefix mem:  <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+<> dct:conformsTo <https://www.w3.org/TR/shacl/> .
+
+sub:WriteContractShape
+    a sh:NodeShape ;
+    rdfs:label "Agentic write contract" ;
+    rdfs:comment "The L2 agentic-write-contract: every durable record document (foaf:Document) written to the Pod carries mem:rationale. Injected into every durable container's ldp:constrainedBy by the derivation; NOT declared per-app. Targets the document subject <> uniformly across lanes." ;
+    sh:targetClass foaf:Document ;
+    sh:agentInstruction """Every durable write MUST carry mem:rationale on the record document (<>): the task that triggered it, what you concluded, and why, including what you consulted. This is the agentic-vs-Solid difference (the spec only says MAY; this substrate says MUST). Your write-context is unrecoverable after this session.""" ;
+    sh:property [
+        sh:path mem:rationale ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "mem:rationale is required — record the task that triggered this write, what you concluded, and why, including what you consulted. Do not merely restate the record's name; a future agent audits this context before trusting it." ;
+    ] .
