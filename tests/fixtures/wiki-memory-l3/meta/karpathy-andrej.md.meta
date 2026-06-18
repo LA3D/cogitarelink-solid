@@ -20,3 +20,4 @@
 <#this> a schema:Person;
     schema:mainEntityOfPage <>;
     schema:name "Karpathy, Andrej".
+<> a foaf:Document.

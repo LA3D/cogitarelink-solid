@@ -22,3 +22,4 @@
 <#this> a wiki:Source;
     schema:mainEntityOfPage <>;
     schema:name "Ghumare - LLM Wiki v2 Extending Karpathy".
+<> a foaf:Document.

@@ -23,3 +23,4 @@
 <#this> a skos:Concept;
     schema:mainEntityOfPage <>;
     schema:name "Wiki-Memory L3 Profile".
+<> a foaf:Document.

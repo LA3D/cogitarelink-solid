@@ -44,6 +44,7 @@ const SCHEMA_MAIN_ENTITY       = "https://schema.org/mainEntity";
 const SCHEMA_MAIN_ENTITY_OF_PAGE = "https://schema.org/mainEntityOfPage";
 const SCHEMA_NAME              = "https://schema.org/name";
 const WIKI_PAGE                = "https://pod.vardeman.me/vault/ontology/wiki#Page";
+const FOAF_DOCUMENT            = "http://xmlns.com/foaf/0.1/Document";
 
 // ---------------------------------------------------------------------------
 // Substrate invariants (D98 Page+Thing bridge)
@@ -56,8 +57,10 @@ export interface SubstrateInvariantsArgs {
 }
 
 /**
- * Emit the four substrate-invariant triples present on every L3 page (D98):
+ * Emit the substrate-invariant triples present on every L3 page (D98):
  *   <>      a wiki:Page
+ *   <>      a foaf:Document         (universal write-contract hook — sub:WriteContractShape
+ *                                    targets foaf:Document on <>; wiki:Page rdfs:subClassOf it)
  *   <>      schema:mainEntity   <#this>
  *   <#this> a <thingClass>
  *   <#this> schema:mainEntityOfPage <>
@@ -68,6 +71,7 @@ export interface SubstrateInvariantsArgs {
 export function emitSubstrateInvariants(args: SubstrateInvariantsArgs): Quad[] {
     return [
         quad(args.pageIRI, namedNode(RDF_TYPE), namedNode(WIKI_PAGE)),
+        quad(args.pageIRI, namedNode(RDF_TYPE), namedNode(FOAF_DOCUMENT)),
         quad(args.pageIRI, namedNode(SCHEMA_MAIN_ENTITY), args.thingIRI),
         quad(args.thingIRI, namedNode(RDF_TYPE), namedNode(args.thingClass)),
         quad(args.thingIRI, namedNode(SCHEMA_MAIN_ENTITY_OF_PAGE), args.pageIRI),

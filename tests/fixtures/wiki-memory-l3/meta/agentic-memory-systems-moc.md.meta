@@ -21,3 +21,4 @@
 <#this> a skos:Concept;
     schema:mainEntityOfPage <>;
     schema:name "Agentic Memory Systems MOC".
+<> a foaf:Document.

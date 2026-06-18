@@ -55,12 +55,25 @@ describe("emitSubstrateInvariants (D98)", () => {
     ]);
   });
 
-  it("emits exactly 4 triples per call", () => {
+  it("emits page <> a foaf:Document (universal write-contract hook)", () => {
     const quads = emitSubstrateInvariants({
       pageIRI: namedNode("https://pod.example/wiki/concepts/foo.md"),
       thingIRI: namedNode("https://pod.example/wiki/concepts/foo.md#this"),
       thingClass: "http://www.w3.org/2004/02/skos/core#Concept",
     });
-    expect(quads).toHaveLength(4);
+    const isFoafDoc = quads.some((q) =>
+      q.subject.value === "https://pod.example/wiki/concepts/foo.md" &&
+      q.predicate.value === "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" &&
+      q.object.value === "http://xmlns.com/foaf/0.1/Document");
+    expect(isFoafDoc).toBe(true);
+  });
+
+  it("emits exactly 5 triples per call", () => {
+    const quads = emitSubstrateInvariants({
+      pageIRI: namedNode("https://pod.example/wiki/concepts/foo.md"),
+      thingIRI: namedNode("https://pod.example/wiki/concepts/foo.md#this"),
+      thingClass: "http://www.w3.org/2004/02/skos/core#Concept",
+    });
+    expect(quads).toHaveLength(5);
   });
 });
