@@ -27,11 +27,19 @@ def test_wiki_concepts_includes_page_and_thing():
     assert any(s.endswith("thing.shacl.ttl") for s in got)
 
 
-def test_contract_injected_for_rdf_native_lanes():
-    for url in ("https://pod.vardeman.me/vault/contacts/",
-                "https://pod.vardeman.me/id/schemes/"):
-        assert WRITE_CONTRACT_SHAPE in derive_constrainedby("overlays/identifier-schemes", url) \
-            if "schemes" in url else WRITE_CONTRACT_SHAPE in derive_constrainedby("overlays/addressbook", url)
+def test_contract_injected_for_id_schemes_lane():
+    # id-schemes keeps the contract (its operational-vs-memory classification is a
+    # separate decision — 2026-06-18 memory-systems spec, open questions).
+    got = derive_constrainedby("overlays/identifier-schemes", "https://pod.vardeman.me/id/schemes/")
+    assert WRITE_CONTRACT_SHAPE in got
+
+
+def test_contract_NOT_injected_for_addressbook():
+    # AddressBook is operational LD, not memory — no memory write contract.
+    got = derive_constrainedby("overlays/addressbook", "https://pod.vardeman.me/vault/contacts/")
+    assert WRITE_CONTRACT_SHAPE not in got
+    # but the vcard shapes are still derived
+    assert any(s.endswith("contact-card.shacl.ttl") for s in got)
 
 
 def test_addressbook_resolves_hosted_url_fragment_shapes():
