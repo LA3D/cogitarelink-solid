@@ -336,12 +336,8 @@ mem:RealignAction
     """ ;
     rdfs:seeAlso </vault/meta/affordances/> .
 
-mem:rationale
-    a owl:DatatypeProperty ;
-    rdfs:label "rationale" ;
-    rdfs:isDefinedBy <> ;
-    rdfs:domain prov:Activity ;
-    rdfs:comment "The agent's reasoning for a memory mutation, in natural language: what was observed, what it was resolved against, why this repair (or withdrawal). Required on mem:RealignAction activities so a human or later agent can reconstruct why a memory changed. This is the provenance-of-reasoning that complements PROV's provenance-of-data." .
+# mem:rationale is defined at the substrate layer (ontology/mem.ttl — L2 write-contract
+# slice, Pod-general). It is used here in examples/scopeNotes but not (re)defined.
 
 # Staleness classification — a controlled set of detection outcomes.
 # Maps to who handles each: dangling is mechanical (auditor / HTTP HEAD);

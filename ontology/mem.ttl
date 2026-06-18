@@ -1,0 +1,19 @@
+# L2 memory-substrate vocabulary (write-contract slice).
+# Deployed at /vault/ontology/mem# (Pod-general).
+# Lifecycle actions (mem:CrystallizeAction, mem:RealignAction, ...)
+# live in overlays/wiki-memory/ontology/mem.ttl (wiki-L3).
+
+@prefix mem:  <https://pod.vardeman.me/vault/ontology/mem#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+mem:rationale
+    a owl:DatatypeProperty ;
+    rdfs:label "rationale" ;
+    rdfs:isDefinedBy <https://pod.vardeman.me/vault/ontology/mem> ;
+    rdfs:domain prov:Activity ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The agent's reasoning for a memory mutation, in natural language: what was observed, what it was resolved against, why this repair (or withdrawal). Required on mem:RealignAction activities so a human or later agent can reconstruct why a memory changed. This is the provenance-of-reasoning that complements PROV's provenance-of-data." .
