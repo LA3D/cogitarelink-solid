@@ -15,24 +15,25 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 ## Project state (as of 2026-06-12)
 
 - **▶▶ CURRENT ANCHOR (2026-06-18) — read this FIRST; supersedes the markers below.** **SHAPE-GOVERNANCE
-  RECONCILIATION in progress — wiki lane BUILT + LIVE-VALIDATED, on branch `shape-governance-reconciliation`
-  (12 commits, UNPUSHED, NOT merged).** Audit (2026-06-17) found three uncoordinated shape-governance routes
-  (`ldp:constrainedBy` [floor-enforced] / ShapeTree `st:shape` [SAI, inert] / `governedPredicates.ts`
-  [projection]) + the agentic write contract copy-pasted per-app + `mem:` vocab mislocated inside the wiki
-  overlay. SAI-spec-grounded (the 2026-06-12 harmonization doc: declaration-only ShapeTrees + D108 floor, no
-  ST runtime). **Design = ShapeTrees as the source of truth → derive `constrainedBy` (+ codegen rejected for
-  governedPredicates, Path B agreement test chosen on AGENTIC grounds: codegen splits agent-taught shapes
-  from agent-invisible behavior + governance is silent/no-422) → ONE substrate `sub:WriteContractShape`
-  (`foaf:Document` → `mem:rationale`, proto-known hook) injected into every durable container's gate.**
-  Spec `docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md`; plan + 12-task status
-  in `docs/superpowers/plans/2026-06-17-shape-governance-reconciliation.md`. **DONE: Tasks 1–6, 8, 10**
-  (e2e green, `make reset` 0 ERROR; the markdown-lane subject bug is resolved by construction — rationale on
-  `<>` = where the contract targets). `mem:` relocated wholesale to substrate `ontology/mem.ttl`. PageShape
-  now in the floored gate (closed the "<> ungoverned" audit gap; surfaced + fixed a latent seed date bug).
-  **▶ RESUME = `FOLLOWUPS.md` ▶▶ RESUME section: Task 12 (~57 fixture-expectation updates, NOT regressions —
-  old mem.ttl path / substrate-shape path / extra `<> a foaf:Document`), Task 11 (agentic probe), Tasks 7/9
-  (RDF-native lanes — deferred, tree↔layout decision).** The paused `markdown-lane-write-contract` branch is
-  SUPERSEDED by this work (its reusable commits were cherry-picked). **Below = prior anchors (still valid history).**
+  RECONCILIATION MERGED to `main` (no-ff merge `6510e2a`; branch deleted; UNPUSHED — origin/main still behind).**
+  Audit (2026-06-17) found three uncoordinated shape-governance routes (`ldp:constrainedBy` [floor-enforced] /
+  ShapeTree `st:shape` [SAI, inert] / `governedPredicates.ts` [projection]) + the agentic write contract
+  copy-pasted per-app + `mem:` vocab mislocated inside the wiki overlay. SAI-spec-grounded (the 2026-06-12
+  harmonization doc: declaration-only ShapeTrees + D108 floor, no ST runtime). **Shipped = ShapeTrees as the
+  source of truth → derive `constrainedBy` (Path B agreement test for governedPredicates, NOT codegen — agentic
+  grounds: codegen splits agent-taught shapes from agent-invisible behavior + governance is silent/no-422) → ONE
+  substrate `sub:WriteContractShape` (`foaf:Document` → `mem:rationale`, proto-known hook) injected into every
+  durable container's gate; `mem:` relocated to substrate `ontology/mem.ttl`.** **DONE: Tasks 1–6, 8, 10, 11, 12.**
+  Suite **474 passed**; `make reset && make verify` 0 ERROR / 1 intentional D98 WARN; `make test-js` green.
+  **Task 11 probe** (`evals/write-contract/`, report `docs/plans/2026-06-17-write-contract-probe-report.md`):
+  multiple-`st:shape` union LIVE-VALIDATED — n=2 cold Haiku both PASS first-try (201, 0×422, $0.32); spec open
+  question CLOSED (keep multiple `st:shape` unioned). **Task 12** fixture sweep surfaced + fixed ONE real
+  coupling (`8d435ec`): the projection's new `<> a foaf:Document` made the contract 422 the *derived* `index.md`
+  → `buildIndexMarkdown` now emits `rationale:`. Spec/plan: `docs/superpowers/{specs,plans}/2026-06-17-shape-governance-reconciliation*.md`.
+  **▶ REMAINING = Tasks 7/9 only (RDF-native lanes — DEFERRED, blocked on the tree↔layout design decision: reshape
+  addressbook tree to manage subcontainers? normalize id-schemes onto `/vault/meta/shapes/`? — see FOLLOWUPS 🔵).**
+  The paused `markdown-lane-write-contract` branch is SUPERSEDED (reusable commits cherry-picked) — a stale-branch
+  cleanup candidate. **PUSH = Chuck's call (origin/main behind).** **Below = prior anchors (still valid history).**
 
 - **▶▶ CURRENT ANCHOR (2026-06-13) — read this first; supersedes the scattered ▶ NEXT markers below.**
   **PSP SHIPPED 2026-06-13 (D116; branch `prov-scoped-projection`, 8 tasks PSP-T1–T8; controller merges
