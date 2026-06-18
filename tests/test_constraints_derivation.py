@@ -1,6 +1,15 @@
 """The derivation computes a durable container's constrainedBy from its ShapeTree
 plus the injected substrate write contract."""
-from scripts.overlay.derive_constraints import derive_constrainedby, WRITE_CONTRACT_SHAPE
+from scripts.overlay.derive_constraints import (
+    derive_constrainedby, committed_constrainedby, WRITE_CONTRACT_SHAPE, WIKI_DURABLE,
+)
+
+
+def test_committed_wiki_meta_matches_derivation():
+    """Each wiki container's committed .meta constrainedBy == the ShapeTree derivation.
+    (RDF-native lanes are a follow-up — their trees diverge from the deployed layout.)"""
+    for url in WIKI_DURABLE:
+        assert committed_constrainedby(url) == derive_constrainedby("overlays/wiki-memory", url), url
 
 
 def test_wiki_concepts_unions_tree_shapes_plus_contract():

@@ -80,3 +80,50 @@ def derive_constrainedby(overlay_dir: str, container_url: str) -> set:
             shapes.add(_shape_url(str(shape)))
     shapes.add(WRITE_CONTRACT_SHAPE)
     return shapes
+
+
+# --- writer + agreement (wiki lane first; RDF-native lanes are a follow-up: their
+#     ShapeTrees diverge from the deployed container layout — addressbook constrains
+#     /vault/contacts/{Person,Organization}/ subcontainers, id-schemes uses /id/ URLs).
+POD = "https://pod.vardeman.me"
+WIKI_DURABLE = [u for u in DURABLE_CONTAINERS if u.startswith(f"{POD}/vault/wiki/")]
+
+
+def _meta_path(container_url: str) -> Path:
+    slug = container_url[len(f"{POD}/vault/wiki/"):].rstrip("/")
+    return _ROOT / "overlays/wiki-memory/containers/wiki" / slug / ".meta"
+
+
+def committed_constrainedby(container_url: str) -> set:
+    "The ldp:constrainedBy URL set currently committed in the container's .meta (absolute)."
+    g = Graph(); g.parse(_meta_path(container_url), format="turtle", publicID=container_url)
+    LDP_CB = URIRef("http://www.w3.org/ns/ldp#constrainedBy")
+    return {str(o) for o in g.objects(URIRef(container_url), LDP_CB)}
+
+
+def _relative(url: str) -> str:
+    return f"<{url[len(POD):]}>" if url.startswith(POD) else f"<{url}>"
+
+
+def rewrite_meta(container_url: str) -> None:
+    "Surgically rewrite the .meta's ldp:constrainedBy + sub:shape object lists to the derived set."
+    derived = sorted(derive_constrainedby("overlays/wiki-memory", container_url))
+    objs = " , ".join(_relative(u) for u in derived)
+    path = _meta_path(container_url)
+    out = []
+    for line in path.read_text().splitlines():
+        stripped = line.strip()
+        for pred in ("ldp:constrainedBy", "sub:shape"):
+            if stripped.startswith(pred):
+                indent = line[:len(line) - len(line.lstrip())]
+                term = stripped[-1]  # ; or .
+                line = f"{indent}{pred} {objs} {term}"
+                break
+        out.append(line)
+    path.write_text("\n".join(out) + "\n")
+
+
+if __name__ == "__main__":
+    for url in WIKI_DURABLE:
+        rewrite_meta(url)
+    print(f"rewrote constrainedBy + sub:shape in {len(WIKI_DURABLE)} wiki container .meta files")

@@ -62,6 +62,11 @@
         # would 405. Only /vault/meta/views/ (the descriptor home) is real.
 
     overlay:installsShape
+        # Substrate write contract (foaf:Document -> mem:rationale), injected into every
+        # durable container's constrainedBy by scripts/overlay/derive_constraints.py.
+        # Sourced from shapes/substrate/ (mounted at /shapes in pod-setup).
+        [ overlay:document "../../shapes/substrate/write-contract.shacl.ttl" ;
+          overlay:hostedAt "/vault/meta/shapes/write-contract.shacl.ttl" ] ,
         [ overlay:document "shapes/resource.shacl.ttl" ;
           overlay:hostedAt "/vault/meta/shapes/resource.shacl.ttl" ] ,
         [ overlay:document "shapes/page.shacl.ttl" ;

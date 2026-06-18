@@ -135,3 +135,6 @@ audit:  ## Validate the Pod's substrate self-description (D104); ERROR findings 
 
 clean:  ## Stop and destroy all data
 	docker compose down -v
+
+derive-constraints:  ## Regenerate wiki container constrainedBy from ShapeTrees (source of truth)
+	~/uvws/.venv/bin/python -m scripts.overlay.derive_constraints
