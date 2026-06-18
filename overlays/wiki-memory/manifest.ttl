@@ -25,7 +25,9 @@
         overlay:hostedAt "/vault/ontology/substrate"
     ] , [
         overlay:namespace mem: ;
-        overlay:document "ontology/mem.ttl" ;
+        # mem: is L2 memory-substrate vocab (relocated to /ontology/ 2026-06-17); deployed here
+        # from the substrate source. /ontology is mounted into the pod-setup container.
+        overlay:document "../../ontology/mem.ttl" ;
         overlay:hostedAt "/vault/ontology/mem"
     ] ;
 
