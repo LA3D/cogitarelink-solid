@@ -2,6 +2,34 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## ▶▶ RESUME — shape-governance reconciliation (branch `shape-governance-reconciliation`, 2026-06-18)
+
+Spec `docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md`; plan
+`docs/superpowers/plans/2026-06-17-shape-governance-reconciliation.md` (12 tasks). **The wiki lane is
+BUILT + LIVE-VALIDATED** (e2e `tests/test_write_contract_e2e.py` green; `make reset` 0 ERROR): ShapeTrees =
+source of truth → `scripts/overlay/derive_constraints.py` derives `constrainedBy` → injects
+`sub:WriteContractShape` (`shapes/substrate/write-contract.shacl.ttl`, `foaf:Document` → `mem:rationale`) →
+projection emits `<> a foaf:Document` → `rationale:` frontmatter lands on `<>` = where the contract targets
+(the markdown-lane subject bug is gone by construction). **Tasks DONE: 1–6, 8, 10** (12 commits, unpushed).
+The `mem:` vocab moved wholesale to substrate `ontology/mem.ttl`. Path B chosen for governed-predicates
+(agreement test, not codegen — agentic reasons; see the 🧱 entry below).
+
+**▶ REMAINING (in priority order for the next session):**
+1. **Task 12 — fixture sweep (~57 red, the bulk).** The changes ripple through integration/unit test
+   expectations; the failures are **fixture-expectation updates, NOT regressions** (the feature is
+   live-validated). Three categories: (a) tests hard-coding the old `overlays/wiki-memory/ontology/mem.ttl`
+   path → now `ontology/mem.ttl`; (b) `test_floor_parity.py` resolves constrainedBy shapes only under
+   `overlays/wiki-memory/shapes/` → `write-contract.shacl.ttl` is in `shapes/substrate/`; (c) integration
+   tests (`test_two_subject_projection_e2e`, `test_admission_floor_integration`, `test_wiki_memory_l3_listener_integration`,
+   `test_projection_subtraction`, view/index/mem-operations e2e, …) asserting exact projected `.meta` → now
+   carry an extra `<> a foaf:Document` triple + the injected `constrainedBy`. **Caution: triage each as
+   update-expectation vs real-regression — don't wave through.** The 9 `test_wiki_search_e2e` ERRORs may be a
+   separate setup/index issue — check independently.
+2. **Task 11 — agentic probe** of the multiple-`st:shape` wiki path (spec's one unverified mechanism): a cold
+   agent crystallizes a wiki concept and the write validates against the unioned Page+Thing+leaf+contract set
+   first try. Rig in `evals/` (model on `evals/proj-enrich/`); report to `docs/plans/`.
+3. **Tasks 7/9 — RDF-native lanes** — see the 🔵 entry below.
+
 ## 🧱 Runtime-derived governed-predicate partition (the real target — shape-governance reconciliation, 2026-06-18)
 
 `governedPredicates.ts` is a hand-maintained static map. Task 5 of the reconciliation chose **Path B**

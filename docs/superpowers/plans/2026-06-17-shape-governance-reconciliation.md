@@ -10,6 +10,15 @@
 
 **Spec:** `docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md`
 
+> **STATUS 2026-06-18 (branch `shape-governance-reconciliation`, 12 commits, unpushed):**
+> **DONE + live-validated (wiki lane): Tasks 1, 2, 3, 4, 5 (Path B), 6, 8, 10.** The reconciliation
+> thesis is proven on the live Pod (e2e green, `make reset` 0 ERROR). Task numbering below differs
+> slightly from execution order (Task 5 became the Path-B agreement test, not codegen; Tasks 6/8 were
+> done before 7/9). **REMAINING: Task 12** (fixture sweep — ~57 red, all expectation-updates not
+> regressions: old `mem.ttl` path, substrate-shape path in `test_floor_parity`, extra `<> a foaf:Document`
+> in projected-`.meta` assertions); **Task 11** (agentic probe); **Tasks 7+9** (RDF-native lanes —
+> deferred, tree↔layout decision). Full resume notes in `FOLLOWUPS.md` ▶▶ RESUME section.
+
 **Conventions (every task):**
 - Pod calls: prefix pytest with `SSL_CERT_FILE=$(mkcert -CAROOT)/rootCA.pem`.
 - After Turtle/shape/TS changes that must reach the live Pod: `make rebuild && make verify` (TS) or `make reset && make verify` (seed/shape data). Pure-Python generator + unit tests don't need the Pod.

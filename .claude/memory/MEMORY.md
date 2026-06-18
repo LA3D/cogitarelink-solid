@@ -14,6 +14,26 @@ Repo decision IDs differ from vault IDs; both numberings are reconciled in `deci
 
 ## Project state (as of 2026-06-12)
 
+- **▶▶ CURRENT ANCHOR (2026-06-18) — read this FIRST; supersedes the markers below.** **SHAPE-GOVERNANCE
+  RECONCILIATION in progress — wiki lane BUILT + LIVE-VALIDATED, on branch `shape-governance-reconciliation`
+  (12 commits, UNPUSHED, NOT merged).** Audit (2026-06-17) found three uncoordinated shape-governance routes
+  (`ldp:constrainedBy` [floor-enforced] / ShapeTree `st:shape` [SAI, inert] / `governedPredicates.ts`
+  [projection]) + the agentic write contract copy-pasted per-app + `mem:` vocab mislocated inside the wiki
+  overlay. SAI-spec-grounded (the 2026-06-12 harmonization doc: declaration-only ShapeTrees + D108 floor, no
+  ST runtime). **Design = ShapeTrees as the source of truth → derive `constrainedBy` (+ codegen rejected for
+  governedPredicates, Path B agreement test chosen on AGENTIC grounds: codegen splits agent-taught shapes
+  from agent-invisible behavior + governance is silent/no-422) → ONE substrate `sub:WriteContractShape`
+  (`foaf:Document` → `mem:rationale`, proto-known hook) injected into every durable container's gate.**
+  Spec `docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md`; plan + 12-task status
+  in `docs/superpowers/plans/2026-06-17-shape-governance-reconciliation.md`. **DONE: Tasks 1–6, 8, 10**
+  (e2e green, `make reset` 0 ERROR; the markdown-lane subject bug is resolved by construction — rationale on
+  `<>` = where the contract targets). `mem:` relocated wholesale to substrate `ontology/mem.ttl`. PageShape
+  now in the floored gate (closed the "<> ungoverned" audit gap; surfaced + fixed a latent seed date bug).
+  **▶ RESUME = `FOLLOWUPS.md` ▶▶ RESUME section: Task 12 (~57 fixture-expectation updates, NOT regressions —
+  old mem.ttl path / substrate-shape path / extra `<> a foaf:Document`), Task 11 (agentic probe), Tasks 7/9
+  (RDF-native lanes — deferred, tree↔layout decision).** The paused `markdown-lane-write-contract` branch is
+  SUPERSEDED by this work (its reusable commits were cherry-picked). **Below = prior anchors (still valid history).**
+
 - **▶▶ CURRENT ANCHOR (2026-06-13) — read this first; supersedes the scattered ▶ NEXT markers below.**
   **PSP SHIPPED 2026-06-13 (D116; branch `prov-scoped-projection`, 8 tasks PSP-T1–T8; controller merges
   after a final whole-branch review).** Subtraction-based re-projection (`.meta − f(old body) ∪ f(new
