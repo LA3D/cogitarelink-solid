@@ -1,8 +1,16 @@
 # Markdown-lane write contract — design
 
 **Date:** 2026-06-17
-**Status:** approved (brainstorm), pre-plan
-**Decision id:** extends D116 (PSP); closes FOLLOWUPS `🧷 (a)`
+**Status:** SUPERSEDED 2026-06-18 by the shape-governance reconciliation (D117; spec
+`2026-06-17-shape-governance-reconciliation-design.md`, merged `6510e2a`). This standalone
+markdown-lane design was folded into the broader reconciliation: the write contract became ONE
+substrate `sub:WriteContractShape` (`foaf:Document` → `mem:rationale`) injected by the derivation,
+rather than per-lane shape edits. The reusable commits from the paused `markdown-lane-write-contract`
+branch (projection `rationale:`→`mem:rationale`, the durable-seed backfill, the crystallize affordance)
+were cherry-picked into the reconciliation; the branch itself is a stale-branch cleanup candidate.
+Retained as the design record of the markdown-lane sub-problem (`<>`-vs-`<#this>` subject placement,
+D73 crystallization timing) that the reconciliation resolved by construction.
+**Decision id:** extends D116 (PSP); closes FOLLOWUPS `🧷 (a)`; superseded by D117
 **Supersedes/relates:** D73 (two-stage commit), D108 (admission floor), D109 (layer-partitioned authority), D112 (operations log / curation), D116 (provenance-scoped projection — the gate-lift)
 
 ## Problem

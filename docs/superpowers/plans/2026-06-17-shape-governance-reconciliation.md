@@ -10,14 +10,21 @@
 
 **Spec:** `docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md`
 
-> **STATUS 2026-06-18 (branch `shape-governance-reconciliation`, 12 commits, unpushed):**
-> **DONE + live-validated (wiki lane): Tasks 1, 2, 3, 4, 5 (Path B), 6, 8, 10.** The reconciliation
-> thesis is proven on the live Pod (e2e green, `make reset` 0 ERROR). Task numbering below differs
-> slightly from execution order (Task 5 became the Path-B agreement test, not codegen; Tasks 6/8 were
-> done before 7/9). **REMAINING: Task 12** (fixture sweep — ~57 red, all expectation-updates not
-> regressions: old `mem.ttl` path, substrate-shape path in `test_floor_parity`, extra `<> a foaf:Document`
-> in projected-`.meta` assertions); **Task 11** (agentic probe); **Tasks 7+9** (RDF-native lanes —
-> deferred, tree↔layout decision). Full resume notes in `FOLLOWUPS.md` ▶▶ RESUME section.
+> **STATUS 2026-06-18 — MERGED to `main` (no-ff merge `6510e2a`; branch deleted; see D117).**
+> **DONE + live-validated (wiki lane): Tasks 1, 2, 3, 4, 5 (Path B), 6, 8, 10, 11, 12.** The
+> reconciliation thesis is proven on the live Pod and the multiple-`st:shape` union is cold-agent
+> validated (Task 11: n=2 PASS first-try, `docs/plans/2026-06-17-write-contract-probe-report.md`).
+> Task numbering differs from execution order (Task 5 became the Path-B agreement test, not codegen;
+> Tasks 6/8 before 7/9). Task 12 (fixture sweep) was all expectation-updates EXCEPT one real coupling
+> fixed on-thesis — the projection's new `<> a foaf:Document` made the contract 422 the *derived*
+> `index.md`; `buildIndexMarkdown` now emits `rationale:` (commit `8d435ec`). Suite 474 passed;
+> `make reset && make verify` 0 ERROR / 1 intentional D98 WARN; `make test-js` green.
+> **REMAINING: Tasks 7 + 9 only (RDF-native lanes) — DEFERRED.** Their containers (addressbook,
+> id-schemes) still enforce via their OWN per-app duplicated `mem:rationale` shapes (functional, not
+> unified); `derive_constraints.py` derives their shape sets but writes wiki-only because their
+> ShapeTrees diverge from the deployed layout (addressbook constrains `{Person,Organization}/`
+> subcontainers; id-schemes is outside `/vault`). Blocked on the tree↔layout decision, not labor.
+> Full resume notes in `FOLLOWUPS.md` ▶▶ RESUME + 🔵 sections.
 
 **Conventions (every task):**
 - Pod calls: prefix pytest with `SSL_CERT_FILE=$(mkcert -CAROOT)/rootCA.pem`.

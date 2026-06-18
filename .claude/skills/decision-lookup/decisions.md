@@ -1,6 +1,6 @@
 # SOLID Pod Decisions Index
 
-Always loaded. Concise index of all architectural decisions (D1-D116, K1-K4). Vault is canonical source:
+Always loaded. Concise index of all architectural decisions (D1-D117, K1-K4). Vault is canonical source:
 `~/Obsidian/obsidian/01 - Projects/SOLID Pod Integration/SOLID-Pod-Decisions.md`
 
 ## Skill cross-reference
@@ -1123,6 +1123,29 @@ where `f` is the deterministic projection. The subtraction removes exactly the t
 **Probe (PSP-T7):** enrichment round-trip, rig `evals/proj-enrich/`, Haiku mechanism check, **PASS 2/2** ($0.26). A cold curl-only agent PATCHed a self-minted triple on `#this`, rewrote the body + re-PUT; the `bodyHash` changed both runs (projection fired) and the agent's annotation survived both. Mechanism validated end-to-end over plain HTTP.
 
 **See also:** D81 (Model A predicate-level governance + the RQ-Listener-1 known limitation this dissolves), D108 (admission floor — the ownership-enforcement station, unchanged), D112 (curation lane — the invalidate-not-delete station, and the curation signal the degraded mode emits), D109 (derive/floor/loop partition), Memento/K1 (the git-backed versioning substrate the backstop reads old bodies from), D115 SP2 follow-on (a) (the markdown-lane write contract this ungates).
+
+## Shape-governance reconciliation (D117, 2026-06-18)
+
+### D117 — ShapeTrees as the single source of governance truth; one substrate write contract (2026-06-18)
+
+**Status:** SHIPPED for the **wiki lane** + MERGED to `main` (no-ff merge `6510e2a`, branch `shape-governance-reconciliation` deleted). Spec: `docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md`; plan: `docs/superpowers/plans/2026-06-17-shape-governance-reconciliation.md`; probe report: `docs/plans/2026-06-17-write-contract-probe-report.md`; grounding: `docs/research/2026-06-12-solid-design-intent-harmonization.md`. Tasks 1–6, 8, 10, 11, 12 done; **Tasks 7/9 (RDF-native lanes) DEFERRED.** Suite **474 passed**; `make reset && make verify` 0 ERROR / 1 intentional D98 WARN; `make test-js` green.
+
+**Problem:** the Pod had **three parallel, hand-maintained declarations of "which SHACL shape governs this container," only one enforced**, with nothing testing agreement: `ldp:constrainedBy` (D108 floor-enforced) / ShapeTree `st:shape` (SAI, inert — no ST runtime) / `governedPredicates.ts` (projection). On top, the agentic write contract (`mem:rationale` MUST accompany every durable write — the L2 invariant, the construct side of Verborgh's trust envelope) was **copy-pasted per-app**, built on a `mem:` vocab mislocated *inside* the wiki overlay.
+
+**Decision (shipped):**
+1. **ShapeTrees are the source of truth** — the declaration-only subset (`st:shape`→SHACL, `st:contains`); **no ST runtime** (harmonization delta #2 — nobody ships it; the D108 floor is the enforcement). Option-2 runtime ST enforcement is off the table.
+2. **Derive `ldp:constrainedBy` from the ShapeTrees** at seed time (`scripts/overlay/derive_constraints.py`, `make derive-constraints`), guarded by an agreement test (`tests/test_constraints_derivation.py` / `test_floor_parity.py`). A wiki ResourceTree carries **multiple `st:shape`** (Page+Thing+leaf); the derivation unions them. `governedPredicates.ts` stays a hand file + **Path B agreement test** (`tests/test_governed_predicates_agreement.py`), NOT codegen — agentic grounds: codegen would split the agent-taught shapes (their `sh:agentInstruction`) from the agent-invisible behavior file, and governance is silent (no 422), so taught≠enforced couldn't self-correct. (The runtime-derived governed set is the cleaner future fix — FOLLOWUPS 🧱.)
+3. **One substrate `sub:WriteContractShape`** (`shapes/substrate/write-contract.shacl.ttl`: `sh:targetClass foaf:Document` → `mem:rationale`, laden `sh:message`) **injected by the derivation** into every durable container's `constrainedBy` — apps no longer declare it.
+4. **`foaf:Document` on `<>` is the universal hook** — the projection emits `<> a foaf:Document` (markdown lane); `foaf:Document owl:equivalentClass schema:CreativeWork` = proto-known across FOAF + schema.org. The contract targets the document subject `<>` uniformly (no `rebindSubject` change; frontmatter already lands on `<>`).
+5. **`mem:` vocab relocated** wholesale to substrate `ontology/mem.ttl` (deployed at its existing `/vault/ontology/mem#` IRI).
+
+**Validated (Task 11):** the multiple-`st:shape` union is satisfiable + coherent for a cold agent — n=2 Haiku, both PASS first-try (201, 0×422, $0.32); each read the four shapes (`concept`+`page`+`thing`+`write-contract`) and composed one conforming write. Spec open question closed: keep multiple `st:shape` unioned, no composed shape needed.
+
+**WORKING now:** the **wiki lane** is fully unified — derived `constrainedBy`, injected `WriteContractShape`, `foaf:Document` on `<>`, no per-app duplication, cold-agent-validated. `PageShape` is now in the floored gate (closed the audit's "`<>` ungoverned" finding; surfaced + fixed a latent seed date bug). A real coupling the change surfaced was fixed on-thesis: the projection's new `<> a foaf:Document` made the contract 422 the **derived** `index.md` write → `buildIndexMarkdown` now emits `rationale:` (commit `8d435ec`; "every durable write carries write-context, derived ones included").
+
+**NOT done / NOT unified (Tasks 7/9, DEFERRED — blocked on a design decision, not labor):** the **addressbook + id-schemes lanes still enforce their write contract via their OWN per-app duplicated `mem:rationale` shapes** (`contact-card`, `organization-card`, `membership`, `group`, `scheme-record` ×2, `curation-proposal`). They are functional but NOT routed through the injected `WriteContractShape`: `derive_constraints.py` lists their containers in `DURABLE_CONTAINERS` (shape sets derive correctly) but the writer runs **wiki-only**, because their ShapeTrees diverge from the deployed layout — addressbook's tree manages `/vault/contacts/` while it constrains `{Person,Organization}/` *subcontainers*; id-schemes lives outside `/vault` (`/id/schemes/`). Addressbook is still on `<#this>` (`vcard:Individual`), NOT realigned to `<>`/`foaf:Document`. So "uniform across all three lanes" holds for wiki only; the RDF-native de-duplication + addressbook `<>`-realignment await the tree↔layout reconciliation (reshape the tree to manage subcontainers? normalize id-schemes onto `/vault/meta/shapes/`?). See FOLLOWUPS 🔵. **Probe caveat:** both Task-11 agents pre-satisfied by reading the shapes, so the laden-422 *convergence* path was not directly exercised (covered indirectly by `test_write_contract_e2e` / `test_admission_floor_integration`).
+
+**See also:** D108 (container=gate/class=dispatch; the in-band floor = the enforcement this builds on), D96 (Page `<>` + Thing `<#this>` split — `mem:rationale` is a Page-lifecycle predicate), D81 (predicate-level governance + the `sub:governs` descriptor synced here), D109/D110 (interop/SAI adoption: vocab-now, runtime-deferred), D116 (PSP — keeps agent `.meta` enrichment across rewrites, so `mem:rationale` survives by re-projection), D73 (`working/` permissive — the contract attaches at crystallization, not draft). Supersedes the per-app write-contract duplication shipped in D115/SP2; the paused `markdown-lane-write-contract` branch is superseded (reusable commits cherry-picked).
 
 ## Open research questions
 

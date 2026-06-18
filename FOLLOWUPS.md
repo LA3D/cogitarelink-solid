@@ -2,41 +2,28 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
-## ▶▶ RESUME — shape-governance reconciliation (branch `shape-governance-reconciliation`, 2026-06-18)
+## ▶▶ SHIPPED + MERGED — shape-governance reconciliation (D117; merge `6510e2a`, 2026-06-18)
 
-Spec `docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md`; plan
-`docs/superpowers/plans/2026-06-17-shape-governance-reconciliation.md` (12 tasks). **The wiki lane is
-BUILT + LIVE-VALIDATED** (e2e `tests/test_write_contract_e2e.py` green; `make reset` 0 ERROR): ShapeTrees =
-source of truth → `scripts/overlay/derive_constraints.py` derives `constrainedBy` → injects
-`sub:WriteContractShape` (`shapes/substrate/write-contract.shacl.ttl`, `foaf:Document` → `mem:rationale`) →
-projection emits `<> a foaf:Document` → `rationale:` frontmatter lands on `<>` = where the contract targets
-(the markdown-lane subject bug is gone by construction). **Tasks DONE: 1–6, 8, 10, 11, 12** (unpushed). **REMAINING: Tasks 7/9 only (RDF-native lanes — deferred, tree↔layout decision).** The reconciliation's last unverified mechanism (multiple-`st:shape` union) is now live-validated by cold agents.
-The `mem:` vocab moved wholesale to substrate `ontology/mem.ttl`. Path B chosen for governed-predicates
-(agreement test, not codegen — agentic reasons; see the 🧱 entry below).
+**MERGED to `main`** (no-ff `6510e2a`; branch `shape-governance-reconciliation` deleted; **unpushed** as of
+this writing). Full done/not-done record: **decisions.md D117**. Spec
+`docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md`; plan
+`docs/superpowers/plans/2026-06-17-shape-governance-reconciliation.md`; probe report
+`docs/plans/2026-06-17-write-contract-probe-report.md`.
 
-**▶ REMAINING (in priority order for the next session):**
-1. ~~**Task 12 — fixture sweep.**~~ **DONE 2026-06-18 (commits `8d435ec` + `14d02e5`).** Full suite
-   **474 passed** (known `test_timemap_returns_parseable_turtle` flake passes in isolation); `make test-js`
-   green; `make reset && make verify` 0 ERROR / 1 intentional D98 WARN. All red was expectation-updates as
-   predicted — (a) `mem.ttl` path → `ontology/mem.ttl` (curation_vocab, vocab_vs_shape); (b) floor_parity
-   substrate-shape resolution + the `tg.value`→`tg.objects` helper bug (trees carry multiple `st:shape`);
-   (c) interop_foundation expected-set += Page/ThingShape; (d) durable-write bodies + wiki-memory-l3
-   body/meta fixtures += `rationale:`/`mem:rationale`. **ONE real coupling regression found + fixed**
-   (`8d435ec`, on-thesis): the projection's new `<> a foaf:Document` made the WriteContractShape 422 the
-   *derived* `index.md` write → it silently 404'd; `buildIndexMarkdown` now emits a `rationale:` line. Also
-   synced the `markdown-projection` `sub:governs` descriptor (+= `mem:rationale`) to the runtime union.
-2. ~~**Task 11 — agentic probe**~~ **DONE 2026-06-18.** Rig `evals/write-contract/`; report
-   `docs/plans/2026-06-17-write-contract-probe-report.md`. **Union VALIDATED** — n=2 cold Haiku, both
-   PASS first-try (POST/PUT → 201, **0×422 from the union**, $0.32). Both agents read the four shapes
-   (`concept`+`page`+`thing`+`write-contract`, each carrying `sh:agentInstruction`) + an exemplar, reasoned
-   about the union explicitly, and composed one conforming write (`type:`+`rationale:`+`[text]{.prefLabel}`).
-   Spec open question CLOSED: keep multiple `st:shape` unioned by the derivation; no composed shape needed.
-   Caveat: both pre-satisfied via shape-reading, so the laden-422 *convergence* path was not exercised here
-   (it's covered indirectly by the e2e fixture tests). run2 had a POST→404 (container routing) before its
-   PUT→201 — tooling note, not a shape fault.
-3. **Tasks 7/9 — RDF-native lanes** — see the 🔵 entry below.
+**WORKING (wiki lane, shipped):** ShapeTrees = source of truth → `scripts/overlay/derive_constraints.py`
+derives `constrainedBy` → injects `sub:WriteContractShape` (`shapes/substrate/write-contract.shacl.ttl`,
+`foaf:Document` → `mem:rationale`) → projection emits `<> a foaf:Document` → `rationale:` lands on `<>`.
+`mem:` relocated to substrate `ontology/mem.ttl`. Multiple-`st:shape` union cold-agent-validated (Task 11,
+n=2 PASS first-try). Suite 474 passed; `make reset && make verify` 0 ERROR / 1 intentional D98 WARN;
+`make test-js` green. Tasks DONE: 1–6, 8, 10, 11, 12.
 
-**📍 NAVIGATION — read in this order, then use this mechanism map (saves re-deriving what the build cost):**
+**▶ OPEN — Tasks 7/9 (RDF-native lanes), DEFERRED:** addressbook + id-schemes still enforce via their OWN
+per-app duplicated `mem:rationale` shapes (functional, NOT unified — the derivation writes `constrainedBy`
+wiki-only). De-dup + addressbook `<>`/`foaf:Document` realign await the tree↔layout decision — see the 🔵
+entry below. Two smaller open items: the runtime-derived governed-predicate set (🧱) and the superseded
+`markdown-lane-write-contract` branch (stale-branch cleanup candidate).
+
+**📍 NAVIGATION (retained — serves Tasks 7/9 + future reference): read in this order, then the mechanism map:**
 
 *Reading order:* (1) this RESUME section; (2) `docs/research/2026-06-12-solid-design-intent-harmonization.md`
 — the GROUNDING that rules out alternatives (declaration-only ShapeTrees, **no ST runtime**, the D108 floor
