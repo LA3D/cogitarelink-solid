@@ -30,6 +30,42 @@ The `mem:` vocab moved wholesale to substrate `ontology/mem.ttl`. Path B chosen 
    first try. Rig in `evals/` (model on `evals/proj-enrich/`); report to `docs/plans/`.
 3. **Tasks 7/9 — RDF-native lanes** — see the 🔵 entry below.
 
+**📍 NAVIGATION — read in this order, then use this mechanism map (saves re-deriving what the build cost):**
+
+*Reading order:* (1) this RESUME section; (2) `docs/research/2026-06-12-solid-design-intent-harmonization.md`
+— the GROUNDING that rules out alternatives (declaration-only ShapeTrees, **no ST runtime**, the D108 floor
+is the enforcement, write-contract = Verborgh trust envelope); (3) the spec
+`docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md` (6 settled decisions +
+`foaf:Document`-on-`<>` cross-lane unification); (4) the plan (12 tasks + File Structure table + status
+banner); (5) decisions **D96** (Page+Thing split), **D108** (container=gate/class=dispatch + in-band floor),
+**D109/D110** (interop adoption: SAI vocab-now/runtime-deferred), **D116** (PSP) — via the `decision-lookup` skill.
+
+*Mechanism map (the non-obvious couplings):*
+- **Source of truth = ShapeTrees** `overlays/*/shapetrees/*.tree.ttl`. **Binding** lives in
+  `overlays/wiki-memory/interop/registry.ttl` (registration→tree) + `interop/managers/*.shapetree.ttl` (wiki
+  container→tree). ⚠️ the registry does NOT carry the container URL; wiki container→tree is in the managers;
+  addressbook/id-schemes have NEITHER (the RDF-native divergence — 🔵 entry).
+- **Derivation** = `scripts/overlay/derive_constraints.py` (reads trees → writes container `.meta`
+  `constrainedBy`, injecting `sub:WriteContractShape`; config = `DURABLE_CONTAINERS` + `SHAPE_NODE_TO_FILE`;
+  modeled on `scripts/gen_managers.py`). Run via `make derive-constraints`.
+- **Deploy** = `scripts/overlay/apply.py` block 8/8b PATCHes container `.meta`. ⚠️ GOTCHA: manifest
+  `overlay:document "../../ontology/mem.ttl"` / `"../../shapes/substrate/..."` resolves because `./ontology`,
+  `./shapes`, `./overlays` are ALL mounted into the pod-setup container (`docker-compose.yml`); apply.py does
+  `overlay_dir / doc`. The extension-less IRI `/vault/ontology/mem` is hosted by the WIKI manifest (NOT
+  `pod_setup.py`, which appends `.ttl`).
+- **Enforcement** = the D108 floor (`css/extensions/shape-validator/src/storage/{AdmissionFloorStore,ShapeValidationStore}.ts`)
+  loads ONLY the container's `ldp:constrainedBy` (NOT ShapeTrees — SAI runtime deferred). Floor's markdown
+  projector = `css/extensions/markdown-projection/src-cjs/markdownBodyProjector.ts` → ESM `projectionPipeline.run`.
+- **Projection** = `projectionPipeline.ts` (`emitSubstrateInvariants` emits `<> a foaf:Document`; `rebindSubject`
+  sends frontmatter to `<>`), `frontmatterProjection.ts` (`rationale:`→`mem:rationale`), `governedPredicates.ts`
+  (the PAGE/THING partition; Path-B agreement test `tests/test_governed_predicates_agreement.py` guards it;
+  ⚠️ `maps.json` sidecar mirrors it — regen with `npm run emit-maps` after any change).
+- **The contract** = `shapes/substrate/write-contract.shacl.ttl` (`foaf:Document` → `mem:rationale`).
+
+*Commands:* `make reset && make verify` (rebuild+reseed+audit, expect 0 ERROR / 1 intentional D98 WARN);
+`make derive-constraints`; Pod calls need `SSL_CERT_FILE=$(mkcert -CAROOT)/rootCA.pem`; run Python as a module
+(`~/uvws/.venv/bin/python -m scripts.overlay.derive_constraints`); see `.claude/rules/agentic-development.md`.
+
 ## 🧱 Runtime-derived governed-predicate partition (the real target — shape-governance reconciliation, 2026-06-18)
 
 `governedPredicates.ts` is a hand-maintained static map. Task 5 of the reconciliation chose **Path B**
