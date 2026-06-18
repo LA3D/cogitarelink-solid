@@ -27,6 +27,7 @@ const FOAF   = "http://xmlns.com/foaf/0.1/";
 const ORG    = "http://www.w3.org/ns/org#";
 const PROV   = "http://www.w3.org/ns/prov#";
 const WIKI   = "https://pod.vardeman.me/vault/ontology/wiki#";
+const MEM    = "https://pod.vardeman.me/vault/ontology/mem#";
 
 // Pod base IRI — single-sourced from WIKI (the wiki vocab lives under <podbase>/vault/…)
 // so the profile IRIs can never diverge from the rest of the pod-hosted namespace.
@@ -45,6 +46,11 @@ export const PAGE_GOVERNED_PREDICATES: NamedNode[] = [
     namedNode(WIKI   + "maturity"),
     namedNode(PROV   + "wasGeneratedBy"),
     namedNode(WIKI   + "embeds"),
+    // The agentic write contract (sub:WriteContractShape, foaf:Document on <>). Governed
+    // because it is BODY-AUTHORED (rationale: frontmatter → mem:rationale on <>): the
+    // projection clears + re-projects it on every rewrite. An agent must NOT add it via a
+    // direct .meta PATCH expecting it to persist independently — it is substrate-managed.
+    namedNode(MEM    + "rationale"),
 ];
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,13 @@
 @prefix as:   <https://www.w3.org/ns/activitystreams#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+# A wiki page <> IS-A foaf:Document — the universal write-contract hook
+# (sub:WriteContractShape targets foaf:Document). The projection ALSO emits
+# foaf:Document on <> explicitly (floor needs no inference); this axiom is the
+# agent-proto-knowledge bridge (an agent that knows wiki:Page reasons to Document).
+wiki:Page rdfs:subClassOf foaf:Document .
 
 # Minimal AS2 subclass axioms loaded by the shape-validator so path
 # constraints honour the activity-type hierarchy without pulling the full

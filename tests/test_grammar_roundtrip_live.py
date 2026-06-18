@@ -33,7 +33,7 @@ def _load_shapes():
 
 def test_inline_authored_concept_conforms_without_patch():
     body = (
-        "---\ntype: concept\n---\n# Photosynthesis\n"
+        "---\ntype: concept\nrationale: \"rqg1 grammar round-trip test\"\n---\n# Photosynthesis\n"
         "[Photosynthesis]{.prefLabel}; "
         "[The conversion of light energy into chemical energy]{.definition}; "
         "broader [[Biology]]{.broader}."

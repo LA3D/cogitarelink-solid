@@ -9,6 +9,11 @@ TREE = REPO / "overlays/wiki-memory/shapetrees/wiki-memory.tree.ttl"
 
 RESOURCE_SHAPES = ["ConceptShape", "SourceShape", "PersonShape", "PlaceShape",
                    "EventShape", "OrganizationShape", "HowToShape", "WorkingNoteShape"]
+# Shape-governance reconciliation (Task 8): each wiki ResourceTree now carries the
+# full dual-layer set — its leaf shape PLUS the shared Page (<>) and Thing (<#this>)
+# shapes — so the derived constrainedBy gates Page+Thing+leaf. The contract shape
+# (sub:WriteContractShape) is injected by the derivation, not declared on the tree.
+PAGE_THING_SHAPES = ["PageShape", "ThingShape"]
 N_CONTAINERS = 7
 
 def _g():
@@ -22,7 +27,7 @@ def test_tree_parses_with_8_resource_trees_and_7_container_trees():
 def test_every_resource_tree_shape_is_a_wiki_nodeshape_iri():
     g = _g()
     shapes = {str(o) for o in g.objects(None, ST.shape)}
-    assert shapes == {WIKI + s for s in RESOURCE_SHAPES}, shapes
+    assert shapes == {WIKI + s for s in RESOURCE_SHAPES + PAGE_THING_SHAPES}, shapes
 
 def test_concepts_container_contains_both_concept_and_source():
     g = _g()
@@ -89,7 +94,7 @@ def test_no_dangling_shape_trees_and_every_shape_defined():
     used_trees = set(g.objects(None, INTEROP.registeredShapeTree))
     assert used_trees <= defined_trees, f"dangling registeredShapeTree: {used_trees - defined_trees}"
     shapes = {str(o).split('#')[-1] for o in g.objects(None, ST.shape)}
-    assert shapes == set(RESOURCE_SHAPES) | set(APP_TREE_SHAPES), shapes
+    assert shapes == set(RESOURCE_SHAPES) | set(APP_TREE_SHAPES) | set(PAGE_THING_SHAPES), shapes
 
 
 # --- Task 5: per-container .shapetree Manager auxiliaries ---

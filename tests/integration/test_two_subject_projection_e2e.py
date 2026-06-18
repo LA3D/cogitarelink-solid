@@ -39,7 +39,7 @@ def _put_and_read_meta(path: str, body: str) -> Graph:
 def test_concept_page_has_two_subjects():
     """Page and Thing both present with correct types."""
     # [Test Concept]{.prefLabel} clears the D108 admission floor on /wiki/concepts/.
-    body = "---\ntitle: Test Concept\ntype: skos:Concept\n---\n\n# Test Concept\n\n[Test Concept]{.prefLabel}\n\nA test."
+    body = "---\ntitle: Test Concept\ntype: skos:Concept\nrationale: \"two-subject projection test\"\n---\n\n# Test Concept\n\n[Test Concept]{.prefLabel}\n\nA test."
     g = _put_and_read_meta("/wiki/concepts/test-concept.md", body)
 
     page = URIRef(POD + "/wiki/concepts/test-concept.md")
@@ -51,7 +51,7 @@ def test_concept_page_has_two_subjects():
 
 def test_person_page_has_two_subjects():
     """schema:Person Thing subject with Page document subject."""
-    body = "---\ntitle: Jane Doe\ntype: schema:Person\n---\n\n# Jane Doe"
+    body = "---\ntitle: Jane Doe\ntype: schema:Person\nrationale: \"two-subject projection test\"\n---\n\n# Jane Doe"
     g = _put_and_read_meta("/wiki/people/jane-test.md", body)
 
     page = URIRef(POD + "/wiki/people/jane-test.md")
@@ -62,7 +62,7 @@ def test_person_page_has_two_subjects():
 
 def test_place_page_has_two_subjects():
     """schema:Place Thing subject with Page document subject."""
-    body = "---\ntitle: Notre Dame\ntype: schema:Place\n---\n\n# ND"
+    body = "---\ntitle: Notre Dame\ntype: schema:Place\nrationale: \"two-subject projection test\"\n---\n\n# ND"
     g = _put_and_read_meta("/wiki/places/nd-test.md", body)
     thing = URIRef(POD + "/wiki/places/nd-test.md#this")
     assert (thing, RDF.type, URIRef(SCHEMA + "Place")) in g
@@ -70,7 +70,7 @@ def test_place_page_has_two_subjects():
 
 def test_event_page_has_two_subjects():
     """schema:Event Thing subject with Page document subject."""
-    body = "---\ntitle: ND Visit\ntype: schema:Event\n---\n\n# Visit"
+    body = "---\ntitle: ND Visit\ntype: schema:Event\nrationale: \"two-subject projection test\"\n---\n\n# Visit"
     g = _put_and_read_meta("/wiki/events/visit-test.md", body)
     thing = URIRef(POD + "/wiki/events/visit-test.md#this")
     assert (thing, RDF.type, URIRef(SCHEMA + "Event")) in g
@@ -78,7 +78,7 @@ def test_event_page_has_two_subjects():
 
 def test_organization_page_has_two_subjects():
     """schema:Organization Thing subject with Page document subject."""
-    body = "---\ntitle: University\ntype: schema:Organization\n---\n\n# U"
+    body = "---\ntitle: University\ntype: schema:Organization\nrationale: \"two-subject projection test\"\n---\n\n# U"
     g = _put_and_read_meta("/wiki/organizations/u-test.md", body)
     thing = URIRef(POD + "/wiki/organizations/u-test.md#this")
     assert (thing, RDF.type, URIRef(SCHEMA + "Organization")) in g
@@ -86,7 +86,7 @@ def test_organization_page_has_two_subjects():
 
 def test_howto_page_has_two_subjects():
     """schema:HowTo Thing subject with Page document subject."""
-    body = "---\ntitle: How to Crystallize\ntype: schema:HowTo\n---\n\n# Crystallize\n\n1. PUT\n2. POST"
+    body = "---\ntitle: How to Crystallize\ntype: schema:HowTo\nrationale: \"two-subject projection test\"\n---\n\n# Crystallize\n\n1. PUT\n2. POST"
     g = _put_and_read_meta("/wiki/procedures/howto-test.md", body)
     thing = URIRef(POD + "/wiki/procedures/howto-test.md#this")
     assert (thing, RDF.type, URIRef(SCHEMA + "HowTo")) in g

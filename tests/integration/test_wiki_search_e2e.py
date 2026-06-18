@@ -40,9 +40,9 @@ def seeded_pages(client: httpx.Client):
     # delta needs none. The spans are just extra body text — wiki-search greps the
     # body, so the search-term matches below are unaffected.
     pages = {
-        "concepts/wsearch-alpha.md": "# alpha\n\n[alpha]{.prefLabel}\n\nthis page discusses progressive disclosure deeply.\n",
-        "concepts/wsearch-beta.md": "# beta\n\n[beta]{.prefLabel}\n\nESPRESSO is the access-control system.\nProgressive disclosure is also mentioned.\n",
-        "concepts/wsearch-gamma.md": "# gamma\n\n[gamma]{.prefLabel}\n\nnothing relevant here at all.\n",
+        "concepts/wsearch-alpha.md": "---\nrationale: \"wiki-search e2e seed\"\n---\n# alpha\n\n[alpha]{.prefLabel}\n\nthis page discusses progressive disclosure deeply.\n",
+        "concepts/wsearch-beta.md": "---\nrationale: \"wiki-search e2e seed\"\n---\n# beta\n\n[beta]{.prefLabel}\n\nESPRESSO is the access-control system.\nProgressive disclosure is also mentioned.\n",
+        "concepts/wsearch-gamma.md": "---\nrationale: \"wiki-search e2e seed\"\n---\n# gamma\n\n[gamma]{.prefLabel}\n\nnothing relevant here at all.\n",
         "working/wsearch-delta.md": "# delta\n\nworking note about progressive disclosure and ESPRESSO together.\n",
     }
     headers = {"Content-Type": "text/markdown"}

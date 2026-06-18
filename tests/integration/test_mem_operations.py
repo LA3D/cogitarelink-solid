@@ -63,6 +63,12 @@ def _put(url, body):
     if "/wiki/concepts/" in url and ".prefLabel" not in body:
         label = url.rsplit("/", 1)[-1].removesuffix(".md")
         body = body + f"\n[{label}]{{.prefLabel}}\n"
+    # Durable writes carry the substrate write contract's mem:rationale (projected
+    # from rationale: frontmatter onto <>); working/ stays permissive (D73). Bodies
+    # here are bare markdown, so prepend a frontmatter block when one is absent.
+    if "/wiki/" in url and "/wiki/working/" not in url and "rationale:" not in body \
+            and not body.lstrip().startswith("---"):
+        body = '---\nrationale: "mem: action provenance test"\n---\n' + body
     r = httpx.put(url, content=body,
                   headers={"Content-Type": "text/markdown"}, verify=_CA)
     # CSS returns 201 for create, 205 Reset Content for update (overwrite).

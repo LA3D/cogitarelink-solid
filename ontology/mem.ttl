@@ -1,3 +1,11 @@
+# L2 memory-substrate vocabulary (relocated from overlays/wiki-memory/ontology/ — 2026-06-17
+# shape-governance reconciliation). The whole mem: vocab is L2 memory-substrate: mem:rationale
+# (the agentic write contract, cross-app), the crystallize lifecycle (D73 two-stage commit), and
+# the curation/staleness actions (used by the curator across wiki + id-schemes). Deployed at the
+# unchanged Pod-general IRI /vault/ontology/mem# (wiki-memory manifest hosts it from here via
+# overlay:document "../../ontology/mem.ttl"). The validator keeps its own copy at
+# css/extensions/shape-validator/data/mem.ttl.
+
 @prefix mem:    <https://pod.vardeman.me/vault/ontology/mem#> .
 @prefix sub:    <https://pod.vardeman.me/vault/ontology/substrate#> .
 @prefix as:     <https://www.w3.org/ns/activitystreams#> .

@@ -32,7 +32,7 @@ OPS = f"{POD}/id/.operations/"
 DESC = f"{POD}/vault/meta/affordances/curation.ttl"
 
 R = f"{POD}/vault/wiki/concepts/view-layer-e2e.md"
-BODY = "---\ntype: Concept\n---\n# View Layer E2E\n\n[View Layer E2E]{.prefLabel} test page.\n"
+BODY = "---\ntype: Concept\nrationale: \"view-layer e2e test\"\n---\n# View Layer E2E\n\n[View Layer E2E]{.prefLabel} test page.\n"
 
 # The seeded bridge person (sameAs → /vault/contacts/Person/marie-curie.ttl#this).
 BRIDGE_SLUG = "marie-curie"

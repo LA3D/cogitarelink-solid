@@ -9,7 +9,7 @@
 <> a ldp:Container, ldp:BasicContainer ;
    dct:title "Wiki Places" ;
    solid:forClass schema:Place ;
-   sub:shape </vault/meta/shapes/place.shacl.ttl> ;
-   ldp:constrainedBy </vault/meta/shapes/place.shacl.ttl> ;
+   sub:shape </vault/meta/shapes/page.shacl.ttl> , </vault/meta/shapes/place.shacl.ttl> , </vault/meta/shapes/thing.shacl.ttl> , </vault/meta/shapes/write-contract.shacl.ttl> ;
+   ldp:constrainedBy </vault/meta/shapes/page.shacl.ttl> , </vault/meta/shapes/place.shacl.ttl> , </vault/meta/shapes/thing.shacl.ttl> , </vault/meta/shapes/write-contract.shacl.ttl> ;
    sub:installedBy <https://pod.vardeman.me/vault/ontology/overlay#wiki-memory> ;
    sh:agentInstruction "Place records. Typed schema:Place on <#this>. schema:name is the entity name (Thing frame), not skos:prefLabel." .

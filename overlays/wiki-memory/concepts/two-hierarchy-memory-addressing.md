@@ -1,4 +1,5 @@
 ---
+rationale: "Crystallized the D105/D106 dogfood note: RDFS-subsumption (addressing axis, Type Index to container) and skos:broader (navigation axis) are distinct and never substituted. Concluded from reconciling the cold-probe wiki/MediaWiki misread against the decisions log. Target of sub:agentGuide."
 title: Two-Hierarchy Memory Addressing
 ---
 

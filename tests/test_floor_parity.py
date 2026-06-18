@@ -35,6 +35,7 @@ WIKI = Namespace("https://pod.vardeman.me/vault/ontology/wiki#")
 
 OVERLAY    = Path("overlays/wiki-memory")
 SHAPES_DIR = OVERLAY / "shapes"
+SUBSTRATE_SHAPES_DIR = Path("shapes/substrate")  # the injected sub:WriteContractShape lives here
 TREE_DOC   = OVERLAY / "shapetrees" / "wiki-memory.tree.ttl"
 MANAGERS   = OVERLAY / "interop" / "managers"
 TREE_BASE  = "https://pod.vardeman.me/vault/meta/shapetrees/wiki-memory.tree"
@@ -48,9 +49,13 @@ def _constrainedby_file(cb_iri: str) -> Path:
     """Resolve an ldp:constrainedBy IRI to the repo shape file (offline).
 
     The deployed IRI is .../vault/meta/shapes/<name>.shacl.ttl; the repo copy is
-    SHAPES_DIR/<name>.shacl.ttl. Map by basename so the test never touches the Pod.
+    SHAPES_DIR/<name>.shacl.ttl for wiki shapes, or SUBSTRATE_SHAPES_DIR/<name> for
+    the substrate-injected contract (write-contract.shacl.ttl). Map by basename so
+    the test never touches the Pod.
     """
-    return SHAPES_DIR / Path(cb_iri).name
+    name = Path(cb_iri).name
+    wiki = SHAPES_DIR / name
+    return wiki if wiki.exists() else SUBSTRATE_SHAPES_DIR / name
 
 
 def _nodeshapes_declared(shape_file: Path) -> set[str]:
@@ -76,8 +81,9 @@ def _tree_shapes_for_container() -> dict[str, set[str]]:
                 continue
             shapes: set[str] = set()
             for res_tree in tg.objects(URIRef(str(tree)), ST.contains):
-                sh = tg.value(res_tree, ST.shape)
-                if sh is not None:
+                # Task 8: a ResourceTree may carry MULTIPLE st:shape (Page+Thing+leaf);
+                # collect them all (tg.value would return only one).
+                for sh in tg.objects(res_tree, ST.shape):
                     shapes.add(str(sh))
             out[str(ctr)] = shapes
     return out

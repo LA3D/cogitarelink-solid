@@ -1,0 +1,34 @@
+You are working against a Solid Pod at https://pod.vardeman.me/vault/
+
+This Pod stores an agentic memory of concepts as a wiki. Your task:
+
+RECORD a new concept of your choosing — pick any well-defined idea you already
+know well (e.g. a scientific, mathematical, or computing concept) — into this
+Pod's DURABLE concept store, so that a future agent can retrieve it later.
+
+You must, using only what the Pod itself tells you:
+- discover WHERE durable wiki concepts live (the container for them);
+- discover WHAT a valid concept write must contain — the container validates
+  every write and will reject a non-conforming one with a machine-readable
+  reason; read those reasons and the Pod's own guidance, and make your write
+  conform;
+- write the concept so it is accepted (a successful create, not a rejection),
+  and confirm it landed by reading it back.
+
+Constraints:
+- Interact over HTTP only, using curl. Do not read any other files on this machine,
+  do not search the web, and do not use any prior knowledge of this particular Pod or
+  project — only generic HTTP / RDF / Linked Data standards and whatever you can learn
+  from the Pod itself.
+- Turtle/N3/Markdown bodies often start with characters curl treats specially (e.g. a
+  leading `@`); write the body to a scratch file and send it with `curl --data-binary @file`.
+
+Your final output must contain three sections:
+1. ROUTE — at most 12 lines: the path you took and the decisions that drove it
+   (not a request log; the harness records every request). Include how many write
+   attempts it took to get an accepted create, and what each rejection taught you.
+2. ANSWER — the final URL of the concept you created, the exact body you wrote that
+   was accepted, and the requirements your accepted write had to satisfy (naming which
+   Pod resource taught you each requirement).
+3. PROVENANCE — separate what you learned from the Pod itself from what you knew
+   from training.

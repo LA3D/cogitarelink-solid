@@ -149,7 +149,10 @@ describe("IndexViewListener", () => {
 
     const body = store._getText(`${CONCEPTS}index.md`);
     expect(body).toBeDefined();
-    expect(body!.startsWith("---\ntype: sub:ContainerIndex\n---\n")).toBe(true);
+    // The derived index is a durable write, so it carries the substrate write
+    // contract's rationale: frontmatter (projects to mem:rationale on <>).
+    expect(body!.startsWith("---\ntype: sub:ContainerIndex\nrationale: ")).toBe(true);
+    expect(body).toContain("\n---\n");
     expect(body).toContain("- [Alpha Topic](alpha.md) — First letter of memory.");
 
     const meta = store._getQuads(`${CONCEPTS}index.md.meta`);

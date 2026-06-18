@@ -82,6 +82,23 @@ describe("projectFrontmatter", () => {
         expect(m).toBeUndefined();
     });
 
+    it("projects rationale to a mem:rationale string literal", () => {
+        const triples = projectFrontmatter({
+            type: "concept",
+            rationale: "Crystallized to document the two-hierarchy rule; concluded the axes are distinct.",
+        });
+        const r = triples.find(t => t.predicate.value === "https://pod.vardeman.me/vault/ontology/mem#rationale");
+        expect(r).toBeDefined();
+        expect(r?.object.termType).toBe("Literal");
+        expect(r?.object.value).toBe("Crystallized to document the two-hierarchy rule; concluded the axes are distinct.");
+        expect((r?.object as any).datatype.value).toBe("http://www.w3.org/2001/XMLSchema#string");
+    });
+
+    it("omits mem:rationale when rationale is absent", () => {
+        const triples = projectFrontmatter({ type: "concept" });
+        expect(triples.find(t => t.predicate.value.endsWith("mem#rationale"))).toBeUndefined();
+    });
+
     it("ignores unknown frontmatter keys", () => {
         const triples = projectFrontmatter({
             type: "concept",

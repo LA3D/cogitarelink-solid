@@ -2,6 +2,100 @@
 
 Things to come back to. Open items only; closed items move to commit history and decisions-index.
 
+## ▶▶ RESUME — shape-governance reconciliation (branch `shape-governance-reconciliation`, 2026-06-18)
+
+Spec `docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md`; plan
+`docs/superpowers/plans/2026-06-17-shape-governance-reconciliation.md` (12 tasks). **The wiki lane is
+BUILT + LIVE-VALIDATED** (e2e `tests/test_write_contract_e2e.py` green; `make reset` 0 ERROR): ShapeTrees =
+source of truth → `scripts/overlay/derive_constraints.py` derives `constrainedBy` → injects
+`sub:WriteContractShape` (`shapes/substrate/write-contract.shacl.ttl`, `foaf:Document` → `mem:rationale`) →
+projection emits `<> a foaf:Document` → `rationale:` frontmatter lands on `<>` = where the contract targets
+(the markdown-lane subject bug is gone by construction). **Tasks DONE: 1–6, 8, 10, 11, 12** (unpushed). **REMAINING: Tasks 7/9 only (RDF-native lanes — deferred, tree↔layout decision).** The reconciliation's last unverified mechanism (multiple-`st:shape` union) is now live-validated by cold agents.
+The `mem:` vocab moved wholesale to substrate `ontology/mem.ttl`. Path B chosen for governed-predicates
+(agreement test, not codegen — agentic reasons; see the 🧱 entry below).
+
+**▶ REMAINING (in priority order for the next session):**
+1. ~~**Task 12 — fixture sweep.**~~ **DONE 2026-06-18 (commits `8d435ec` + `14d02e5`).** Full suite
+   **474 passed** (known `test_timemap_returns_parseable_turtle` flake passes in isolation); `make test-js`
+   green; `make reset && make verify` 0 ERROR / 1 intentional D98 WARN. All red was expectation-updates as
+   predicted — (a) `mem.ttl` path → `ontology/mem.ttl` (curation_vocab, vocab_vs_shape); (b) floor_parity
+   substrate-shape resolution + the `tg.value`→`tg.objects` helper bug (trees carry multiple `st:shape`);
+   (c) interop_foundation expected-set += Page/ThingShape; (d) durable-write bodies + wiki-memory-l3
+   body/meta fixtures += `rationale:`/`mem:rationale`. **ONE real coupling regression found + fixed**
+   (`8d435ec`, on-thesis): the projection's new `<> a foaf:Document` made the WriteContractShape 422 the
+   *derived* `index.md` write → it silently 404'd; `buildIndexMarkdown` now emits a `rationale:` line. Also
+   synced the `markdown-projection` `sub:governs` descriptor (+= `mem:rationale`) to the runtime union.
+2. ~~**Task 11 — agentic probe**~~ **DONE 2026-06-18.** Rig `evals/write-contract/`; report
+   `docs/plans/2026-06-17-write-contract-probe-report.md`. **Union VALIDATED** — n=2 cold Haiku, both
+   PASS first-try (POST/PUT → 201, **0×422 from the union**, $0.32). Both agents read the four shapes
+   (`concept`+`page`+`thing`+`write-contract`, each carrying `sh:agentInstruction`) + an exemplar, reasoned
+   about the union explicitly, and composed one conforming write (`type:`+`rationale:`+`[text]{.prefLabel}`).
+   Spec open question CLOSED: keep multiple `st:shape` unioned by the derivation; no composed shape needed.
+   Caveat: both pre-satisfied via shape-reading, so the laden-422 *convergence* path was not exercised here
+   (it's covered indirectly by the e2e fixture tests). run2 had a POST→404 (container routing) before its
+   PUT→201 — tooling note, not a shape fault.
+3. **Tasks 7/9 — RDF-native lanes** — see the 🔵 entry below.
+
+**📍 NAVIGATION — read in this order, then use this mechanism map (saves re-deriving what the build cost):**
+
+*Reading order:* (1) this RESUME section; (2) `docs/research/2026-06-12-solid-design-intent-harmonization.md`
+— the GROUNDING that rules out alternatives (declaration-only ShapeTrees, **no ST runtime**, the D108 floor
+is the enforcement, write-contract = Verborgh trust envelope); (3) the spec
+`docs/superpowers/specs/2026-06-17-shape-governance-reconciliation-design.md` (6 settled decisions +
+`foaf:Document`-on-`<>` cross-lane unification); (4) the plan (12 tasks + File Structure table + status
+banner); (5) decisions **D96** (Page+Thing split), **D108** (container=gate/class=dispatch + in-band floor),
+**D109/D110** (interop adoption: SAI vocab-now/runtime-deferred), **D116** (PSP) — via the `decision-lookup` skill.
+
+*Mechanism map (the non-obvious couplings):*
+- **Source of truth = ShapeTrees** `overlays/*/shapetrees/*.tree.ttl`. **Binding** lives in
+  `overlays/wiki-memory/interop/registry.ttl` (registration→tree) + `interop/managers/*.shapetree.ttl` (wiki
+  container→tree). ⚠️ the registry does NOT carry the container URL; wiki container→tree is in the managers;
+  addressbook/id-schemes have NEITHER (the RDF-native divergence — 🔵 entry).
+- **Derivation** = `scripts/overlay/derive_constraints.py` (reads trees → writes container `.meta`
+  `constrainedBy`, injecting `sub:WriteContractShape`; config = `DURABLE_CONTAINERS` + `SHAPE_NODE_TO_FILE`;
+  modeled on `scripts/gen_managers.py`). Run via `make derive-constraints`.
+- **Deploy** = `scripts/overlay/apply.py` block 8/8b PATCHes container `.meta`. ⚠️ GOTCHA: manifest
+  `overlay:document "../../ontology/mem.ttl"` / `"../../shapes/substrate/..."` resolves because `./ontology`,
+  `./shapes`, `./overlays` are ALL mounted into the pod-setup container (`docker-compose.yml`); apply.py does
+  `overlay_dir / doc`. The extension-less IRI `/vault/ontology/mem` is hosted by the WIKI manifest (NOT
+  `pod_setup.py`, which appends `.ttl`).
+- **Enforcement** = the D108 floor (`css/extensions/shape-validator/src/storage/{AdmissionFloorStore,ShapeValidationStore}.ts`)
+  loads ONLY the container's `ldp:constrainedBy` (NOT ShapeTrees — SAI runtime deferred). Floor's markdown
+  projector = `css/extensions/markdown-projection/src-cjs/markdownBodyProjector.ts` → ESM `projectionPipeline.run`.
+- **Projection** = `projectionPipeline.ts` (`emitSubstrateInvariants` emits `<> a foaf:Document`; `rebindSubject`
+  sends frontmatter to `<>`), `frontmatterProjection.ts` (`rationale:`→`mem:rationale`), `governedPredicates.ts`
+  (the PAGE/THING partition; Path-B agreement test `tests/test_governed_predicates_agreement.py` guards it;
+  ⚠️ `maps.json` sidecar mirrors it — regen with `npm run emit-maps` after any change).
+- **The contract** = `shapes/substrate/write-contract.shacl.ttl` (`foaf:Document` → `mem:rationale`).
+
+*Commands:* `make reset && make verify` (rebuild+reseed+audit, expect 0 ERROR / 1 intentional D98 WARN);
+`make derive-constraints`; Pod calls need `SSL_CERT_FILE=$(mkcert -CAROOT)/rootCA.pem`; run Python as a module
+(`~/uvws/.venv/bin/python -m scripts.overlay.derive_constraints`); see `.claude/rules/agentic-development.md`.
+
+## 🧱 Runtime-derived governed-predicate partition (the real target — shape-governance reconciliation, 2026-06-18)
+
+`governedPredicates.ts` is a hand-maintained static map. Task 5 of the reconciliation chose **Path B**
+(keep the hand file + an agreement test that every durable shape's required `sh:path` is governed on the
+right subject — `tests/test_governed_predicates_agreement.py`) over codegen, on the **agentic** argument:
+codegen would split the agent-facing teaching (the shapes' `sh:agentInstruction`, which agents read) from
+the agent-invisible behavior file, risking taught≠enforced — and governance is *silent* (no 422), so agents
+can't self-correct, and a curator agent can't make a shape change take effect without a human re-running a
+generator. **Real fix:** derive the governed set at RUNTIME from the deployed shapes the floor already loads
+— single source (taught == enforced by construction), no static file, no second generator, immediately
+curator-evolvable. Cost: shape-parsing on the projection path (the static map exists for speed). Do this
+when the projection path is next touched; until then the agreement test is the guardrail.
+
+## 🔵 RDF-native lanes: ShapeTree↔container-layout reconciliation (shape-governance reconciliation, 2026-06-18)
+
+The ShapeTree→`constrainedBy` derivation + the write contract shipped for the **wiki lane** (validated live).
+The RDF-native lanes (addressbook, id-schemes) are deferred: their ShapeTrees diverge from the deployed
+container layout — addressbook constrains `/vault/contacts/{Person,Organization}/` *subcontainers* while its
+tree manages `/vault/contacts/`; id-schemes lives outside `/vault` (`/id/schemes/`, `/id/scheme-record.shacl.ttl`).
+`scripts/overlay/derive_constraints.py` already derives their shape sets correctly (`DURABLE_CONTAINERS`),
+but writing their `.meta` + de-duplicating their per-app `mem:rationale` (Tasks 7/9) needs a decision on how
+to reconcile each tree with its real layout (reshape the tree to manage subcontainers? normalize id-schemes
+onto `/vault/meta/shapes/`?). The apps function today on their existing (duplicated) contract.
+
 ## ▶▶ ACTIVE — agentic progressive-disclosure contract (SP1 + SP2 SHIPPED; 2026-06-12)
 
 **Spec (spine, settled):** `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md`.

@@ -1,5 +1,6 @@
 ---
 type: moc
+rationale: "listener round-trip fixture"
 created: 2026-04-01T00:00:00Z
 modified: 2026-05-15T00:00:00Z
 maturity: validated

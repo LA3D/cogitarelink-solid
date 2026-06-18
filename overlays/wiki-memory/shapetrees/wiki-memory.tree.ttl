@@ -5,13 +5,13 @@
 @prefix app:      <https://pod.vardeman.me/vault/meta/interop/application#> .
 
 # Resource trees — one per governed class; st:shape -> the deployed SHACL NodeShape IRI.
-wikitree:ConceptResourceTree      a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:ConceptShape .
-wikitree:SourceResourceTree       a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:SourceShape .
-wikitree:PersonResourceTree       a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PersonShape .
-wikitree:PlaceResourceTree        a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PlaceShape .
-wikitree:EventResourceTree        a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:EventShape .
-wikitree:OrganizationResourceTree a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:OrganizationShape .
-wikitree:HowToResourceTree        a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:HowToShape .
+wikitree:ConceptResourceTree      a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PageShape , wiki:ThingShape , wiki:ConceptShape .
+wikitree:SourceResourceTree       a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PageShape , wiki:ThingShape , wiki:SourceShape .
+wikitree:PersonResourceTree       a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PageShape , wiki:ThingShape , wiki:PersonShape .
+wikitree:PlaceResourceTree        a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PageShape , wiki:ThingShape , wiki:PlaceShape .
+wikitree:EventResourceTree        a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PageShape , wiki:ThingShape , wiki:EventShape .
+wikitree:OrganizationResourceTree a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PageShape , wiki:ThingShape , wiki:OrganizationShape .
+wikitree:HowToResourceTree        a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:PageShape , wiki:ThingShape , wiki:HowToShape .
 wikitree:WorkingNoteResourceTree  a st:ShapeTree ; st:expectsType st:Resource ; st:shape wiki:WorkingNoteShape .
 
 # Container trees — one per container; concepts/ holds BOTH Concept and Source.

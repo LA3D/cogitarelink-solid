@@ -21,7 +21,7 @@
     wiki:procedure (
         "GET /vault/wiki/working/{slug}.md to fetch the source body and .meta"
         "Look up destination container via Type Index lookup on the source's rdf:type"
-        "Compose destination body (markdown) and .meta (Turtle) including prov:wasDerivedFrom <working-source> (agent-authored, ungoverned; do NOT PATCH prov:wasGeneratedBy onto the resource — the substrate governs it and the operation is recorded in .operations/ per step 6)"
+        "Compose the destination markdown body. The frontmatter MUST include a rationale: field — the task that triggered this crystallization, what you concluded, and why (including what you consulted). It projects to mem:rationale on <#this> and the durable shape REQUIRES it: a body whose projection omits it is 422'd. Optionally PATCH .meta (Turtle) with prov:wasDerivedFrom <working-source> (agent-authored, ungoverned; do NOT PATCH prov:wasGeneratedBy onto the resource — the substrate governs it and the operation is recorded in .operations/ per step 6)"
         "PUT /vault/wiki/{class-container}/{slug}.md with body; PATCH .meta with the Turtle"
         "On 201, DELETE /vault/wiki/working/{slug}.md"
         "POST the canonical operation record to /vault/wiki/.operations/: a <>-subject resource multi-typed `a as:Announce, mem:CrystallizeAction, prov:Activity` with as:object <durable-url>, as:actor <webid>, as:published (named subject <>, not a blank node — CSS N3 Patch / this PUT both reject blank-node activity subjects)"

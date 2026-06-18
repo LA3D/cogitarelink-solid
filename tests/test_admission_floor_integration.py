@@ -54,7 +54,7 @@ def test_rejected_write_leaves_no_artifacts():
 
 
 def test_valid_concept_commits_with_synchronous_stamped_meta():
-    body = ("---\ntype: Concept\n---\n# E2E Floor Valid\n\n"
+    body = ("---\ntype: Concept\nrationale: \"e2e floor admission test\"\n---\n# E2E Floor Valid\n\n"
             "[E2E Floor Valid]{.prefLabel} is a test concept.\n\n[[Biology]]{.broader}\n")
     r = _put("/vault/wiki/concepts/e2e-floor-valid.md", body)
     assert r.status_code in (201, 205)
@@ -74,7 +74,7 @@ def test_working_container_is_permissive():
 
 
 def test_direct_meta_patch_dropping_preflabel_rejected():
-    body = "---\ntype: Concept\n---\n# E2E Patch Target\n\n[E2E Patch Target]{.prefLabel} here.\n"
+    body = "---\ntype: Concept\nrationale: \"e2e floor patch test\"\n---\n# E2E Patch Target\n\n[E2E Patch Target]{.prefLabel} here.\n"
     r = _put("/vault/wiki/concepts/e2e-floor-patch.md", body)
     assert r.status_code in (201, 205)
     patch = (
@@ -93,7 +93,7 @@ def test_direct_meta_patch_dropping_preflabel_rejected():
 
 
 def test_direct_meta_patch_agent_enrichment_accepted():
-    body = "---\ntype: Concept\n---\n# E2E Enrich Target\n\n[E2E Enrich Target]{.prefLabel} here.\n"
+    body = "---\ntype: Concept\nrationale: \"e2e floor enrich test\"\n---\n# E2E Enrich Target\n\n[E2E Enrich Target]{.prefLabel} here.\n"
     r = _put("/vault/wiki/concepts/e2e-floor-enrich.md", body)
     assert r.status_code in (201, 205)
     patch = (
@@ -145,7 +145,7 @@ def test_source_without_identifier_rejected_422():
 def test_source_with_citekey_commits_with_identifier_materialized():
     # citekey -> dct:identifier; prefLabel from the body literal axis -> conforms to BOTH
     # SourceShape (identifier) and ConceptShape (prefLabel) in the merged store.
-    body = ("---\ntype: wiki:Source\ncitekey: vardeman-2026-ct2b\n---\n# E2E Source Ok\n\n"
+    body = ("---\ntype: wiki:Source\ncitekey: vardeman-2026-ct2b\nrationale: \"e2e source ok test\"\n---\n# E2E Source Ok\n\n"
             "[E2E Source Ok]{.prefLabel} is a properly-identified paper.\n")
     r = _put("/vault/wiki/concepts/e2e-floor-source-ok.md", body)
     assert r.status_code in (201, 205), (
@@ -168,7 +168,7 @@ def test_shortform_source_with_citekey_commits_as_wiki_source():
     # <#this> a wiki:Source so SourceShape fires. citekey -> dct:identifier; prefLabel
     # from the body. Conforms to BOTH SourceShape (identifier) and ConceptShape (prefLabel)
     # in the merged {concept,source} store -> 201, with <#this> typed wiki:Source.
-    body = ("---\ntype: source\ncitekey: vardeman-2026-ct2c\n---\n# E2E Shortform Source\n\n"
+    body = ("---\ntype: source\ncitekey: vardeman-2026-ct2c\nrationale: \"e2e shortform source test\"\n---\n# E2E Shortform Source\n\n"
             "[E2E Shortform Source]{.prefLabel} is a properly-identified paper.\n")
     r = _put("/vault/wiki/concepts/e2e-floor-shortform-source.md", body)
     assert r.status_code in (201, 205), (

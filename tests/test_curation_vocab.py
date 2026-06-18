@@ -4,7 +4,7 @@ from pathlib import Path
 from rdflib import Graph, URIRef, RDF, RDFS, SKOS
 
 MEM = "https://pod.vardeman.me/vault/ontology/mem#"
-MEM_TTL = Path(__file__).parent.parent / "overlays" / "wiki-memory" / "ontology" / "mem.ttl"
+MEM_TTL = Path(__file__).parent.parent / "ontology" / "mem.ttl"
 
 
 def g():

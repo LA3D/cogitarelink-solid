@@ -87,7 +87,11 @@ describe("buildIndexMarkdown", () => {
     // Frontmatter MUST be first so splitFrontmatter recognises it; the sub: CURIE
     // resolves through the projection's existing CURIE_PREFIXES map — frontmatter
     // type WINS over the container's D98 class fallback, so no shape targets it.
-    expect(md.startsWith(`---\ntype: ${INDEX_FRONTMATTER_TYPE}\n---\n`)).toBe(true);
+    // The derived index is itself a durable write, so it carries the substrate
+    // write contract's rationale: frontmatter (projects to mem:rationale on <>),
+    // between the type line and the closing fence.
+    expect(md.startsWith(`---\ntype: ${INDEX_FRONTMATTER_TYPE}\nrationale: `)).toBe(true);
+    expect(md).toContain(`\n---\n`);
     expect(INDEX_FRONTMATTER_TYPE).toBe("sub:ContainerIndex");
   });
 

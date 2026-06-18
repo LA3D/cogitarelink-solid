@@ -55,5 +55,5 @@ export function buildIndexMarkdown(containerUrl: string, quads: Quad[]): string 
     lines.push(`- [${ws(label)}](${doc})${firstSentence}`);
   }
   lines.sort((a, b) => a.localeCompare(b, "en"));
-  return `---\ntype: ${INDEX_FRONTMATTER_TYPE}\n---\n# Index\n\nOne line per member; derived — see this document's .meta for derivation provenance.\n\n${lines.join("\n")}\n`;
+  return `---\ntype: ${INDEX_FRONTMATTER_TYPE}\nrationale: "Derived container index — regenerated from member .meta on each write (sub:ContainerIndex view); see this document's .meta for derivation provenance."\n---\n# Index\n\nOne line per member; derived — see this document's .meta for derivation provenance.\n\n${lines.join("\n")}\n`;
 }

@@ -7,7 +7,7 @@ REPO = Path(__file__).parents[2]
 SHAPES_DIR = REPO / "overlays/wiki-memory/shapes"
 VOCAB_FILES = [
     REPO / "overlays/wiki-memory/vocabulary/wiki.ttl",
-    REPO / "overlays/wiki-memory/ontology/mem.ttl",
+    REPO / "ontology/mem.ttl",  # mem: relocated to the substrate layer (shape-governance reconciliation)
 ]
 
 # External classes whose definitions we don't include locally — trust standard vocabs
