@@ -8,7 +8,7 @@ POD = _pod_base()
 SUB = Namespace("https://pod.vardeman.me/vault/ontology/substrate#")
 pytestmark = pytest.mark.skipif(not _pod_up(), reason="Pod not running")
 
-BODY1 = "---\ntype: Concept\n---\n# PSP Probe\n\n[PSP Probe]{.prefLabel} is [a subtraction test concept.]{.definition}\n\n[[Biology]]{.broader}\n"
+BODY1 = "---\ntype: Concept\nrationale: \"PSP subtraction test\"\n---\n# PSP Probe\n\n[PSP Probe]{.prefLabel} is [a subtraction test concept.]{.definition}\n\n[[Biology]]{.broader}\n"
 BODY2 = BODY1.replace("a subtraction test concept", "a REVISED subtraction test concept").replace("\n\n[[Biology]]{.broader}\n", "\n")  # drops the broader edge too
 N3_ENRICH = """@prefix solid: <http://www.w3.org/ns/solid/terms#>.
 <> a solid:InsertDeletePatch;

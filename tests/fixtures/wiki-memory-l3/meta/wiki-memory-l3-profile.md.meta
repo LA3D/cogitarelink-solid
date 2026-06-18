@@ -3,6 +3,7 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#>.
 @prefix schema: <https://schema.org/>.
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix mem: <https://pod.vardeman.me/vault/ontology/mem#>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
 @prefix cito: <http://purl.org/spar/cito/>.
 @prefix wiki: <https://pod.vardeman.me/vault/ontology/wiki#>.
@@ -23,4 +24,5 @@
 <#this> a skos:Concept;
     schema:mainEntityOfPage <>;
     schema:name "Wiki-Memory L3 Profile".
-<> a foaf:Document.
+<> a foaf:Document;
+    mem:rationale "listener round-trip fixture".

@@ -27,7 +27,7 @@ pytestmark = pytest.mark.skipif(not _pod_up(), reason="Pod not running")
 
 def _mk_concept(slug: str) -> httpx.Response:
     body = (
-        f"---\ntype: Concept\n---\n# SP2 Index Probe\n\n"
+        f"---\ntype: Concept\nrationale: \"SP2 index-view derivation test\"\n---\n# SP2 Index Probe\n\n"
         f"[SP2 Index Probe]{{.prefLabel}} is [a test marker for the derived index.]{{.definition}}\n"
     )
     return httpx.put(

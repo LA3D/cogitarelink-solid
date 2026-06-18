@@ -16,7 +16,7 @@ def test_substrate_emits_main_entity_pair():
     """Page and Thing linked via schema:mainEntity / schema:mainEntityOfPage."""
     # [Invariant Test]{.prefLabel} satisfies the D108 admission floor (ConceptShape
     # requires skos:prefLabel); the test then checks the mainEntity invariant.
-    body = "---\ntitle: Invariant Test\ntype: skos:Concept\n---\n\n# Test\n\n[Invariant Test]{.prefLabel}\n"
+    body = "---\ntitle: Invariant Test\ntype: skos:Concept\nrationale: \"mainEntity invariant test\"\n---\n\n# Test\n\n[Invariant Test]{.prefLabel}\n"
     CLIENT.put(
         POD + "/wiki/concepts/invariant-test.md",
         content=body,

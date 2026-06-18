@@ -85,7 +85,7 @@ def _trigger_drain() -> None:
     # write to flush pendingEventsBuffer, so the body must be floor-conformant.
     r = CLIENT.put(
         f"{CONCEPTS}{slug}.md",
-        content=f"# drain trigger\n\n[{slug}]{{.prefLabel}}\n",
+        content=f"---\nrationale: \"drain trigger\"\n---\n# drain trigger\n\n[{slug}]{{.prefLabel}}\n",
         headers={"Content-Type": "text/markdown"},
     )
     assert r.status_code in (201, 204), f"drain trigger failed: {r.status_code}"
@@ -107,7 +107,7 @@ def test_bound_exceeded_emits_event():
     for i, slug in enumerate(slugs):
         r = CLIENT.put(
             f"{CONCEPTS}{slug}.md",
-            content=f"# bound test {i}\n\n[{slug}]{{.prefLabel}}\n",  # clear D108 floor
+            content=f"---\nrationale: \"bound-exceeded event test\"\n---\n# bound test {i}\n\n[{slug}]{{.prefLabel}}\n",  # clear D108 floor + write contract
             headers={"Content-Type": "text/markdown"},
         )
         # A 5xx here means the Pod is still in its MemTrigger startup grace window
@@ -236,6 +236,7 @@ def test_contradiction_detected_emits_event():
     body = (
         "---\n"
         "type: concept-note\n"
+        "rationale: \"contradiction-detection event test\"\n"
         "---\n"
         "# contra test\n\n"
         "[contra test]{.prefLabel}\n\n"  # body literal axis clears the D108 floor

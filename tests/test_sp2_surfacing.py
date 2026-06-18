@@ -100,7 +100,7 @@ def test_place_event_organization_get_class_profiles():
     try:
         for path, (cls, slug) in probes.items():
             url = f"{POD}/vault/wiki/{path}"
-            body = f"---\ntitle: SP2 T8 Probe\ntype: {cls}\n---\n\n# SP2 T8 Probe"
+            body = f"---\ntitle: SP2 T8 Probe\ntype: {cls}\nrationale: \"SP2 class-profile surfacing test\"\n---\n\n# SP2 T8 Probe"
             httpx.put(url, content=body, headers={"Content-Type": "text/markdown"},
                       verify=_CA).raise_for_status()
             link = httpx.head(url, verify=_CA).headers.get("link", "")

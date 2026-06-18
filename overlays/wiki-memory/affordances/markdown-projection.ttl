@@ -13,6 +13,7 @@
 @prefix schema:   <https://schema.org/> .
 @prefix foaf:     <http://xmlns.com/foaf/0.1/> .
 @prefix org:      <http://www.w3.org/ns/org#> .
+@prefix mem:      <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <> a sub:WriteAffordance ,
        prof:ResourceDescriptor ;
@@ -97,7 +98,8 @@
         schema:superEvent ,
         schema:supply ,
         schema:tool ,
-        schema:totalTime ;
+        schema:totalTime ,
+        mem:rationale ;
     sub:projectsFromFrontmatter "type" ,
         "created" ,
         "modified" ,
