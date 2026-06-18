@@ -3,7 +3,6 @@
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <https://pod.vardeman.me/vault/meta/shapes/organization-card.shacl.ttl#OrganizationCardShape>
     a sh:NodeShape ;
@@ -11,13 +10,10 @@
     sh:closed false ;
     sh:agentInstruction """
       A vcard:Organization card. Required: vcard:fn (one), vcard:inAddressBook
-      (one), at least one external anchor — owl:sameAs (ROR strongly preferred
-      for institutional orgs) or vcard:hasURL (for non-ROR orgs) — and
-      mem:rationale. ROR provides stable cross-system identity
-      (https://ror.org/...). Without an anchor, the organization can't be
+      (one), and at least one external anchor — owl:sameAs (ROR strongly preferred
+      for institutional orgs) or vcard:hasURL (for non-ROR orgs).
+      ROR provides stable cross-system identity (https://ror.org/...). Without an anchor, the organization can't be
       matched across pods or to external knowledge bases.
-      Every write carries mem:rationale: the task that triggered it, what was
-      concluded, and why — your write-context is unrecoverable after this session.
     """ ;
 
     sh:property [
@@ -33,17 +29,6 @@
         sh:hasValue <https://pod.vardeman.me/vault/contacts/index.ttl#this> ;
         sh:nodeKind sh:IRI ;
         sh:message "Organization must declare vcard:inAddressBook <https://pod.vardeman.me/vault/contacts/index.ttl#this>." ;
-    ] ;
-
-    # SP2 §6 agentic write contract (Turtle lane; twin-probe grounded 2026-06-11):
-    # REQUIRED — agents fill required literals richly and never volunteer optional
-    # ones (e5b-write; D112 35/35). The laden instruction lives on the SHAPE (read
-    # pre-write 9/9); sh:message only fires on violation.
-    sh:property [
-        sh:path mem:rationale ;
-        sh:minCount 1 ;
-        sh:datatype xsd:string ;
-        sh:message "mem:rationale is required — record the task that triggered this write, what you concluded, and why, including what you consulted. Do not merely restate the record's name; a future agent audits this context before trusting it." ;
     ] ;
 
     sh:or (
