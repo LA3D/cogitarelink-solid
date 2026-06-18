@@ -2,9 +2,10 @@
 
 **Date:** 2026-06-17
 **Status:** SHIPPED for the wiki lane + MERGED to `main` (2026-06-18, merge `6510e2a`; D117).
-Tasks 1–6, 8, 10, 11, 12 done; **Tasks 7/9 (RDF-native lanes) DEFERRED** — addressbook + id-schemes
-still enforce via their own per-app duplicated `mem:rationale` shapes (the derivation writes
-`constrainedBy` for the wiki lane only; their ShapeTrees diverge from the deployed layout). So the
+Tasks 1–6, 8, 10, 11, 12 done; **Tasks 7/9 (RDF-native lanes) DEFERRED** — addressbook is now
+DE-CONFLATED (see the appended note below); id-schemes still enforces via its own per-app
+`mem:rationale` shape (the derivation writes `constrainedBy` for the wiki lane only; the RDF-native
+ShapeTrees diverge from the deployed layout). So the
 "big-bang across all three lanes" goal below holds for the **wiki lane only** as shipped; the
 RDF-native unification is the remaining work (FOLLOWUPS 🔵). Multiple-`st:shape` union cold-agent
 validated (Task 11; `docs/plans/2026-06-17-write-contract-probe-report.md`).
