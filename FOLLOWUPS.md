@@ -10,7 +10,7 @@ BUILT + LIVE-VALIDATED** (e2e `tests/test_write_contract_e2e.py` green; `make re
 source of truth → `scripts/overlay/derive_constraints.py` derives `constrainedBy` → injects
 `sub:WriteContractShape` (`shapes/substrate/write-contract.shacl.ttl`, `foaf:Document` → `mem:rationale`) →
 projection emits `<> a foaf:Document` → `rationale:` frontmatter lands on `<>` = where the contract targets
-(the markdown-lane subject bug is gone by construction). **Tasks DONE: 1–6, 8, 10, 12** (14 commits, unpushed). **REMAINING: Task 11 (agentic probe) + Tasks 7/9 (RDF-native lanes — deferred, tree↔layout decision).**
+(the markdown-lane subject bug is gone by construction). **Tasks DONE: 1–6, 8, 10, 11, 12** (unpushed). **REMAINING: Tasks 7/9 only (RDF-native lanes — deferred, tree↔layout decision).** The reconciliation's last unverified mechanism (multiple-`st:shape` union) is now live-validated by cold agents.
 The `mem:` vocab moved wholesale to substrate `ontology/mem.ttl`. Path B chosen for governed-predicates
 (agreement test, not codegen — agentic reasons; see the 🧱 entry below).
 
@@ -25,9 +25,15 @@ The `mem:` vocab moved wholesale to substrate `ontology/mem.ttl`. Path B chosen 
    (`8d435ec`, on-thesis): the projection's new `<> a foaf:Document` made the WriteContractShape 422 the
    *derived* `index.md` write → it silently 404'd; `buildIndexMarkdown` now emits a `rationale:` line. Also
    synced the `markdown-projection` `sub:governs` descriptor (+= `mem:rationale`) to the runtime union.
-2. **Task 11 — agentic probe** of the multiple-`st:shape` wiki path (spec's one unverified mechanism): a cold
-   agent crystallizes a wiki concept and the write validates against the unioned Page+Thing+leaf+contract set
-   first try. Rig in `evals/` (model on `evals/proj-enrich/`); report to `docs/plans/`.
+2. ~~**Task 11 — agentic probe**~~ **DONE 2026-06-18.** Rig `evals/write-contract/`; report
+   `docs/plans/2026-06-17-write-contract-probe-report.md`. **Union VALIDATED** — n=2 cold Haiku, both
+   PASS first-try (POST/PUT → 201, **0×422 from the union**, $0.32). Both agents read the four shapes
+   (`concept`+`page`+`thing`+`write-contract`, each carrying `sh:agentInstruction`) + an exemplar, reasoned
+   about the union explicitly, and composed one conforming write (`type:`+`rationale:`+`[text]{.prefLabel}`).
+   Spec open question CLOSED: keep multiple `st:shape` unioned by the derivation; no composed shape needed.
+   Caveat: both pre-satisfied via shape-reading, so the laden-422 *convergence* path was not exercised here
+   (it's covered indirectly by the e2e fixture tests). run2 had a POST→404 (container routing) before its
+   PUT→201 — tooling note, not a shape fault.
 3. **Tasks 7/9 — RDF-native lanes** — see the 🔵 entry below.
 
 **📍 NAVIGATION — read in this order, then use this mechanism map (saves re-deriving what the build cost):**
