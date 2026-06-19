@@ -131,7 +131,11 @@ This is an **architecture spec**, not a single implementation plan. It decompose
 plans, each spec → plan → implement on its own:
 
 1. **AddressBook de-conflation + vcard-domain ShapeTree↔layout fix** — the original Tasks 7-9,
-   correctly scoped. Buildable now, low risk.
+   correctly scoped. **✅ DONE.** De-conflation merged 2026-06-18; the ShapeTree↔layout reshape shipped
+   on branch `addressbook-shapetree-reshape` (2026-06-19, spec/plan
+   `docs/superpowers/{specs,plans}/2026-06-19-addressbook-shapetree-layout-reshape*.md`): nested tree,
+   tree-derived `constrainedBy`, four interop managers, leaf-registration + audit-narrowing for the
+   nested-tree registration-coverage. `make verify` 0 ERROR; suite 477 passed.
 2. **The crosswalk** — bridge-predicate reconciliation + the tier-jump breadcrumb.
 3. **Episodic interaction substrate** — net-new, modeled on the `.operations/` ledger pattern.
 4. **Classification scheme + derive-on-read affordances** — the SKOS relationship scheme + the

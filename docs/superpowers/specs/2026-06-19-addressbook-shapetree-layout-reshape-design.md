@@ -44,9 +44,22 @@ truth that the test only keeps honest, against the whole reconciliation's direct
 ## Section 1 — The reshaped ShapeTree
 
 Replace the flat tree with a **nested** tree mirroring the deployed layout. The root keeps the name
-`ContactContainerTree` (the registry binds to it; semantics come from the `st:contains` triples, not
-the local name, so no rename and no registry edit). It now contains four per-class **container** trees;
-each container tree contains one **resource** tree carrying the vcard shape.
+`ContactContainerTree` (semantics come from the `st:contains` triples, not the local name, so no
+rename). It now contains four per-class **container** trees; each container tree contains one
+**resource** tree carrying the vcard shape.
+
+**Registration model (corrected during implementation, 2026-06-19):** the original draft assumed the
+registry was untouched. That was wrong — nesting introduces four new `st:Container` trees, and the
+audit's `interop:registration-coverage` requires a `DataRegistration` per container tree. The
+SAI-consistent fix (Chuck's call): a `DataRegistration` registers a *data-bearing* container, so the
+single root registration `reg:contacts` is replaced by four leaf registrations
+(`reg:contacts-{person,organization,group,membership}` → the four leaf `*ContainerTree`s), exactly
+parallel to the wiki lane (one registration + one manager per leaf container) and to the four managers
+built here. The structural grouping root (which `st:contains` only container trees, no resource tree)
+is **exempt**: `pod_audit.py`'s coverage check is narrowed to container trees that directly
+`st:contains` a resource tree, which leaves the wiki and id-schemes lanes unchanged and makes the
+audit correct for any future nested tree. So `registry.ttl`, `pod_audit.py`, and the interop tests
+ARE edited (the draft's "no registry edit" no longer holds).
 
 ```turtle
 @prefix st:      <http://www.w3.org/ns/shapetrees#> .
