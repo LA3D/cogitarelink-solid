@@ -1,7 +1,9 @@
 """The derivation computes a durable container's constrainedBy from its ShapeTree
 plus the injected substrate write contract."""
+import pytest
 from scripts.overlay.derive_constraints import (
     derive_constrainedby, committed_constrainedby, WRITE_CONTRACT_SHAPE, WIKI_DURABLE,
+    committed_addressbook_constrainedby, ADDRESSBOOK_DEPLOY,
 )
 
 
@@ -34,16 +36,21 @@ def test_contract_injected_for_id_schemes_lane():
     assert WRITE_CONTRACT_SHAPE in got
 
 
-def test_contract_NOT_injected_for_addressbook():
-    # AddressBook is operational LD, not memory — no memory write contract.
-    got = derive_constrainedby("overlays/addressbook", "https://pod.vardeman.me/vault/contacts/")
-    assert WRITE_CONTRACT_SHAPE not in got
-    # but the vcard shapes are still derived
-    assert any(s.endswith("contact-card.shacl.ttl") for s in got)
+AB_EXPECT = {
+    "https://pod.vardeman.me/vault/contacts/Person/":       "contact-card.shacl.ttl",
+    "https://pod.vardeman.me/vault/contacts/Organization/": "organization-card.shacl.ttl",
+    "https://pod.vardeman.me/vault/contacts/Group/":        "group.shacl.ttl",
+    "https://pod.vardeman.me/vault/contacts/Membership/":   "membership.shacl.ttl",
+}
 
+@pytest.mark.parametrize("url,shape_file", AB_EXPECT.items())
+def test_addressbook_subcontainer_derives_one_vcard_shape_no_contract(url, shape_file):
+    got = derive_constrainedby("overlays/addressbook", url)
+    assert got == {"https://pod.vardeman.me/vault/meta/shapes/" + shape_file}, got
+    assert WRITE_CONTRACT_SHAPE not in got  # operational lane — no memory contract
 
-def test_addressbook_resolves_hosted_url_fragment_shapes():
-    got = derive_constrainedby("overlays/addressbook", "https://pod.vardeman.me/vault/contacts/")
-    assert any(s.endswith("contact-card.shacl.ttl") for s in got)
-    assert any(s.endswith("organization-card.shacl.ttl") for s in got)
-    assert all("#" not in s for s in got)  # fragments stripped to file URLs
+@pytest.mark.parametrize("url", AB_EXPECT)
+def test_addressbook_deploy_source_matches_derivation(url):
+    # The committed deploy file (patch or Person .meta) must equal the derived set —
+    # fails the build if a hand-edit drifts from the tree.
+    assert committed_addressbook_constrainedby(url) == derive_constrainedby("overlays/addressbook", url)

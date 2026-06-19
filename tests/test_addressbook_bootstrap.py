@@ -44,7 +44,6 @@ def test_manifest_type_registration_has_solid_instance():
 def test_container_meta_patches_parse_and_carry_constrainedBy():
     """Each per-container meta patch inserts ldp:constrainedBy pointing at the matching shape."""
     expected = {
-        "person-container-meta": ("/vault/contacts/Person/",       "contact-card.shacl.ttl"),
         "organization-container-meta": ("/vault/contacts/Organization/", "organization-card.shacl.ttl"),
         "group-container-meta": ("/vault/contacts/Group/",         "group.shacl.ttl"),
         "membership-container-meta": ("/vault/contacts/Membership/", "membership.shacl.ttl"),
