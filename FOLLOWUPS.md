@@ -82,6 +82,8 @@ The **remaining RDF-native work** is two separate items:
 
 **(b) id-schemes operational-vs-memory classification:** id-schemes lives outside `/vault` (`/id/schemes/`); its `mem:rationale` shapes are still deployed. Classify it (operational reference infrastructure → drop `mem:rationale`, like addressbook; or curation-act memory → keep it) before any tree↔layout work. The D111 cold probes were built around it having the contract; do not fold silently.
 
+**(c) Stale curator-eval fixtures in the sibling repo (low priority, `solid-agent-skills`):** the de-conflation consistency check (2026-06-19) found `solid-agent-skills/skills/pod-curator/evals/evals.json` + `eval-workspace/pod-curator/iteration-1/` carry *frozen* recorded contact `.ttl` outputs (and `benchmark.json`) from when contacts still required `mem:rationale`. These are past eval artifacts, NOT runtime guidance — no live agent is misled (the runtime curator playbook only couples `mem:rationale` to curation *operations*, not contacts; the live `vcard-individual-substrate` capability has 0 `mem:rationale` occurrences). But if that curator eval is **re-run**, its fixtures may still assume contacts carry rationale. Refresh the contact fixtures when the curator eval is next touched. Sibling repo, off any active path.
+
 ## ▶▶ ACTIVE — agentic progressive-disclosure contract (SP1 + SP2 SHIPPED; 2026-06-12)
 
 **Spec (spine, settled):** `docs/superpowers/specs/2026-06-10-agentic-progressive-disclosure-contract-design.md`.
