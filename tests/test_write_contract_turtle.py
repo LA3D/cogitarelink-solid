@@ -1,4 +1,4 @@
-"""SP2 §6 write contract, Turtle lanes: rationale required, laden instruction, seeds conform."""
+"""SP2 §6 write contract, Turtle lanes: id-schemes rationale required; contacts de-conflated (no mem:rationale)."""
 import httpx
 import pytest
 from rdflib import Graph, Namespace
@@ -26,32 +26,19 @@ BARE_ORG = """@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 """
 
 
-def test_rationale_less_contact_422_with_laden_message():
+def test_bare_contact_admitted_no_memory_contract():
+    # AddressBook is operational LD — a vcard card with no mem:rationale is valid.
     r = httpx.post(f"{POD}/vault/contacts/Person/", content=BARE_CARD,
-                   headers={"Content-Type": "text/turtle", "Slug": "sp2-wc-probe"}, verify=_CA)
-    assert r.status_code == 422, f"got {r.status_code}: {r.text[:200]}"
-    assert "rationale" in r.text and "task" in r.text  # the laden message rides the report
-
-
-def test_contact_with_rationale_201():
-    body = BARE_CARD.rstrip().rstrip(".") + """;
-   <https://pod.vardeman.me/vault/ontology/mem#rationale> "Test write: SP2 contract conformance check (test_write_contract_turtle)." .
-"""
-    r = httpx.post(f"{POD}/vault/contacts/Person/", content=body,
-                   headers={"Content-Type": "text/turtle", "Slug": "sp2-wc-ok"}, verify=_CA)
+                   headers={"Content-Type": "text/turtle", "Slug": "deconflate-card"}, verify=_CA)
     assert r.status_code == 201, f"got {r.status_code}: {r.text[:300]}"
-    created = r.headers.get("location", f"{POD}/vault/contacts/Person/sp2-wc-ok")
-    httpx.delete(created, verify=_CA)
+    httpx.delete(r.headers.get("location", f"{POD}/vault/contacts/Person/deconflate-card"), verify=_CA)
 
 
-def test_rationale_less_org_422_with_laden_message():
+def test_bare_org_admitted_no_memory_contract():
     r = httpx.post(f"{POD}/vault/contacts/Organization/", content=BARE_ORG,
-                   headers={"Content-Type": "text/turtle", "Slug": "sp2-org-probe"}, verify=_CA)
-    assert r.status_code == 422, f"got {r.status_code}: {r.text[:200]}"
-    assert "rationale" in r.text and "task" in r.text  # laden message rides the report
-    # confirm no residue
-    gone = httpx.get(f"{POD}/vault/contacts/Organization/sp2-org-probe", verify=_CA)
-    assert gone.status_code == 404
+                   headers={"Content-Type": "text/turtle", "Slug": "deconflate-org"}, verify=_CA)
+    assert r.status_code == 201, f"got {r.status_code}: {r.text[:300]}"
+    httpx.delete(r.headers.get("location", f"{POD}/vault/contacts/Organization/deconflate-org"), verify=_CA)
 
 
 def _sweep(ctr_path):
@@ -68,10 +55,6 @@ def _sweep(ctr_path):
         if (None, MEM.rationale, None) not in mg:
             missing.append(m)
     return missing
-
-
-def test_contact_seeds_conform():
-    assert _sweep("/vault/contacts/Person/") == []
 
 
 def test_scheme_record_seeds_conform():

@@ -2,12 +2,19 @@
 
 **Date:** 2026-06-17
 **Status:** SHIPPED for the wiki lane + MERGED to `main` (2026-06-18, merge `6510e2a`; D117).
-Tasks 1–6, 8, 10, 11, 12 done; **Tasks 7/9 (RDF-native lanes) DEFERRED** — addressbook + id-schemes
-still enforce via their own per-app duplicated `mem:rationale` shapes (the derivation writes
-`constrainedBy` for the wiki lane only; their ShapeTrees diverge from the deployed layout). So the
+Tasks 1–6, 8, 10, 11, 12 done; **Tasks 7/9 (RDF-native lanes) DEFERRED** — addressbook is now
+DE-CONFLATED (see the appended note below); id-schemes still enforces via its own per-app
+`mem:rationale` shape (the derivation writes `constrainedBy` for the wiki lane only; the RDF-native
+ShapeTrees diverge from the deployed layout). So the
 "big-bang across all three lanes" goal below holds for the **wiki lane only** as shipped; the
 RDF-native unification is the remaining work (FOLLOWUPS 🔵). Multiple-`st:shape` union cold-agent
 validated (Task 11; `docs/plans/2026-06-17-write-contract-probe-report.md`).
+**Addressbook de-conflation (2026-06-18) supersedes this spec's Task 7/9 framing.** The goal of
+"remove per-app `mem:rationale` duplication so the injected `sub:WriteContractShape` supplies it"
+is **corrected**: `mem:rationale` is **removed** from the addressbook shapes entirely — the write
+contract is a memory-substrate invariant, not Pod-wide, so it does not belong on vCard operational
+data. The addressbook ShapeTree↔layout reconciliation becomes a vcard-domain-only interop fix. See
+`docs/superpowers/specs/2026-06-18-pod-memory-systems-architecture-design.md`.
 **Relates to:** D96 (Page+Thing split), D81 (predicate-level governance Model A), D98/D108
 (container=gate / class=dispatch; in-band floor), D109/D110 (interop adoption; SAI vocab-now /
 runtime-deferred), D116 (PSP). Supersedes the per-app write-contract duplication shipped in SP2.

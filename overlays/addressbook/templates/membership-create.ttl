@@ -21,11 +21,9 @@
         4. On 422: read the SHACL ValidationReport, fix cited fields, retry PUT.
 
       Required: org:member (the Person card IRI), org:organization (the Org card
-      IRI), org:memberDuring with at least time:hasBeginning (start date), and
-      mem:rationale. time:hasEnd is optional — omit for ongoing memberships.
+      IRI), org:memberDuring with at least time:hasBeginning (start date).
+      time:hasEnd is optional — omit for ongoing memberships.
       Optional: org:role (e.g., bibo:Author, or a string role label).
-      Every write carries mem:rationale: the task that triggered it, what was
-      concluded, and why — your write-context is unrecoverable after this session.
     """ ;
 
     tmpl:templateBody """
@@ -33,7 +31,6 @@
 @prefix time:  <http://www.w3.org/2006/time#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
-@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <>  dct:creator </vault/profile/card#me> ;
     dct:created  \"<<ISO_DATETIME>>\"^^xsd:dateTime .
@@ -45,10 +42,7 @@
     org:memberDuring [
         time:hasBeginning [ time:inXSDDate \"<<START_DATE>>\"^^xsd:date ] ;
         # time:hasEnd      [ time:inXSDDate \"<<END_DATE>>\"^^xsd:date ] ;
-    ] ;
-
-    # REQUIRED — the task that triggered this write, what you concluded, and why
-    mem:rationale \"<<RATIONALE>>\" .
+    ] .
 
     # OPTIONAL:
     # org:role bibo:Author .

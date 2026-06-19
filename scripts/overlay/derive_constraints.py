@@ -37,6 +37,11 @@ SHAPE_NODE_TO_FILE[f"{WIKI}SchemeRecordShape"] = SHAPES_BASE + "scheme-record.sh
 
 TREE = "https://pod.vardeman.me/vault/meta/shapetrees/"
 
+# Overlays whose writes carry the memory write contract (mem:rationale). AddressBook
+# is operational LD (vcard) — excluded. id-schemes pending its classification
+# (2026-06-18 memory-systems spec). Wiki = the memory lane.
+CONTRACT_BEARING = {"overlays/wiki-memory", "overlays/identifier-schemes"}
+
 # Durable containers across all lanes (working/ excluded — D73 permissive):
 #   container_url -> (overlay_dir, tree_file, ContainerTree IRI)
 DURABLE_CONTAINERS = {
@@ -78,7 +83,8 @@ def derive_constrainedby(overlay_dir: str, container_url: str) -> set:
     for resource_tree in g.objects(URIRef(container_tree), ST.contains):
         for shape in g.objects(resource_tree, ST.shape):
             shapes.add(_shape_url(str(shape)))
-    shapes.add(WRITE_CONTRACT_SHAPE)
+    if overlay_dir in CONTRACT_BEARING:
+        shapes.add(WRITE_CONTRACT_SHAPE)
     return shapes
 
 

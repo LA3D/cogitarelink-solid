@@ -21,10 +21,7 @@
            the cited fields (sh:focusNode, sh:resultPath, sh:resultMessage),
            retry the PUT
 
-      Minimum to satisfy SHACL: vcard:fn + vcard:inAddressBook + one anchor +
-      mem:rationale. Every write carries mem:rationale: the task that triggered
-      it, what was concluded, and why — your write-context is unrecoverable
-      after this session.
+      Minimum to satisfy SHACL: vcard:fn + vcard:inAddressBook + one anchor.
       Prefer owl:sameAs <orcid> when known — ORCID is the canonical cross-pod
       anchor. Fall back to vcard:hasEmail when ORCID isn't available. Fall back
       further to vcard:hasTelephone if neither.
@@ -41,7 +38,6 @@
 @prefix org:   <http://www.w3.org/ns/org#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <>  a vcard:VCard, foaf:PersonalProfileDocument ;
     foaf:primaryTopic <#this> ;
@@ -52,9 +48,6 @@
     a vcard:Individual, foaf:Person ;
     vcard:fn               \"<<FULL_NAME>>\" ;
     vcard:inAddressBook    </vault/contacts/index.ttl#this> ;
-
-    # REQUIRED — the task that triggered this write, what you concluded, and why
-    mem:rationale          \"<<RATIONALE>>\" ;
 
     # AT LEAST ONE of the following — required for operational utility
     owl:sameAs             <https://orcid.org/<<ORCID>>> ;

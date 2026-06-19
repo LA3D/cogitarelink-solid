@@ -40,18 +40,15 @@ def _card_body(contact_uuid: str, orcid: str | None = None, anchored: bool = Tru
     anchor = f"   owl:sameAs <{orcid}> ;" if orcid else ""
     if anchored and not orcid:
         anchor = f"   vcard:hasEmail <mailto:{contact_uuid[:8]}@example.org> ;"
-    # mem:rationale: SP2 §6 write contract — conformant writes carry write-context
     return f"""\
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
-@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <#this> a vcard:Individual, foaf:Person ;
    vcard:fn "Test Person {contact_uuid[:8]}" ;
    vcard:inAddressBook <{ADDRESSBOOK_IRI}> ;
 {anchor}
-   mem:rationale "Test write: addressbook e2e round-trip check (test_addressbook_e2e)." ;
    foaf:name "Test Person {contact_uuid[:8]}" .
 """
 
