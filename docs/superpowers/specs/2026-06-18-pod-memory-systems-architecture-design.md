@@ -157,9 +157,17 @@ plans, each spec → plan → implement on its own:
 - **Breadcrumb form + direction:** which predicate carries the tier-jump signal, and whether it is
   forward (vCard → memory), backward (memory → vCard), or both. The cheap-lookup path needs the
   forward signal to be one lightweight triple.
-- **id-schemes classification:** operational reference data (→ drop `mem:rationale`, like
-  addressbook) or part of the agent's memory (→ keep it; registering a scheme is a curation act). The
-  D111 cold probes were built around it having the contract; do not fold it in silently.
+- **id-schemes classification — ✅ RESOLVED (2026-06-19, Chuck): operational reference data.** Scheme
+  records are a PID lookup table consulted in the tool-calling loop (resolve an identifier via its
+  `idot:urlPattern`), structurally parallel to the vCard addressbook. The `mem:rationale` write
+  contract was removed from scheme registration (**lane A** — `scheme-record.shacl.ttl` + 8 seeds +
+  `CONTRACT_BEARING`), keeping the genuine memory/curation aspect in the **lane B** curation loop
+  (`curation-proposal.shacl.ttl` on `/id/.operations/`, `mem:RealignAction` with HTTP evidence —
+  untouched). De-conflation branch `id-schemes-deconflation` (plan
+  `docs/superpowers/plans/2026-06-19-id-schemes-deconflation.md`): `make verify` 0 ERROR; bare scheme
+  record → 201; lane-B `test_rationale_missing_422` still 422. **Caveat:** the `evals/` D111 cold-probe
+  planting scripts still write `mem:rationale` on scheme bodies — stale research artifacts, refresh
+  when those probes are next run (not CI-blocking).
 
 ## Out of scope (YAGNI)
 
