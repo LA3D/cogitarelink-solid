@@ -121,23 +121,25 @@ def _load_gen_managers():
 
 def test_gen_managers_isomorphic_to_committed():
     gm = _load_gen_managers()
-    mdir = REPO / "overlays" / "wiki-memory" / "interop" / "managers"
-    for slug, tree in gm.CONTAINERS.items():
-        base = gm.served_url(slug)
-        regen = gm.serialize_relative(slug, gm.manager_graph(slug, tree))
-        g_new = Graph().parse(data=regen, format="turtle", publicID=base)
-        g_old = Graph().parse(mdir / f"{slug}.shapetree.ttl", format="turtle", publicID=base)
-        assert isomorphic(g_new, g_old), f"{slug} regenerated manager not isomorphic"
+    for lane in gm.LANES.values():
+        mdir = REPO / lane["out"]
+        for slug, (tree_local, ctr_path) in lane["containers"].items():
+            base = gm.served_url(slug)
+            regen = gm.serialize_relative(slug, gm.manager_graph(slug, lane["tree_ns"], tree_local, ctr_path))
+            g_new = Graph().parse(data=regen, format="turtle", publicID=base)
+            g_old = Graph().parse(mdir / f"{slug}.shapetree.ttl", format="turtle", publicID=base)
+            assert isomorphic(g_new, g_old), f"{slug} regenerated manager not isomorphic"
 
 
 def test_committed_manager_files_match_generator_output():
     "The committed .ttl files are byte-identical to the generator's current output."
     gm = _load_gen_managers()
-    mdir = REPO / "overlays" / "wiki-memory" / "interop" / "managers"
-    for slug, tree in gm.CONTAINERS.items():
-        regen = gm.serialize_relative(slug, gm.manager_graph(slug, tree))
-        committed = (mdir / f"{slug}.shapetree.ttl").read_text()
-        assert regen == committed, f"{slug}.shapetree.ttl is stale — re-run gen_managers.py"
+    for lane in gm.LANES.values():
+        mdir = REPO / lane["out"]
+        for slug, (tree_local, ctr_path) in lane["containers"].items():
+            regen = gm.serialize_relative(slug, gm.manager_graph(slug, lane["tree_ns"], tree_local, ctr_path))
+            committed = (mdir / f"{slug}.shapetree.ttl").read_text()
+            assert regen == committed, f"{slug}.shapetree.ttl is stale — re-run gen_managers.py"
 
 
 # ---- F6: pod_audit expected-set derivation -------------------------------------
