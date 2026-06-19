@@ -156,3 +156,25 @@ def test_old_suffix_filter_would_miss_non_tree_members():
                     if str(o).endswith(".tree")}
     assert TREES_CTR + "rogue.tree.ttl" not in old_doc_urls, \
         "sanity: old filter should NOT include rogue.tree.ttl (proves the bug existed)"
+
+
+# --- Task 3: addressbook interop managers ---
+
+AB_MGR_DIR = REPO / "overlays/addressbook/interop/managers"
+AB_MANAGERS = {  # slug -> (ContainerTree localname, managed container URL)
+    "person":       ("PersonContainerTree",       "https://pod.vardeman.me/vault/contacts/Person/"),
+    "organization": ("OrganizationContainerTree", "https://pod.vardeman.me/vault/contacts/Organization/"),
+    "group":        ("GroupContainerTree",        "https://pod.vardeman.me/vault/contacts/Group/"),
+    "membership":   ("MembershipContainerTree",   "https://pod.vardeman.me/vault/contacts/Membership/"),
+}
+
+def test_addressbook_managers_assign_container_trees_and_name_their_container():
+    for slug, (tree_local, ctr_url) in AB_MANAGERS.items():
+        f = AB_MGR_DIR / f"{slug}.shapetree.ttl"
+        assert f.exists(), f"missing addressbook manager {f}"
+        g = rdflib.Graph(); g.parse(f, format="turtle")
+        mgr = next(g.subjects(rdflib.RDF.type, ST.Manager))
+        a = g.value(mgr, ST.hasAssignment)
+        assert a is not None, f"{slug}: no st:hasAssignment"
+        assert g.value(a, ST.assigns) == rdflib.URIRef(ABTREE_NS + tree_local), slug
+        assert g.value(a, ST.manages) == rdflib.URIRef(ctr_url), slug
