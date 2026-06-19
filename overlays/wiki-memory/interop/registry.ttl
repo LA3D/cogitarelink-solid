@@ -48,14 +48,29 @@ reg:working a interop:DataRegistration ;
 # SP2: the registry covers every deployed app (FOLLOWUPS interop gap + D112 item 6).
 # SP2-T3b: each registration declares its shape tree (SAI §6.1) — per-app tree docs
 # under /vault/meta/shapetrees/.
-reg:data interop:hasDataRegistration reg:id-schemes , reg:contacts .
+reg:data interop:hasDataRegistration reg:id-schemes , reg:contacts-person , reg:contacts-organization , reg:contacts-group , reg:contacts-membership .
 
 reg:id-schemes a interop:DataRegistration ;
     interop:registeredShapeTree idtree:SchemeRecordContainerTree ;
     interop:registeredWith idapp:id-schemes ;
     interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
 
-reg:contacts a interop:DataRegistration ;
-    interop:registeredShapeTree abtree:ContactContainerTree ;
+reg:contacts-person a interop:DataRegistration ;
+    interop:registeredShapeTree abtree:PersonContainerTree ;
+    interop:registeredWith abapp:addressbook ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+
+reg:contacts-organization a interop:DataRegistration ;
+    interop:registeredShapeTree abtree:OrganizationContainerTree ;
+    interop:registeredWith abapp:addressbook ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+
+reg:contacts-group a interop:DataRegistration ;
+    interop:registeredShapeTree abtree:GroupContainerTree ;
+    interop:registeredWith abapp:addressbook ;
+    interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .
+
+reg:contacts-membership a interop:DataRegistration ;
+    interop:registeredShapeTree abtree:MembershipContainerTree ;
     interop:registeredWith abapp:addressbook ;
     interop:registeredBy <https://pod.vardeman.me/vault/profile/card#me> .

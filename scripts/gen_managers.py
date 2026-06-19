@@ -1,6 +1,6 @@
-# Emit per-container .shapetree Manager auxiliaries (interop foundation, Task 5).
+# Emit per-container .shapetree Manager auxiliaries (interop foundation).
 # Run from repo root: ~/uvws/.venv/bin/python scripts/gen_managers.py
-# Commit the generated overlays/wiki-memory/interop/managers/*.shapetree.ttl files.
+# Commit the generated overlays/*/interop/managers/*.shapetree.ttl files.
 #
 # A Manager associates a container with its CONTAINER shape tree (st:assigns). The shapes
 # themselves live on the container tree's contained resource trees (st:contains), so the
@@ -23,18 +23,33 @@ from rdflib.namespace import RDF
 
 ST = Namespace("http://www.w3.org/ns/shapetrees#")
 BASE = "https://pod.vardeman.me/vault"
-TREE_NS = f"{BASE}/meta/shapetrees/wiki-memory.tree#"
 
-# container slug -> (ContainerTree localname, served manager URL).
-# 7 containers; concepts/ covers Concept + Source.
-CONTAINERS = {
-    "concepts": "ConceptContainerTree",
-    "people": "PersonContainerTree",
-    "places": "PlaceContainerTree",
-    "events": "EventContainerTree",
-    "organizations": "OrganizationContainerTree",
-    "procedures": "ProcedureContainerTree",
-    "working": "WorkingNoteContainerTree",
+# Each lane: where to write, its tree namespace, and slug -> (ContainerTree localname,
+# managed-container path under BASE). Managers host to the shared /vault/meta/interop/managers/.
+LANES = {
+    "wiki": {
+        "out": "overlays/wiki-memory/interop/managers",
+        "tree_ns": f"{BASE}/meta/shapetrees/wiki-memory.tree#",
+        "containers": {
+            "concepts": ("ConceptContainerTree", "wiki/concepts"),
+            "people": ("PersonContainerTree", "wiki/people"),
+            "places": ("PlaceContainerTree", "wiki/places"),
+            "events": ("EventContainerTree", "wiki/events"),
+            "organizations": ("OrganizationContainerTree", "wiki/organizations"),
+            "procedures": ("ProcedureContainerTree", "wiki/procedures"),
+            "working": ("WorkingNoteContainerTree", "wiki/working"),
+        },
+    },
+    "addressbook": {
+        "out": "overlays/addressbook/interop/managers",
+        "tree_ns": f"{BASE}/meta/shapetrees/addressbook.tree#",
+        "containers": {
+            "person": ("PersonContainerTree", "contacts/Person"),
+            "organization": ("OrganizationContainerTree", "contacts/Organization"),
+            "group": ("GroupContainerTree", "contacts/Group"),
+            "membership": ("MembershipContainerTree", "contacts/Membership"),
+        },
+    },
 }
 
 
@@ -42,26 +57,23 @@ def served_url(slug: str) -> str:
     return f"{BASE}/meta/interop/managers/{slug}.shapetree"
 
 
-def manager_graph(slug: str, tree: str) -> Graph:
+def manager_graph(slug: str, tree_ns: str, tree_local: str, ctr_path: str) -> Graph:
     "The 4-triple Manager graph, self-IRIs minted against the served URL."
     base = served_url(slug)
-    g = Graph()
-    g.bind("st", ST)
-    doc = URIRef(base)
-    a1 = URIRef(base + "#a1")
+    g = Graph(); g.bind("st", ST)
+    doc = URIRef(base); a1 = URIRef(base + "#a1")
     g.add((doc, RDF.type, ST.Manager))
     g.add((doc, ST.hasAssignment, a1))
-    g.add((a1, ST.assigns, URIRef(f"{TREE_NS}{tree}")))
-    g.add((a1, ST.manages, URIRef(f"{BASE}/wiki/{slug}/")))
+    g.add((a1, ST.assigns, URIRef(f"{tree_ns}{tree_local}")))
+    g.add((a1, ST.manages, URIRef(f"{BASE}/{ctr_path}/")))
     return g
 
 
 def serialize_relative(slug: str, g: Graph) -> str:
     "Turtle with the doc's self-IRIs relativized to <> / <#frag> (no @base line)."
     base = served_url(slug)
-    ttl = g.serialize(format="turtle", base=base)
     out = []
-    for line in ttl.splitlines():
+    for line in g.serialize(format="turtle", base=base).splitlines():
         if line.startswith("@base "):
             continue
         line = line.replace(f"<{base}#", "<#").replace(f"<{base}>", "<>")
@@ -70,8 +82,11 @@ def serialize_relative(slug: str, g: Graph) -> str:
 
 
 if __name__ == "__main__":
-    out = Path("overlays/wiki-memory/interop/managers")
-    out.mkdir(parents=True, exist_ok=True)
-    for slug, tree in CONTAINERS.items():
-        (out / f"{slug}.shapetree.ttl").write_text(serialize_relative(slug, manager_graph(slug, tree)))
-    print(f"wrote {len(CONTAINERS)} manager files")
+    total = 0
+    for lane in LANES.values():
+        out = Path(lane["out"]); out.mkdir(parents=True, exist_ok=True)
+        for slug, (tree_local, ctr_path) in lane["containers"].items():
+            g = manager_graph(slug, lane["tree_ns"], tree_local, ctr_path)
+            (out / f"{slug}.shapetree.ttl").write_text(serialize_relative(slug, g))
+            total += 1
+    print(f"wrote {total} manager files")

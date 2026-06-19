@@ -98,7 +98,19 @@
         [ overlay:contentPath "containers/groups.ttl" ;
           overlay:hostedAt "/vault/contacts/groups.ttl" ] ,
         [ overlay:contentPath "containers/marie-curie.ttl" ;
-          overlay:hostedAt "/vault/contacts/Person/marie-curie.ttl" ] ;
+          overlay:hostedAt "/vault/contacts/Person/marie-curie.ttl" ] ,
+        [ overlay:contentPath "interop/managers/person.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/person.shapetree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/organization.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/organization.shapetree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/group.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/group.shapetree" ;
+          overlay:contentType "text/turtle" ] ,
+        [ overlay:contentPath "interop/managers/membership.shapetree.ttl" ;
+          overlay:hostedAt "/vault/meta/interop/managers/membership.shapetree" ;
+          overlay:contentType "text/turtle" ] ;
 
     # Person/ is constrained at CREATION via containers/contacts/Person/.meta
     # (block 8) so the marie-curie bridge contact can be bootstrapped into it;

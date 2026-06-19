@@ -1,17 +1,49 @@
 @prefix st:     <http://www.w3.org/ns/shapetrees#> .
 @prefix abtree: <https://pod.vardeman.me/vault/meta/shapetrees/addressbook.tree#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 
-# Minimal Shape-Trees doc for the AddressBook app (SP2-T3b; SAI §6.1 — the
-# DataRegistration reg:contacts declares this container tree). Modeled on
-# wiki-memory.tree.ttl: resource trees carry st:shape -> the DEPLOYED SHACL
-# NodeShape IRI (catalog-resident under /vault/meta/shapes/, audit-resolvable).
+abtree:ContactContainerTree a st:ShapeTree ; st:expectsType st:Container ;
+    rdfs:label "AddressBook root container tree" ;
+    rdfs:comment "Governs /vault/contacts/ — holds the four typed subcontainers; no vcard resources live directly here. Named ContactContainerTree for the registry binding (reg:contacts); the structure is in st:contains, not the name." ;
+    st:contains abtree:PersonContainerTree, abtree:OrganizationContainerTree,
+                abtree:GroupContainerTree, abtree:MembershipContainerTree .
 
-# Resource trees — one per governed contact class.
-abtree:ContactResourceTree      a st:ShapeTree ; st:expectsType st:Resource ;
+abtree:PersonContainerTree a st:ShapeTree ; st:expectsType st:Container ;
+    rdfs:label "Person subcontainer tree" ;
+    rdfs:comment "Governs /vault/contacts/Person/ — holds vcard:Individual contact cards." ;
+    st:contains abtree:ContactResourceTree .
+
+abtree:OrganizationContainerTree a st:ShapeTree ; st:expectsType st:Container ;
+    rdfs:label "Organization subcontainer tree" ;
+    rdfs:comment "Governs /vault/contacts/Organization/ — holds vcard:Organization cards." ;
+    st:contains abtree:OrganizationResourceTree .
+
+abtree:GroupContainerTree a st:ShapeTree ; st:expectsType st:Container ;
+    rdfs:label "Group subcontainer tree" ;
+    rdfs:comment "Governs /vault/contacts/Group/ — holds vcard:Group records." ;
+    st:contains abtree:GroupResourceTree .
+
+abtree:MembershipContainerTree a st:ShapeTree ; st:expectsType st:Container ;
+    rdfs:label "Membership subcontainer tree" ;
+    rdfs:comment "Governs /vault/contacts/Membership/ — holds group-membership records." ;
+    st:contains abtree:MembershipResourceTree .
+
+abtree:ContactResourceTree a st:ShapeTree ; st:expectsType st:Resource ;
+    rdfs:label "Contact card resource" ;
+    rdfs:comment "A vcard:Individual contact card." ;
     st:shape <https://pod.vardeman.me/vault/meta/shapes/contact-card.shacl.ttl#ContactCardShape> .
+
 abtree:OrganizationResourceTree a st:ShapeTree ; st:expectsType st:Resource ;
+    rdfs:label "Organization card resource" ;
+    rdfs:comment "A vcard:Organization card." ;
     st:shape <https://pod.vardeman.me/vault/meta/shapes/organization-card.shacl.ttl#OrganizationCardShape> .
 
-# Container tree — /vault/contacts/ holds flat Person/*.ttl + Organization/*.ttl.
-abtree:ContactContainerTree a st:ShapeTree ; st:expectsType st:Container ;
-    st:contains abtree:ContactResourceTree, abtree:OrganizationResourceTree .
+abtree:GroupResourceTree a st:ShapeTree ; st:expectsType st:Resource ;
+    rdfs:label "Group record resource" ;
+    rdfs:comment "A vcard:Group record." ;
+    st:shape <https://pod.vardeman.me/vault/meta/shapes/group.shacl.ttl#GroupShape> .
+
+abtree:MembershipResourceTree a st:ShapeTree ; st:expectsType st:Resource ;
+    rdfs:label "Membership record resource" ;
+    rdfs:comment "A group-membership record." ;
+    st:shape <https://pod.vardeman.me/vault/meta/shapes/membership.shacl.ttl#MembershipShape> .

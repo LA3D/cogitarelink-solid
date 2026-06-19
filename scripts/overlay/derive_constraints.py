@@ -57,8 +57,14 @@ DURABLE_CONTAINERS = {
         ("overlays/wiki-memory", "overlays/wiki-memory/shapetrees/wiki-memory.tree.ttl", TREE + "wiki-memory.tree#OrganizationContainerTree"),
     "https://pod.vardeman.me/vault/wiki/procedures/":
         ("overlays/wiki-memory", "overlays/wiki-memory/shapetrees/wiki-memory.tree.ttl", TREE + "wiki-memory.tree#ProcedureContainerTree"),
-    "https://pod.vardeman.me/vault/contacts/":
-        ("overlays/addressbook", "overlays/addressbook/shapetrees/addressbook.tree.ttl", TREE + "addressbook.tree#ContactContainerTree"),
+    "https://pod.vardeman.me/vault/contacts/Person/":
+        ("overlays/addressbook", "overlays/addressbook/shapetrees/addressbook.tree.ttl", TREE + "addressbook.tree#PersonContainerTree"),
+    "https://pod.vardeman.me/vault/contacts/Organization/":
+        ("overlays/addressbook", "overlays/addressbook/shapetrees/addressbook.tree.ttl", TREE + "addressbook.tree#OrganizationContainerTree"),
+    "https://pod.vardeman.me/vault/contacts/Group/":
+        ("overlays/addressbook", "overlays/addressbook/shapetrees/addressbook.tree.ttl", TREE + "addressbook.tree#GroupContainerTree"),
+    "https://pod.vardeman.me/vault/contacts/Membership/":
+        ("overlays/addressbook", "overlays/addressbook/shapetrees/addressbook.tree.ttl", TREE + "addressbook.tree#MembershipContainerTree"),
     "https://pod.vardeman.me/id/schemes/":
         ("overlays/identifier-schemes", "overlays/identifier-schemes/shapetrees/id-schemes.tree.ttl", TREE + "id-schemes.tree#SchemeRecordContainerTree"),
 }
@@ -129,7 +135,80 @@ def rewrite_meta(container_url: str) -> None:
     path.write_text("\n".join(out) + "\n")
 
 
+# --- addressbook lane: the tree is the source of truth; regenerate the deploy sources.
+# Person is constrained at CREATION via its .meta sidecar (block 8, so the marie-curie
+# bridge can bootstrap into a constrained container); Organization/Group/Membership via
+# post-creation N3 patches (block 8b). Each carries exactly ONE vcard shape, no contract.
+#   container_url -> ("meta" | "patch", repo_path)
+ADDRESSBOOK_DEPLOY = {
+    "https://pod.vardeman.me/vault/contacts/Person/":
+        ("meta", "overlays/addressbook/containers/contacts/Person/.meta"),
+    "https://pod.vardeman.me/vault/contacts/Organization/":
+        ("patch", "overlays/addressbook/patches/organization-container-meta.ttl"),
+    "https://pod.vardeman.me/vault/contacts/Group/":
+        ("patch", "overlays/addressbook/patches/group-container-meta.ttl"),
+    "https://pod.vardeman.me/vault/contacts/Membership/":
+        ("patch", "overlays/addressbook/patches/membership-container-meta.ttl"),
+}
+
+LDP_CB = URIRef("http://www.w3.org/ns/ldp#constrainedBy")
+
+_PATCH_TMPL = """@prefix solid: <http://www.w3.org/ns/solid/terms#> .
+@prefix ldp:   <http://www.w3.org/ns/ldp#> .
+
+<> a solid:InsertDeletePatch ;
+   solid:inserts {{
+       <{ctr}> ldp:constrainedBy <{shape}> .
+   }} .
+"""
+
+
+def _addressbook_shape(container_url: str) -> str:
+    "The single derived shape URL for an addressbook subcontainer (relative to pod root)."
+    derived = derive_constrainedby("overlays/addressbook", container_url)
+    assert len(derived) == 1, f"{container_url}: expected one vcard shape, got {derived}"
+    return next(iter(derived))
+
+
+def committed_addressbook_constrainedby(container_url: str) -> set:
+    "The ldp:constrainedBy set the committed deploy source carries (absolute URLs)."
+    kind, path = ADDRESSBOOK_DEPLOY[container_url]
+    g = Graph()
+    if kind == "meta":
+        g.parse(_ROOT / path, format="turtle", publicID=container_url)
+        return {str(o) for o in g.objects(URIRef(container_url), LDP_CB)}
+    # patch: the constraint lives inside the solid:inserts N3 formula. Avoid fragile
+    # formula parsing — regenerate the expected body and read constrainedBy off the
+    # committed text the same deterministic way (string anchor on the one inserts triple).
+    # The IRI in the file is root-relative (e.g. </vault/meta/shapes/…>); expand to absolute.
+    text = (_ROOT / path).read_text()
+    return {POD + line.split("<", 2)[2].split(">", 1)[0]
+            for line in text.splitlines() if "ldp:constrainedBy" in line}
+
+
+def write_addressbook_deploy(container_url: str) -> None:
+    "Regenerate the deploy source for one addressbook subcontainer from the tree."
+    shape_abs = _addressbook_shape(container_url)           # absolute pod URL
+    shape_rel = shape_abs[len(POD):]                        # /vault/meta/shapes/<x>.shacl.ttl
+    ctr_rel = container_url[len(POD):]                      # /vault/contacts/<X>/
+    kind, path = ADDRESSBOOK_DEPLOY[container_url]
+    p = _ROOT / path
+    if kind == "patch":
+        p.write_text(_PATCH_TMPL.format(ctr=ctr_rel, shape=shape_rel))
+    else:  # meta: surgically rewrite only the ldp:constrainedBy object, keep all else
+        out = []
+        for line in p.read_text().splitlines():
+            if line.strip().startswith("ldp:constrainedBy"):
+                indent = line[:len(line) - len(line.lstrip())]
+                term = line.strip()[-1]                     # ; or .
+                line = f"{indent}ldp:constrainedBy <{shape_rel}> {term}"
+            out.append(line)
+        p.write_text("\n".join(out) + "\n")
+
+
 if __name__ == "__main__":
     for url in WIKI_DURABLE:
         rewrite_meta(url)
-    print(f"rewrote constrainedBy + sub:shape in {len(WIKI_DURABLE)} wiki container .meta files")
+    for url in ADDRESSBOOK_DEPLOY:
+        write_addressbook_deploy(url)
+    print(f"rewrote {len(WIKI_DURABLE)} wiki .meta + {len(ADDRESSBOOK_DEPLOY)} addressbook deploy sources")
