@@ -84,7 +84,8 @@ def test_registry_chain_covers_all_apps_every_registration_a_container_tree():
 
 ABTREE = REPO / "overlays/addressbook/shapetrees/addressbook.tree.ttl"
 IDTREE = REPO / "overlays/identifier-schemes/shapetrees/id-schemes.tree.ttl"
-APP_TREE_SHAPES = ["ContactCardShape", "OrganizationCardShape", "SchemeRecordShape"]
+APP_TREE_SHAPES = ["ContactCardShape", "OrganizationCardShape", "GroupShape",
+                   "MembershipShape", "SchemeRecordShape"]
 
 def test_no_dangling_shape_trees_and_every_shape_defined():
     g = rdflib.Graph()
