@@ -1,4 +1,4 @@
-"""SP2 §6 write contract, Turtle lanes: id-schemes rationale required; contacts de-conflated (no mem:rationale)."""
+"""Turtle lanes: contacts + id-schemes de-conflated (operational reference data, no mem:rationale write contract); the wiki memory lane + the curation lane (.operations/) keep it."""
 import httpx
 import pytest
 from rdflib import Graph, Namespace
