@@ -578,8 +578,16 @@ async def audit_interop_registration(client, pod_base, findings):
     # Container trees = ShapeTrees that expect an st:Container (one per governed container).
     # The registrations must register exactly these — derive the expected set from the data,
     # never a hardcoded count, so adding a container can't trigger a false ERROR.
-    container_trees = {str(s) for s in tree_g.subjects(
-        URIRef(ST + "expectsType"), URIRef(ST + "Container"))}
+    # A container tree needs a DataRegistration iff it directly st:contains a RESOURCE tree
+    # (a data-bearing leaf). A grouping container tree that only st:contains other container
+    # trees (e.g. the addressbook root, which holds the four typed subcontainers) is
+    # structural, not a registered data container — exempt from coverage.
+    resource_trees = {str(s) for s in tree_g.subjects(
+        URIRef(ST + "expectsType"), URIRef(ST + "Resource"))}
+    container_trees = {
+        str(s) for s in tree_g.subjects(URIRef(ST + "expectsType"), URIRef(ST + "Container"))
+        if any(str(o) in resource_trees for o in tree_g.objects(s, URIRef(ST + "contains")))
+    }
 
     for reg_iri, tree_iri in reg_trees.items():
         if tree_iri not in defined_trees:

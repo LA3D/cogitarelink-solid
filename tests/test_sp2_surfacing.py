@@ -35,7 +35,8 @@ def test_registry_covers_all_three_apps():
     g = _graph("/vault/meta/interop/registry")
     regs = set(g.objects(None, INTEROP.hasDataRegistration))
     REG = Namespace(f"{POD}/vault/meta/interop/registry#")
-    assert REG["id-schemes"] in regs and REG["contacts"] in regs, f"got: {sorted(str(r) for r in regs)}"
+    ab_regs = {REG["contacts-person"], REG["contacts-organization"], REG["contacts-group"], REG["contacts-membership"]}
+    assert REG["id-schemes"] in regs and ab_regs <= regs, f"got: {sorted(str(r) for r in regs)}"
 
 
 ST = Namespace("http://www.w3.org/ns/shapetrees#")
