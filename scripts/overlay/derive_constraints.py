@@ -37,10 +37,11 @@ SHAPE_NODE_TO_FILE[f"{WIKI}SchemeRecordShape"] = SHAPES_BASE + "scheme-record.sh
 
 TREE = "https://pod.vardeman.me/vault/meta/shapetrees/"
 
-# Overlays whose writes carry the memory write contract (mem:rationale). AddressBook
-# is operational LD (vcard) — excluded. id-schemes pending its classification
-# (2026-06-18 memory-systems spec). Wiki = the memory lane.
-CONTRACT_BEARING = {"overlays/wiki-memory", "overlays/identifier-schemes"}
+# Overlays whose writes carry the memory write contract (mem:rationale). Wiki is the
+# memory lane. AddressBook (vcard) and id-schemes (PID reference data) are operational
+# LD — excluded (2026-06-18 memory-systems architecture spec: the contract is a
+# memory-substrate invariant, not Pod-wide).
+CONTRACT_BEARING = {"overlays/wiki-memory"}
 
 # Durable containers across all lanes (working/ excluded — D73 permissive):
 #   container_url -> (overlay_dir, tree_file, ContainerTree IRI)

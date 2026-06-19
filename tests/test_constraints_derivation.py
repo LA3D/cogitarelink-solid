@@ -29,11 +29,12 @@ def test_wiki_concepts_includes_page_and_thing():
     assert any(s.endswith("thing.shacl.ttl") for s in got)
 
 
-def test_contract_injected_for_id_schemes_lane():
-    # id-schemes keeps the contract (its operational-vs-memory classification is a
-    # separate decision — 2026-06-18 memory-systems spec, open questions).
+def test_contract_NOT_injected_for_id_schemes():
+    # id-schemes records are operational reference data (2026-06-18 memory-systems
+    # spec, open-Q #3 resolved) — no memory write contract, like addressbook.
     got = derive_constrainedby("overlays/identifier-schemes", "https://pod.vardeman.me/id/schemes/")
-    assert WRITE_CONTRACT_SHAPE in got
+    assert WRITE_CONTRACT_SHAPE not in got
+    assert any(s.endswith("scheme-record.shacl.ttl") for s in got)  # the domain shape stays
 
 
 AB_EXPECT = {
