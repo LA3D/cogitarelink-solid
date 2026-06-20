@@ -12,9 +12,32 @@ authoritative home:
 
 Repo decision IDs differ from vault IDs; both numberings are reconciled in `decisions.md`.
 
-## Project state (as of 2026-06-12)
+## Project state (as of 2026-06-20)
 
-- **▶▶ CURRENT ANCHOR (2026-06-18) — read this FIRST; supersedes the markers below.** **SHAPE-GOVERNANCE
+- **▶▶ CURRENT ANCHOR (2026-06-20) — read this FIRST; supersedes every marker below.** **POD MEMORY-SYSTEMS
+  ARCHITECTURE arc: pieces 1 + id-schemes DONE + verified; main PUSHED + branches cleaned.** Governing spec
+  `docs/superpowers/specs/2026-06-18-pod-memory-systems-architecture-design.md` (the deferred "Tasks 7/9" thread
+  surfaced a category error: the write contract is a **memory-substrate invariant, NOT Pod-wide** — operational
+  LD ≠ externalized memory). Decomposes into 5 pieces. **DONE:** (1) **AddressBook de-conflation** (`mem:rationale`
+  stripped from vcard shapes; no `WriteContractShape` on `/vault/contacts/`) **+ ShapeTree↔layout reshape**
+  (branch `addressbook-shapetree-reshape`, merged: nested tree root→4 subcontainers→4 resource trees incl.
+  Group/Membership, tree-derived `constrainedBy` as single source of truth, 4 interop managers, leaf-registration
+  + audit narrowing); **id-schemes classified operational** (Chuck 2026-06-19) **+ de-conflated** (merge `c3a95a6`:
+  `scheme-record.shacl.ttl` + 8 seeds + `CONTRACT_BEARING={overlays/wiki-memory}` — lane A; lane-B curation loop
+  `/id/.operations/` `mem:RealignAction` UNTOUCHED). **VERIFIED LIVE 2026-06-20:** `make reset && make verify`
+  0 ERROR / 1 intentional D98 WARN / interop registry INFO (12 DataRegistrations / 12 trees / 3 docs, all
+  `st:shape` resolve); full suite **488 passed**, 14 skipped, 1 known Memento flake (passes in isolation).
+  **CLEANUP DONE 2026-06-20:** main pushed (`dfbae9a..c3a95a6`, origin in sync); local branches
+  `id-schemes-deconflation` (merged) + `markdown-lane-write-contract` (superseded; discarded tip `d84e583`
+  reflog-recoverable ~30d) deleted; stale `origin/rq-listener-1-provenance` pruned. Only `uv.lock` untracked.
+  **▶ NEXT = piece 2, THE CROSSWALK** (bridge-predicate reconciliation + tier-jump breadcrumb). Two open Qs for
+  its plan: bridge predicate (`foaf:primaryTopic` lean vs `schema:sameAs`); breadcrumb form + direction (forward
+  vCard→memory / backward / both). Then pieces 3 (episodic interaction substrate, net-new, `.operations/` pattern),
+  4 (classification scheme + derive-on-read affordances), 5 (judgment-promotion + curation — research-flavored).
+  **Minor debt:** `scripts/overlay/derive_constraints.py:98-100` stale comment (claims addressbook trees diverge
+  from layout — false post-reshape; one-line fix). **Below = prior anchors (valid history).**
+
+- **▶▶ ANCHOR (2026-06-18) — SUPERSEDED by the 2026-06-20 anchor above (its "REMAINING Tasks 7/9" is now DONE).** **SHAPE-GOVERNANCE
   RECONCILIATION MERGED to `main` (no-ff merge `6510e2a`; branch deleted; UNPUSHED — origin/main still behind).**
   Audit (2026-06-17) found three uncoordinated shape-governance routes (`ldp:constrainedBy` [floor-enforced] /
   ShapeTree `st:shape` [SAI, inert] / `governedPredicates.ts` [projection]) + the agentic write contract
