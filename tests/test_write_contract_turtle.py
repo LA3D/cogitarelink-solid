@@ -1,4 +1,4 @@
-"""SP2 §6 write contract, Turtle lanes: id-schemes rationale required; contacts de-conflated (no mem:rationale)."""
+"""Turtle lanes: contacts + id-schemes de-conflated (operational reference data, no mem:rationale write contract); the wiki memory lane + the curation lane (.operations/) keep it."""
 import httpx
 import pytest
 from rdflib import Graph, Namespace
@@ -57,8 +57,24 @@ def _sweep(ctr_path):
     return missing
 
 
-def test_scheme_record_seeds_conform():
-    missing = _sweep("/id/schemes/")
-    # the catalog document itself is server-derived, not an agent write — exclude if listed
-    missing = [m for m in missing if not m.rstrip("/").endswith("schemes")]
-    assert missing == []
+BARE_SCHEME = """\
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix idot: <http://identifiers.org/idot/> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+<> a foaf:Document ; dct:title "deconflate scheme" ;
+   foaf:primaryTopic <{cat}#zz-deconflate> .
+<{cat}#zz-deconflate> a idot:Namespace, skos:Concept, rdfs:Datatype ;
+   skos:prefLabel "ZZ deconflate"@en ; skos:definition "de-conflation test scheme"@en ;
+   idot:luiPattern "^Z\\\\d+$" ; idot:sampleID "Z1" .
+"""
+
+
+def test_bare_scheme_record_admitted_no_memory_contract():
+    # id-schemes is operational reference data — a bare scheme record (no mem:rationale) is valid.
+    url = f"{POD}/id/schemes/zz-deconflate"
+    body = BARE_SCHEME.format(cat=f"{POD}/id/schemes/")
+    r = httpx.put(url, content=body, headers={"Content-Type": "text/turtle"}, verify=_CA)
+    assert r.status_code in (201, 205), f"got {r.status_code}: {r.text[:300]}"
+    httpx.delete(url, verify=_CA)

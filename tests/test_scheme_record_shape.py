@@ -13,11 +13,9 @@ GOOD = f"""
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix mem: <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <https://pod.vardeman.me/id/schemes/doi> a foaf:Document ;
     dct:title "DOI scheme record" ;
-    mem:rationale "Fixture: SchemeRecordShape conformance test (SP2 write contract)." ;
     foaf:primaryTopic <https://pod.vardeman.me/id/schemes/#doi> .
 
 <https://pod.vardeman.me/id/schemes/#doi> a idot:Namespace, skos:Concept, rdfs:Datatype ;
@@ -39,9 +37,11 @@ def test_conformant_record_passes():
     assert _validate(GOOD)
 
 
-def test_missing_rationale_fails():
-    assert not _validate(GOOD.replace(
-        '    mem:rationale "Fixture: SchemeRecordShape conformance test (SP2 write contract)." ;\n', ""))
+def test_bare_record_admitted_no_memory_contract():
+    # id-schemes records are operational reference data — a scheme record without
+    # mem:rationale conforms to the (vcard-equivalent) domain shape. 2026-06-18
+    # memory-systems architecture spec, open-Q #3 resolved: id-schemes = operational.
+    assert _validate(GOOD)  # GOOD no longer carries mem:rationale
 
 
 def test_missing_regex_fails():

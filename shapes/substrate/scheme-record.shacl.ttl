@@ -7,7 +7,6 @@
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 @prefix idot:  <http://identifiers.org/idot/> .
 @prefix wiki:  <https://pod.vardeman.me/vault/ontology/wiki#> .
-@prefix mem:   <https://pod.vardeman.me/vault/ontology/mem#> .
 
 <> dct:conformsTo <https://www.w3.org/TR/shacl/> .
 
@@ -38,23 +37,12 @@ wiki:SchemeRecordShape
     sh:agentInstruction """To register an identifier scheme, PUT one Turtle document to /id/schemes/<key> (e.g. /id/schemes/doi). The document frame:
   <https://pod.vardeman.me/id/schemes/<key>> a foaf:Document ;
       dct:title "<label> scheme record" ;
-      mem:rationale "<why this scheme is being registered, triggered by what task>" ;
       foaf:primaryTopic <https://pod.vardeman.me/id/schemes/#<key>> .
-Every write carries mem:rationale: the task that triggered it, what was concluded, and why — your write-context is unrecoverable after this session. The topic node (the abstract scheme) MUST use a fragment IRI on the catalog (/id/schemes/#<key> — NOT /id/schemes/<key>#this). It must be triple-typed idot:Namespace + skos:Concept + rdfs:Datatype, carry skos:prefLabel, skos:definition, idot:luiPattern (the regex as a plain string — data, not a constraint), and at least one idot:sampleID. Providers are optional: an idot:Resource with idot:urlPattern (use {$id} as the placeholder), dcat:servesDataset pointing at the scheme, and dct:type from /id/roles. GET /id/schemes/doi for a worked exemplar. The catalog index at /id/schemes/ is server-derived — write nothing else there.""" ;
+The topic node (the abstract scheme) MUST use a fragment IRI on the catalog (/id/schemes/#<key> — NOT /id/schemes/<key>#this). It must be triple-typed idot:Namespace + skos:Concept + rdfs:Datatype, carry skos:prefLabel, skos:definition, idot:luiPattern (the regex as a plain string — data, not a constraint), and at least one idot:sampleID. Providers are optional: an idot:Resource with idot:urlPattern (use {$id} as the placeholder), dcat:servesDataset pointing at the scheme, and dct:type from /id/roles. GET /id/schemes/doi for a worked exemplar. The catalog index at /id/schemes/ is server-derived — write nothing else there.""" ;
     sh:property [
         sh:path dct:title ;
         sh:minCount 1 ;
         sh:message "Scheme record document needs dct:title (Page frame)."
-    ] ;
-    # SP2 §6 agentic write contract (Turtle lane; twin-probe grounded 2026-06-11):
-    # REQUIRED — agents fill required literals richly and never volunteer optional
-    # ones (e5b-write; D112 35/35). The laden instruction lives on the SHAPE (read
-    # pre-write 9/9); sh:message only fires on violation.
-    sh:property [
-        sh:path mem:rationale ;
-        sh:minCount 1 ;
-        sh:datatype xsd:string ;
-        sh:message "mem:rationale is required — record the task that triggered this write, what you concluded, and why, including what you consulted. Do not merely restate the record's name; a future agent audits this context before trusting it." ;
     ] ;
     sh:property [
         sh:path foaf:primaryTopic ;
